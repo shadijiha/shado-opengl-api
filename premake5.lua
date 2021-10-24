@@ -1,5 +1,6 @@
 workspace "shado-opengl-api"
 	architecture "x64"
+	startproject "sandbox"
 
 	configurations
 	{
@@ -39,7 +40,7 @@ project "shado-opengl-api"
 
 	includedirs
 	{
-		"%{prj.name}",
+		"%{prj.name}/src",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.GLEW}",
 		"%{IncludeDir.imgui}",
