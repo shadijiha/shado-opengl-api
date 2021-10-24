@@ -4,3 +4,9 @@
 [submodule "shado-opengl-api/vendor/imgui"]
 	path = shado-opengl-api/vendor/imgui
 	url = https://github.com/TheCherno/imgui
+[submodule "shado-opengl-api/vendor/glm"]
+	path = shado-opengl-api/vendor/glm
+	url = https://github.com/g-truc/glm
+[submodule "shado-opengl-api/vendor/spdlog"]
+	path = shado-opengl-api/vendor/spdlog
+	url = https://github.com/gabime/spdlog

@@ -15,6 +15,8 @@ IncludeDir = {}
 IncludeDir["GLFW"] = "shado-opengl-api/vendor/GLFW/include"
 IncludeDir["GLEW"] = "shado-opengl-api/vendor/GLEW/include"
 IncludeDir["imgui"] = "shado-opengl-api/vendor/imgui"
+IncludeDir["glm"] = "shado-opengl-api/vendor/glm"
+IncludeDir["spdlog"] = "shado-opengl-api/vendor/spdlog/include"
 
 include "shado-opengl-api/vendor/GLFW"
 include "shado-opengl-api/vendor/GLEW"
@@ -40,7 +42,9 @@ project "shado-opengl-api"
 		"%{prj.name}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.GLEW}",
-		"%{IncludeDir.imgui}"
+		"%{IncludeDir.imgui}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.spdlog}"
 	}
 
 	links
@@ -96,6 +100,8 @@ project "sandbox"
 	includedirs
 	{
 		"%{IncludeDir.imgui}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.spdlog}",
 		"shado-opengl-api/src"
 	}
 
