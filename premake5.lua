@@ -14,9 +14,11 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW"] = "shado-opengl-api/vendor/GLFW/include"
 IncludeDir["GLEW"] = "shado-opengl-api/vendor/GLEW/include"
+IncludeDir["imgui"] = "shado-opengl-api/vendor/imgui"
 
 include "shado-opengl-api/vendor/GLFW"
 include "shado-opengl-api/vendor/GLEW"
+include "shado-opengl-api/vendor/imgui"
 
 project "shado-opengl-api"
 	location "shado-opengl-api"
@@ -37,13 +39,15 @@ project "shado-opengl-api"
 	{
 		"%{prj.name}",
 		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.GLEW}"
+		"%{IncludeDir.GLEW}",
+		"%{IncludeDir.imgui}"
 	}
 
 	links
 	{
 		"GLFW",
 		"GLEW",
+		"ImGui",
 		"opengl32.lib"
 	}
 
@@ -91,6 +95,7 @@ project "sandbox"
 
 	includedirs
 	{
+		"%{IncludeDir.imgui}",
 		"shado-opengl-api/src"
 	}
 
