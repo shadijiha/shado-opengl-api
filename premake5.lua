@@ -100,10 +100,13 @@ project "sandbox"
 
 	includedirs
 	{
+		"%{IncludeDir.GLFW}", -- For some reason I need this and cherno doesn't
+		"%{IncludeDir.GLEW}", -- For some reason I need this and cherno doesn't
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
-		"shado-opengl-api/src"
+		"shado-opengl-api/src",
+		"shado-opengl-api/vendor"
 	}
 
 	links
@@ -113,7 +116,7 @@ project "sandbox"
 
 	filter "system:windows"
 	cppdialect "C++17"
-	staticruntime "On"
+	staticruntime "Off"
 	systemversion "latest"
 
 	defines
