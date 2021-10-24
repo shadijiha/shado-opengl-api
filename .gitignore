@@ -1,0 +1,15 @@
+# Binaries
+**/bin/
+bin-int/
+
+# Log files
+*.log
+*.tlog
+*.cache
+
+# Visual Studio files and folder
+.vs/
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user

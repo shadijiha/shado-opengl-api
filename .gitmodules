@@ -1,0 +1,3 @@
+[submodule "shado-opengl-api/vendor/GLFW"]
+	path = shado-opengl-api/vendor/GLFW
+	url = https://github.com/TheCherno/glfw
