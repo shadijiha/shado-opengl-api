@@ -13,3 +13,6 @@
 [submodule "shado-opengl-api/vendor/shado-script"]
 	path = shado-opengl-api/vendor/shado-script
 	url = https://github.com/shadijiha/shado-script
+[submodule "shado-opengl-api/vendor/box2d"]
+	path = shado-opengl-api/vendor/box2d
+	url = https://github.com/TheCherno/box2d

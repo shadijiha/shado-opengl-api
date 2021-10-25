@@ -2,29 +2,108 @@
 #include "ShadoScript.h"
 #include <iostream>
 
+
+#include "box2d/b2_body.h"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_world.h"
+
 using namespace Shado;
+
+struct GameObject {
+	float z;
+	glm::vec2 scale;
+	glm::vec4 color = { 1,1,1,1 };
+	Ref<Texture2D> texture;
+
+	b2Body* body;
+
+	bool hasTexture = false;
+};
 
 class TestScene : public Scene {
 public:
 	TestScene() :
-		Scene("Test scene"), camera(Application::get().getWindow().getAspectRatio())
+		Scene("Test scene"), camera(Application::get().getWindow().getAspectRatio()),
+		world({ 0.0f, -1.0f })
 	{
 		sphere = std::make_shared<Cube>();
 	}
 	virtual ~TestScene() {}
 
 	void onInit() override {
+
+		for (float y = -1.5f; y < 1.5f; y += 0.3f)
+			for (float x = -1.5f; x < 1.5f; x += 0.3f) {
+
+				b2BodyDef bodyDef;
+				bodyDef.type = b2_dynamicBody;
+				bodyDef.position.Set(x, y);
+
+				b2PolygonShape dynamicBox;
+				dynamicBox.SetAsBox(0.25, 0.25);
+
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &dynamicBox;
+				fixtureDef.density = 1.0f;
+				fixtureDef.friction = 0.3f;
+
+				b2Body* body = world.CreateBody(&bodyDef);
+				body->CreateFixture(&fixtureDef);
+
+				GameObject obj;
+				obj.body = body;
+				obj.z = -2;
+				obj.scale = { 0.25, 0.25 };
+				obj.texture = riven2;
+				obj.hasTexture = true;
+				objects.push_back(obj);
+			}
+
+
+		for (float y = -5.0f; y < 5.0f; y += 0.5f)
+		{
+			for (float x = -5.0f; x < 5.0f; x += 0.5f)
+			{
+				glm::vec4 color = { (x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f };
+
+				b2BodyDef bodyDef;
+				bodyDef.type = b2_dynamicBody;
+				bodyDef.position.Set(x, y);
+
+				b2PolygonShape dynamicBox;
+				dynamicBox.SetAsBox(0.45f, 0.45f);
+
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &dynamicBox;
+				fixtureDef.density = 1.0f;
+				fixtureDef.friction = 0.3f;
+
+				b2Body* body = world.CreateBody(&bodyDef);
+				body->CreateFixture(&fixtureDef);
+
+				GameObject obj;
+				obj.z = -15;
+				obj.body = body;
+				obj.scale = { 0.45f, 0.45f };
+				obj.color = color;
+				objects.push_back(obj);
+			}
+		}
+
 	}
 
 	void onUpdate(TimeStep dt) override {
 		camera.onUpdate(dt);
+
+		world.Step(dt, 6, 2);
 	}
 
 	void onDraw() override {
 
 		Renderer2D::BeginScene(camera.getCamera());
 
-		for (float y = -1.5f; y < 1.5f; y += 0.3f)
+		/*for (float y = -1.5f; y < 1.5f; y += 0.3f)
 			for (float x = -1.5f; x < 1.5f; x += 0.3f)
 				Renderer2D::DrawQuad({ x, y , -2 }, { 0.25, 0.25 }, riven2);
 
@@ -38,6 +117,16 @@ public:
 			{
 				glm::vec4 color = { (x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f };
 				Renderer2D::DrawQuad({ x, y , -15 }, { 0.45f, 0.45f }, color);
+			}
+		}*/
+
+		for (auto& object : objects) {
+			b2Vec2 position = object.body->GetPosition();
+			float angle = object.body->GetAngle();
+			if (object.hasTexture) {
+				Renderer2D::DrawRotatedQuad({ position.x, position.y, object.z }, object.scale, angle, object.texture);
+			} else {
+				Renderer2D::DrawRotatedQuad({ position.x, position.y, object.z }, object.scale, angle, object.color);
 			}
 		}
 
@@ -73,6 +162,8 @@ private:
 
 	//Ref<Object3D> obj = std::make_shared<Object3D>("src/core/ressources/rings.obj");
 	//DiffuseLight light = DiffuseLight({ 0, 0, 20 });
+	b2World world;
+	std::vector<GameObject> objects;
 
 	OrbitCameraController camera;
 	Color color = { 1, 1, 1 };
@@ -82,7 +173,6 @@ private:
 int main(int argc, const char** argv)
 {
 	auto& application = Application::get();
-	SHADO_CORE_INFO(FLAT_COLOR_SHADER_PATH);
 	application.getWindow().resize(1920, 1080);
 	application.submit(new TestScene);
 	application.run();
