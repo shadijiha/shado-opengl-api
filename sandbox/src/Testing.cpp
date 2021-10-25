@@ -82,6 +82,7 @@ private:
 int main(int argc, const char** argv)
 {
 	auto& application = Application::get();
+	SHADO_CORE_INFO(FLAT_COLOR_SHADER_PATH);
 	application.getWindow().resize(1920, 1080);
 	application.submit(new TestScene);
 	application.run();

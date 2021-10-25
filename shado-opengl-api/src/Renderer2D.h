@@ -13,9 +13,9 @@
 
 namespace Shado {
 
-	inline std::string FLAT_COLOR_SHADER_PATH = FILE_PATH + "assets\\FlatColorShader.glsl";
-	inline std::string TEXTURE2D_SHADER_PATH = FILE_PATH + "assets\\TextureShader.glsl";
-	inline std::string LINES_SHADER_PATH = FILE_PATH + "assets\\Renderer2D_Lines.glsl";
+	inline std::string FLAT_COLOR_SHADER_PATH = FILE_PATH + "\\assets\\FlatColorShader.glsl";
+	inline std::string TEXTURE2D_SHADER_PATH = FILE_PATH + "\\assets\\TextureShader.glsl";
+	inline std::string LINES_SHADER_PATH = FILE_PATH + "\\assets\\Renderer2D_Lines.glsl";
 
 	class Renderer2D
 	{
