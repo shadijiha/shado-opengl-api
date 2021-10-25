@@ -1,0 +1,19 @@
+// This is a sample file for a scriptable object
+// This file uses C++ Shado script compiler. Thus very limited features are supported
+// Only use void function calls 
+// 
+// @author Shadi Jiha
+// @Date 24 Oct. 2021
+
+void OnCreate() {
+    // Do something when object is mounted on Scene
+
+}
+
+void OnUpdate() {
+    // Called every frame
+}
+
+void OnDestroyed()  {
+    // Do something when object is destroyed
+}

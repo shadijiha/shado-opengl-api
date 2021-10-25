@@ -10,3 +10,6 @@
 [submodule "shado-opengl-api/vendor/spdlog"]
 	path = shado-opengl-api/vendor/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "shado-opengl-api/vendor/shado-script"]
+	path = shado-opengl-api/vendor/shado-script
+	url = https://github.com/shadijiha/shado-script

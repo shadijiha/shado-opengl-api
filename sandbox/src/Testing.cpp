@@ -1,4 +1,6 @@
 ﻿#include "Shado.h"
+#include "ShadoScript.h"
+#include <iostream>
 
 using namespace Shado;
 

@@ -18,15 +18,18 @@ IncludeDir["GLEW"] = "shado-opengl-api/vendor/GLEW/include"
 IncludeDir["imgui"] = "shado-opengl-api/vendor/imgui"
 IncludeDir["glm"] = "shado-opengl-api/vendor/glm"
 IncludeDir["spdlog"] = "shado-opengl-api/vendor/spdlog/include"
+IncludeDir["shadoScript"] = "shado-opengl-api/vendor/shado-script/shado-script/src"
 
 include "shado-opengl-api/vendor/GLFW"
 include "shado-opengl-api/vendor/GLEW"
 include "shado-opengl-api/vendor/imgui"
+include "shado-opengl-api/vendor/shado-script/premakeProj.lua"
 
 project "shado-opengl-api"
 	location "shado-opengl-api"
 	kind "StaticLib"
 	language "C++"
+	staticruntime "off"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -45,7 +48,8 @@ project "shado-opengl-api"
 		"%{IncludeDir.GLEW}",
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
-		"%{IncludeDir.spdlog}"
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.shadoScript}"
 	}
 
 	links
@@ -53,12 +57,14 @@ project "shado-opengl-api"
 		"GLFW",
 		"GLEW",
 		"ImGui",
-		"opengl32.lib"
+		"gdi32.lib",
+		"opengl32.lib",
+		"shado-script"
 	}
 
 	filter "system:windows"
 		cppdialect "C++17"
-		staticruntime "On"
+		staticruntime "Off"
 		systemversion "latest"
 
 		defines
@@ -66,10 +72,10 @@ project "shado-opengl-api"
 			"SHADO_PLATFORM_WINDOWS"
 		}
 	
-		postbuildcommands
-		{
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" ..outputdir .. "/sandbox")
-		}
+		--postbuildcommands
+		--{
+		--	("{COPY} %{cfg.buildtarget.relpath} ../bin/" ..outputdir .. "/sandbox"),
+		--}
 	
 	filter "configurations:Debug"
 		defines "SHADO_DEBUG"
@@ -105,13 +111,14 @@ project "sandbox"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.shadoScript}",
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"
 	}
 
 	links
 	{
-		"shado-opengl-api"
+		"shado-opengl-api",
 	}
 
 	filter "system:windows"
