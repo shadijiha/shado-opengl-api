@@ -8,7 +8,6 @@
 #include <windows.h>
 #include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
-#include <clocale>
 #include <locale>
 #include <filesystem>
 
@@ -114,5 +113,10 @@ using ScopedPtr = std::unique_ptr<T>;
 
 template<typename T>
 using Ref = std::shared_ptr<T>;
+
+template<typename T, typename... Args>
+Ref<T> CreateRef(Args&&... args) {
+	return std::make_shared<T>(std::forward<Args>(args)...);
+}
 
 #endif

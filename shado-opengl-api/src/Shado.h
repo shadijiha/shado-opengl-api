@@ -12,6 +12,7 @@
 #include "Buffer.h"
 #include "Texture2D.h"
 #include "VertexArray.h"
+#include "Entity.h"
 
 #include "cameras/Camera.h"
 #include "cameras/OrthoCamera.h"

@@ -5,7 +5,7 @@
 
 namespace Shado {
 
-	inline std::string OBJECT3D_DEFAULT_SHADER_PATH = FILE_PATH + "assets\\Renderer3D.glsl";
+	inline std::string OBJECT3D_DEFAULT_SHADER_PATH = FILE_PATH + "\\assets\\Renderer3D.glsl";
 
 	class Renderer3D {
 	public:
