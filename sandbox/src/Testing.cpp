@@ -19,8 +19,7 @@ public:
 	TestLayer() :
 		Layer("layer1"),
 		camera(Application::get().getWindow().getAspectRatio()),
-		orthoCamera(Application::get().getWindow().getAspectRatio()),
-		world({ 0.0f, -1.0f })
+		orthoCamera(Application::get().getWindow().getAspectRatio())
 	{
 	}
 	
@@ -49,7 +48,7 @@ public:
 			{
 				def2.color = { (x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f };
 				def2.position = { x, y, -15 };
-				objects.push_back({ def2 , world});
+				objects.push_back(getScene()->addEntityToWorld(def2));
 			}
 		}
 
@@ -58,23 +57,21 @@ public:
 		groundDef.scale = { 10.0, 0.3 };
 		groundDef.position = { 0, -0.75, 0 };
 
-		objects.emplace_back(groundDef, world);
+		objects.push_back(getScene()->addEntityToWorld(groundDef));
 		
 	}
 
 	void onUpdate(TimeStep dt) override {
 		camera.onUpdate(dt);
 		orthoCamera.onUpdate(dt);
-		
-		world.Step(dt, 6, 2);
 	}
-
+	 
 	void onDraw() override {
 
 		Renderer2D::BeginScene(orthoCamera.getCamera());
 
-		for (const auto& object : objects) {
-			object.draw();
+		for (const auto* object : objects) {
+			object->draw();
 		}
 
 		Renderer2D::EndScene();
@@ -114,7 +111,7 @@ public:
 				def2.scale = { 0.45f, 0.45f };
 				def2.position = {mapX, -mapY, 0};
 				
-				objects.emplace_back(def2, world);
+				objects.push_back(getScene()->addEntityToWorld(def2));
 			}
 			return false;
 		});
@@ -129,8 +126,7 @@ private:
 	Ref<Texture2D> riven1 = CreateRef<Texture2D>("assets/riven3.png");
 	Ref<Texture2D> riven2 = CreateRef<Texture2D>("assets/riven2.jpg");
 
-	b2World world;
-	std::vector<Entity> objects;
+	std::vector<Entity*> objects;
 
 	OrbitCameraController camera;
 	OrthoCameraController orthoCamera;

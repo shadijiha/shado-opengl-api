@@ -1,9 +1,14 @@
 ﻿#pragma once
 #include <string>
+
+#include "box2d/b2_world.h"
 #include "Events/Event.h"
 #include "util/Util.h"
+#include "Entity.h"
 
 namespace Shado {
+	class Scene;
+	
 	class Layer {
 	public:
 		Layer(const std::string& name = "Layer");
@@ -19,9 +24,15 @@ namespace Shado {
 		std::string			getName()	const { return m_Name; }
 		unsigned long long	getId()		const { return m_Id; }
 
+		inline Scene* getScene()			{ return m_Scene; }
+
 	private:
 		std::string m_Name;
 		unsigned long long m_Id;
+
+		Scene* m_Scene;
+
+		friend class Scene;
 	};
 
 	class Scene {
@@ -39,7 +50,17 @@ namespace Shado {
 		/// </summary>
 		virtual void onUnMount()	{}
 
+		virtual void onUpdate(TimeStep dt) final;
+
 		void pushLayer(Layer* layer);
+
+		// Physics related functions
+		Entity* addEntityToWorld(Entity* entity);
+		Entity* addEntityToWorld(const EntityDefinition& def);
+		void setWorldGravity(const glm::vec2& gravity);
+
+		Entity& getEntity(const std::string& name);
+		Entity& getEntity(uint64_t id);
 		
 		const std::vector<Layer*>& getLayers()	const;
 		const std::string& getName()			const { return name; }
@@ -47,5 +68,9 @@ namespace Shado {
 	protected:
 		std::vector<Layer*> m_Layers;
 		std::string name;
+
+
+		std::vector<Entity*> entities;
+		b2World world;
 	};
 }

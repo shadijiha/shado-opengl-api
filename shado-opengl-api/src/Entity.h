@@ -42,10 +42,11 @@ namespace Shado {
 		Entity& setColor(const Color& color);
 		Entity& setType(const EntityType& type);
 
-		std::string getName() const			{ return name; }
+		uint64_t getId()			const	{ return id; }
+		std::string getName()		const	{ return name; }
 		Ref<Texture2D> getTexture() const	{ return texture; }
 		uint32_t getTillingFactor() const	{ return tilingfactor; }
-		Color	getColor() const			{ return color; }
+		Color	getColor()			const	{ return color; }
 		b2Body* getNativeBody()				{ return body; }
 		
 	private:

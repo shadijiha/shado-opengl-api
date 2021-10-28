@@ -85,6 +85,7 @@ namespace Shado {
 					layer->onUpdate(timestep);
 					layer->onDraw();
 				}
+				m_activeScene->onUpdate(timestep);
 			}
 			uiScene->onUpdate(timestep);
 			uiScene->onDraw();
