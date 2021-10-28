@@ -14,17 +14,17 @@ float map(float x, float in_min, float in_max, float out_min, float out_max)
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-class TestScene : public Scene {
+class TestLayer : public Layer {
 public:
-	TestScene() :
-		Scene("Test scene"),
+	TestLayer() :
+		Layer("layer1"),
 		camera(Application::get().getWindow().getAspectRatio()),
 		orthoCamera(Application::get().getWindow().getAspectRatio()),
 		world({ 0.0f, -1.0f })
 	{
 	}
 	
-	virtual ~TestScene() {}
+	virtual ~TestLayer() {}
 
 	void onInit() override {
 		/*EntityDefinition def;
@@ -94,6 +94,10 @@ public:
 				Application::get().getWindow().setMode(WindowMode::WINDOWED);
 			}
 
+			if (event.getKeyCode() == SHADO_KEY_B) {
+				Application::get().setActiveScene("Test scene2");
+			}
+
 			return false;
 		});
 
@@ -134,11 +138,68 @@ private:
 	int tileFactor = 1;
 };
 
+class TestScene : public Scene {
+	public:
+	TestScene() : Scene("Test scene") {
+		pushLayer(new TestLayer);
+	}
+};
+
+class TestLayer2 : public Layer {
+public:
+	TestLayer2() :
+		Layer("layer1"),
+		camera(Application::get().getWindow().getAspectRatio())
+	{
+	}
+
+	void onUpdate(TimeStep dt) override {
+		camera.onUpdate(dt);
+	}
+
+	void onDraw() override {
+		Renderer2D::BeginScene(camera.getCamera());
+		
+		Renderer2D::DrawQuad({ 0, 0, 0 }, { 1, 1 }, { 1, 1, 1, 1 });
+		Renderer2D::DrawRotatedQuad({ 0, 0, -3 }, { 2, 2 }, 45.0f, { 0.3, 0.614, 0.21, 1.0 });
+
+		Renderer2D::EndScene();
+	}
+
+	void onEvent(Event& e) override {
+		camera.onEvent(e);
+
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<KeyPressedEvent>([&](KeyPressedEvent& event) {
+
+			if (event.getKeyCode() == SHADO_KEY_B) {
+				Application::get().setActiveScene("Test scene");
+			}
+
+			return false;
+		});
+	}
+
+	void onImGuiRender() override {
+		ImGui::TextColored({ 0.5, 0.5, 0, 1 }, "LULW");
+	}
+
+	OrbitCameraController camera;
+};
+
+class TestScene2 : public Scene {
+public:
+	TestScene2() : Scene("Test scene2") {
+		pushLayer(new TestLayer2);
+	}
+};
+
 int main(int argc, const char** argv)
 {
 	auto& application = Application::get();
 	application.getWindow().resize(1920, 1080);
 	application.submit(new TestScene);
+	application.submit(new TestScene2);
 	application.run();
 
 	Application::destroy();

@@ -1,15 +1,15 @@
 ﻿#pragma once
-#include "Scene.h"
+#include "Layer.h"
 #include "Events/KeyEvent.h"
 #include <imgui.h>	// keep this here
 
 namespace Shado {
 
-	class ImguiScene : public Scene
+	class ImguiLayer : public Layer
 	{
 	public:
-		ImguiScene(bool showDemo = false);
-		~ImguiScene();
+		ImguiLayer(bool showDemo = false);
+		~ImguiLayer();
 
 		void onInit() override;
 		void onDestroy() override;

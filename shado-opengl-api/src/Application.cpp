@@ -18,7 +18,7 @@ namespace Shado {
 	Application* Application::singleton = new Application();
 
 	Application::Application(unsigned width, unsigned height, const std::string& title)
-		: window(new Window(width, height, title)), uiScene(new ImguiScene)
+		: window(new Window(width, height, title)), uiScene(new ImguiLayer)
 	{
 		Log::init();
 		Random::init();
@@ -38,8 +38,14 @@ namespace Shado {
 		for (Scene* scene : allScenes) {
 			if (scene == nullptr)
 				continue;
+			
+			for (Layer* layer : m_activeScene->getLayers()) {
+				if (layer == nullptr)
+					continue;
 
-			scene->onDestroy();
+				layer->onDestroy();
+			}
+			
 			delete scene;
 		}
 
@@ -52,11 +58,12 @@ namespace Shado {
 		if (!Renderer2D::hasInitialized()) {
 			Renderer2D::Init();
 			Renderer3D::Init();
-			submit(uiScene);
+			uiScene->onInit();
 		}
 
 		if (allScenes.size() == 0)
-			SHADO_WARN("No Scenes to draw");
+			SHADO_CORE_WARN("No layers to draw");
+
 
 		/* Loop until the user closes the window */
 		while (m_Running) {
@@ -69,21 +76,28 @@ namespace Shado {
 			Renderer2D::Clear();
 
 			// Draw scenes here
-			for (Scene* scene : allScenes) {
-				if (scene == nullptr) {
-					continue;
-				}
+			if (m_activeScene != nullptr) {
+				for (Layer* layer : m_activeScene->getLayers()) {
+					if (layer == nullptr) {
+						continue;
+					}
 
-				scene->onUpdate(timestep);
-				scene->onDraw();
+					layer->onUpdate(timestep);
+					layer->onDraw();
+				}
 			}
+			uiScene->onUpdate(timestep);
+			uiScene->onDraw();
 
 			// Render UI
 			uiScene->begin();
-			for (Scene* scene : allScenes) {
-				if (scene != nullptr)
-					scene->onImGuiRender();
+			if (m_activeScene != nullptr) {
+				for (Layer* layer : m_activeScene->getLayers()) {
+					if (layer != nullptr)
+						layer->onImGuiRender();
+				}
 			}
+			uiScene->onImGuiRender();
 			uiScene->end();
 
 			/* Swap front and back buffers */
@@ -98,38 +112,82 @@ namespace Shado {
 		if (!Renderer2D::hasInitialized()) {
 			Renderer2D::Init();
 			Renderer3D::Init();
-			submit(uiScene);
+			uiScene->onInit();
 		}
 
-		scene->onInit();
+		// Init all layers
+		for (const auto& layer : scene->getLayers()) {
+			layer->onInit();
+		}
+		
 		allScenes.push_back(scene);
 
+		// The first scene submitted should be the active one
+		if (m_activeScene == nullptr)
+			m_activeScene = scene;
+
 		// Reverse sorting
-		std::sort(allScenes.begin(), allScenes.end(), [](Scene* a, Scene* b) {
+		/*std::sort(allScenes.begin(), allScenes.end(), [](Scene* a, Scene* b) {
 			return a->getZIndex() < b->getZIndex();
-			});
+			});*/
 	}
 
 	void Application::onEvent(Event& e) {
+		if (m_activeScene == nullptr)
+			return;
+		
 		// Distaptch the event and excute the required code
-
 		// Pass Events to layer
-		for (Scene* scene : allScenes) {
-			if (scene != nullptr) {
-				scene->onEvent(e);
+		for (Layer* layer : m_activeScene->getLayers()) {
+			if (layer != nullptr) {
+				layer->onEvent(e);
 				if (e.isHandled())
 					break;
 			}
 		}
 	}
 
+	void Application::setActiveScene(Scene* scene) {
+		if (std::find(allScenes.begin(), allScenes.end(), scene) == allScenes.end()) {
+			SHADO_CORE_ERROR("Scene {0} is set as active but is not added to Application!", scene->getName());
+		}
+
+		// Unmount the current scene
+		if (m_activeScene != nullptr)
+			m_activeScene->onUnMount();
+
+		m_activeScene = scene;
+		m_activeScene->onMount();
+	}
+
+	void Application::setActiveScene(const std::string& name) {
+		Scene* ptr = nullptr;
+		for (Scene* scene : allScenes) {
+			if (scene->getName() == name) {
+				ptr = scene;
+				break;
+			}
+		}
+
+		// Scene was not found
+		if (ptr == nullptr) {
+			SHADO_CORE_ERROR("Attempted to set an invalid active scene ({0})!", name);
+			return;
+		}
+
+		setActiveScene(ptr);
+	}
+
 	void Application::destroy() {
 
 		for (Scene*& scene : singleton->allScenes) {
-			scene->onDestroy();
+			for (auto& layer : scene->getLayers()) {
+				layer->onDestroy();
+			}
 			delete scene;
 			scene = nullptr;
 		}
+		singleton->uiScene->onDestroy();
 
 		singleton->m_Running = false;
 

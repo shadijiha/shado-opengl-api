@@ -5,12 +5,12 @@
 
 namespace Shado {
 
-	ImguiScene::ImguiScene(bool showDemo)
-		: Scene("ImGui Scene"), m_ShowDemo(showDemo)
+	ImguiLayer::ImguiLayer(bool showDemo)
+		: Layer("ImGui Scene"), m_ShowDemo(showDemo)
 	{}
-	ImguiScene::~ImguiScene() {}
+	ImguiLayer::~ImguiLayer() {}
 
-	void ImguiScene::onInit() {
+	void ImguiLayer::onInit() {
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -42,26 +42,26 @@ namespace Shado {
 		io.DisplaySize = ImVec2(app.getWindow().getWidth(), app.getWindow().getHeight());
 	}
 
-	void ImguiScene::onDestroy() {
+	void ImguiLayer::onDestroy() {
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 	}
 
-	void ImguiScene::onUpdate(TimeStep dt) {}
+	void ImguiLayer::onUpdate(TimeStep dt) {}
 
-	void ImguiScene::onImGuiRender() {
+	void ImguiLayer::onImGuiRender() {
 		if (m_ShowDemo)
 			ImGui::ShowDemoWindow(&m_ShowDemo);
 	}
 
-	void ImguiScene::begin() {
+	void ImguiLayer::begin() {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 	}
 
-	void ImguiScene::end() {
+	void ImguiLayer::end() {
 		ImGuiIO& io = ImGui::GetIO();
 		Application& app = Application::get();
 		io.DisplaySize = ImVec2(app.getWindow().getWidth(), app.getWindow().getHeight());

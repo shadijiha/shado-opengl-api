@@ -23,14 +23,20 @@ namespace Shado {
 		void submit(Scene* scene);
 		void onEvent(Event& e);
 
+		void setActiveScene(Scene* scene);
+		void setActiveScene(const std::string& name);
+
 		Window& getWindow() { return *window; }
 
 	private:
 		ScopedPtr<Window> window;		// TODO: This might be a bad idea, might want to revert to std::unique_ptr
-		ImguiScene* uiScene;
+		ImguiLayer* uiScene;
 		float m_LastFrameTime = 0.0f;	// Time took to render last frame	
-		std::vector<Scene*> allScenes;
+		
 		bool m_Running = true;
+
+		std::vector<Scene*> allScenes;
+		Scene* m_activeScene = nullptr;
 
 		static Application* singleton;
 	};
