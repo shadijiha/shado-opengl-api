@@ -62,7 +62,7 @@ project "shado-opengl-api"
 		"ImGui",
 		"gdi32.lib",
 		"opengl32.lib",
-		"shado-script",
+--		"shado-script",
 		"box2d"
 	}
 
