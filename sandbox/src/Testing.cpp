@@ -2,11 +2,6 @@
 #include "ShadoScript.h"
 #include <iostream>
 
-#include "box2d/b2_body.h"
-#include "box2d/b2_fixture.h"
-#include "box2d/b2_polygon_shape.h"
-#include "box2d/b2_world.h"
-
 using namespace Shado;
 
 float map(float x, float in_min, float in_max, float out_min, float out_max)
@@ -93,6 +88,10 @@ public:
 
 			if (event.getKeyCode() == SHADO_KEY_B) {
 				Application::get().setActiveScene("Test scene2");
+			}
+
+			if (event.getKeyCode() == SHADO_KEY_F) {
+				Application::get().getWindow().setMode(WindowMode::FULLSCREEN);
 			}
 
 			return false;
