@@ -18,13 +18,13 @@ IncludeDir["GLEW"] = "shado-opengl-api/vendor/GLEW/include"
 IncludeDir["imgui"] = "shado-opengl-api/vendor/imgui"
 IncludeDir["glm"] = "shado-opengl-api/vendor/glm"
 IncludeDir["spdlog"] = "shado-opengl-api/vendor/spdlog/include"
-IncludeDir["shadoScript"] = "shado-opengl-api/vendor/shado-script/shado-script/src"
+--IncludeDir["shadoScript"] = "shado-opengl-api/vendor/shado-script/shado-script/src"
 IncludeDir["box2d"] = "shado-opengl-api/vendor/box2d/include"
 
 include "shado-opengl-api/vendor/GLFW"
 include "shado-opengl-api/vendor/GLEW"
 include "shado-opengl-api/vendor/imgui"
-include "shado-opengl-api/vendor/shado-script/premakeProj.lua"
+--include "shado-opengl-api/vendor/shado-script/premakeProj.lua"
 include "shado-opengl-api/vendor/box2d"
 
 project "shado-opengl-api"
@@ -51,7 +51,7 @@ project "shado-opengl-api"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.shadoScript}",
+--		"%{IncludeDir.shadoScript}",
 		"%{IncludeDir.box2d}"
 	}
 
@@ -115,7 +115,7 @@ project "sandbox"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.shadoScript}",
+--		"%{IncludeDir.shadoScript}",
 		"%{IncludeDir.box2d}",
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"
