@@ -20,6 +20,7 @@ namespace Shado {
         void onCreate();
         void onUpdate(TimeStep dt);
         void onDestoy();
+        void onEvent(Event& event);
     	
     private:
         void checkLua(int r);

@@ -52,6 +52,7 @@ namespace Shado {
 		float m_XOffset, m_YOffset;
 	};
 
+	// This class is abstract
 	class MouseButtonEvent : public Event
 	{
 	public:

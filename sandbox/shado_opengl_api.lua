@@ -3,6 +3,9 @@
 -- 
 -- @author Shadi Jiha
 -- @Date 24 Oct. 2021
+require "input"
+require "event"
+require "window"
 
 Entity = {entity = nil}
 
@@ -26,7 +29,7 @@ function Entity:setTillingFactor(factor)
 end
 
 function Entity:setColor(r, g, b, a)
-    _SetEntityTillingFactor(self.entity, r, g, b, a)
+    _SetEntityColor(self.entity, r, g, b, a)
 end
 
 function Entity:setPosition(x, y)

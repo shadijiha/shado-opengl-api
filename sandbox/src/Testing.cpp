@@ -25,7 +25,7 @@ public:
 	}
 
 	void onInit() override {
-		script = new LuaScript(*getScene(), "test.lua");
+		script = new LuaScript(*getScene(), luaScriptFile);
 		/*EntityDefinition def;
 		def.type = EntityType::DYNAMIC;
 		def.texture = riven2;
@@ -52,13 +52,6 @@ public:
 				objects.push_back(getScene()->addEntityToWorld(def2));
 			}
 		}
-
-
-		EntityDefinition groundDef;
-		groundDef.scale = { 10.0, 0.3 };
-		groundDef.position = { 0, -0.75, 0 };
-
-		objects.push_back(getScene()->addEntityToWorld(groundDef));
 
 	}
 
@@ -94,44 +87,27 @@ public:
 
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>([&](KeyPressedEvent& event) {
-
-			if (event.getKeyCode() == SHADO_KEY_ESCAPE) {
-				Application::get().getWindow().setMode(WindowMode::WINDOWED);
-			}
-
 			if (event.getKeyCode() == SHADO_KEY_B) {
 				Application::get().setActiveScene("Test scene2");
 			}
 
-			if (event.getKeyCode() == SHADO_KEY_F) {
-				Application::get().getWindow().setMode(WindowMode::FULLSCREEN);
-			}
-
 			return false;
-			});
+		});
 
-
-		dispatcher.dispatch<MouseButtonPressedEvent>([&](MouseButtonPressedEvent& event) {
-			Window& win = Application::get().getWindow();
-
-			if (event.getMouseButton() == SHADO_MOUSE_BUTTON_LEFT) {
-				float mapX = map(Input::getMouseX(), 0, win.getWidth(), -10, 10);
-				float mapY = map(Input::getMouseY(), 0, win.getHeight(), -10, 10);
-
-				EntityDefinition def2;
-				def2.type = EntityType::DYNAMIC;
-				def2.scale = { 0.45f, 0.45f };
-				def2.position = { mapX, -mapY, 0 };
-
-				objects.push_back(getScene()->addEntityToWorld(def2));
-			}
-			return false;
-			});
+		script->onEvent(e);
 	}
 
 	void onImGuiRender() override {
 		ImGui::SliderFloat4("Sphere Colour", (float*)&color, 0, 1.0f);
 		ImGui::SliderInt("Tiling factor", &tileFactor, 1, 100);
+
+		if (ImGui::Button("Reload script")) {
+			script->onDestoy();
+			delete script;
+
+			script = new LuaScript(*getScene(), luaScriptFile);
+			script->onCreate();
+		}
 	}
 
 private:
@@ -145,6 +121,7 @@ private:
 	Color color = { 1, 1, 1 };
 	int tileFactor = 1;
 
+	std::string luaScriptFile = "test.lua";
 	LuaScript* script;
 
 	friend class LuaScript;	// This is very temporary
