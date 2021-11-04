@@ -2,19 +2,30 @@
 #include <fstream>
 #include "Debug.h"
 #include "Entity.h"
+#include "box2d/b2_fixture.h"
 
 namespace Shado {
+
+	static std::string toLower(std::string s) {
+		std::transform(s.begin(), s.end(), s.begin(),
+			[](unsigned char c) { return std::tolower(c); });
+		return s;
+	}
+	
     // Entity Wrapper functions
 	int _CreateEntity(lua_State* L) {
         
-        EntityDefinition def;
-		def.type = EntityType::DYNAMIC;
-
-		// Check if lua has provided a b2World for entity
-		if (lua_gettop(L) != 1) return -1;
+		// Check if lua has provided a b2World for entity and a width and height
+		if (lua_gettop(L) != 3) return -1;
 
 		// Get the world
 		Scene* scene = (Scene*)lua_touserdata(L, 1);
+		float width = lua_tonumber(L, 2);
+		float height = lua_tonumber(L, 3);
+
+		EntityDefinition def;
+		def.type = EntityType::DYNAMIC;
+		def.scale = { width, height };
 		
 		Entity* entity = new Entity(def, scene->getWorld());
 		scene->addEntityToWorld(entity);
@@ -35,6 +46,17 @@ namespace Shado {
 		return 1;
 	}
 
+	int _SetTillingFactor(lua_State* L) {
+		// Check if lua has provided an Entity Ptr and a factor
+		if (lua_gettop(L) != 2) return -1;
+
+		// Get entity
+		Entity* e = (Entity*)lua_touserdata(L, 1);
+		int factor = (int)lua_tonumber(L, 2);
+		e->setTillingFactor(factor);
+		return 1;
+	}
+	
 	int _SetColor(lua_State* L) {
 		// Check if lua has provided an Entity Ptr and 4 arguments for colour
 		if (lua_gettop(L) != 5) return -1;
@@ -51,7 +73,7 @@ namespace Shado {
 
 	int _SetPosition(lua_State* L) {
 		// Check if lua has provided an Entity Ptr and 2 arguments for position
-		if (lua_gettop(L) != 5) return -1;
+		if (lua_gettop(L) != 3) return -1;
 
 		Entity* e = (Entity*)lua_touserdata(L, 1);
 		float x = lua_tonumber(L, 2);
@@ -61,6 +83,25 @@ namespace Shado {
 
 		return 1;
 	}
+	
+	int _SetType(lua_State* L) {
+		// Check if lua has provided an Entity Ptr and 1 arguments for type
+		if (lua_gettop(L) != 2) return -1;
+
+		Entity* e = (Entity*)lua_touserdata(L, 1);
+		std::string type = lua_tostring(L, 2);
+
+		using namespace std::string_literals;
+		if (toLower(type) == "dynamic"s)
+			e->getNativeBody()->SetType(b2_dynamicBody);
+		else if (toLower(type) == "static"s)
+			e->getNativeBody()->SetType(b2_staticBody);
+		else if (toLower(type) == "kinematic"s)
+			e->getNativeBody()->SetType(b2_kinematicBody);
+
+		return 1;	
+	}
+	
 	
 	// ===================== LUA SCRIPT STUFF ======================
 
@@ -77,8 +118,10 @@ namespace Shado {
 		// Register all native functions
 		lua_register(L, "_CreateEntity", _CreateEntity);
 		lua_register(L, "_SetEntityTexture", _SetEntityTexture);
-		lua_register(L, "_SetColor", _SetColor);
-		lua_register(L, "_SetPosition", _SetPosition);
+		lua_register(L, "_SetEntityTillingFactor", _SetTillingFactor);
+		lua_register(L, "_SetEntityColor", _SetColor);
+		lua_register(L, "_SetEntityPosition", _SetPosition);
+		lua_register(L, "_SetEntityType", _SetType);
 		
 		int code = luaL_dofile(L, filename.c_str());
 		checkLua(code);
@@ -106,6 +149,11 @@ namespace Shado {
 	}
 
 	void LuaScript::onDestoy() {
+		lua_getglobal(L, "OnDestroy");
+		if (lua_isfunction(L, -1)) {
+			int code = lua_pcall(L, 0, 1, 0);
+			checkLua(code);
+		}
 	}
 
 	void LuaScript::checkLua(int r) {

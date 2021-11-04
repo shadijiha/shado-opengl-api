@@ -39,7 +39,7 @@ namespace Shado {
 		float angle = body->GetAngle();
 		
 		if (texture != nullptr) {
-			Renderer2D::DrawRotatedQuad({ position.x, position.y, z }, scale, angle, texture);
+			Renderer2D::DrawRotatedQuad({ position.x, position.y, z }, scale, angle, texture, tilingfactor);
 		} else
 		{
 			Renderer2D::DrawRotatedQuad({ position.x, position.y, z }, scale, angle, color);

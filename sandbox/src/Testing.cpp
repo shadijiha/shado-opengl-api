@@ -65,6 +65,7 @@ public:
 	void onUpdate(TimeStep dt) override {
 		camera.onUpdate(dt);
 		orthoCamera.onUpdate(dt);
+		script->onUpdate(dt);
 	}
 
 	void onDraw() override {
@@ -82,7 +83,9 @@ public:
 		Renderer2D::EndScene();
 	}
 
-	void onDestroy() override {}
+	void onDestroy() override {
+		script->onDestoy();
+	}
 
 	void onEvent(Event& e) override {
 

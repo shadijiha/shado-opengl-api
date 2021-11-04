@@ -3,17 +3,22 @@
 -- 
 -- @author Shadi Jiha
 -- @Date 24 Oct. 2021
+require "shado_opengl_api"
+
+local entities = {};
 
 function OnCreate()
-    entity = _CreateEntity(_scene);
-    --_SetEntityTexture(entity, "assets/riven3.png");
+    for i = 0, 9, 3 do
+        local entity = Entity:new({width = 2, height = 2});
+        entity:setTexture("assets/riven.png");
+        entity:setPosition(i, 7.0);
 
-    _SetColor(entity, 1.0, 0, 1, 1.0);
-    _SetPosition(entity, 10.0, 1.5);
+        table.insert(entities, entity);
+    end
 end
 
 function OnUpdate(dt)
-    
+    --print(entities["1"]);
 end
 
 function OnDestroy()
