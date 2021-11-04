@@ -1,6 +1,7 @@
 ﻿#include "Shado.h"
-#include "ShadoScript.h"
 #include <iostream>
+
+#include "script/LuaScript.h"
 
 using namespace Shado;
 
@@ -17,7 +18,7 @@ public:
 		orthoCamera(Application::get().getWindow().getAspectRatio())
 	{
 	}
-	
+
 	virtual ~TestLayer() {}
 
 	void onInit() override {
@@ -36,7 +37,7 @@ public:
 		EntityDefinition def2;
 		def2.type = EntityType::DYNAMIC;
 		def2.scale = { 0.45f, 0.45f };
-		
+
 		for (float y = -5.0f; y < 5.0f; y += 0.5f)
 		{
 			for (float x = -5.0f; x < 5.0f; x += 0.5f)
@@ -53,14 +54,14 @@ public:
 		groundDef.position = { 0, -0.75, 0 };
 
 		objects.push_back(getScene()->addEntityToWorld(groundDef));
-		
+
 	}
 
 	void onUpdate(TimeStep dt) override {
 		camera.onUpdate(dt);
 		orthoCamera.onUpdate(dt);
 	}
-	 
+
 	void onDraw() override {
 
 		Renderer2D::BeginScene(orthoCamera.getCamera());
@@ -95,25 +96,25 @@ public:
 			}
 
 			return false;
-		});
+			});
 
 
 		dispatcher.dispatch<MouseButtonPressedEvent>([&](MouseButtonPressedEvent& event) {
 			Window& win = Application::get().getWindow();
-			
+
 			if (event.getMouseButton() == SHADO_MOUSE_BUTTON_LEFT) {
 				float mapX = map(Input::getMouseX(), 0, win.getWidth(), -10, 10);
 				float mapY = map(Input::getMouseY(), 0, win.getHeight(), -10, 10);
-				
+
 				EntityDefinition def2;
 				def2.type = EntityType::DYNAMIC;
 				def2.scale = { 0.45f, 0.45f };
-				def2.position = {mapX, -mapY, 0};
-				
+				def2.position = { mapX, -mapY, 0 };
+
 				objects.push_back(getScene()->addEntityToWorld(def2));
 			}
 			return false;
-		});
+			});
 	}
 
 	void onImGuiRender() override {
@@ -134,7 +135,7 @@ private:
 };
 
 class TestScene : public Scene {
-	public:
+public:
 	TestScene() : Scene("Test scene") {
 		pushLayer(new TestLayer);
 	}
@@ -154,7 +155,7 @@ public:
 
 	void onDraw() override {
 		Renderer2D::BeginScene(camera.getCamera());
-		
+
 		Renderer2D::DrawQuad({ 0, 0, 0 }, { 1, 1 }, { 1, 1, 1, 1 });
 		Renderer2D::DrawRotatedQuad({ 0, 0, -3 }, { 2, 2 }, 45.0f, { 0.3, 0.614, 0.21, 1.0 });
 
@@ -172,7 +173,7 @@ public:
 			}
 
 			return false;
-		});
+			});
 	}
 
 	void onImGuiRender() override {
@@ -191,11 +192,14 @@ public:
 
 int main(int argc, const char** argv)
 {
-	auto& application = Application::get();
+	/*auto& application = Application::get();
 	application.getWindow().resize(1920, 1080);
 	application.submit(new TestScene);
 	application.submit(new TestScene2);
 	application.run();
 
-	Application::destroy();
+	Application::destroy();*/
+
+	LuaScript script = LuaScript::fromFile("test.lua");
+	script.run();
 }
