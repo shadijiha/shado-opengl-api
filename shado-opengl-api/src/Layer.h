@@ -64,6 +64,8 @@ namespace Shado {
 		
 		const std::vector<Layer*>& getLayers()	const;
 		const std::string& getName()			const { return name; }
+		b2World& getWorld()								{ return world; }
+		const std::vector<Entity*>& getAllEntities()	const { return entities; }	// TODO: remove
 		
 	protected:
 		std::vector<Layer*> m_Layers;

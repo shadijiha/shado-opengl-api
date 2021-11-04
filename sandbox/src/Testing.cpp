@@ -17,11 +17,15 @@ public:
 		camera(Application::get().getWindow().getAspectRatio()),
 		orthoCamera(Application::get().getWindow().getAspectRatio())
 	{
+		
 	}
 
-	virtual ~TestLayer() {}
+	virtual ~TestLayer() {
+		delete script;
+	}
 
 	void onInit() override {
+		script = new LuaScript(*getScene(), "test.lua");
 		/*EntityDefinition def;
 		def.type = EntityType::DYNAMIC;
 		def.texture = riven2;
@@ -33,6 +37,7 @@ public:
 				objects.push_back({def, world});
 			}
 		*/
+		script->onCreate();
 
 		EntityDefinition def2;
 		def2.type = EntityType::DYNAMIC;
@@ -66,8 +71,12 @@ public:
 
 		Renderer2D::BeginScene(orthoCamera.getCamera());
 
-		for (const auto* object : objects) {
+		/*for (const auto* object : objects) {
 			object->draw();
+		}*/
+
+		for (const Entity* entity : getScene()->getAllEntities()) {
+			entity->draw();
 		}
 
 		Renderer2D::EndScene();
@@ -132,6 +141,10 @@ private:
 	OrthoCameraController orthoCamera;
 	Color color = { 1, 1, 1 };
 	int tileFactor = 1;
+
+	LuaScript* script;
+
+	friend class LuaScript;	// This is very temporary
 };
 
 class TestScene : public Scene {
@@ -192,14 +205,11 @@ public:
 
 int main(int argc, const char** argv)
 {
-	/*auto& application = Application::get();
+	auto& application = Application::get();
 	application.getWindow().resize(1920, 1080);
 	application.submit(new TestScene);
 	application.submit(new TestScene2);
 	application.run();
 
-	Application::destroy();*/
-
-	LuaScript script = LuaScript::fromFile("test.lua");
-	script.run();
+	Application::destroy();
 }

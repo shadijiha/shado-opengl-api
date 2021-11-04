@@ -1,14 +1,21 @@
---- Testing C++ wrapper
+-- This is a sample file for a scriptable object
+-- Only use void function calls 
+-- 
+-- @author Shadi Jiha
+-- @Date 24 Oct. 2021
 
-a = Test();
+function OnCreate()
+    entity = _CreateEntity(_scene);
+    --_SetEntityTexture(entity, "assets/riven3.png");
 
-print("Pos: " .. a:position());
+    _SetColor(entity, 1.0, 0, 1, 1.0);
+    _SetPosition(entity, 10.0, 1.5);
+end
 
-a:moveTo(13);
+function OnUpdate(dt)
+    
+end
 
-
-print("Pos: " .. a:position());
-
-a:moveBy(4);
-
-print("Pos: " .. a:position());
+function OnDestroy()
+    
+end
