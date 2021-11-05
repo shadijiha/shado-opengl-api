@@ -9,7 +9,7 @@
 namespace Shado {
 	class Scene;
 	
-	class Layer {
+	/*class Layer {
 	public:
 		Layer(const std::string& name = "Layer");
 		virtual ~Layer() = default;
@@ -33,7 +33,7 @@ namespace Shado {
 		Scene* m_Scene;
 
 		friend class Scene;
-	};
+	};*/
 
 	class Scene {
 	public:
@@ -50,9 +50,17 @@ namespace Shado {
 		/// </summary>
 		virtual void onUnMount()	{}
 
-		virtual void onUpdate(TimeStep dt) final;
+		virtual void updatePhysics(TimeStep dt) final;
 
-		void pushLayer(Layer* layer);
+		
+		virtual void onInit()				{}
+		virtual void onUpdate(TimeStep dt)	{}
+		virtual void onDraw()				{}
+		virtual void onImGuiRender()		{}
+		virtual void onDestroy()			{}
+		virtual void onEvent(Event& event)	{}
+
+		//void pushLayer(Layer* layer);
 
 		// Physics related functions
 		Entity* addEntityToWorld(Entity* entity);
@@ -62,13 +70,13 @@ namespace Shado {
 		Entity& getEntity(const std::string& name);
 		Entity& getEntity(uint64_t id);
 		
-		const std::vector<Layer*>& getLayers()	const;
+		// const std::vector<Layer*>& getLayers()	const;
 		const std::string& getName()			const { return name; }
 		b2World& getWorld()								{ return world; }
 		const std::vector<Entity*>& getAllEntities()	const { return entities; }	// TODO: remove
 		
 	protected:
-		std::vector<Layer*> m_Layers;
+		// std::vector<Layer*> m_Layers;
 		std::string name;
 
 

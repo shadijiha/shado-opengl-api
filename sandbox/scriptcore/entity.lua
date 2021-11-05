@@ -1,11 +1,6 @@
--- This file defines the standard Shado OpenGL api lua classes
--- Only use void function calls 
--- 
--- @author Shadi Jiha
--- @Date 24 Oct. 2021
-require "input"
-require "event"
-require "window"
+---
+--- This file has definitions for a Shado OpenGL API Lua script
+---
 
 Entity = {entity = nil}
 

@@ -39,12 +39,14 @@ namespace Shado {
 			if (scene == nullptr)
 				continue;
 			
-			for (Layer* layer : m_activeScene->getLayers()) {
+			/*for (Layer* layer : m_activeScene->getLayers()) {
 				if (layer == nullptr)
 					continue;
 
 				layer->onDestroy();
-			}
+			}*/
+
+			scene->onDestroy();
 			
 			delete scene;
 		}
@@ -62,7 +64,7 @@ namespace Shado {
 		}
 
 		if (allScenes.size() == 0)
-			SHADO_CORE_WARN("No layers to draw");
+			SHADO_CORE_WARN("No Scenes to draw");
 
 
 		/* Loop until the user closes the window */
@@ -77,15 +79,18 @@ namespace Shado {
 
 			// Draw scenes here
 			if (m_activeScene != nullptr) {
-				for (Layer* layer : m_activeScene->getLayers()) {
+				/*for (Layer* layer : m_activeScene->getLayers()) {
 					if (layer == nullptr) {
 						continue;
 					}
 
 					layer->onUpdate(timestep);
 					layer->onDraw();
-				}
+				}*/
+
 				m_activeScene->onUpdate(timestep);
+				m_activeScene->updatePhysics(timestep);
+				m_activeScene->onDraw();				
 			}
 			uiScene->onUpdate(timestep);
 			uiScene->onDraw();
@@ -93,10 +98,11 @@ namespace Shado {
 			// Render UI
 			uiScene->begin();
 			if (m_activeScene != nullptr) {
-				for (Layer* layer : m_activeScene->getLayers()) {
+				/*for (Layer* layer : m_activeScene->getLayers()) {
 					if (layer != nullptr)
 						layer->onImGuiRender();
-				}
+				}*/
+				m_activeScene->onImGuiRender();
 			}
 			uiScene->onImGuiRender();
 			uiScene->end();
@@ -117,9 +123,10 @@ namespace Shado {
 		}
 
 		// Init all layers
-		for (const auto& layer : scene->getLayers()) {
+		/*for (const auto& layer : scene->getLayers()) {
 			layer->onInit();
-		}
+		}*/
+		scene->onInit();
 		
 		allScenes.push_back(scene);
 
@@ -139,13 +146,14 @@ namespace Shado {
 		
 		// Distaptch the event and excute the required code
 		// Pass Events to layer
-		for (Layer* layer : m_activeScene->getLayers()) {
+		/*for (Layer* layer : m_activeScene->getLayers()) {
 			if (layer != nullptr) {
 				layer->onEvent(e);
 				if (e.isHandled())
 					break;
 			}
-		}
+		}*/
+		m_activeScene->onEvent(e);
 	}
 
 	void Application::setActiveScene(Scene* scene) {
@@ -182,9 +190,10 @@ namespace Shado {
 	void Application::destroy() {
 
 		for (Scene*& scene : singleton->allScenes) {
-			for (auto& layer : scene->getLayers()) {
+			/*for (auto& layer : scene->getLayers()) {
 				layer->onDestroy();
-			}
+			}*/
+			scene->onDestroy();
 			delete scene;
 			scene = nullptr;
 		}

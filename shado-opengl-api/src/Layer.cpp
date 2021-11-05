@@ -4,10 +4,10 @@
 
 namespace Shado {
 
-	Layer::Layer(const std::string& name)
+	/*Layer::Layer(const std::string& name)
 		: m_Name(name), m_Id(rand() % UINT64_MAX)
 	{
-	}
+	}*/
 
 	////////////////// SCENE //////////////////
 	Scene::Scene(const std::string& name)
@@ -16,19 +16,19 @@ namespace Shado {
 	}
 
 	Scene::~Scene() {
-		for (Layer* layer : m_Layers) {
+		/*for (Layer* layer : m_Layers) {
 			delete layer;
-		}
+		}*/
 	}
 
-	void Scene::onUpdate(TimeStep dt) {
+	void Scene::updatePhysics(TimeStep dt) {
 		world.Step(dt, 6, 2);
 	}
 
-	void Scene::pushLayer(Layer* layer) {
+	/*void Scene::pushLayer(Layer* layer) {
 		layer->m_Scene = this;
 		m_Layers.push_back(layer);
-	}
+	}*/
 
 	Entity* Scene::addEntityToWorld(Entity* entity) {
 		entities.push_back(entity);
@@ -71,8 +71,8 @@ namespace Shado {
 		SHADO_CORE_ASSERT(false, "Invalid entity ID");
 	}
 
-	const std::vector<Layer*>& Scene::getLayers() const {
+	/*const std::vector<Layer*>& Scene::getLayers() const {
 		return m_Layers;
-	}
+	}*/
 
 }

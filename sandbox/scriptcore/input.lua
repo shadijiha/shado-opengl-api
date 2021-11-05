@@ -1,14 +1,16 @@
 --- This file contains all the input polling code
 
-function IsKeyDown(keycode)
+Input = {}
+
+Input.isKeyDown = function (keycode)
     return _IsKeyDown(keycode)
 end
 
-function GetMouseX()
+Input.getMouseX = function ()
     return _GetMouseX();
 end
 
-function GetMouseY()
+Input.getMouseY = function ()
     return _GetMouseY();
 end
 

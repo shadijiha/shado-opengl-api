@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <lua.h>
 #include <string>
 #include <vector>
 #include "Renderer2D.h"
@@ -26,7 +27,9 @@ namespace Shado {
 		void setActiveScene(Scene* scene);
 		void setActiveScene(const std::string& name);
 
-		Window& getWindow() { return *window; }
+		Window& getWindow()								{ return *window; }
+		const std::vector<Scene*>& getScenes()	const	{ return allScenes; }
+		const Scene& getActiveScene()			const	{ return *m_activeScene; }
 
 	private:
 		ScopedPtr<Window> window;		// TODO: This might be a bad idea, might want to revert to std::unique_ptr

@@ -27,6 +27,7 @@ namespace Shado {
     	
         lua_State* L;
         std::string filename;
+        bool hasError = false;
     };    
 }
 

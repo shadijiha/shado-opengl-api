@@ -6,7 +6,7 @@
 namespace Shado {
 
 	ImguiLayer::ImguiLayer(bool showDemo)
-		: Layer("ImGui Scene"), m_ShowDemo(showDemo)
+		: Scene("ImGui Scene"), m_ShowDemo(showDemo)
 	{}
 	ImguiLayer::~ImguiLayer() {}
 

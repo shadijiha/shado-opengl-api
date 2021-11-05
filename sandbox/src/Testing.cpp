@@ -10,22 +10,22 @@ float map(float x, float in_min, float in_max, float out_min, float out_max)
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-class TestLayer : public Layer {
+class TestScene : public Scene {
 public:
-	TestLayer() :
-		Layer("layer1"),
+	TestScene() :
+		Scene("Test scene"),
 		camera(Application::get().getWindow().getAspectRatio()),
 		orthoCamera(Application::get().getWindow().getAspectRatio())
 	{
 		
 	}
 
-	virtual ~TestLayer() {
+	virtual ~TestScene() {
 		delete script;
 	}
 
 	void onInit() override {
-		script = new LuaScript(*getScene(), luaScriptFile);
+		script = new LuaScript(*this, luaScriptFile);
 		/*EntityDefinition def;
 		def.type = EntityType::DYNAMIC;
 		def.texture = riven2;
@@ -49,7 +49,7 @@ public:
 			{
 				def2.color = { (x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f };
 				def2.position = { x, y, -15 };
-				objects.push_back(getScene()->addEntityToWorld(def2));
+				objects.push_back(this->addEntityToWorld(def2));
 			}
 		}
 
@@ -69,7 +69,7 @@ public:
 			object->draw();
 		}*/
 
-		for (const Entity* entity : getScene()->getAllEntities()) {
+		for (const Entity* entity : getAllEntities()) {
 			entity->draw();
 		}
 
@@ -84,16 +84,6 @@ public:
 
 		camera.onEvent(e);
 		orthoCamera.onEvent(e);
-
-		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<KeyPressedEvent>([&](KeyPressedEvent& event) {
-			if (event.getKeyCode() == SHADO_KEY_B) {
-				Application::get().setActiveScene("Test scene2");
-			}
-
-			return false;
-		});
-
 		script->onEvent(e);
 	}
 
@@ -105,7 +95,7 @@ public:
 			script->onDestoy();
 			delete script;
 
-			script = new LuaScript(*getScene(), luaScriptFile);
+			script = new LuaScript(*this, luaScriptFile);
 			script->onCreate();
 		}
 	}
@@ -127,17 +117,10 @@ private:
 	friend class LuaScript;	// This is very temporary
 };
 
-class TestScene : public Scene {
+class TestScene2 : public Scene {
 public:
-	TestScene() : Scene("Test scene") {
-		pushLayer(new TestLayer);
-	}
-};
-
-class TestLayer2 : public Layer {
-public:
-	TestLayer2() :
-		Layer("layer1"),
+	TestScene2() :
+		Scene("Test scene2"),
 		camera(Application::get().getWindow().getAspectRatio())
 	{
 	}
@@ -176,12 +159,6 @@ public:
 	OrbitCameraController camera;
 };
 
-class TestScene2 : public Scene {
-public:
-	TestScene2() : Scene("Test scene2") {
-		pushLayer(new TestLayer2);
-	}
-};
 
 int main(int argc, const char** argv)
 {

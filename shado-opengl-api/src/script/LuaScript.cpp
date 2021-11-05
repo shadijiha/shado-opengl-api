@@ -174,6 +174,52 @@ namespace Shado {
 		Application::get().getWindow().setResizable(mode);
 		return 1;
 	}
+
+	int _SetClearColor(lua_State* L) {
+		// Check if lua has provided a r, g, b and a
+		if (lua_gettop(L) != 4) return -1;
+
+		float r = lua_tonumber(L, 1);
+		float g = lua_tonumber(L, 2);
+		float b = lua_tonumber(L, 3);
+		float a = lua_tonumber(L, 4);
+
+		Renderer2D::SetClearColor({ r, g, b, a });
+		
+	}
+
+	int _GetSceneByName(lua_State* L) {
+		// Check if lua has provided a scene name
+		if (lua_gettop(L) != 1) return -1;
+
+		std::string name = lua_tostring(L, 1);
+		auto& app = Application::get();
+
+		for (Scene* element : app.getScenes()) {
+			if (element->getName() == name) {
+				lua_pushlightuserdata(L, element);
+				break;
+			}
+		}
+
+		return 1;
+	}
+
+	int _GetActiveScene(lua_State* L) {
+		lua_pushlightuserdata(L, (void*)&Application::get().getActiveScene());
+		return 1;
+	}
+
+	int _SetActiveScene(lua_State* L) {
+		// Check if lua has provided a scene ptr
+		if (lua_gettop(L) != 1) return -1;
+
+		Scene* scene = (Scene*)lua_touserdata(L, 1);
+		Application::get().setActiveScene(scene);
+		
+		return 1;
+	}
+
 	
 	// ===================== LUA SCRIPT STUFF ======================
 
@@ -205,9 +251,17 @@ namespace Shado {
 		lua_register(L, "_SetWindowMode", _SetWindowMode);
 		lua_register(L, "_SetWindowOpacity", _SetWindowOpacity);
 		lua_register(L, "_SetResizable", _SetResizable);
+
+		lua_register(L, "_SetClearColor", _SetClearColor);
+		lua_register(L, "_GetSceneByName", _GetSceneByName);
+		lua_register(L, "_GetActiveScene", _GetActiveScene);
+		lua_register(L, "_SetActiveScene", _SetActiveScene);
+		
 		
 		int code = luaL_dofile(L, filename.c_str());
 		checkLua(code);
+		if (code != LUA_OK)
+			hasError = true;
     }
 
     LuaScript::~LuaScript() {
@@ -215,6 +269,9 @@ namespace Shado {
     }
 
 	void LuaScript::onCreate() {
+		if (hasError)
+			return;
+		
 		lua_getglobal(L, "OnCreate");
 		if (lua_isfunction(L, -1)) {
 			int code = lua_pcall(L, 0, 1, 0);
@@ -223,6 +280,9 @@ namespace Shado {
 	}
 
 	void LuaScript::onUpdate(TimeStep dt) {
+		if (hasError)
+			return;
+		
 		lua_getglobal(L, "OnUpdate");
 		if (lua_isfunction(L, -1)) {
 			lua_pushnumber(L, (float)dt);
@@ -232,6 +292,9 @@ namespace Shado {
 	}
 
 	void LuaScript::onDestoy() {
+		if (hasError)
+			return;
+		
 		lua_getglobal(L, "OnDestroy");
 		if (lua_isfunction(L, -1)) {
 			int code = lua_pcall(L, 0, 1, 0);
@@ -240,6 +303,9 @@ namespace Shado {
 	}
 
 	void LuaScript::onEvent(Event& event) {
+		if (hasError)
+			return;
+		
 		lua_getglobal(L, "OnEvent");
 		if (lua_isfunction(L, -1)) {
 
@@ -255,8 +321,7 @@ namespace Shado {
 				lua_pushnumber(L, kv.second);
 				lua_settable(L, -3);
 			}
-			
-			
+						
 			int code = lua_pcall(L, 1, 1, 0);
 			checkLua(code);
 		}

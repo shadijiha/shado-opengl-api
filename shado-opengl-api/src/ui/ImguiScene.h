@@ -5,7 +5,7 @@
 
 namespace Shado {
 
-	class ImguiLayer : public Layer
+	class ImguiLayer : public Scene
 	{
 	public:
 		ImguiLayer(bool showDemo = false);
