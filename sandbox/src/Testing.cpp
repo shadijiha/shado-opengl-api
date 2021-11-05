@@ -98,6 +98,14 @@ public:
 			script = new LuaScript(*this, luaScriptFile);
 			script->onCreate();
 		}
+
+		if (ImGui::Button("Clear entities")) {
+			for (Entity* e : entities) {
+				e->destroy();
+				delete e;
+			}
+			entities.clear();
+		}
 	}
 
 private:
@@ -113,8 +121,6 @@ private:
 
 	std::string luaScriptFile = "test.lua";
 	LuaScript* script;
-
-	friend class LuaScript;	// This is very temporary
 };
 
 class TestScene2 : public Scene {

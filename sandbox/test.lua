@@ -11,6 +11,8 @@ local function map(x, in_min, in_max, out_min, out_max)
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 end
 
+local entities = {}
+
 function OnCreate()
     Window.setTitle("My title")
     -- Define ground
@@ -18,17 +20,24 @@ function OnCreate()
     ground:setType("static");
     ground:setPosition(0, -0.75);
 
-    for i = 0, 9, 3 do
+--    for i = 0, 1, 1 do
         local entity = Entity:new({width = 2, height = 2});
         entity:setTexture("assets/riven.png");
         entity:setPosition(i, 7.0);
-    end
+
+        entities[1] = entity;
+--    end
 end
 
 function OnUpdate(dt)
+
 end
 
-function OnDestroy()   
+function OnDestroy() 
+    print(#entities);
+    for index, value in ipairs(entities) do
+        value:destroy();
+    end    
 end
 
 function OnEvent(e)

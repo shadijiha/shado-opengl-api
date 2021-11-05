@@ -34,9 +34,8 @@ namespace Shado {
 		def.type = EntityType::DYNAMIC;
 		def.scale = { width, height };
 		
-		Entity* entity = new Entity(def, scene->getWorld());
-		scene->addEntityToWorld(entity);
-		lua_pushlightuserdata(L, entity);
+		Entity* e = scene->addEntityToWorld(def);
+		lua_pushlightuserdata(L, e);
 
 		return 1;	
 	}
@@ -195,13 +194,22 @@ namespace Shado {
 		std::string name = lua_tostring(L, 1);
 		auto& app = Application::get();
 
+		Scene* found = nullptr;
 		for (Scene* element : app.getScenes()) {
 			if (element->getName() == name) {
-				lua_pushlightuserdata(L, element);
+				found = element;
 				break;
 			}
 		}
 
+
+		if (found != nullptr)
+			lua_pushlightuserdata(L, found);
+		else
+		{
+			lua_pushnil(L);
+		}
+			
 		return 1;
 	}
 
@@ -220,6 +228,18 @@ namespace Shado {
 		return 1;
 	}
 
+	int _DestroyEntity(lua_State* L) {
+		// Check if lua has provided a entity ptr and scene ptr
+		if (lua_gettop(L) != 2) return -1;
+
+		Entity* entity = (Entity*)lua_touserdata(L, 1);
+		Scene* scene = (Scene*)lua_touserdata(L, 2);
+
+		scene->destroyEntity(entity);
+		lua_pushboolean(L, true);
+		
+		return 1;
+	}
 	
 	// ===================== LUA SCRIPT STUFF ======================
 
@@ -240,6 +260,7 @@ namespace Shado {
 		lua_register(L, "_SetEntityColor", _SetColor);
 		lua_register(L, "_SetEntityPosition", _SetPosition);
 		lua_register(L, "_SetEntityType", _SetType);
+		lua_register(L, "_DestroyEntity", _DestroyEntity);
 		
 		lua_register(L, "_IsKeyDown", _IsKeyDown);
 		lua_register(L, "_GetMouseX", _GetMouseX);

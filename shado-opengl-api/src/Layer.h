@@ -40,24 +40,48 @@ namespace Shado {
 		Scene(const std::string& name);
 		virtual ~Scene();
 
-		/// <summary>
-		/// Called when the scene is set as active
-		/// </summary>
+		/**
+		 * Called when the scene is set as active
+		 */
 		virtual void onMount()		{}
 		
-		/// <summary>
-		/// Called when the scene is unmounted (is inactive)
-		/// </summary>
+		/**
+		 * Called when the scene is unmounted (is inactive)
+		 */
 		virtual void onUnMount()	{}
 
 		virtual void updatePhysics(TimeStep dt) final;
 
-		
+		/**
+		 * This function is called on all scenes when the application runs
+		 */
 		virtual void onInit()				{}
+
+		/**
+		 * This function is called every frame
+		 *
+		 * @param dt time between 2 frames
+		 */
 		virtual void onUpdate(TimeStep dt)	{}
+
+		/**
+		 * This function is called every frame and draw everything to the screen
+		 */
 		virtual void onDraw()				{}
+
+		/**
+		 * This function draws all ImGui code to the screen
+		 */
 		virtual void onImGuiRender()		{}
+
+		/**
+		 * This function is called when the scene is delete
+		 */
 		virtual void onDestroy()			{}
+
+		/**
+		 * This functions is called whenever an event occures
+		 */
 		virtual void onEvent(Event& event)	{}
 
 		//void pushLayer(Layer* layer);
@@ -66,6 +90,8 @@ namespace Shado {
 		Entity* addEntityToWorld(Entity* entity);
 		Entity* addEntityToWorld(const EntityDefinition& def);
 		void setWorldGravity(const glm::vec2& gravity);
+
+		void destroyEntity(Entity* entity);
 
 		Entity& getEntity(const std::string& name);
 		Entity& getEntity(uint64_t id);

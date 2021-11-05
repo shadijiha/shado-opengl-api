@@ -16,7 +16,12 @@ end
 ---@param name any
 ---@return table
 Scene.getByName = function (name)
-    return Scene:new(_GetSceneByName(name));
+    local temp = _GetSceneByName(name);
+    if temp == nil then
+        print("Unknown scene name -->" .. name);
+        return nil;
+    end
+    return Scene:new(temp);
 end
 
 ---Gets the application's current active scene

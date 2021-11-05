@@ -38,7 +38,7 @@ namespace Shado {
 		const b2Vec2& position = body->GetPosition();
 		float angle = body->GetAngle();
 		
-		if (texture != nullptr) {
+		if (texture) {
 			Renderer2D::DrawRotatedQuad({ position.x, position.y, z }, scale, angle, texture, tilingfactor);
 		} else
 		{

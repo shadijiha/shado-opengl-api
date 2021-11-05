@@ -1,6 +1,7 @@
 ﻿#include "Layer.h"
 
 #include "Debug.h"
+#include <algorithm>
 
 namespace Shado {
 
@@ -43,6 +44,22 @@ namespace Shado {
 
 	void Scene::setWorldGravity(const glm::vec2& gravity) {
 		world.SetGravity({ gravity.x, gravity.y });
+	}
+
+	void Scene::destroyEntity(Entity* entity) {
+		if (entity != nullptr) {
+			entity->destroy();
+
+			int i = 0;
+			for (Entity* e : entities) {
+				if (entity == e) {
+					//entities.erase(entities.begin() + i);
+					break;
+				}
+				i++;
+			}
+			delete entity;
+		}
 	}
 
 	Entity& Scene::getEntity(const std::string& name) {

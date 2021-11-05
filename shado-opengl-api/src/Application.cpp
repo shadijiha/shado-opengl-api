@@ -66,6 +66,11 @@ namespace Shado {
 		if (allScenes.size() == 0)
 			SHADO_CORE_WARN("No Scenes to draw");
 
+		// Init all scenes
+		for (Scene* scene : allScenes) {
+			scene->onInit();
+		}
+
 
 		/* Loop until the user closes the window */
 		while (m_Running) {
@@ -126,13 +131,16 @@ namespace Shado {
 		/*for (const auto& layer : scene->getLayers()) {
 			layer->onInit();
 		}*/
-		scene->onInit();
+		
 		
 		allScenes.push_back(scene);
 
 		// The first scene submitted should be the active one
-		if (m_activeScene == nullptr)
+		if (m_activeScene == nullptr) {
 			m_activeScene = scene;
+			m_activeScene->onMount();
+		}
+			
 
 		// Reverse sorting
 		/*std::sort(allScenes.begin(), allScenes.end(), [](Scene* a, Scene* b) {
