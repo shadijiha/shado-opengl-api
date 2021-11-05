@@ -2,19 +2,13 @@
 --- This file has definitions for a Shado OpenGL API Lua script
 ---
 
-Entity = {entity = nil, scene = nil, is_alive = true}
-
-function Entity:new(options)
-    o = {};
-    setmetatable(o, self);
-    self.__index = self;
-
+Entity = class(function (this, options)
     options = options or {width = 1, height = 1}
 
-    self.entity = _CreateEntity(_scene, options["width"], options["height"]);
-    self.scene = _scene;
-    return o;
-end
+    this.entity = _CreateEntity(_scene, options["width"], options["height"]);
+    this.scene = _scene;
+    this.is_alive = true;
+end)
 
 function Entity:setTexture(path)
     if self.is_alive then
@@ -47,8 +41,8 @@ function Entity:setType(type)
 end
 
 function Entity:destroy()
-    -- if self.is_alive and _DestroyEntity(self.entity, self.scene) then
-    --     self.is_alive = false;
-    --     self.entity = nil;
-    -- end
+    if self.is_alive and _DestroyEntity(self.entity, self.scene) then
+        self.is_alive = false;
+        self.entity = nil;
+    end
 end

@@ -53,12 +53,12 @@ namespace Shado {
 			int i = 0;
 			for (Entity* e : entities) {
 				if (entity == e) {
-					//entities.erase(entities.begin() + i);
+					entities.erase(entities.begin() + i);
+					delete entity;
 					break;
 				}
 				i++;
-			}
-			delete entity;
+			}			
 		}
 	}
 

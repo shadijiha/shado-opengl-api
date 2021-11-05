@@ -61,5 +61,7 @@ namespace Shado {
 		Color color;
 
 		b2Body* body;
+
+		bool isAlive;
 	};
 }

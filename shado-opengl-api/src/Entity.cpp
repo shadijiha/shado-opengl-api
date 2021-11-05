@@ -8,7 +8,7 @@
 namespace Shado {
 
 	Entity::Entity(const EntityDefinition& definition, b2World& world)
-		: name(definition.name), scale(definition.scale), tilingfactor(definition.tillingfactor), texture(definition.texture), color(definition.color)
+		: name(definition.name), scale(definition.scale), texture(definition.texture), tilingfactor(definition.tillingfactor), color(definition.color)
 	{
 		id = rand();
 		z = definition.position.z;
@@ -30,11 +30,15 @@ namespace Shado {
 		body->CreateFixture(&fixtureDef);
 
 		this->body = body;
+		this->isAlive = true;
 	}
 
 	Entity::~Entity() {}
 
 	void Entity::draw() const {
+		if (!isAlive)
+			return;
+		
 		const b2Vec2& position = body->GetPosition();
 		float angle = body->GetAngle();
 		
@@ -48,6 +52,7 @@ namespace Shado {
 
 	void Entity::destroy() {
 		body->GetWorld()->DestroyBody(body);
+		isAlive = false;
 	}
 
 	Entity& Entity::setName(const std::string& name) {

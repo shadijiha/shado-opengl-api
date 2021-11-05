@@ -26,6 +26,7 @@ public:
 
 	void onInit() override {
 		script = new LuaScript(*this, luaScriptFile);
+		script->onCreate();
 		/*EntityDefinition def;
 		def.type = EntityType::DYNAMIC;
 		def.texture = riven2;
@@ -37,9 +38,8 @@ public:
 				objects.push_back({def, world});
 			}
 		*/
-		script->onCreate();
-
-		EntityDefinition def2;
+		
+		/*EntityDefinition def2;
 		def2.type = EntityType::DYNAMIC;
 		def2.scale = { 0.45f, 0.45f };
 
@@ -49,10 +49,14 @@ public:
 			{
 				def2.color = { (x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f };
 				def2.position = { x, y, -15 };
-				objects.push_back(this->addEntityToWorld(def2));
+				addEntityToWorld(def2);
 			}
 		}
+		*/
 
+		EntityDefinition def;
+		def.texture = riven2;
+		//entity = addEntityToWorld(def);
 	}
 
 	void onUpdate(TimeStep dt) override {
@@ -88,8 +92,15 @@ public:
 	}
 
 	void onImGuiRender() override {
-		ImGui::SliderFloat4("Sphere Colour", (float*)&color, 0, 1.0f);
-		ImGui::SliderInt("Tiling factor", &tileFactor, 1, 100);
+
+		if (entity) {
+			using namespace std::string_literals;
+			auto label = "Destroy "s + entity->getName();
+			if (ImGui::Button(label.c_str())) {
+				destroyEntity(entity);
+			}
+		}
+		
 
 		if (ImGui::Button("Reload script")) {
 			script->onDestoy();
@@ -112,8 +123,6 @@ private:
 	Ref<Texture2D> riven1 = CreateRef<Texture2D>("assets/riven3.png");
 	Ref<Texture2D> riven2 = CreateRef<Texture2D>("assets/riven2.jpg");
 
-	std::vector<Entity*> objects;
-
 	OrbitCameraController camera;
 	OrthoCameraController orthoCamera;
 	Color color = { 1, 1, 1 };
@@ -121,6 +130,8 @@ private:
 
 	std::string luaScriptFile = "test.lua";
 	LuaScript* script;
+
+	Entity* entity;
 };
 
 class TestScene2 : public Scene {

@@ -1,7 +1,6 @@
 --- Controle the Scene and the renderer
-
-Scene = {scene = nil}
 Renderer = {}
+SceneUtils = {}
 
 ---Changes the Renderer Clear colour 
 ---@param r number red
@@ -15,33 +14,27 @@ end
 ---Get a C++ scene by name
 ---@param name any
 ---@return table
-Scene.getByName = function (name)
+SceneUtils.getByName = function (name)
     local temp = _GetSceneByName(name);
     if temp == nil then
         print("Unknown scene name -->" .. name);
         return nil;
     end
-    return Scene:new(temp);
+    return Scene(temp);
 end
 
 ---Gets the application's current active scene
 ---@return table Scene a scene object
-Scene.getActive = function ()
-    return Scene:new(_GetActiveScene());
+SceneUtils.getActive = function ()
+    return Scene(_GetActiveScene());
 end
 
 --- Created a scene object
 ---@param scenePtr Scene* a pointer to a C++ Scene
 ---@return table Scene a scene object
-function Scene:new(scenePtr)
-    o = {};
-    setmetatable(o, self);
-    self.__index = self;
-
-    self.scene = scenePtr;
-
-    return o;
-end
+Scene = class(function (this, scenePtr)
+    this.scene = scenePtr;
+end)
 
 --- Sets the caller scene as the application active scene
 function Scene:setActive()

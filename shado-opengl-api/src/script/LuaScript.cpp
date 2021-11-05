@@ -33,6 +33,7 @@ namespace Shado {
 		EntityDefinition def;
 		def.type = EntityType::DYNAMIC;
 		def.scale = { width, height };
+		def.name = "Lua entity";
 		
 		Entity* e = scene->addEntityToWorld(def);
 		lua_pushlightuserdata(L, e);

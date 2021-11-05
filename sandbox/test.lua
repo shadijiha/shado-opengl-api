@@ -5,7 +5,7 @@
 -- @Date 24 Oct. 2021
 require "scriptcore/shado_opengl_api"
 
-local scene2 = Scene.getByName("Test scene2");
+local scene2 = SceneUtils.getByName("Test scene2");
 
 local function map(x, in_min, in_max, out_min, out_max)
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -14,19 +14,18 @@ end
 local entities = {}
 
 function OnCreate()
-    Window.setTitle("My title")
+    print("Called create!")
     -- Define ground
-    local ground = Entity:new({width = 40.0, height = 0.3});
+    local ground = Entity({width = 40.0, height = 0.3});
     ground:setType("static");
     ground:setPosition(0, -0.75);
 
---    for i = 0, 1, 1 do
-        local entity = Entity:new({width = 2, height = 2});
+    for i = 0, 1, 1 do
+        entity = Entity({width = 2, height = 2});
         entity:setTexture("assets/riven.png");
-        entity:setPosition(i, 7.0);
-
-        entities[1] = entity;
---    end
+        entity:setPosition(0, 7.0);
+        entities[i + 1] = entity;
+    end
 end
 
 function OnUpdate(dt)
@@ -34,21 +33,24 @@ function OnUpdate(dt)
 end
 
 function OnDestroy() 
-    print(#entities);
+    print("Called OnDestroy!");
     for index, value in ipairs(entities) do
         value:destroy();
-    end    
+    end  
+    entity:destroy();  
 end
 
 function OnEvent(e)
+    
     if IsMousePressedEvent(e) then
+        print("Called event!");
         if e.button == MouseCodes.MOUSE_BUTTON_LEFT then
             local mapX = map(Input.getMouseX(), 0, Window.getWidth(), -10, 10);
             local mapY = map(Input.getMouseY(), 0, Window.getHeight(), -10, 10);
 
-            local entity = Entity:new({width = 0.5, height = 0.5});
-            entity:setPosition(mapX, -mapY);
-            entity:setColor(0.6, 0.3, 0.7, 1);
+            local e = Entity({width = 0.5, height = 0.5});
+            e:setPosition(mapX, -mapY);
+            e:setColor(0.6, 0.3, 0.7, 1);
         end
     end
 
