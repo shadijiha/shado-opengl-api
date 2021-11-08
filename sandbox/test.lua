@@ -14,17 +14,27 @@ end
 local entities = {}
 
 function OnCreate()
-    print("Called create!")
     -- Define ground
     local ground = Entity({width = 40.0, height = 0.3});
     ground:setType("static");
     ground:setPosition(0, -0.75);
 
     for i = 0, 1, 1 do
-        entity = Entity({width = 2, height = 2});
+        local entity = Entity({width = 2, height = 2});
         entity:setTexture("assets/riven.png");
         entity:setPosition(0, 7.0);
         entities[i + 1] = entity;
+    end
+
+    local j = 2;
+    for y = -5.0, 5.0, 0.5 do
+        for x = -0.5, 5.0, 0.5 do
+            local entity = Entity();
+            entity:setColor((x + 0.5) / 10, 0.4, (y + 5.0)/10, 1.0);
+            entity:setPosition(x, y);
+            entities[j] = entity;   
+            j = j + 1;       
+        end
     end
 end
 
@@ -33,17 +43,14 @@ function OnUpdate(dt)
 end
 
 function OnDestroy() 
-    print("Called OnDestroy!");
     for index, value in ipairs(entities) do
         value:destroy();
-    end  
-    entity:destroy();  
+    end   
 end
 
 function OnEvent(e)
     
     if IsMousePressedEvent(e) then
-        print("Called event!");
         if e.button == MouseCodes.MOUSE_BUTTON_LEFT then
             local mapX = map(Input.getMouseX(), 0, Window.getWidth(), -10, 10);
             local mapY = map(Input.getMouseY(), 0, Window.getHeight(), -10, 10);
