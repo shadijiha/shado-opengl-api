@@ -17,7 +17,7 @@ public:
 		camera(Application::get().getWindow().getAspectRatio()),
 		orthoCamera(Application::get().getWindow().getAspectRatio())
 	{
-		
+
 	}
 
 	virtual ~TestScene() {
@@ -38,7 +38,7 @@ public:
 				objects.push_back({def, world});
 			}
 		*/
-		
+
 		/*EntityDefinition def2;
 		def2.type = EntityType::DYNAMIC;
 		def2.scale = { 0.45f, 0.45f };
@@ -102,7 +102,7 @@ public:
 				destroyEntity(entity);
 			}
 		}
-		
+
 
 		if (ImGui::Button("Reload script")) {
 			script->onDestoy();
