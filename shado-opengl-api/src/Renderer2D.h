@@ -16,6 +16,7 @@ namespace Shado {
 	inline std::string FLAT_COLOR_SHADER_PATH = FILE_PATH + "\\assets\\FlatColorShader.glsl";
 	inline std::string TEXTURE2D_SHADER_PATH = FILE_PATH + "\\assets\\TextureShader.glsl";
 	inline std::string LINES_SHADER_PATH = FILE_PATH + "\\assets\\Renderer2D_Lines.glsl";
+	inline std::string CIRCLE_SHADER_PATH = FILE_PATH + "\\assets\\Renderer2D_Circles.glsl";
 
 	class Renderer2D
 	{
@@ -49,6 +50,9 @@ namespace Shado {
 		static void SetLineThickness(float thickness);
 		static void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color = glm::vec4(1.0f));
 
+		static void DrawCircle(const glm::vec3& position, const glm::vec2& size, const Color& color, float thickness = 1.0f, float fade = 0.005f);
+		static void DrawCircle(const glm::mat4& transform, const Color& color, float thickness = 1.0f, float fade = 0.005f);
+		
 		static bool hasInitialized() { return s_Init; }
 
 		// Stats

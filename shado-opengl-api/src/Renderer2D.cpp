@@ -27,6 +27,14 @@ namespace Shado {
 		glm::vec4 Color;
 	};
 
+	struct CircleVertex {
+		glm::vec3 WorldPosition;
+		glm::vec3 LocalPosition;
+		glm::vec4 Color;		
+		float Thickness;
+		float Fade;
+	};
+	
 	struct Renderer2DData
 	{
 		static const uint32_t MaxQuads = 20000;
@@ -56,6 +64,15 @@ namespace Shado {
 
 		glm::vec4 QuadVertexPositions[4];
 
+		// Circles
+		Ref<VertexArray> CircleVertexArray;
+		Ref<VertexBuffer> CircleVertexBuffer;
+		Ref<Shader> CircleShader;
+
+		uint32_t CircleIndexCount = 0;
+		CircleVertex* CircleVertexBufferBase = nullptr;
+		CircleVertex* CircleVertexBufferPtr = nullptr;
+
 		// Lines
 		Ref<VertexArray> LineVertexArray;
 		Ref<VertexBuffer> LineVertexBuffer;
@@ -82,6 +99,7 @@ namespace Shado {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_DEPTH_TEST);
 
+		// Rectangles
 		s_Data.QuadVertexArray = VertexArray::create();
 
 		s_Data.QuadVertexBuffer = VertexBuffer::create(s_Data.MaxVertices * sizeof(QuadVertex));
@@ -116,6 +134,22 @@ namespace Shado {
 		s_Data.QuadVertexArray->setIndexBuffer(quadIB);
 		delete[] quadIndices;
 
+		// Circles
+		s_Data.CircleVertexArray = VertexArray::create();
+
+		s_Data.CircleVertexBuffer = VertexBuffer::create(s_Data.MaxVertices * sizeof(CircleVertex));
+		s_Data.CircleVertexBuffer->setLayout({
+			{ ShaderDataType::Float3, "a_WorldPosition" },
+			{ ShaderDataType::Float3, "a_LocalPosition" },
+			{ ShaderDataType::Float4, "a_Color" },
+			{ ShaderDataType::Float, "a_Thickness" },
+			{ ShaderDataType::Float, "a_Fade" }
+			});
+		s_Data.CircleVertexArray->addVertexBuffer(s_Data.CircleVertexBuffer);
+		s_Data.CircleVertexArray->setIndexBuffer(quadIB);	// Use quad Index Buffer
+		s_Data.CircleVertexBufferBase = new CircleVertex[s_Data.MaxVertices];
+
+		// White texture
 		s_Data.WhiteTexture = std::make_shared<Texture2D>(1, 1);
 		uint32_t whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->bind(0);
@@ -129,6 +163,9 @@ namespace Shado {
 		s_Data.TextureShader->bind();
 		s_Data.TextureShader->setIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
 
+		s_Data.CircleShader = std::make_shared<Shader>(CIRCLE_SHADER_PATH);
+		s_Data.CircleShader->bind();
+		
 		// Set first texture slot to 0
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
@@ -185,11 +222,17 @@ namespace Shado {
 		s_Data.LineIndexCount = 0;
 		s_Data.LineVertexBufferPtr = s_Data.LineVertexBufferBase;
 
+		s_Data.CircleIndexCount = 0;
+		s_Data.CircleVertexBufferPtr = s_Data.CircleVertexBufferBase;
+
 		s_Data.TextureSlotIndex = 1;
 	}
 
 	void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform)
 	{
+		SHADO_CORE_ASSERT(false, "This function needs work!");
+
+#if 0
 		glm::mat4 viewProj = camera.getProjectionMatrix() * glm::inverse(transform);
 
 		s_Data.CameraViewProj = viewProj;
@@ -201,6 +244,7 @@ namespace Shado {
 		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
 
 		s_Data.TextureSlotIndex = 1;
+#endif
 	}
 
 	void Renderer2D::EndScene()
@@ -225,6 +269,7 @@ namespace Shado {
 
 			s_Data.QuadVertexArray->bind();
 			s_Data.QuadVertexArray->getIndexBuffers()->bind();
+			
 			CmdDrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
@@ -243,22 +288,41 @@ namespace Shado {
 			CmdDrawIndexedLine(s_Data.LineVertexArray, s_Data.LineIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
+
+
+		if (s_Data.CircleIndexCount) {
+			uint32_t dataSize = (uint8_t*)s_Data.CircleVertexBufferPtr - (uint8_t*)s_Data.CircleVertexBufferBase;
+			s_Data.CircleVertexBuffer->setData(s_Data.CircleVertexBufferBase, dataSize);
+
+			s_Data.CircleShader->bind();
+			s_Data.CircleShader->setMat4("u_ViewProjection", s_Data.CameraViewProj);
+			
+			s_Data.CircleVertexArray->bind();
+			s_Data.CircleVertexArray->getIndexBuffers()->bind();
+			
+			CmdDrawIndexed(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
+			s_Data.Stats.DrawCalls++;
+		}
 	}
 
 	void Renderer2D::Flush()
 	{
 #if 0
-		if (s_Data.QuadIndexCount == 0)
-			return; // Nothing to draw
+		if (s_Data.QuadIndexCount) {
 
-		// Bind textures
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
-			s_Data.TextureSlots[i]->bind(i);
+			// Bind textures
+			for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+				s_Data.TextureSlots[i]->bind(i);
 
-		CmdDrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
-		s_Data.Stats.DrawCalls++;
+			CmdDrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
+			s_Data.Stats.DrawCalls++;
+		}
+			
+
 
 #endif
+
+
 	}
 
 	void Renderer2D::SetClearColor(const glm::vec4& color) {
@@ -277,6 +341,9 @@ namespace Shado {
 		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
 
 		s_Data.TextureSlotIndex = 1;
+
+		s_Data.CircleIndexCount = 0;
+		s_Data.CircleVertexBufferPtr = s_Data.CircleVertexBufferBase;
 	}
 
 	void Renderer2D::FlushAndResetLines()
@@ -465,6 +532,39 @@ namespace Shado {
 		s_Data.LineIndexCount += 2;
 
 		s_Data.Stats.LineCount++;
+	}
+
+	void Renderer2D::DrawCircle(const glm::vec3& position, const glm::vec2& size, const Color& color, float thickness,
+		float fade) {
+
+		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
+			* glm::scale(glm::mat4(1.0f), { size.x, size.y, 1.0f });
+
+		DrawCircle(transform, color,  thickness, fade);
+		
+	}
+
+	void Renderer2D::DrawCircle(const glm::mat4& transform, const Color& color, float thickness, float fade) {
+
+		constexpr size_t quadVertexCount = 4;
+
+		if (s_Data.CircleIndexCount >= Renderer2DData::MaxIndices)
+			FlushAndReset();
+
+		for (size_t i = 0; i < quadVertexCount; i++)
+		{
+			s_Data.CircleVertexBufferPtr->WorldPosition = transform * s_Data.QuadVertexPositions[i];
+			s_Data.CircleVertexBufferPtr->LocalPosition = s_Data.QuadVertexPositions[i] * 2.0f;
+			s_Data.CircleVertexBufferPtr->Color = color;
+			s_Data.CircleVertexBufferPtr->Thickness = thickness;
+			s_Data.CircleVertexBufferPtr->Fade = fade;
+			s_Data.CircleVertexBufferPtr++;
+		}
+
+		s_Data.CircleIndexCount += 6;
+
+		s_Data.Stats.QuadCount++;
+
 	}
 
 	void Renderer2D::ResetStats()

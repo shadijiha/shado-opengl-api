@@ -73,9 +73,11 @@ public:
 			object->draw();
 		}*/
 
-		for (const Entity* entity : getAllEntities()) {
+		/*for (const Entity* entity : getAllEntities()) {
 			entity->draw();
-		}
+		}*/
+		Renderer2D::SetClearColor({ 0.2, 0.2, 0.2, 1.0 });
+		Renderer2D::DrawCircle({ 0, 0, 0 }, { 1, 1 }, Color::RED);
 
 		Renderer2D::EndScene();
 	}
