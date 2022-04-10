@@ -117,7 +117,7 @@ namespace Shado {
             ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
             // If viewports don't match recreate frame buffer
-            if (m_ViewportSize.x != viewportPanelSize.x || m_ViewportSize.y != viewportPanelSize.y) {
+            if (m_ViewportSize != *((glm::vec2*)&viewportPanelSize)  && viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
                 m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
                 buffer->resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 

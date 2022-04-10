@@ -8,6 +8,7 @@
 
 namespace Shado {
 
+	static const uint32_t s_MaxFrameBufferSize = 8192;
 
 	FrameBuffer::FrameBuffer(const FrameBufferSpecification& spec)
 		: m_Specification(spec)
@@ -22,6 +23,12 @@ namespace Shado {
 	}
 
 	void FrameBuffer::resize(uint32_t width, uint32_t height) {
+
+		if (width <= 0 || height <= 0 || width > s_MaxFrameBufferSize || height > s_MaxFrameBufferSize) {
+			SHADO_CORE_WARN("Attempt to resize framebuffer to invalid values: {0}, {1}", width, height);
+			return;
+		}
+
 		m_Specification.width = width;
 		m_Specification.height = height;
 		glDeleteFramebuffers(1, &m_RendererID);
