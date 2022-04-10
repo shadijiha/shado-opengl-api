@@ -72,6 +72,11 @@ namespace Shado {
 		dispatcher.dispatch<WindowResizeEvent>(SHADO_BIND_EVENT_FN(OrthoCameraController::onWindowResized));
 	}
 
+	void OrthoCameraController::onResize(float width, float height) {
+		m_aspectRatio = width / height;
+		((OrthoCamera*)m_Camera)->setProjection(-m_aspectRatio * m_ZoomLevel, m_aspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+	}
+
 	bool OrthoCameraController::onMouseScrolled(MouseScrolledEvent& e)
 	{
 		m_ZoomLevel -= e.getYOffset() * 0.25f;
@@ -83,8 +88,7 @@ namespace Shado {
 
 	bool OrthoCameraController::onWindowResized(WindowResizeEvent& e)
 	{
-		m_ZoomLevel = (float)e.getWidth() / (float)e.getHeight();
-		((OrthoCamera*)m_Camera)->setProjection(-m_aspectRatio * m_ZoomLevel, m_aspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+		onResize((float)e.getWidth(), (float)e.getHeight());
 		return false;
 	}
 }

@@ -29,6 +29,8 @@ namespace Shado
 		virtual void onUpdate(TimeStep dt) override;
 		virtual void onEvent(Event& e) override;
 
+		void onResize(float width, float height);
+
 	protected:
 		virtual bool onMouseScrolled(MouseScrolledEvent& e) override;
 		virtual bool onWindowResized(WindowResizeEvent& e) override;

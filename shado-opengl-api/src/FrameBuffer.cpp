@@ -17,6 +17,17 @@ namespace Shado {
 
 	FrameBuffer::~FrameBuffer() {
 		glDeleteFramebuffers(1, &m_RendererID);
+		glDeleteTextures(1, &m_ColorAttachment);
+		glDeleteRenderbuffers(1, &m_DepthAttachment);
+	}
+
+	void FrameBuffer::resize(uint32_t width, uint32_t height) {
+		m_Specification.width = width;
+		m_Specification.height = height;
+		glDeleteFramebuffers(1, &m_RendererID);
+		glDeleteTextures(1, &m_ColorAttachment);
+		glDeleteRenderbuffers(1, &m_DepthAttachment);
+		invalidate();
 	}
 
 	void FrameBuffer::invalidate() {
@@ -45,6 +56,7 @@ namespace Shado {
 
 	void FrameBuffer::bind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+		glViewport(0, 0, m_Specification.width, m_Specification.height);
 	}
 
 	void FrameBuffer::unbind() {

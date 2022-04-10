@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <glm/vec2.hpp>
+
 #include "util/Util.h"
 
 namespace Shado {
@@ -15,6 +17,7 @@ namespace Shado {
 		FrameBuffer(const FrameBufferSpecification& spec);
 		virtual ~FrameBuffer();
 
+		void resize(uint32_t width, uint32_t height);
 		void invalidate();
 		void bind();
 		void unbind();
@@ -25,9 +28,9 @@ namespace Shado {
 		static Ref<FrameBuffer> create(const FrameBufferSpecification& spec);
 
 	private:
-		uint32_t m_RendererID;
-		uint32_t m_ColorAttachment;
-		uint32_t m_DepthAttachment;
+		uint32_t m_RendererID = 0;
+		uint32_t m_ColorAttachment = 0;
+		uint32_t m_DepthAttachment = 0;
 		FrameBufferSpecification m_Specification;
 	};
 }

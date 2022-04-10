@@ -1,6 +1,6 @@
 workspace "shado-opengl-api"
 	architecture "x64"
-	startproject "sandbox"
+	startproject "shado-editor"
 
 	configurations
 	{
