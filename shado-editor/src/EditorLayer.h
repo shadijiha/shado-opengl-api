@@ -1,5 +1,5 @@
-#include "FrameBuffer.h"
-#include "Layer.h"
+#include "renderer/FrameBuffer.h"
+#include "renderer/Layer.h"
 #include "cameras/OrthoCamera.h"
 
 namespace Shado {

@@ -5,15 +5,15 @@
 
 // Shado Engine
 #include "Application.h"
-#include "Renderer2D.h"
-#include "Renderer3D.h"
-#include "Shader.h"
+#include "renderer/Renderer2D.h"
+#include "renderer/Renderer3D.h"
+#include "renderer/Shader.h"
 #include "Debug.h"
-#include "Buffer.h"
-#include "Texture2D.h"
-#include "VertexArray.h"
+#include "renderer/Buffer.h"
+#include "renderer/Texture2D.h"
+#include "renderer/VertexArray.h"
 #include "Entity.h"
-#include "FrameBuffer.h"
+#include "renderer/FrameBuffer.h"
 
 #include "cameras/Camera.h"
 #include "cameras/OrthoCamera.h"

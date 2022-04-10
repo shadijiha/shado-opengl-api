@@ -2,13 +2,13 @@
 
 #include "Debug.h"
 #include "GL/glew.h"
-#include "Renderer2D.h"
+#include "renderer/Renderer2D.h"
 #include <algorithm>
 #include "cameras/OrthoCamera.h"
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
-#include "Renderer3D.h"
+#include "renderer/Renderer3D.h"
 #include "util/Random.h"
 
 namespace Shado {

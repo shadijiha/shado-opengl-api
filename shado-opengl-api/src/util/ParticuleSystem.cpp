@@ -3,7 +3,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/compatibility.hpp"
 #include "Random.h"
-#include "../Renderer2D.h"
+#include "../renderer/Renderer2D.h"
 
 namespace Shado {
 

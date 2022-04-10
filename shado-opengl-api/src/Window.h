@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "opengl.h"
+#include "renderer/opengl.h"
 #include <string>
 
 #include "Events/Event.h"

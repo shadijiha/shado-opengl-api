@@ -20,6 +20,7 @@ IncludeDir["glm"] = "shado-opengl-api/vendor/glm"
 IncludeDir["spdlog"] = "shado-opengl-api/vendor/spdlog/include"
 --IncludeDir["shadoScript"] = "shado-opengl-api/vendor/shado-script/shado-script/src"
 IncludeDir["box2d"] = "shado-opengl-api/vendor/box2d/include"
+IncludeDir["entt"] = "shado-opengl-api/vendor/entt/include"
 
 include "shado-opengl-api/vendor/GLFW"
 include "shado-opengl-api/vendor/GLEW"
@@ -51,7 +52,7 @@ project "shado-opengl-api"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
---		"%{IncludeDir.shadoScript}",
+		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}"
 	}
 
@@ -115,7 +116,7 @@ project "sandbox"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
---		"%{IncludeDir.shadoScript}",
+		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"
@@ -147,62 +148,6 @@ project "sandbox"
 	filter "configurations:Dist"
 		defines "SHADO_DIST"
 		optimize "Full"
-
-project "sandbox"
-	location "sandbox"
-	kind "ConsoleApp"
-	language "C++"
-
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-
-	files
-	{
-		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/**.hpp"
-	}
-
-	includedirs
-	{
-		"%{IncludeDir.GLFW}", -- For some reason I need this and cherno doesn't
-		"%{IncludeDir.GLEW}", -- For some reason I need this and cherno doesn't
-		"%{IncludeDir.imgui}",
-		"%{IncludeDir.glm}",
-		"%{IncludeDir.spdlog}",
---		"%{IncludeDir.shadoScript}",
-		"%{IncludeDir.box2d}",
-		"shado-opengl-api/src",
-		"shado-opengl-api/vendor"
-	}
-
-	links
-	{
-		"shado-opengl-api",
-	}
-
-	filter "system:windows"
-	cppdialect "C++17"
-	staticruntime "Off"
-	systemversion "latest"
-
-	defines
-	{
-		"SHADO_PLATFORM_WINDOWS"
-	}
-
-	filter "configurations:Debug"
-		defines "SHADO_DEBUG"
-		symbols "On"
-
-	filter "configurations:Release"
-		defines "SHADO_RELEASE"
-		optimize "On"
-
-	filter "configurations:Dist"
-		defines "SHADO_DIST"
-		optimize "Full"
-
 
 project "shado-editor"
 	location "shado-editor"
