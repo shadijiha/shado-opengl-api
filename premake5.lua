@@ -73,7 +73,7 @@ project "shado-opengl-api"
 
 		defines
 		{
-			"SHADO_PLATFORM_WINDOWS", "GLEW_STATIC"
+			"SHADO_PLATFORM_WINDOWS", "GLEW_STATIC", "SHADO_ENABLE_ASSERTS"
 		}
 	
 		--postbuildcommands

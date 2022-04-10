@@ -1,5 +1,4 @@
 ﻿#include "Shado.h"
-#include "ShadoScript.h"
 #include <iostream>
 
 using namespace Shado;
@@ -33,6 +32,11 @@ public:
 			}
 		*/
 
+		FrameBufferSpecification specification;
+		specification.width = Application::get().getWindow().getWidth();
+		specification.height = Application::get().getWindow().getHeight();
+		buffer = FrameBuffer::create(specification);
+
 		EntityDefinition def2;
 		def2.type = EntityType::DYNAMIC;
 		def2.scale = { 0.45f, 0.45f };
@@ -53,7 +57,8 @@ public:
 		groundDef.position = { 0, -0.75, 0 };
 
 		objects.push_back(getScene()->addEntityToWorld(groundDef));
-		
+
+		Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 	}
 
 	void onUpdate(TimeStep dt) override {
@@ -62,7 +67,8 @@ public:
 	}
 	 
 	void onDraw() override {
-
+		buffer->bind();
+		Renderer2D::Clear();
 		Renderer2D::BeginScene(orthoCamera.getCamera());
 
 		for (const auto* object : objects) {
@@ -70,6 +76,7 @@ public:
 		}
 
 		Renderer2D::EndScene();
+		buffer->unbind();
 	}
 
 	void onDestroy() override {}
@@ -119,6 +126,9 @@ public:
 	void onImGuiRender() override {
 		ImGui::SliderFloat4("Sphere Colour", (float*)&color, 0, 1.0f);
 		ImGui::SliderInt("Tiling factor", &tileFactor, 1, 100);
+
+		uint32_t textureID = buffer->getColorAttachmentRendererID();
+		ImGui::Image((void*)textureID, {1280.0f, 720.0f}, ImVec2(0, 1), ImVec2(1, 0));
 	}
 
 private:
@@ -131,6 +141,8 @@ private:
 	OrthoCameraController orthoCamera;
 	Color color = { 1, 1, 1 };
 	int tileFactor = 1;
+
+	Ref<FrameBuffer> buffer;
 };
 
 class TestScene : public Scene {

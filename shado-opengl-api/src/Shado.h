@@ -13,6 +13,7 @@
 #include "Texture2D.h"
 #include "VertexArray.h"
 #include "Entity.h"
+#include "FrameBuffer.h"
 
 #include "cameras/Camera.h"
 #include "cameras/OrthoCamera.h"
