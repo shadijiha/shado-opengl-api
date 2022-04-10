@@ -41,21 +41,21 @@ namespace Shado {
 	void OrthoCameraController::onUpdate(TimeStep dt)
 	{
 		// Movement
-		if (Input::isKeyPressed(SHADO_KEY_A))
+		if (Input::isKeyPressed(KeyCode::A))
 			m_CameraPosition.x -= m_CameraTranslationSpeed * dt;
-		else if (Input::isKeyPressed(SHADO_KEY_D))
+		else if (Input::isKeyPressed(KeyCode::D))
 			m_CameraPosition.x += m_CameraTranslationSpeed * dt;
 
-		if (Input::isKeyPressed(SHADO_KEY_W))
+		if (Input::isKeyPressed(KeyCode::W))
 			m_CameraPosition.y += m_CameraTranslationSpeed * dt;
-		else if (Input::isKeyPressed(SHADO_KEY_S))
+		else if (Input::isKeyPressed(KeyCode::S))
 			m_CameraPosition.y -= m_CameraTranslationSpeed * dt;
 
 		// Rotation
 		if (m_Rotation) {
-			if (Input::isKeyPressed(SHADO_KEY_Q))
+			if (Input::isKeyPressed(KeyCode::Q))
 				m_CameraRotation.z += m_CameraRotationSpeed * dt;
-			else if (Input::isKeyPressed(SHADO_KEY_E))
+			else if (Input::isKeyPressed(KeyCode::E))
 				m_CameraRotation.z -= m_CameraRotationSpeed * dt;
 
 			m_Camera->setRotation(m_CameraRotation);

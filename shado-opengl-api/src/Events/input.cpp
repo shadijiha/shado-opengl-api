@@ -8,10 +8,10 @@ namespace Shado {
 	
 	Input* Input::s_instance = new WindowsInput();
 
-	bool WindowsInput::isKeyPressedImplementation(int keycode) {
+	bool WindowsInput::isKeyPressedImplementation(KeyCode keycode) {
 
 		auto window = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
-		auto state = glfwGetKey(window, keycode);
+		auto state = glfwGetKey(window, (uint16_t)keycode);
 
 		return state == GLFW_PRESS || state == GLFW_REPEAT;
 	}

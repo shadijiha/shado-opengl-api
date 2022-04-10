@@ -5,7 +5,7 @@
 namespace Shado {
 
 	EditorLayer::EditorLayer()
-		: Layer("Editor"), m_camera_controller(Application::get().getWindow().getAspectRatio())
+		: Layer("Editor"), m_camera_controller(Application::get().getWindow().getAspectRatio(), true)
 	{
 		Application::get().getWindow().setTitle("Shado Engine Editor");
 	}

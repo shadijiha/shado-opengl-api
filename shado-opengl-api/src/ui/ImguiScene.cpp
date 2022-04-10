@@ -58,7 +58,6 @@ namespace Shado {
 			handled |= event.isInCategory(EventCategoryKeyboard) & io.WantCaptureKeyboard;
 
 			event.setHandled(handled);
-			SHADO_INFO("{0}", event.isHandled());
 		}
 	}
 

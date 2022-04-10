@@ -106,19 +106,19 @@ namespace Shado {
 		// Movement
 		float velocity = cam.MovementSpeed * dt;
 		bool hasChangedPos = false;
-		if (Input::isKeyPressed(SHADO_KEY_W)) {
+		if (Input::isKeyPressed(KeyCode::W)) {
 			m_CameraPosition += cam.Front * velocity;
 			hasChangedPos = true;
 		}
-		if (Input::isKeyPressed(SHADO_KEY_S)) {
+		if (Input::isKeyPressed(KeyCode::S)) {
 			m_CameraPosition -= cam.Front * velocity;
 			hasChangedPos = true;
 		}
-		if (Input::isKeyPressed(SHADO_KEY_A)) {
+		if (Input::isKeyPressed(KeyCode::A)) {
 			m_CameraPosition -= cam.Right * velocity;
 			hasChangedPos = true;
 		}
-		if (Input::isKeyPressed(SHADO_KEY_D)) {
+		if (Input::isKeyPressed(KeyCode::D)) {
 			m_CameraPosition += cam.Right * velocity;
 			hasChangedPos = true;
 		}
@@ -133,27 +133,27 @@ namespace Shado {
 
 			bool hasChangedRot = false;
 
-			if (Input::isKeyPressed(SHADO_KEY_UP)) {
+			if (Input::isKeyPressed(KeyCode::UpArrow)) {
 				m_CameraRotation.x += m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_DOWN)) {
+			if (Input::isKeyPressed(KeyCode::DownArrow)) {
 				m_CameraRotation.x -= m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_RIGHT)) {
+			if (Input::isKeyPressed(KeyCode::RightArrow)) {
 				m_CameraRotation.y += m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_LEFT)) {
+			if (Input::isKeyPressed(KeyCode::LeftArrow)) {
 				m_CameraRotation.y -= m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_Q)) {
+			if (Input::isKeyPressed(KeyCode::Q)) {
 				m_CameraRotation.z -= m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_E)) {
+			if (Input::isKeyPressed(KeyCode::E)) {
 				m_CameraRotation.z += m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
