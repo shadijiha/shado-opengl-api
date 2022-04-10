@@ -18,13 +18,16 @@ namespace Shado {
 		static void destroy();
 
 		static void close();
+		
 
 		void run();
 		void submit(Layer* scene);
 		void onEvent(Event& e);
 
 		Window& getWindow() { return *window; }
-
+		ImguiLayer* getUILayer() { return uiScene; }
+	private:
+		void Init();
 	private:
 		ScopedPtr<Window> window;		// TODO: This might be a bad idea, might want to revert to std::unique_ptr
 		ImguiLayer* uiScene;

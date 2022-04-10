@@ -25,7 +25,8 @@ namespace Shado {
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
-        m_camera_controller.onUpdate(dt);
+        if (m_viewportFocused)
+			m_camera_controller.onUpdate(dt);
 	}
 
 	void EditorLayer::onDraw() {
@@ -106,22 +107,29 @@ namespace Shado {
             ImGui::EndMenuBar();
         }
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-        ImGui::Begin("Viewport");
-        ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+            ImGui::Begin("Viewport");
+            m_viewportFocused = ImGui::IsWindowFocused();
+            m_viewportHovered = ImGui::IsWindowHovered();
+            Application::get().getUILayer()->setBlockEvents(!m_viewportFocused || !m_viewportHovered);
+            
+            ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
-        // If viewports don't match recreate frame buffer
-        if (m_ViewportSize.x != viewportPanelSize.x || m_ViewportSize.y != viewportPanelSize.y) {
-            m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
-            buffer->resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+            // If viewports don't match recreate frame buffer
+            if (m_ViewportSize.x != viewportPanelSize.x || m_ViewportSize.y != viewportPanelSize.y) {
+                m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
+                buffer->resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 
-            m_camera_controller.onResize(m_ViewportSize.x, m_ViewportSize.y);
+                m_camera_controller.onResize(m_ViewportSize.x, m_ViewportSize.y);
+            }
+
+            uint32_t textureID = buffer->getColorAttachmentRendererID();
+            ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
+            ImGui::End();
+            ImGui::PopStyleVar();
         }
 
-        uint32_t textureID = buffer->getColorAttachmentRendererID();
-        ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
-        ImGui::End();
-        ImGui::PopStyleVar();
 
         ImGui::Begin("Test");
         ImGui::Text("hehexd");

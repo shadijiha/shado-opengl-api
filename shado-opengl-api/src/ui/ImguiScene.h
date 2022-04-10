@@ -15,13 +15,17 @@ namespace Shado {
 		void onDestroy() override;
 		void onUpdate(TimeStep dt) override;
 		void onDraw() override {}
-		void onEvent(Event& event) override {}
+		void onEvent(Event& event) override;
 		void onImGuiRender() override;
 
 		void begin();
 		void end();
+
+		void setBlockEvents(bool b) { m_BlockEvents = b; }
+		bool isBlockingEvents() const { return m_BlockEvents; }
 	private:
 		float m_Time;
 		bool m_ShowDemo;
+		bool m_BlockEvents = true;
 	};
 }

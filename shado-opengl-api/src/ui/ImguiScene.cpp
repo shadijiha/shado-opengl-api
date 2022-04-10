@@ -50,6 +50,18 @@ namespace Shado {
 
 	void ImguiLayer::onUpdate(TimeStep dt) {}
 
+	void ImguiLayer::onEvent(Event& event) {
+		if (m_BlockEvents) {
+			bool handled = event.isHandled();
+			ImGuiIO& io = ImGui::GetIO();
+			handled |= event.isInCategory(EventCategoryMouse) & io.WantCaptureMouse;
+			handled |= event.isInCategory(EventCategoryKeyboard) & io.WantCaptureKeyboard;
+
+			event.setHandled(handled);
+			SHADO_INFO("{0}", event.isHandled());
+		}
+	}
+
 	void ImguiLayer::onImGuiRender() {
 		if (m_ShowDemo)
 			ImGui::ShowDemoWindow(&m_ShowDemo);

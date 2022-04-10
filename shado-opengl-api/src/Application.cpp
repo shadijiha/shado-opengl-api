@@ -23,6 +23,8 @@ namespace Shado {
 		Log::init();
 		Random::init();
 
+		
+
 		/* Initialize the library */
 		// TODO: Might want to un comment this if application crashes
 		//window = std::make_unique<Window>(width, height, title);
@@ -48,11 +50,7 @@ namespace Shado {
 	void Application::run() {
 
 		// Init Renderer if it hasn't been done
-		if (!Renderer2D::hasInitialized()) {
-			Renderer2D::Init();
-			Renderer3D::Init();
-			uiScene->onInit();
-		}
+		Init();
 
 		if (layers.size() == 0)
 			SHADO_CORE_WARN("No layers to draw");
@@ -100,11 +98,7 @@ namespace Shado {
 	void Application::submit(Layer* layer) {
 
 		// Init Renderer if it hasn't been done
-		if (!Renderer2D::hasInitialized()) {
-			Renderer2D::Init();
-			Renderer3D::Init();
-			uiScene->onInit();
-		}
+		Init();
 
 		// Init all layers
 		layer->onInit();
@@ -117,6 +111,8 @@ namespace Shado {
 	}
 
 	void Application::onEvent(Event& e) {
+		Init();
+
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& evt) {
 			int width = evt.getWidth(), height = evt.getHeight();
@@ -138,13 +134,10 @@ namespace Shado {
 
 		// Distaptch the event and excute the required code
 		// Pass Events to layer
-		// for (Layer* layer : layers) {
-		// 	if (layer != nullptr) {
-		// 		layer->onEvent(e);
-		// 		if (e.isHandled())
-		// 			break;
-		// 	}
-		// }
+
+		uiScene->onEvent(e);
+		if (e.isHandled())
+			return;
 
 		for (auto it = layers.end(); it != layers.begin(); )
 		{
@@ -172,6 +165,14 @@ namespace Shado {
 
 	void Application::close() {
 		singleton->m_Running = false;
+	}
+
+	void Application::Init() {
+		if (!Renderer2D::hasInitialized()) {
+			Renderer2D::Init();
+			Renderer3D::Init();
+			uiScene->onInit();
+		}
 	}
 
 }
