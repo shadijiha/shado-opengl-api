@@ -7,4 +7,17 @@
 
 namespace Shado {
 
+	Entity::Entity()
+		: m_Scene(nullptr)
+	{
+	}
+
+	Entity::Entity(entt::entity handle, Scene* scene)
+		: m_Scene(scene), m_EntityHandle(handle)
+	{
+
+	}
+
+	Entity::~Entity() {
+	}
 }

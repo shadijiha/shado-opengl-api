@@ -1,6 +1,4 @@
-#include "renderer/FrameBuffer.h"
-#include "renderer/Layer.h"
-#include "cameras/OrthoCamera.h"
+#include "Shado.h"
 
 namespace Shado {
 
@@ -23,6 +21,10 @@ namespace Shado {
 		bool m_viewportFocused = false, m_viewportHovered = false;
 		glm::vec2 m_ViewportSize = {0, 0};
 		Ref<FrameBuffer> buffer;
+
+		// Debug
+		Entity m_Square;
+		Ref<Scene> m_ActiveScene;
 	};
 
 

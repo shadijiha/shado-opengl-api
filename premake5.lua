@@ -41,7 +41,8 @@ project "shado-opengl-api"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/**.hpp"
+		"%{prj.name}/src/**.hpp",
+		"%{prj.name}/vendor/entt/include/**.hpp"
 	}
 
 	includedirs
@@ -106,7 +107,8 @@ project "sandbox"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/**.hpp"
+		"%{prj.name}/src/**.hpp",
+		"%{prj.name}/vendor/entt/include/**.hpp"
 	}
 
 	includedirs
@@ -171,7 +173,7 @@ project "shado-editor"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
---		"%{IncludeDir.shadoScript}",
+		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"

@@ -22,21 +22,36 @@ namespace Shado {
         buffer = FrameBuffer::create(specs);
 
         Renderer2D::SetClearColor({ 0, 0, 0, 1 });
+
+        m_ActiveScene = CreateRef<Scene>();
+        m_Square = m_ActiveScene->createEntity();
+
+        // Debug code
+        m_Square.addComponent<SpriteRendererComponent>(glm::vec4{0, 1, 0, 1});
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
         if (m_viewportFocused)
 			m_camera_controller.onUpdate(dt);
+
+        // Update Scene
+        m_ActiveScene->onUpdate(dt);
 	}
 
 	void EditorLayer::onDraw() {
+
         buffer->bind();
         Renderer2D::Clear();
-        Renderer2D::BeginScene(m_camera_controller.getCamera());
 
-        Renderer2D::DrawQuad({ 0.5, 0.5 }, { 1, 1 }, Color::CYAN);
+        {
+            Renderer2D::BeginScene(m_camera_controller.getCamera());
+            // Draw Scene
+            m_ActiveScene->onDraw();
 
-        Renderer2D::EndScene();
+            Renderer2D::DrawQuad({ 0.5, 0.5 }, { 1, 1 }, Color::CYAN);
+            Renderer2D::EndScene();
+        }
+
         buffer->unbind();
 	}
 
@@ -132,7 +147,8 @@ namespace Shado {
 
 
         ImGui::Begin("Test");
-        ImGui::Text("hehexd");
+        auto& squareColor = m_Square.getComponent<SpriteRendererComponent>().color;
+        ImGui::ColorEdit4("Square Color", (float*)&squareColor);
         ImGui::End();
 
         ImGui::End();

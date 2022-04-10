@@ -12,13 +12,18 @@
 #include "renderer/Buffer.h"
 #include "renderer/Texture2D.h"
 #include "renderer/VertexArray.h"
-#include "Entity.h"
+
 #include "renderer/FrameBuffer.h"
+
+#include "scene/Scene.h"
+#include "scene/Components.h"
+#include "scene/Entity.h"
 
 #include "cameras/Camera.h"
 #include "cameras/OrthoCamera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/EditorCamera.h"
+
 
 // ImGui
 #include "ui/ImguiScene.h"
