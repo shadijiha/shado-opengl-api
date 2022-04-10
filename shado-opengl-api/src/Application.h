@@ -20,11 +20,8 @@ namespace Shado {
 		static void close();
 
 		void run();
-		void submit(Scene* scene);
+		void submit(Layer* scene);
 		void onEvent(Event& e);
-
-		void setActiveScene(Scene* scene);
-		void setActiveScene(const std::string& name);
 
 		Window& getWindow() { return *window; }
 
@@ -35,8 +32,7 @@ namespace Shado {
 		
 		bool m_Running = true;
 
-		std::vector<Scene*> allScenes;
-		Scene* m_activeScene = nullptr;
+		std::vector<Layer*> layers;
 
 		static Application* singleton;
 	};

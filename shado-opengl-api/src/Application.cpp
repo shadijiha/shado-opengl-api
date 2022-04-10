@@ -35,18 +35,11 @@ namespace Shado {
 
 	Application::~Application() {
 
-		for (Scene* scene : allScenes) {
-			if (scene == nullptr)
+		for (Layer* layer : layers) {
+			if (layer == nullptr)
 				continue;
-			
-			for (Layer* layer : m_activeScene->getLayers()) {
-				if (layer == nullptr)
-					continue;
-
-				layer->onDestroy();
-			}
-			
-			delete scene;
+			layer->onDestroy();
+			delete layer;
 		}
 
 		glfwTerminate();
@@ -61,7 +54,7 @@ namespace Shado {
 			uiScene->onInit();
 		}
 
-		if (allScenes.size() == 0)
+		if (layers.size() == 0)
 			SHADO_CORE_WARN("No layers to draw");
 
 
@@ -76,27 +69,22 @@ namespace Shado {
 			Renderer2D::Clear();
 
 			// Draw scenes here
-			if (m_activeScene != nullptr) {
-				for (Layer* layer : m_activeScene->getLayers()) {
-					if (layer == nullptr) {
-						continue;
-					}
-
-					layer->onUpdate(timestep);
-					layer->onDraw();
+			for (Layer* layer : layers) {
+				if (layer == nullptr) {
+					continue;
 				}
-				m_activeScene->onUpdate(timestep);
+
+				layer->onUpdate(timestep);
+				layer->onDraw();
 			}
 			uiScene->onUpdate(timestep);
 			uiScene->onDraw();
 
 			// Render UI
 			uiScene->begin();
-			if (m_activeScene != nullptr) {
-				for (Layer* layer : m_activeScene->getLayers()) {
-					if (layer != nullptr)
-						layer->onImGuiRender();
-				}
+			for (Layer* layer : layers) {
+				if (layer != nullptr)
+					layer->onImGuiRender();
 			}
 			uiScene->onImGuiRender();
 			uiScene->end();
@@ -107,7 +95,7 @@ namespace Shado {
 		}
 	}
 
-	void Application::submit(Scene* scene) {
+	void Application::submit(Layer* layer) {
 
 		// Init Renderer if it hasn't been done
 		if (!Renderer2D::hasInitialized()) {
@@ -117,15 +105,8 @@ namespace Shado {
 		}
 
 		// Init all layers
-		for (const auto& layer : scene->getLayers()) {
-			layer->onInit();
-		}
-		
-		allScenes.push_back(scene);
-
-		// The first scene submitted should be the active one
-		if (m_activeScene == nullptr)
-			m_activeScene = scene;
+		layer->onInit();
+		layers.push_back(layer);
 
 		// Reverse sorting
 		/*std::sort(allScenes.begin(), allScenes.end(), [](Scene* a, Scene* b) {
@@ -134,12 +115,10 @@ namespace Shado {
 	}
 
 	void Application::onEvent(Event& e) {
-		if (m_activeScene == nullptr)
-			return;
 		
 		// Distaptch the event and excute the required code
 		// Pass Events to layer
-		for (Layer* layer : m_activeScene->getLayers()) {
+		for (Layer* layer : layers) {
 			if (layer != nullptr) {
 				layer->onEvent(e);
 				if (e.isHandled())
@@ -147,46 +126,12 @@ namespace Shado {
 			}
 		}
 	}
-
-	void Application::setActiveScene(Scene* scene) {
-		if (std::find(allScenes.begin(), allScenes.end(), scene) == allScenes.end()) {
-			SHADO_CORE_ERROR("Scene {0} is set as active but is not added to Application!", scene->getName());
-		}
-
-		// Unmount the current scene
-		if (m_activeScene != nullptr)
-			m_activeScene->onUnMount();
-
-		m_activeScene = scene;
-		m_activeScene->onMount();
-	}
-
-	void Application::setActiveScene(const std::string& name) {
-		Scene* ptr = nullptr;
-		for (Scene* scene : allScenes) {
-			if (scene->getName() == name) {
-				ptr = scene;
-				break;
-			}
-		}
-
-		// Scene was not found
-		if (ptr == nullptr) {
-			SHADO_CORE_ERROR("Attempted to set an invalid active scene ({0})!", name);
-			return;
-		}
-
-		setActiveScene(ptr);
-	}
-
+	
 	void Application::destroy() {
-
-		for (Scene*& scene : singleton->allScenes) {
-			for (auto& layer : scene->getLayers()) {
-				layer->onDestroy();
-			}
-			delete scene;
-			scene = nullptr;
+		for (Layer*& layer : singleton->layers) {
+			layer->onDestroy();
+			delete layer;
+			layer = nullptr;
 		}
 		singleton->uiScene->onDestroy();
 
