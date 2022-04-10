@@ -65,29 +65,31 @@ namespace Shado {
 			float timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 
-			/* Render here */
-			Renderer2D::Clear();
+			if (!m_minimized) {
+				/* Render here */
+				Renderer2D::Clear();
 
-			// Draw scenes here
-			for (Layer* layer : layers) {
-				if (layer == nullptr) {
-					continue;
+				// Draw scenes here
+				for (Layer* layer : layers) {
+					if (layer == nullptr) {
+						continue;
+					}
+
+					layer->onUpdate(timestep);
+					layer->onDraw();
 				}
+				uiScene->onUpdate(timestep);
+				uiScene->onDraw();
 
-				layer->onUpdate(timestep);
-				layer->onDraw();
+				// Render UI
+				uiScene->begin();
+				for (Layer* layer : layers) {
+					if (layer != nullptr)
+						layer->onImGuiRender();
+				}
+				uiScene->onImGuiRender();
+				uiScene->end();
 			}
-			uiScene->onUpdate(timestep);
-			uiScene->onDraw();
-
-			// Render UI
-			uiScene->begin();
-			for (Layer* layer : layers) {
-				if (layer != nullptr)
-					layer->onImGuiRender();
-			}
-			uiScene->onImGuiRender();
-			uiScene->end();
 
 			/* Swap front and back buffers */
 			/* Poll for and process events */
@@ -115,15 +117,43 @@ namespace Shado {
 	}
 
 	void Application::onEvent(Event& e) {
-		
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& evt) {
+			int width = evt.getWidth(), height = evt.getHeight();
+			if (width == 0 || height == 0)
+			{
+				m_minimized = true;
+				return false;
+			}
+			m_minimized = false;
+			glViewport(0, 0, width, height);
+
+			return false;
+		});
+
+		dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& evt) {
+			m_Running = false;
+			return true;
+		});
+
 		// Distaptch the event and excute the required code
 		// Pass Events to layer
-		for (Layer* layer : layers) {
+		// for (Layer* layer : layers) {
+		// 	if (layer != nullptr) {
+		// 		layer->onEvent(e);
+		// 		if (e.isHandled())
+		// 			break;
+		// 	}
+		// }
+
+		for (auto it = layers.end(); it != layers.begin(); )
+		{
+			Layer* layer = (*--it);
 			if (layer != nullptr) {
 				layer->onEvent(e);
 				if (e.isHandled())
 					break;
-			}
+			}			
 		}
 	}
 	

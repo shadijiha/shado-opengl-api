@@ -20,7 +20,7 @@ namespace Shado {
 	private:
 		OrthoCameraController m_camera_controller;
 
-		glm::vec2 m_ViewportSize;
+		glm::vec2 m_ViewportSize = {0, 0};
 		Ref<FrameBuffer> buffer;
 	};
 

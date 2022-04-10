@@ -31,6 +31,7 @@ namespace Shado {
 		float m_LastFrameTime = 0.0f;	// Time took to render last frame	
 		
 		bool m_Running = true;
+		bool m_minimized = false;
 
 		std::vector<Layer*> layers;
 
