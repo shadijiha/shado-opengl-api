@@ -200,6 +200,9 @@ namespace Shado {
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
 
+		s_Data.LineIndexCount = 0;
+		s_Data.LineVertexBufferPtr = s_Data.LineVertexBufferBase;
+
 		s_Data.TextureSlotIndex = 1;
 	}
 

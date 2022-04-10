@@ -26,7 +26,7 @@ namespace Shado {
         const glm::vec3& getRotation() const override;
         void setRotation(const glm::vec3& rot) override;
         void setProjection(const glm::mat4& projectionMatrix);
-
+        void setAspectRatio(float aspectRatio);
     private:
         // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
         void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);

@@ -6,7 +6,6 @@
 // Shado Engine
 #include "Application.h"
 #include "renderer/Renderer2D.h"
-#include "renderer/Renderer3D.h"
 #include "renderer/Shader.h"
 #include "Debug.h"
 #include "renderer/Buffer.h"

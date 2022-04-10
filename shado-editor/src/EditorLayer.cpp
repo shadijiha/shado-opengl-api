@@ -24,15 +24,33 @@ namespace Shado {
         Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 
         m_ActiveScene = CreateRef<Scene>();
-        m_Square = m_ActiveScene->createEntity();
+        m_Square = m_ActiveScene->createEntity("Cait queen");
+
+        m_Camera = m_ActiveScene->createEntity("Camera");
+        m_Camera.addComponent<OrthoCameraComponent>(-16.0f, 16.0f, -9.0f, 9.0f);
+
+		m_CameraSecondary = m_ActiveScene->createEntity("Camera 2");
+		m_CameraSecondary.addComponent<OrbitCameraComponent>(Application::get().getWindow().getAspectRatio()).primary = false;
+		m_CameraSecondary.getComponent<TransformComponent>().transform[3][2] = 4.0f;
 
         // Debug code
         m_Square.addComponent<SpriteRendererComponent>(glm::vec4{0, 1, 0, 1});
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
-        if (m_viewportFocused)
-			m_camera_controller.onUpdate(dt);
+   //      if (m_viewportFocused)
+			// m_camera_controller.onUpdate(dt);
+
+		// If viewports don't match recreate frame buffer
+		if (m_ViewportSize != *((glm::vec2*)&m_viewportPanelSize) && m_viewportPanelSize.x > 0 && m_viewportPanelSize.y > 0) {
+			m_ViewportSize = { m_viewportPanelSize.x, m_viewportPanelSize.y };
+			buffer->resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+
+			m_camera_controller.onResize(m_ViewportSize.x, m_ViewportSize.y);
+
+			m_ActiveScene->onViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+		}
+
 
         // Update Scene
         m_ActiveScene->onUpdate(dt);
@@ -44,111 +62,117 @@ namespace Shado {
         Renderer2D::Clear();
 
         {
-            Renderer2D::BeginScene(m_camera_controller.getCamera());
+            //Renderer2D::BeginScene(m_camera_controller.getCamera());
             // Draw Scene
             m_ActiveScene->onDraw();
 
-            Renderer2D::DrawQuad({ 0.5, 0.5 }, { 1, 1 }, Color::CYAN);
-            Renderer2D::EndScene();
+            //Renderer2D::DrawQuad({ 0.5, 0.5 }, { 1, 1 }, Color::CYAN);
+           // Renderer2D::EndScene();
         }
 
         buffer->unbind();
 	}
 
-	void EditorLayer::onImGuiRender() {
+    void EditorLayer::onImGuiRender() {
         static bool p_open = true;
         static bool opt_fullscreen = true;
         static bool opt_padding = false;
         static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-        // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-        // because it would be confusing to have two docking targets within each others.
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-        if (opt_fullscreen)
-        {
-            const ImGuiViewport* viewport = ImGui::GetMainViewport();
-            ImGui::SetNextWindowPos(viewport->WorkPos);
-            ImGui::SetNextWindowSize(viewport->WorkSize);
-            ImGui::SetNextWindowViewport(viewport->ID);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-        } else
-        {
-            dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-        }
+		{
+	        // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+	        // because it would be confusing to have two docking targets within each others.
+	        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	        if (opt_fullscreen)
+	        {
+	            const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	            ImGui::SetNextWindowPos(viewport->WorkPos);
+	            ImGui::SetNextWindowSize(viewport->WorkSize);
+	            ImGui::SetNextWindowViewport(viewport->ID);
+	            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+	        } else
+	        {
+	            dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+	        }
 
-        // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-        // and handle the pass-thru hole, so we ask Begin() to not render a background.
-        if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-            window_flags |= ImGuiWindowFlags_NoBackground;
+	        // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
+	        // and handle the pass-thru hole, so we ask Begin() to not render a background.
+	        if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+	            window_flags |= ImGuiWindowFlags_NoBackground;
 
-        // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-        // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-        // all active windows docked into it will lose their parent and become undocked.
-        // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-        // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
-        if (!opt_padding)
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::Begin("DockSpace Demo", &p_open, window_flags);
-        if (!opt_padding)
-            ImGui::PopStyleVar();
+	        // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+	        // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+	        // all active windows docked into it will lose their parent and become undocked.
+	        // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+	        // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+	        if (!opt_padding)
+	            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	        ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+	        if (!opt_padding)
+	            ImGui::PopStyleVar();
 
-        if (opt_fullscreen)
-            ImGui::PopStyleVar(2);
+	        if (opt_fullscreen)
+	            ImGui::PopStyleVar(2);
 
-        // Submit the DockSpace
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-        {
-            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-        }
+	        // Submit the DockSpace
+	        ImGuiIO& io = ImGui::GetIO();
+	        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+	        {
+	            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+	            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+	        }
 
-        if (ImGui::BeginMenuBar())
-        {
-            if (ImGui::BeginMenu("File"))
-            {
-                // Disabling fullscreen would allow the window to be moved to the front of other windows,
-                // which we can't undo at the moment without finer window depth/z control.
-                if (ImGui::MenuItem("Exit")) {
-                    Application::close();
-                }
-                    
-                ImGui::EndMenu();
-            }
+	        if (ImGui::BeginMenuBar())
+	        {
+	            if (ImGui::BeginMenu("File"))
+	            {
+	                // Disabling fullscreen would allow the window to be moved to the front of other windows,
+	                // which we can't undo at the moment without finer window depth/z control.
+	                if (ImGui::MenuItem("Exit")) {
+	                    Application::close();
+	                }
 
-            ImGui::EndMenuBar();
-        }
+	                ImGui::EndMenu();
+	            }
 
-        {
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-            ImGui::Begin("Viewport");
-            m_viewportFocused = ImGui::IsWindowFocused();
-            m_viewportHovered = ImGui::IsWindowHovered();
-            Application::get().getUILayer()->setBlockEvents(!m_viewportFocused || !m_viewportHovered);
-            
-            ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+	            ImGui::EndMenuBar();
+	        }
+		}
 
-            // If viewports don't match recreate frame buffer
-            if (m_ViewportSize != *((glm::vec2*)&viewportPanelSize)  && viewportPanelSize.x > 0 && viewportPanelSize.y > 0) {
-                m_ViewportSize = { viewportPanelSize.x, viewportPanelSize.y };
-                buffer->resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+			ImGui::Begin("Viewport");
+			m_viewportFocused = ImGui::IsWindowFocused();
+			m_viewportHovered = ImGui::IsWindowHovered();
+			Application::get().getUILayer()->setBlockEvents(!m_viewportFocused || !m_viewportHovered);
 
-                m_camera_controller.onResize(m_ViewportSize.x, m_ViewportSize.y);
-            }
+			m_viewportPanelSize = ImGui::GetContentRegionAvail();
 
-            uint32_t textureID = buffer->getColorAttachmentRendererID();
-            ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
-            ImGui::End();
-            ImGui::PopStyleVar();
-        }
 
+			uint32_t textureID = buffer->getColorAttachmentRendererID();
+			ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
+			ImGui::End();
+			ImGui::PopStyleVar();
+		}
 
         ImGui::Begin("Test");
+        auto& tag = m_Square.getComponent<TagComponent>().tag;
         auto& squareColor = m_Square.getComponent<SpriteRendererComponent>().color;
+        ImGui::Text("%s", tag.c_str());
         ImGui::ColorEdit4("Square Color", (float*)&squareColor);
+
+		auto& cameratag = m_Camera.getComponent<TagComponent>().tag;
+		auto& transform = m_CameraSecondary.getComponent<TransformComponent>().transform[3];
+		ImGui::Text("%s", cameratag.c_str());
+		ImGui::DragFloat3("Camera transform", (float*)&transform);
+
+		auto* active = &m_Camera.getComponent<OrthoCameraComponent>().primary;
+		ImGui::Checkbox("Swtich primary cam", active);
+		m_CameraSecondary.getComponent<OrbitCameraComponent>().primary = !*active;
+
         ImGui::End();
 
         ImGui::End();
@@ -158,6 +182,6 @@ namespace Shado {
 	}
 
 	void EditorLayer::onEvent(Event& event) {
-        m_camera_controller.onEvent(event);
+        //m_camera_controller.onEvent(event);
 	}
 }

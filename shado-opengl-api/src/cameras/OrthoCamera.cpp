@@ -9,13 +9,13 @@
 namespace Shado {
 	OrthoCamera::OrthoCamera(float left, float right, float bottom, float top)
 	{
-		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 100.0f);
+		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, getNearClip(), getFarClip());
 		m_ViewMatrix = glm::mat4(1.0);
 		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 
 	void OrthoCamera::setProjection(float left, float right, float bottom, float top) {
-		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 100.0f);
+		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, getNearClip(), getFarClip());
 		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 

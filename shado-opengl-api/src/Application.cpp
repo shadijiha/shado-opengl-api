@@ -8,7 +8,6 @@
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
-#include "renderer/Renderer3D.h"
 #include "util/Random.h"
 
 namespace Shado {
@@ -170,7 +169,6 @@ namespace Shado {
 	void Application::Init() {
 		if (!Renderer2D::hasInitialized()) {
 			Renderer2D::Init();
-			Renderer3D::Init();
 			uiScene->onInit();
 		}
 	}

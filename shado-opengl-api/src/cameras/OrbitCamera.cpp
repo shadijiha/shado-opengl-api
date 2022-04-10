@@ -42,6 +42,12 @@ namespace Shado {
 		reCalculateViewMatrix();
 	}
 
+	void OrbitCamera::setAspectRatio(float aspectRatio) {
+		this->m_AspectRatio = aspectRatio;
+		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, 0.1f, 100.0f);
+		reCalculateViewMatrix();
+	}
+
 	void OrbitCamera::processMouseMovement(float xoffset, float yoffset, bool constrainPitch) {
 		xoffset *= MouseSensitivity;
 		yoffset *= MouseSensitivity;

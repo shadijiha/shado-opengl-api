@@ -2,7 +2,7 @@
 #include <unordered_map>
 
 #include "glm/vec2.hpp"
-#include "../Texture2D.h"
+#include "../renderer/Texture2D.h"
 
 namespace Shado {
 
