@@ -37,9 +37,21 @@ namespace Shado {
 
 		operator bool() const { return m_EntityHandle != entt::null; }
 
-	private:
+	protected:
 		entt::entity m_EntityHandle{entt::null};
 		Scene* m_Scene;
 	};
 
+
+	class ScriptableEntity : public Entity {
+	public:
+		virtual ~ScriptableEntity()	{}
+
+	protected:
+		virtual void onCreate() {}
+		virtual void onUpdate(TimeStep ts) {}
+		virtual void onDestroyed() {}
+
+		friend class Scene;
+	};
 }

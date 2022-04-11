@@ -22,6 +22,20 @@ namespace Shado {
 	}
 
 	void Scene::onUpdate(TimeStep ts) {
+		// Update script
+		{
+			m_Registry.view<NativeScriptComponent>().each([this, ts](auto entity, NativeScriptComponent& nsc) {
+				// TODO: mave to onScenePlay
+				if (!nsc.script) {
+					nsc.script = nsc.instantiateScript();
+					nsc.script->m_EntityHandle = entity;
+					nsc.script->m_Scene = this;
+					nsc.script->onCreate();					
+				}
+
+				nsc.script->onUpdate(ts);
+			});
+		}
 	}
 
 	void Scene::onDraw() {
@@ -33,7 +47,7 @@ namespace Shado {
 			// Loop through ortho cameras
 			auto group = m_Registry.view<TransformComponent, OrthoCameraComponent>();
 			for (auto entity : group) {
-				auto& [transform, camera] = group.get<TransformComponent, OrthoCameraComponent>(entity);
+				auto [transform, camera] = group.get<TransformComponent, OrthoCameraComponent>(entity);
 
 				if (camera.primary) {
 					primaryCamera = &camera.camera;
@@ -45,7 +59,7 @@ namespace Shado {
 			// Loop through Orbit cameras
 			auto orbitCams = m_Registry.view<TransformComponent, OrbitCameraComponent>();
 			for (auto entity : orbitCams) {
-				auto& [transform, camera] = orbitCams.get<TransformComponent, OrbitCameraComponent>(entity);
+				auto [transform, camera] = orbitCams.get<TransformComponent, OrbitCameraComponent>(entity);
 
 				if (camera.primary) {
 					primaryCamera = &camera.camera;
@@ -62,7 +76,7 @@ namespace Shado {
 			// Render stuff
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {
-				auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
 				Renderer2D::DrawQuad(transform.transform, sprite.color);
 			}

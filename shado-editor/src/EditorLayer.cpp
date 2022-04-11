@@ -23,17 +23,35 @@ namespace Shado {
 
         Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 
+		// Debug code
         m_ActiveScene = CreateRef<Scene>();
         m_Square = m_ActiveScene->createEntity("Cait queen");
 
         m_Camera = m_ActiveScene->createEntity("Camera");
         m_Camera.addComponent<OrthoCameraComponent>(-16.0f, 16.0f, -9.0f, 9.0f);
 
+		class CameraController : public ScriptableEntity {
+			void onUpdate(TimeStep ts) override {
+				auto& transform = getComponent<TransformComponent>().transform;
+				float speed = 5.0f;
+
+				if (Input::isKeyPressed(KeyCode::A))
+					transform[3][0] -= speed * ts;
+				if (Input::isKeyPressed(KeyCode::D))
+					transform[3][0] += speed * ts;
+				if (Input::isKeyPressed(KeyCode::W))
+					transform[3][1] += speed * ts;
+				if (Input::isKeyPressed(KeyCode::S))
+					transform[3][1] -= speed * ts;
+			}
+		};
+		m_Camera.addComponent<NativeScriptComponent>().bind<CameraController>();
+
 		m_CameraSecondary = m_ActiveScene->createEntity("Camera 2");
 		m_CameraSecondary.addComponent<OrbitCameraComponent>(Application::get().getWindow().getAspectRatio()).primary = false;
 		m_CameraSecondary.getComponent<TransformComponent>().transform[3][2] = 4.0f;
-
-        // Debug code
+		m_CameraSecondary.addComponent<NativeScriptComponent>().bind<CameraController>();
+        
         m_Square.addComponent<SpriteRendererComponent>(glm::vec4{0, 1, 0, 1});
 	}
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 
+#include "Entity.h"
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
@@ -25,8 +26,7 @@ namespace Shado {
 		operator glm::mat4& () { return transform; }
 		operator const glm::mat4& () { return transform; }
 	};
-
-
+	
 	struct SpriteRendererComponent {
 		glm::vec4 color= {1, 1, 1, 1};
 
@@ -67,6 +67,19 @@ namespace Shado {
 
 		void setViewportSize(uint32_t width, uint32_t height) {
 			camera.setAspectRatio((float)width / (float)height);
+		}
+	};
+
+	struct NativeScriptComponent {
+		ScriptableEntity* script;
+
+		ScriptableEntity* (*instantiateScript)();
+		void (*destroyScript)(NativeScriptComponent*);
+
+		template<typename T>
+		void bind() {
+			instantiateScript = []() {return (ScriptableEntity*)new T(); };
+			destroyScript = [](NativeScriptComponent* nsc) {delete nsc->script; nsc->script = nullptr; };
 		}
 	};
 
