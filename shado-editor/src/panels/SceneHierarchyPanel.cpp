@@ -112,7 +112,7 @@ namespace Shado {
 			if (ImGui::InputText("Tag", buffer, sizeof(buffer))) {
 				tc.tag = std::string(buffer);
 			}
-		});
+		}, false);
 
 		drawComponent<TransformComponent>("Transform", entity, [this, &entity]() {
 			auto& transform = entity.getComponent<TransformComponent>();
@@ -128,7 +128,7 @@ namespace Shado {
 			///ImGui::DragFloat3("Position", glm::value_ptr(transform.position), 0.1f);
 			//ImGui::DragFloat3("Rotation", glm::value_ptr(transform.rotation), 0.1f);
 			//ImGui::DragFloat3("Scale", glm::value_ptr(transform.scale), 0.1f);
-		});
+		}, false);
 
 		drawComponent<SpriteRendererComponent>("Sprite", entity, [this, &entity]() {
 			auto& sprit = entity.getComponent<SpriteRendererComponent>();
