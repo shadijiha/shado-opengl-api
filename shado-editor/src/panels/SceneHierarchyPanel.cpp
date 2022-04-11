@@ -52,7 +52,7 @@ namespace Shado {
 				}
 
 				if (ImGui::MenuItem("Camera")) {
-					m_Selected.addComponent<CameraComponent>();
+					m_Selected.addComponent<CameraComponent>(CameraComponent::Type::Orthographic, m_Context->m_ViewportWidth, m_Context->m_ViewportHeight);
 					ImGui::CloseCurrentPopup();
 				}
 

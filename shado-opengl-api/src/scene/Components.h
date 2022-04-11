@@ -51,9 +51,6 @@ namespace Shado {
 		bool fixedAspectRatio = false;
 		Type type = Type::Orthographic;
 
-		CameraComponent()
-			: CameraComponent(Type::Orthographic, Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight())
-		{}
 		CameraComponent(Type type, uint32_t width, uint32_t height): type(type) {
 			cachedWidth = width;
 			cachedHeight = height;
