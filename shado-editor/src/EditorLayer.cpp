@@ -53,6 +53,8 @@ namespace Shado {
 		m_CameraSecondary.addComponent<NativeScriptComponent>().bind<CameraController>();
         
         m_Square.addComponent<SpriteRendererComponent>(glm::vec4{0, 1, 0, 1});
+
+		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
@@ -175,6 +177,8 @@ namespace Shado {
 			ImGui::End();
 			ImGui::PopStyleVar();
 		}
+
+		m_sceneHierarchyPanel.onImGuiRender();
 
         ImGui::Begin("Test");
         auto& tag = m_Square.getComponent<TagComponent>().tag;

@@ -1,4 +1,5 @@
 #include "Shado.h"
+#include "panels/SceneHierarchyPanel.h"
 
 namespace Shado {
 
@@ -29,6 +30,9 @@ namespace Shado {
 		Entity m_Camera;
 		Entity m_CameraSecondary;
 		Ref<Scene> m_ActiveScene;
+
+		// Panels
+		SceneHierarchyPanel m_sceneHierarchyPanel;
 	};
 
 
