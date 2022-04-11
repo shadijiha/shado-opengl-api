@@ -52,6 +52,8 @@ namespace Shado {
 		std::pair<float, float> PanSpeed() const;
 		float RotationSpeed() const;
 		float ZoomSpeed() const;
+	protected:
+		void reCalculateProjectionMatix() override	{}
 	private:
 		glm::mat4 m_ViewMatrix;
 		glm::vec3 m_Position, m_Rotation, m_FocalPoint;

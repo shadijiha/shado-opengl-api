@@ -24,11 +24,15 @@ namespace Shado {
         Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 
 		// Debug code
+		int width = Application::get().getWindow().getWidth();
+		int height = Application::get().getWindow().getHeight();
+
         m_ActiveScene = CreateRef<Scene>();
         m_Square = m_ActiveScene->createEntity("Cait queen");
+		
 
         m_Camera = m_ActiveScene->createEntity("Camera");
-        m_Camera.addComponent<OrthoCameraComponent>(-16.0f, 16.0f, -9.0f, 9.0f);
+        m_Camera.addComponent<CameraComponent>(CameraComponent::Type::Orthographic, width, height);
 
 		class CameraController : public ScriptableEntity {
 			void onUpdate(TimeStep ts) override {
@@ -48,11 +52,12 @@ namespace Shado {
 		m_Camera.addComponent<NativeScriptComponent>().bind<CameraController>();
 
 		m_CameraSecondary = m_ActiveScene->createEntity("Camera 2");
-		m_CameraSecondary.addComponent<OrbitCameraComponent>(Application::get().getWindow().getAspectRatio()).primary = false;
+		m_CameraSecondary.addComponent<CameraComponent>(CameraComponent::Type::Orbit, width, height).primary = false;
 		m_CameraSecondary.getComponent<TransformComponent>().transform[3][2] = 4.0f;
 		m_CameraSecondary.addComponent<NativeScriptComponent>().bind<CameraController>();
         
         m_Square.addComponent<SpriteRendererComponent>(glm::vec4{0, 1, 0, 1});
+		m_ActiveScene->createEntity("Square2").addComponent<SpriteRendererComponent>(glm::vec4{1, 0, 0, 1});
 
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
@@ -191,9 +196,9 @@ namespace Shado {
 		ImGui::Text("%s", cameratag.c_str());
 		ImGui::DragFloat3("Camera transform", (float*)&transform);
 
-		auto* active = &m_Camera.getComponent<OrthoCameraComponent>().primary;
+		auto* active = &m_Camera.getComponent<CameraComponent>().primary;
 		ImGui::Checkbox("Swtich primary cam", active);
-		m_CameraSecondary.getComponent<OrbitCameraComponent>().primary = !*active;
+		m_CameraSecondary.getComponent<CameraComponent>().primary = !*active;
 
         ImGui::End();
 

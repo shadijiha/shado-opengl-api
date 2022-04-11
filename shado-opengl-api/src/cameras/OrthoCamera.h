@@ -15,12 +15,12 @@ namespace Shado
 		OrthoCamera(float left, float right, float bottom, float top);
 
 		void setProjection(float left, float right, float bottom, float top);
-
-		float getNearClip()	const { return -1.0f; }
-		float getFarClip()	const { return 100.0f; }
-
+	
 	protected:
 		virtual void reCalculateViewMatrix() override;
+		virtual void reCalculateProjectionMatix() override;
+
+		float left, right, bottom, top;
 	};
 
 	/***************** CLASS OrthographicCameraController ********************/

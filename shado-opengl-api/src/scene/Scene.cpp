@@ -45,24 +45,12 @@ namespace Shado {
 		glm::mat4* cameraTransform = nullptr;
 		{
 			// Loop through ortho cameras
-			auto group = m_Registry.view<TransformComponent, OrthoCameraComponent>();
+			auto group = m_Registry.view<TransformComponent, CameraComponent>();
 			for (auto entity : group) {
-				auto [transform, camera] = group.get<TransformComponent, OrthoCameraComponent>(entity);
+				auto [transform, camera] = group.get<TransformComponent, CameraComponent>(entity);
 
 				if (camera.primary) {
-					primaryCamera = &camera.camera;
-					cameraTransform = &transform.transform;
-					break;
-				}
-			}
-
-			// Loop through Orbit cameras
-			auto orbitCams = m_Registry.view<TransformComponent, OrbitCameraComponent>();
-			for (auto entity : orbitCams) {
-				auto [transform, camera] = orbitCams.get<TransformComponent, OrbitCameraComponent>(entity);
-
-				if (camera.primary) {
-					primaryCamera = &camera.camera;
+					primaryCamera = camera.camera;
 					cameraTransform = &transform.transform;
 					break;
 				}
@@ -91,19 +79,9 @@ namespace Shado {
 
 		// Resize cams
 		// Loop through ortho cameras
-		auto orthCams = m_Registry.view<OrthoCameraComponent>();
+		auto orthCams = m_Registry.view<CameraComponent>();
 		for (auto entity : orthCams) {
-			auto& camera = orthCams.get<OrthoCameraComponent>(entity);
-
-			if (!camera.fixedAspectRatio) {
-				camera.setViewportSize(width, height);
-			}
-		}
-
-		// Loop through Orbit cameras
-		auto orbitCams = m_Registry.view<OrbitCameraComponent>();
-		for (auto entity : orbitCams) {
-			auto& camera = orbitCams.get<OrbitCameraComponent>(entity);
+			auto& camera = orthCams.get<CameraComponent>(entity);
 
 			if (!camera.fixedAspectRatio) {
 				camera.setViewportSize(width, height);

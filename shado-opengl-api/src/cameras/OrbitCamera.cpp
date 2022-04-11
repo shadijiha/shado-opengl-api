@@ -20,7 +20,7 @@ namespace Shado {
 		WorldUp = up;
 		m_Rotation = rotation;
 		m_AspectRatio = aspectRatio;
-		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, 0.1f, 100.0f);
+		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, nearClip, farClip);
 		updateCameraVectors();
 		reCalculateViewMatrix();
 	}
@@ -44,7 +44,7 @@ namespace Shado {
 
 	void OrbitCamera::setAspectRatio(float aspectRatio) {
 		this->m_AspectRatio = aspectRatio;
-		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, 0.1f, 100.0f);
+		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, nearClip, farClip);
 		reCalculateViewMatrix();
 	}
 
@@ -87,6 +87,11 @@ namespace Shado {
 		m_ViewMatrix = glm::lookAt(m_Position, m_Position + Front, Up) * glm::rotate(
 			glm::mat4(1.0f), glm::radians(m_Rotation.z), glm::vec3(0, 0, 1));
 		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
+	}
+
+	void OrbitCamera::reCalculateProjectionMatix() {
+		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, nearClip, farClip);
+		reCalculateViewMatrix();
 	}
 
 	//=========================================================

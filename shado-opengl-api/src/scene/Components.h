@@ -35,38 +35,74 @@ namespace Shado {
 		SpriteRendererComponent(const glm::vec4& color) : color(color) {}
 	};
 
-	struct OrthoCameraComponent {
-		OrthoCamera camera;
+	struct CameraComponent {
+		enum class Type {
+			Orthographic = 0, Orbit = 1
+		};
+
+		Camera* camera;
 		bool primary = true;
 		bool fixedAspectRatio = false;
-		float size = 5.0f;
+		Type type = Type::Orthographic;
 
-		OrthoCameraComponent() = default;
-		OrthoCameraComponent(const OrthoCameraComponent&) = default;
-		OrthoCameraComponent(float left, float right, float bottom, float top): camera(left, right, bottom, top) {}
+		CameraComponent(Type type, uint32_t width, uint32_t height): type(type) {
+			cachedWidth = width;
+			cachedHeight = height;
 
-		void setViewportSize(uint32_t width, uint32_t height) {
-			float aspectRatio = (float)width / (float)height;
-			float left = -size * aspectRatio * 0.5f;
-			float right = size * aspectRatio * 0.5f;
-			float bottom = -size * 0.5f;
-			float top = size * 0.5f;
-
-			camera.setProjection(left ,right, bottom, top);
+			init(width, height);
 		}
-	};
 
-	struct OrbitCameraComponent {
-		OrbitCamera camera;
-		bool primary = true;
-		bool fixedAspectRatio = false;
-
-		OrbitCameraComponent() = default;
-		OrbitCameraComponent(const OrbitCameraComponent&) = default;
-		OrbitCameraComponent(float aspectRatio) : camera(aspectRatio) {}
+		CameraComponent(const CameraComponent&) = default;
+		~CameraComponent() { delete camera; }
 
 		void setViewportSize(uint32_t width, uint32_t height) {
-			camera.setAspectRatio((float)width / (float)height);
+			if (type == Type::Orthographic) {
+				auto* cam = (OrthoCamera*)camera;
+				float aspectRatio = (float)width / (float)height;
+				float left = -size * aspectRatio * 0.5f;
+				float right = size * aspectRatio * 0.5f;
+				float bottom = -size * 0.5f;
+				float top = size * 0.5f;
+				cam->setProjection(left, right, bottom, top);
+			} else {
+				auto* cam = (OrbitCamera*)camera;
+				cam->setAspectRatio((float)width / (float)height);
+			}
+
+			cachedWidth = width;
+			cachedHeight = height;
+		}
+
+		float getSize() const {
+			if (type == Type::Orbit)
+				SHADO_CORE_WARN("Attempting to get the size of an orbit camera?");
+			return size;
+		}
+
+		void setSize(float size) {
+			if (type == Type::Orthographic) {
+				this->size = size;
+				this->setViewportSize(cachedWidth, cachedHeight);
+			}
+		}
+
+		void setType(Type type) {
+			delete camera;
+			this->type = type;
+			init(cachedWidth, cachedHeight);
+		}
+
+	private:
+		float size = 5.0f;
+		uint32_t cachedWidth, cachedHeight;
+
+	private:
+		void init(uint32_t width, uint32_t height) {
+			if (type == Type::Orthographic) {
+				camera = new OrthoCamera(-16.0f, 16.0f, -9.0f, 9.0f);
+				setViewportSize(width, height);
+			} else
+				camera = new OrbitCamera((float)width / (float)height);
 		}
 	};
 
