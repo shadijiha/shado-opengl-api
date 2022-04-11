@@ -3,6 +3,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "imgui_internal.h"
+
 namespace Shado {
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
@@ -25,11 +27,42 @@ namespace Shado {
 			m_Selected = {};
 		}
 
+		// Context menu to create 
+		if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+			if (ImGui::MenuItem("Create empty Entity"))
+				m_Context->createEntity("Empty Entity");
+
+			ImGui::EndPopup();
+		}
+
 		ImGui::End();
 
 		ImGui::Begin("Properties");
 		if (m_Selected) {
 			drawComponents(m_Selected);
+
+			// To Add components context menu
+			if (ImGui::Button("+"))
+				ImGui::OpenPopup("AddComponent");
+
+			if (ImGui::BeginPopup("AddComponent")) {
+				if (ImGui::MenuItem("Sprite renderer")) {
+					m_Selected.addComponent<SpriteRendererComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+
+				if (ImGui::MenuItem("Camera")) {
+					m_Selected.addComponent<CameraComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+
+				if (ImGui::MenuItem("Native script")) {
+					m_Selected.addComponent<NativeScriptComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
 		}
 		ImGui::End();
 	}
@@ -44,10 +77,29 @@ namespace Shado {
 			m_Selected = entity;
 		}
 
+		// Context menu item
+		bool deleteEntity = false;
+		if (ImGui::BeginPopupContextItem()) {
+			if (ImGui::MenuItem("Delete Entity"))
+				deleteEntity = true;
+
+			ImGui::EndPopup();
+		}
+
 		if (opened) {
 			ImGui::TreePop();
 		}
+
+		// Defer the entity deletion to avoid bugs
+		if (deleteEntity) {
+			m_Context->destroyEntity(entity);
+			if (m_Selected == entity)
+				m_Selected = {};
+		}
 	}
+
+	// Helpers
+	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 
 	void SceneHierarchyPanel::drawComponents(Entity entity) {
 
@@ -64,7 +116,18 @@ namespace Shado {
 
 		drawComponent<TransformComponent>("Transform", entity, [this, &entity]() {
 			auto& transform = entity.getComponent<TransformComponent>();
-			ImGui::DragFloat3("Position", glm::value_ptr(transform.transform[3]), 0.1f);
+
+			drawVec3Control("Position", transform.position);
+
+			auto rotation = glm::degrees(transform.rotation);
+			drawVec3Control("Rotation", rotation);
+			transform.rotation = glm::radians(rotation);
+
+			drawVec3Control("Scale", transform.scale, 1.0);
+
+			///ImGui::DragFloat3("Position", glm::value_ptr(transform.position), 0.1f);
+			//ImGui::DragFloat3("Rotation", glm::value_ptr(transform.rotation), 0.1f);
+			//ImGui::DragFloat3("Scale", glm::value_ptr(transform.scale), 0.1f);
 		});
 
 		drawComponent<SpriteRendererComponent>("Sprite", entity, [this, &entity]() {
@@ -105,7 +168,7 @@ namespace Shado {
 			}
 
 			if (camera.type == CameraComponent::Type::Orbit) {
-				OrbitCamera* cam = (OrbitCamera*)camera.camera;
+				OrbitCamera* cam = (OrbitCamera*)camera.camera.get();
 
 				float fov = cam->getFOV();
 				if (ImGui::DragFloat("FOV", &fov)) {
@@ -126,5 +189,65 @@ namespace Shado {
 			ImGui::Checkbox("Fixed aspect ratio", &camera.fixedAspectRatio);
 
 		});
+	}
+
+	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.c_str());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.1f, 0.15f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.1f, 0.15f, 1.0f });
+		if (ImGui::Button("X", buttonSize))
+			values.x = resetValue;
+		ImGui::PopStyleColor(3);
+		
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##X", &values.x, 0.1f, 0, 0, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.3f, 0.8f, 0.3f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.2f, 0.7f, 0.2f, 1.0f });
+		if (ImGui::Button("Y", buttonSize))
+			values.y = resetValue;
+		ImGui::PopStyleColor(3);
+
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Y", &values.y, 0.1f, 0, 0, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.35f, 0.9f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.1f, 0.25f, 0.8f, 1.0f });
+		if (ImGui::Button("Z", buttonSize))
+			values.z = resetValue;
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Z", &values.z, 0.1f, 0, 0, "%.2f");
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleVar();
+
+		ImGui::Columns(1);
+
+		ImGui::PopID();
 	}
 }

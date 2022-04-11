@@ -21,6 +21,10 @@ namespace Shado {
 		return entity;
 	}
 
+	void Scene::destroyEntity(Entity entity) {
+		m_Registry.destroy(entity);
+	}
+
 	void Scene::onUpdate(TimeStep ts) {
 		// Update script
 		{
@@ -42,7 +46,7 @@ namespace Shado {
 
 		// Render 2D: Cameras
 		Camera* primaryCamera = nullptr;
-		glm::mat4* cameraTransform = nullptr;
+		glm::mat4 cameraTransform;
 		{
 			// Loop through ortho cameras
 			auto group = m_Registry.view<TransformComponent, CameraComponent>();
@@ -50,8 +54,8 @@ namespace Shado {
 				auto [transform, camera] = group.get<TransformComponent, CameraComponent>(entity);
 
 				if (camera.primary) {
-					primaryCamera = camera.camera;
-					cameraTransform = &transform.transform;
+					primaryCamera = camera.camera.get();
+					cameraTransform = transform.getTransform();
 					break;
 				}
 			}
@@ -59,14 +63,14 @@ namespace Shado {
 
 		
 		if (primaryCamera) {
-			Renderer2D::BeginScene(*primaryCamera, *cameraTransform);
+			Renderer2D::BeginScene(*primaryCamera, cameraTransform);
 
 			// Render stuff
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {
 				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
-				Renderer2D::DrawQuad(transform.transform, sprite.color);
+				Renderer2D::DrawQuad(transform.getTransform(), sprite.color);
 			}
 
 			Renderer2D::EndScene();

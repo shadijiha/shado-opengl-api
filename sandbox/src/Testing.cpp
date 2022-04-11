@@ -57,11 +57,11 @@ public:
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>([&](KeyPressedEvent& event) {
 
-			if (event.getKeyCode() == SHADO_KEY_ESCAPE) {
+			if (event.getKeyCode() == (int)KeyCode::Escape) {
 				Application::get().getWindow().setMode(WindowMode::WINDOWED);
 			}
 
-			if (event.getKeyCode() == SHADO_KEY_F) {
+			if (event.getKeyCode() == (int)KeyCode::F) {
 				Application::get().getWindow().setMode(WindowMode::FULLSCREEN);
 			}
 

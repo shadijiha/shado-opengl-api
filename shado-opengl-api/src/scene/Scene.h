@@ -11,6 +11,7 @@ namespace Shado {
 		~Scene();
 
 		Entity createEntity(const std::string& name = "");
+		void destroyEntity(Entity entity);
 
 		void onUpdate(TimeStep ts);
 		void onDraw();

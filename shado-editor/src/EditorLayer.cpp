@@ -36,24 +36,24 @@ namespace Shado {
 
 		class CameraController : public ScriptableEntity {
 			void onUpdate(TimeStep ts) override {
-				auto& transform = getComponent<TransformComponent>().transform;
+				auto& transform = getComponent<TransformComponent>().position;
 				float speed = 5.0f;
 
 				if (Input::isKeyPressed(KeyCode::A))
-					transform[3][0] -= speed * ts;
+					transform.x-= speed * ts;
 				if (Input::isKeyPressed(KeyCode::D))
-					transform[3][0] += speed * ts;
+					transform.x += speed * ts;
 				if (Input::isKeyPressed(KeyCode::W))
-					transform[3][1] += speed * ts;
+					transform.y += speed * ts;
 				if (Input::isKeyPressed(KeyCode::S))
-					transform[3][1] -= speed * ts;
+					transform.y -= speed * ts;
 			}
 		};
 		m_Camera.addComponent<NativeScriptComponent>().bind<CameraController>();
 
 		m_CameraSecondary = m_ActiveScene->createEntity("Camera 2");
 		m_CameraSecondary.addComponent<CameraComponent>(CameraComponent::Type::Orbit, width, height).primary = false;
-		m_CameraSecondary.getComponent<TransformComponent>().transform[3][2] = 4.0f;
+		m_CameraSecondary.getComponent<TransformComponent>().position.z = 4.0f;
 		m_CameraSecondary.addComponent<NativeScriptComponent>().bind<CameraController>();
         
         m_Square.addComponent<SpriteRendererComponent>(glm::vec4{0, 1, 0, 1});
@@ -184,24 +184,7 @@ namespace Shado {
 		}
 
 		m_sceneHierarchyPanel.onImGuiRender();
-
-        ImGui::Begin("Test");
-        auto& tag = m_Square.getComponent<TagComponent>().tag;
-        auto& squareColor = m_Square.getComponent<SpriteRendererComponent>().color;
-        ImGui::Text("%s", tag.c_str());
-        ImGui::ColorEdit4("Square Color", (float*)&squareColor);
-
-		auto& cameratag = m_Camera.getComponent<TagComponent>().tag;
-		auto& transform = m_CameraSecondary.getComponent<TransformComponent>().transform[3];
-		ImGui::Text("%s", cameratag.c_str());
-		ImGui::DragFloat3("Camera transform", (float*)&transform);
-
-		auto* active = &m_Camera.getComponent<CameraComponent>().primary;
-		ImGui::Checkbox("Swtich primary cam", active);
-		m_CameraSecondary.getComponent<CameraComponent>().primary = !*active;
-
-        ImGui::End();
-
+		
         ImGui::End();
 	}
 
