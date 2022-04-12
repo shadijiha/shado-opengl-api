@@ -22,8 +22,10 @@ namespace Shado {
 		entt::registry m_Registry;
 		uint32_t m_ViewportWidth = 0;
 		uint32_t m_ViewportHeight = 0;
+		std::string name = "Untitled";
 
 		friend class Entity;
+		friend class SceneSerializer;
 		friend class SceneHierarchyPanel;
 	};
 

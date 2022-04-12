@@ -1,6 +1,7 @@
 #include "EditorLayer.h"
 
 #include "Application.h"
+#include "scene/SceneSerializer.h"
 
 namespace Shado {
 
@@ -23,16 +24,7 @@ namespace Shado {
 
         Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 
-		// Debug code
-		int width = Application::get().getWindow().getWidth();
-		int height = Application::get().getWindow().getHeight();
-
         m_ActiveScene = CreateRef<Scene>();
-        m_Square = m_ActiveScene->createEntity("Cait queen");
-		
-
-        m_Camera = m_ActiveScene->createEntity("Camera");
-        m_Camera.addComponent<CameraComponent>(CameraComponent::Type::Orthographic, width, height);
 
 		class CameraController : public ScriptableEntity {
 			void onUpdate(TimeStep ts) override {
@@ -49,15 +41,6 @@ namespace Shado {
 					transform.y -= speed * ts;
 			}
 		};
-		m_Camera.addComponent<NativeScriptComponent>().bind<CameraController>();
-
-		m_CameraSecondary = m_ActiveScene->createEntity("Camera 2");
-		m_CameraSecondary.addComponent<CameraComponent>(CameraComponent::Type::Orbit, width, height).primary = false;
-		m_CameraSecondary.getComponent<TransformComponent>().position.z = 4.0f;
-		m_CameraSecondary.addComponent<NativeScriptComponent>().bind<CameraController>();
-        
-        m_Square.addComponent<SpriteRendererComponent>(glm::vec4{0, 1, 0, 1});
-		m_ActiveScene->createEntity("Square2").addComponent<SpriteRendererComponent>(glm::vec4{1, 0, 0, 1});
 
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
@@ -159,6 +142,24 @@ namespace Shado {
 	        {
 	            if (ImGui::BeginMenu("File"))
 	            {
+					// Open Scene file
+					if (ImGui::MenuItem("Open", "Ctrl+O")) {
+						Ref<Scene> scene = CreateRef<Scene>();
+						scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+
+						SceneSerializer serializer(scene);
+						serializer.deserialize("assets/scene.shadoscene");
+
+						m_ActiveScene = scene;
+						m_sceneHierarchyPanel.setContext(scene);
+					}
+
+					// Save scene file
+					if (ImGui::MenuItem("Save", "Ctrl+S")) {
+						SceneSerializer serializer(m_ActiveScene);
+						serializer.serialize("assets/scene.shadoscene");
+					}
+
 	                // Disabling fullscreen would allow the window to be moved to the front of other windows,
 	                // which we can't undo at the moment without finer window depth/z control.
 	                if (ImGui::MenuItem("Exit")) {

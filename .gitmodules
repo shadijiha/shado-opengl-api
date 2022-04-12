@@ -13,3 +13,6 @@
 [submodule "shado-opengl-api/vendor/box2d"]
 	path = shado-opengl-api/vendor/box2d
 	url = https://github.com/TheCherno/box2d
+[submodule "shado-opengl-api/vendor/yaml-cpp"]
+	path = shado-opengl-api/vendor/yaml-cpp
+	url = https://github.com/TheCherno/yaml-cpp.git

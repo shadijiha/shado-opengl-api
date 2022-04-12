@@ -24,11 +24,6 @@ namespace Shado {
 		Ref<FrameBuffer> buffer;
 
 		ImVec2 m_viewportPanelSize;
-
-		// Debug
-		Entity m_Square;
-		Entity m_Camera;
-		Entity m_CameraSecondary;
 		Ref<Scene> m_ActiveScene;
 
 		// Panels
