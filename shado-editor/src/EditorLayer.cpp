@@ -5,6 +5,9 @@
 #include "scene/utils/SceneUtils.h"
 
 namespace Shado {
+	static void saveScene();
+	static void newScene();
+	static void openScene();
 
 	EditorLayer::EditorLayer()
 		: Layer("Editor"), m_camera_controller(Application::get().getWindow().getAspectRatio(), true)
@@ -146,35 +149,17 @@ namespace Shado {
 	            {
 					// New scene
 					if (ImGui::MenuItem("New", "Ctrl+N")) {
-						Ref<Scene> scene = CreateRef<Scene>();
-						scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
-						m_ActiveScene = scene;
-						m_sceneHierarchyPanel.setContext(scene);
+						newScene();
 					}
 
 					// Open Scene file
 					if (ImGui::MenuItem("Open", "Ctrl+O")) {
-						auto filepath = FileDialogs::openFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
-
-						if(!filepath.empty()) {
-							Ref<Scene> scene = CreateRef<Scene>();
-							scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
-
-							SceneSerializer serializer(scene);
-							serializer.deserialize(filepath);
-
-							m_ActiveScene = scene;
-							m_sceneHierarchyPanel.setContext(scene);
-						}
+						openScene();
 					}
 
 					// Save scene file
 					if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {
-						auto filepath = FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
-						if (!filepath.empty()) {
-							SceneSerializer serializer(m_ActiveScene);
-							serializer.serialize(filepath);
-						}						
+						saveScene();
 					}
 
 	                // Disabling fullscreen would allow the window to be moved to the front of other windows,
@@ -216,5 +201,63 @@ namespace Shado {
 
 	void EditorLayer::onEvent(Event& event) {
         //m_camera_controller.onEvent(event);
+
+		EventDispatcher dispatcher(event);
+		dispatcher.dispatch<KeyPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onKeyPressed));
+	}
+
+	// Helpers
+	bool EditorLayer::onKeyPressed(KeyPressedEvent& e) {
+		// For shortcuts
+		if (e.getRepeatCount() > 0)
+			return false;
+
+		bool control = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
+		bool shift = Input::isKeyPressed(KeyCode::LeftShift) || Input::isKeyPressed(KeyCode::RightShift);
+
+		switch (e.getKeyCode()) {
+			case KeyCode::S:
+				if (control && shift)
+					saveScene();
+				break;
+			case KeyCode::N:
+				if (control)
+					newScene();
+				break;
+			case KeyCode::O:
+				if (control)
+					openScene();
+				break;
+		}
+	}
+
+	void EditorLayer::saveScene() {
+		auto filepath = FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
+		if (!filepath.empty()) {
+			SceneSerializer serializer(m_ActiveScene);
+			serializer.serialize(filepath);
+		}		
+	}
+
+	void EditorLayer::newScene() {
+		Ref<Scene> scene = CreateRef<Scene>();
+		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+		m_ActiveScene = scene;
+		m_sceneHierarchyPanel.setContext(scene);
+	}
+
+	void EditorLayer::openScene() {
+		auto filepath = FileDialogs::openFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
+
+		if (!filepath.empty()) {
+			Ref<Scene> scene = CreateRef<Scene>();
+			scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+
+			SceneSerializer serializer(scene);
+			serializer.deserialize(filepath);
+
+			m_ActiveScene = scene;
+			m_sceneHierarchyPanel.setContext(scene);
+		}
 	}
 }

@@ -13,6 +13,7 @@ namespace Shado {
 
 	void SceneHierarchyPanel::setContext(const Ref<Scene>& scene) {
 		m_Context = scene;
+		m_Selected = {};
 	}
 
 	void SceneHierarchyPanel::onImGuiRender() {
