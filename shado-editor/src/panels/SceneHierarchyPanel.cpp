@@ -40,29 +40,6 @@ namespace Shado {
 		ImGui::Begin("Properties");
 		if (m_Selected) {
 			drawComponents(m_Selected);
-
-			// To Add components context menu
-			if (ImGui::Button("+"))
-				ImGui::OpenPopup("AddComponent");
-
-			if (ImGui::BeginPopup("AddComponent")) {
-				if (ImGui::MenuItem("Sprite renderer")) {
-					m_Selected.addComponent<SpriteRendererComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-
-				if (ImGui::MenuItem("Camera")) {
-					m_Selected.addComponent<CameraComponent>(CameraComponent::Type::Orthographic, m_Context->m_ViewportWidth, m_Context->m_ViewportHeight);
-					ImGui::CloseCurrentPopup();
-				}
-
-				if (ImGui::MenuItem("Native script")) {
-					m_Selected.addComponent<NativeScriptComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-
-				ImGui::EndPopup();
-			}
 		}
 		ImGui::End();
 	}
@@ -72,6 +49,8 @@ namespace Shado {
 		TagComponent& tc = entity.getComponent<TagComponent>();
 		
 		auto flags = ImGuiTreeNodeFlags_OpenOnArrow | (m_Selected == entity ? ImGuiTreeNodeFlags_Selected : 0);
+		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+
 		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tc.tag.c_str());
 		if (ImGui::IsItemClicked()) {
 			m_Selected = entity;
@@ -99,24 +78,26 @@ namespace Shado {
 	}
 
 	// Helpers
+	template<typename T>
+	static void drawComponent(const char* label, Entity entity, std::function<void(T&)> ui, bool allowDeletion = true);
 	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight);
 
 	void SceneHierarchyPanel::drawComponents(Entity entity) {
 
-		drawComponent<TagComponent>("Tag", entity, [this, &entity]() {
-			auto& tc = entity.getComponent<TagComponent>();
-
+		drawComponent<TagComponent>("Tag", entity, [](TagComponent& tc) {
 			char buffer[512];
 			memset(buffer, 0, sizeof(buffer));
 			strcpy_s(buffer, sizeof(buffer), tc.tag.c_str());
-			if (ImGui::InputText("Tag", buffer, sizeof(buffer))) {
+			if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
 				tc.tag = std::string(buffer);
 			}
 		}, false);
 
-		drawComponent<TransformComponent>("Transform", entity, [this, &entity]() {
-			auto& transform = entity.getComponent<TransformComponent>();
+		// Add component context menu
+		addComponentContextMenu(m_Selected, m_Context->m_ViewportWidth, m_Context->m_ViewportHeight);
 
+		drawComponent<TransformComponent>("Transform", entity, [](TransformComponent& transform) {
 			drawVec3Control("Position", transform.position);
 
 			auto rotation = glm::degrees(transform.rotation);
@@ -124,20 +105,13 @@ namespace Shado {
 			transform.rotation = glm::radians(rotation);
 
 			drawVec3Control("Scale", transform.scale, 1.0);
-
-			///ImGui::DragFloat3("Position", glm::value_ptr(transform.position), 0.1f);
-			//ImGui::DragFloat3("Rotation", glm::value_ptr(transform.rotation), 0.1f);
-			//ImGui::DragFloat3("Scale", glm::value_ptr(transform.scale), 0.1f);
 		}, false);
 
-		drawComponent<SpriteRendererComponent>("Sprite", entity, [this, &entity]() {
-			auto& sprit = entity.getComponent<SpriteRendererComponent>();
-			ImGui::ColorEdit4("Colour", glm::value_ptr(sprit.color));
+		drawComponent<SpriteRendererComponent>("Sprite", entity, [](SpriteRendererComponent& sprite) {
+			ImGui::ColorEdit4("Colour", glm::value_ptr(sprite.color));
 		});
 
-		drawComponent<CameraComponent>("Camera", entity, [this, &entity]() {
-			auto& camera = entity.getComponent<CameraComponent>();
-
+		drawComponent<CameraComponent>("Camera", entity, [](CameraComponent& camera) {
 			// Select menu to change camera type
 			const char* projectionTypesString[] = { "Orthographic", "Orbit (Perspective)" };
 			const char* currentProjectionType = projectionTypesString[(int)camera.type];
@@ -187,11 +161,61 @@ namespace Shado {
 
 			ImGui::Checkbox("Primary", &camera.primary);
 			ImGui::Checkbox("Fixed aspect ratio", &camera.fixedAspectRatio);
-
 		});
 	}
+	
+	template<typename T>
+	static void drawComponent(const char* label, Entity entity, std::function<void(T&)> ui, bool allowDeletion) {
+		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap
+				| ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding
+				| ImGuiTreeNodeFlags_AllowItemOverlap;
 
+		if (entity.hasComponent<T>()) {
+			auto& component = entity.getComponent<T>();
+			ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail();
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 4 });
+			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImGui::Separator();
+
+			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, label);
+
+			ImGui::PopStyleVar();
+
+			// Component settings menu
+			if (allowDeletion) {
+				ImGui::SameLine(contentRegionAvail.x - lineHeight * 0.5f);
+				if (ImGui::Button("...", { lineHeight, lineHeight })) {
+					ImGui::OpenPopup("ComponentSettings");
+				}
+			}
+			
+
+			bool removeComponent = false;
+			if (allowDeletion && ImGui::BeginPopup("ComponentSettings")) {
+
+				if (ImGui::MenuItem("Remove component"))
+					removeComponent = true;
+
+				ImGui::EndPopup();
+			}
+
+			if (open) {
+				ui(component);
+				ImGui::TreePop();
+			}
+
+			if (removeComponent) {
+				entity.removeComponent<T>();
+			}
+		}
+	}
+
+	// Draw a vector with colourful x, y and z
 	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
+		ImGuiIO& io = ImGui::GetIO();
+		auto boldFont = io.Fonts->Fonts[ImguiLayer::FontIndex::BOLD];
+
 		ImGui::PushID(label.c_str());
 
 		ImGui::Columns(2);
@@ -208,8 +232,10 @@ namespace Shado {
 		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.1f, 0.15f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.1f, 0.15f, 1.0f });
+		ImGui::PushFont(boldFont);
 		if (ImGui::Button("X", buttonSize))
 			values.x = resetValue;
+		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 		
 
@@ -222,8 +248,10 @@ namespace Shado {
 		ImGui::PushStyleColor(ImGuiCol_Button, { 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.3f, 0.8f, 0.3f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.2f, 0.7f, 0.2f, 1.0f });
+		ImGui::PushFont(boldFont);
 		if (ImGui::Button("Y", buttonSize))
 			values.y = resetValue;
+		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
 
@@ -236,8 +264,10 @@ namespace Shado {
 		ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.35f, 0.9f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.1f, 0.25f, 0.8f, 1.0f });
+		ImGui::PushFont(boldFont);
 		if (ImGui::Button("Z", buttonSize))
 			values.z = resetValue;
+		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
 		ImGui::SameLine();
@@ -249,5 +279,33 @@ namespace Shado {
 		ImGui::Columns(1);
 
 		ImGui::PopID();
+	}
+
+	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight) {
+		ImGui::SameLine();
+		ImGui::PushItemWidth(-1);
+		// To Add components context menu
+		if (ImGui::Button("Add Component"))
+			ImGui::OpenPopup("AddComponent");
+
+		if (ImGui::BeginPopup("AddComponent")) {
+			if (ImGui::MenuItem("Sprite renderer")) {
+				m_Selected.addComponent<SpriteRendererComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (ImGui::MenuItem("Camera")) {
+				m_Selected.addComponent<CameraComponent>(CameraComponent::Type::Orthographic, vpWidth, vpHeight);
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (ImGui::MenuItem("Native script")) {
+				m_Selected.addComponent<NativeScriptComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+		ImGui::PopItemWidth();
 	}
 }
