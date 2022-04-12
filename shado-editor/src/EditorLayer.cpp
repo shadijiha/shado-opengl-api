@@ -2,6 +2,7 @@
 
 #include "Application.h"
 #include "scene/SceneSerializer.h"
+#include "scene/utils/SceneUtils.h"
 
 namespace Shado {
 
@@ -138,26 +139,42 @@ namespace Shado {
 	        }
 			style.WindowMinSize.x = minWinSize;
 
+			// MENU BAR
 	        if (ImGui::BeginMenuBar())
 	        {
 	            if (ImGui::BeginMenu("File"))
 	            {
-					// Open Scene file
-					if (ImGui::MenuItem("Open", "Ctrl+O")) {
+					// New scene
+					if (ImGui::MenuItem("New", "Ctrl+N")) {
 						Ref<Scene> scene = CreateRef<Scene>();
 						scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
-
-						SceneSerializer serializer(scene);
-						serializer.deserialize("assets/scene.shadoscene");
-
 						m_ActiveScene = scene;
 						m_sceneHierarchyPanel.setContext(scene);
 					}
 
+					// Open Scene file
+					if (ImGui::MenuItem("Open", "Ctrl+O")) {
+						auto filepath = FileDialogs::openFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
+
+						if(!filepath.empty()) {
+							Ref<Scene> scene = CreateRef<Scene>();
+							scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+
+							SceneSerializer serializer(scene);
+							serializer.deserialize(filepath);
+
+							m_ActiveScene = scene;
+							m_sceneHierarchyPanel.setContext(scene);
+						}
+					}
+
 					// Save scene file
-					if (ImGui::MenuItem("Save", "Ctrl+S")) {
-						SceneSerializer serializer(m_ActiveScene);
-						serializer.serialize("assets/scene.shadoscene");
+					if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {
+						auto filepath = FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
+						if (!filepath.empty()) {
+							SceneSerializer serializer(m_ActiveScene);
+							serializer.serialize(filepath);
+						}						
 					}
 
 	                // Disabling fullscreen would allow the window to be moved to the front of other windows,
