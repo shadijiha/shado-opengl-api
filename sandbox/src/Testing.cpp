@@ -15,10 +15,11 @@ public:
 	virtual ~TestLayer() {}
 
 	void onInit() override {
-		FrameBufferSpecification specification;
-		specification.width = Application::get().getWindow().getWidth();
-		specification.height = Application::get().getWindow().getHeight();
-		buffer = FrameBuffer::create(specification);
+		FramebufferSpecification specification;
+		specification.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::DEPTH24STENCIL8 };
+		specification.Width = Application::get().getWindow().getWidth();
+		specification.Height = Application::get().getWindow().getHeight();
+		buffer = Framebuffer::create(specification);
 
 		Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 	}
@@ -92,7 +93,7 @@ private:
 	Color color = { 1, 1, 1 };
 	int tileFactor = 1;
 
-	Ref<FrameBuffer> buffer;
+	Ref<Framebuffer> buffer;
 };
 
 class TestLayer2 : public Layer {

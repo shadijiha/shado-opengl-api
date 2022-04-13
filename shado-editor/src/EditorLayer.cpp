@@ -25,30 +25,16 @@ namespace Shado {
 
 	void EditorLayer::onInit() {
         Renderer2D::Init();
-        FrameBufferSpecification specs;
-        specs.width = Application::get().getWindow().getWidth();
-        specs.height = Application::get().getWindow().getHeight();
-        buffer = FrameBuffer::create(specs);
+
+        FramebufferSpecification specs;
+		specs.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER,  FramebufferTextureFormat::DEPTH24STENCIL8 };
+        specs.Width = Application::get().getWindow().getWidth();
+        specs.Height = Application::get().getWindow().getHeight();
+        buffer = Framebuffer::create(specs);
 
         Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 
         m_ActiveScene = CreateRef<Scene>();
-
-		class CameraController : public ScriptableEntity {
-			void onUpdate(TimeStep ts) override {
-				auto& transform = getComponent<TransformComponent>().position;
-				float speed = 5.0f;
-
-				if (Input::isKeyPressed(KeyCode::A))
-					transform.x-= speed * ts;
-				if (Input::isKeyPressed(KeyCode::D))
-					transform.x += speed * ts;
-				if (Input::isKeyPressed(KeyCode::W))
-					transform.y += speed * ts;
-				if (Input::isKeyPressed(KeyCode::S))
-					transform.y -= speed * ts;
-			}
-		};
 
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
@@ -67,6 +53,20 @@ namespace Shado {
 			m_ActiveScene->onViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 
+		auto [mx, my] = ImGui::GetMousePos();
+		mx -= m_ViewportBounds[0].x;
+		my -= m_ViewportBounds[0].y;
+		glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+		my = viewportSize.y - my;
+		int mouseX = (int)mx;
+		int mouseY = (int)my;
+
+		buffer->bind();
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y) {
+			int data = buffer->readPixel(1, mouseX, mouseY);
+			SHADO_INFO("{0}, {1}, {2}",mouseX, mouseY, data);
+		}
+			
 
         // Update Scene
         m_ActiveScene->onUpdateEditor(dt, m_EditorCamera);
@@ -204,6 +204,9 @@ namespace Shado {
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 			ImGui::Begin("Viewport");
+			auto viewportOffset = ImGui::GetCursorPos();	// Includes tab bar
+
+
 			m_viewportFocused = ImGui::IsWindowFocused();
 			m_viewportHovered = ImGui::IsWindowHovered();
 			Application::get().getUILayer()->setBlockEvents(!m_viewportFocused && !m_viewportHovered);
@@ -213,6 +216,14 @@ namespace Shado {
 			uint32_t textureID = buffer->getColorAttachmentRendererID();
 			ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
 
+			auto windowSize = ImGui::GetWindowSize();
+			auto minBound = ImGui::GetWindowPos();
+			minBound.x += viewportOffset.x;
+			minBound.y += viewportOffset.y;
+
+			ImVec2 maxBound = {minBound.x + windowSize.x, minBound.y + windowSize.y};
+			m_ViewportBounds[0] = { minBound.x, minBound.y };
+			m_ViewportBounds[1] = {maxBound.x, maxBound.y};
 
 			// Gizmos
 			Entity selected = m_sceneHierarchyPanel.getSelected();
