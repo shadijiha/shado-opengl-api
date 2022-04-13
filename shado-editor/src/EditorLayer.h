@@ -1,4 +1,5 @@
 #include "Shado.h"
+#include "panels/ContentBrowserPanel.h"
 #include "panels/SceneHierarchyPanel.h"
 
 namespace Shado {
@@ -39,6 +40,7 @@ namespace Shado {
 
 		// Panels
 		SceneHierarchyPanel m_sceneHierarchyPanel;
+		ContentBrowserPanel m_ContentPanel;
 		Entity m_HoveredEntity;
 	};
 }

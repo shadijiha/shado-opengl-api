@@ -121,8 +121,14 @@ namespace Shado {
 
 			ImGui::InputText("Texture", (char*)texturePath.c_str(), texturePath.length(), ImGuiInputTextFlags_ReadOnly);
 
+			// Image
+			if (sprite.texture) {
+				ImGui::Image((void*)sprite.texture->getRendererID(), { 60, 60 }, ImVec2(0, 1), ImVec2(1, 0));
+			}
+
 			// File choose
 			ImGui::PushID(typeid(sprite.texture).hash_code());
+			ImGui::SameLine();
 			if (ImGui::Button("...", { 24, 24 }) ) {
 				texturePath = FileDialogs::openFile("Image file (*.jpg, *.png)\0*.jpg;*.png\0");
 				textureChanged = true;

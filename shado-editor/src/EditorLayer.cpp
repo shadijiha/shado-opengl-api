@@ -236,7 +236,7 @@ namespace Shado {
 				auto transform = tc.getTransform();
 
 				// Snapping
-				bool snap = Input::isKeyPressed(KeyCode::LeftControl);
+				bool snap = Input::isKeyPressed(KeyCode::LeftShift);
 				float snapValue = m_GuizmosOperation == ImGuizmo::OPERATION::ROTATE ? 45.0f : 0.5f;	// Snap to 45 degrees for rotation, and 0.5m for scale and translation
 				float snapValues[3] = { snapValue, snapValue, snapValue };
 
@@ -260,6 +260,7 @@ namespace Shado {
 		}
 
 		m_sceneHierarchyPanel.onImGuiRender();
+		m_ContentPanel.onImGuiRender();
 		
         ImGui::End();
 	}
