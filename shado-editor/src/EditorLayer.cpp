@@ -28,6 +28,9 @@ namespace Shado {
 	void EditorLayer::onInit() {
         Renderer2D::Init();
 
+		m_IconPlay = CreateRef<Texture2D>("resources/icons/PlayButton.png");
+		m_IconStop = CreateRef<Texture2D>("resources/icons/StopButton.png");
+
         FramebufferSpecification specs;
 		specs.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER,  FramebufferTextureFormat::DEPTH24STENCIL8 };
         specs.Width = Application::get().getWindow().getWidth();
@@ -42,8 +45,7 @@ namespace Shado {
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
-        if (m_viewportFocused)
-			m_EditorCamera.OnUpdate(dt);
+        
 
 		// If viewports don't match recreate frame buffer
 		if (m_ViewportSize != *((glm::vec2*)&m_viewportPanelSize) && m_viewportPanelSize.x > 0 && m_viewportPanelSize.y > 0) {
@@ -55,8 +57,19 @@ namespace Shado {
 			m_ActiveScene->onViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 
-		// Update Scene		
-		m_ActiveScene->onUpdateEditor(dt, m_EditorCamera);
+		// Update Scene
+		switch (m_SceneState)
+		{
+			case SceneState::Edit:
+				if (m_viewportFocused)
+					m_EditorCamera.OnUpdate(dt);
+
+				m_ActiveScene->onUpdateEditor(dt, m_EditorCamera);
+				break;
+			case SceneState::Play:
+				m_ActiveScene->onUpdateRuntime(dt);
+				break;
+		}
 	}
 
 	void EditorLayer::onDraw() {
@@ -66,27 +79,32 @@ namespace Shado {
          Renderer2D::Clear();
 		 buffer->clearAttachment(1, -1);
 
-        {
-            // Draw Scene
-            m_ActiveScene->onDrawEditor(m_EditorCamera);
+		 switch (m_SceneState)
+		 {
+			 case SceneState::Edit:
+				 m_ActiveScene->onDrawEditor(m_EditorCamera);
+				 break;
+			 case SceneState::Play:
+				 m_ActiveScene->onDrawRuntime();
+				 break;
+		 }
 
-			// For mouse picking
-			auto [mx, my] = ImGui::GetMousePos();
-			mx -= m_ViewportBounds[0].x;
-			my -= m_ViewportBounds[0].y;
-			glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
-			my = viewportSize.y - my;
-			int mouseX = (int)mx;
-			int mouseY = (int)my;
+        
+		// For mouse picking
+		auto [mx, my] = ImGui::GetMousePos();
+		mx -= m_ViewportBounds[0].x;
+		my -= m_ViewportBounds[0].y;
+		glm::vec2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+		my = viewportSize.y - my;
+		int mouseX = (int)mx;
+		int mouseY = (int)my;
 
-			if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
-			{
-				int pixelData = buffer->readPixel(1, mouseX, mouseY);
-				m_HoveredEntity = pixelData == -1 ? Entity() : Entity{ (entt::entity)(uint32_t)pixelData, m_ActiveScene.get()};
-			}
-
-        }
-
+		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+		{
+			int pixelData = buffer->readPixel(1, mouseX, mouseY);
+			m_HoveredEntity = pixelData == -1 ? Entity() : Entity{ (entt::entity)(uint32_t)pixelData, m_ActiveScene.get()};
+		}
+		
         buffer->unbind();
 	}
 
@@ -162,8 +180,12 @@ namespace Shado {
 						openScene();
 					}
 
+					if (ImGui::MenuItem("Save", "Ctrl+S"))
+						saveScene();
+
 					// Save scene file
-					if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {
+					if (ImGui::MenuItem("Save As...")) {
+						m_ScenePath = "";
 						saveScene();
 					}
 
@@ -200,85 +222,10 @@ namespace Shado {
 	            ImGui::EndMenuBar();
 	        }
 		}
-
-		// Viewport
-		{
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
-			ImGui::Begin("Viewport");
-			auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
-			auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-			auto viewportOffset = ImGui::GetWindowPos();
-			m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
-			m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
-			
-			m_viewportFocused = ImGui::IsWindowFocused();
-			m_viewportHovered = ImGui::IsWindowHovered();
-			Application::get().getUILayer()->setBlockEvents(!m_viewportFocused && !m_viewportHovered);
-
-			m_viewportPanelSize = ImGui::GetContentRegionAvail();
-
-			uint32_t textureID = buffer->getColorAttachmentRendererID();
-			ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
-
-			// For drag and drop
-			if (ImGui::BeginDragDropTarget()) {
-
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-					const wchar_t* pathStr = (const wchar_t*)payload->Data;
-					auto path = g_AssetsPath / pathStr;
-					auto extension = path.extension();
-
-					if (extension == ".shadoscene")
-						openScene(path);
-					else if (extension == ".jpg" || extension == ".png") {
-						if (m_HoveredEntity)
-							m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
-					}					
-				}
-				
-				ImGui::EndDragDropTarget();
-			}
-
-			// Gizmos
-			Entity selected = m_sceneHierarchyPanel.getSelected();
-			if (selected && m_GuizmosOperation != -1) {
-				ImGuizmo::SetOrthographic(false);
-				ImGuizmo::SetDrawlist();
-
-				ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
-
-				// Camera
-				const auto& camera = m_EditorCamera;
-				const auto& projection = camera.getProjectionMatrix();
-				glm::mat4 cameraView = camera.getViewMatrix();
-
-				// Entity transform
-				auto& tc = selected.getComponent<TransformComponent>();
-				auto transform = tc.getTransform();
-
-				// Snapping
-				bool snap = Input::isKeyPressed(KeyCode::LeftShift);
-				float snapValue = m_GuizmosOperation == ImGuizmo::OPERATION::ROTATE ? 45.0f : 0.5f;	// Snap to 45 degrees for rotation, and 0.5m for scale and translation
-				float snapValues[3] = { snapValue, snapValue, snapValue };
-
-
-				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(projection),
-					(ImGuizmo::OPERATION)m_GuizmosOperation, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
-
-				if (ImGuizmo::IsUsing()) {
-					glm::vec3 position, rotation, scale;
-					Math::decomposeTransform(transform, position, rotation, scale);
-
-					auto deltaRotation = rotation -  tc.rotation;	// To avoid gimbull lock
-					tc.position = transform[3];
-					tc.rotation += deltaRotation;
-					tc.scale = scale;
-				}
-			}
-
-			ImGui::End();
-			ImGui::PopStyleVar();
-		}
+		
+		// UI
+		UI_Viewport();
+		UI_ToolBar();
 
 		m_sceneHierarchyPanel.onImGuiRender();
 		m_ContentPanel.onImGuiRender();
@@ -308,7 +255,7 @@ namespace Shado {
 
 		switch (e.getKeyCode()) {
 			case KeyCode::S:
-				if (control && shift)
+				if (control)
 					saveScene();
 				break;
 			case KeyCode::N:
@@ -345,10 +292,12 @@ namespace Shado {
 	}
 
 	void EditorLayer::saveScene() {
-		auto filepath = FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
+		auto filepath = m_ScenePath.empty() ? FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0") : m_ScenePath;
+		
 		if (!filepath.empty()) {
 			SceneSerializer serializer(m_ActiveScene);
 			serializer.serialize(filepath);
+			m_ScenePath = filepath;
 		}		
 	}
 
@@ -357,12 +306,14 @@ namespace Shado {
 		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 		m_ActiveScene = scene;
 		m_sceneHierarchyPanel.setContext(scene);
+		m_ScenePath = "";
 	}
 
 	void EditorLayer::openScene() {
 		auto filepath = FileDialogs::openFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
-		if (!filepath.empty())
+		if (!filepath.empty()) {
 			openScene(filepath);
+		}
 	}
 
 	void EditorLayer::openScene(const std::filesystem::path& path) {
@@ -373,6 +324,124 @@ namespace Shado {
 		serializer.deserialize(path.string());
 
 		m_ActiveScene = scene;
-		m_sceneHierarchyPanel.setContext(scene);		
+		m_sceneHierarchyPanel.setContext(scene);
+		m_ScenePath = path.string();
+	}
+
+	// ============================== For runtime
+	void EditorLayer::onScenePlay() {
+		m_SceneState = SceneState::Play;
+	}
+
+	void EditorLayer::onSceneStop() {
+		m_SceneState = SceneState::Edit;
+	}
+
+	// =============================== UI Stuff
+	void EditorLayer::UI_ToolBar() {
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+		auto& colors = ImGui::GetStyle().Colors;
+		const auto& buttonHovered = colors[ImGuiCol_ButtonHovered];
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
+		const auto& buttonActive = colors[ImGuiCol_ButtonActive];
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
+
+		ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+		float size = ImGui::GetWindowHeight() - 4.0f;
+		Ref<Texture2D> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
+		ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+		if (ImGui::ImageButton((ImTextureID)icon->getRendererID(), ImVec2(size, size), ImVec2(0, 0), ImVec2(1, 1), 0))
+		{
+			if (m_SceneState == SceneState::Edit)
+				onScenePlay();
+			else if (m_SceneState == SceneState::Play)
+				onSceneStop();
+		}
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(3);
+		ImGui::End();
+	}
+
+	void EditorLayer::UI_Viewport() {
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
+		ImGui::Begin("Viewport");
+		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+		auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+		auto viewportOffset = ImGui::GetWindowPos();
+		m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+		m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+
+		m_viewportFocused = ImGui::IsWindowFocused();
+		m_viewportHovered = ImGui::IsWindowHovered();
+		Application::get().getUILayer()->setBlockEvents(!m_viewportFocused && !m_viewportHovered);
+
+		m_viewportPanelSize = ImGui::GetContentRegionAvail();
+
+		uint32_t textureID = buffer->getColorAttachmentRendererID();
+		ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
+
+		// For drag and drop
+		if (ImGui::BeginDragDropTarget()) {
+
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+				const wchar_t* pathStr = (const wchar_t*)payload->Data;
+				auto path = g_AssetsPath / pathStr;
+				auto extension = path.extension();
+
+				if (extension == ".shadoscene")
+					openScene(path);
+				else if (extension == ".jpg" || extension == ".png") {
+					if (m_HoveredEntity)
+						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
+				}
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
+		// Gizmos
+		Entity selected = m_sceneHierarchyPanel.getSelected();
+		if (selected && m_GuizmosOperation != -1) {
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
+
+			ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+
+			// Camera
+			const auto& runtimeCamera = m_ActiveScene->getPrimaryCameraEntity().getComponent<CameraComponent>().camera;
+			const auto& editorCamera = m_EditorCamera;
+			auto projection = m_SceneState == SceneState::Edit ? editorCamera.getProjectionMatrix() : runtimeCamera->getProjectionMatrix();
+			glm::mat4 cameraView = m_SceneState == SceneState::Edit ? editorCamera.getViewMatrix() : runtimeCamera->getViewMatrix();
+
+
+			// Entity transform
+			auto& tc = selected.getComponent<TransformComponent>();
+			auto transform = tc.getTransform();
+
+			// Snapping
+			bool snap = Input::isKeyPressed(KeyCode::LeftShift);
+			float snapValue = m_GuizmosOperation == ImGuizmo::OPERATION::ROTATE ? 45.0f : 0.5f;	// Snap to 45 degrees for rotation, and 0.5m for scale and translation
+			float snapValues[3] = { snapValue, snapValue, snapValue };
+
+
+			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(projection),
+				(ImGuizmo::OPERATION)m_GuizmosOperation, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+			if (ImGuizmo::IsUsing()) {
+				glm::vec3 position, rotation, scale;
+				Math::decomposeTransform(transform, position, rotation, scale);
+
+				auto deltaRotation = rotation - tc.rotation;	// To avoid gimbull lock
+				tc.position = transform[3];
+				tc.rotation += deltaRotation;
+				tc.scale = scale;
+			}
+		}
+
+		ImGui::End();
+		ImGui::PopStyleVar();
 	}
 }

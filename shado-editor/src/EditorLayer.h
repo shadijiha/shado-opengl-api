@@ -25,6 +25,13 @@ namespace Shado {
 		void newScene();
 		void openScene();
 		void openScene(const std::filesystem::path&);
+
+		void onScenePlay();
+		void onSceneStop();
+
+		// UI Stuff
+		void UI_ToolBar();
+		void UI_Viewport();
 	private:
 		EditorCamera m_EditorCamera;
 
@@ -37,10 +44,21 @@ namespace Shado {
 		Ref<Scene> m_ActiveScene;
 
 		int m_GuizmosOperation = -1;
+		std::string m_ScenePath;
 
 		// Panels
 		SceneHierarchyPanel m_sceneHierarchyPanel;
 		ContentBrowserPanel m_ContentPanel;
 		Entity m_HoveredEntity;
+
+		// Scene runtime / editing
+		enum class SceneState
+		{
+			Edit = 0, Play = 1
+		};
+		SceneState m_SceneState = SceneState::Edit;
+
+		// Editor resources
+		Ref<Texture2D> m_IconPlay, m_IconStop;
 	};
 }

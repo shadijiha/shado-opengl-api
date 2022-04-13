@@ -70,7 +70,7 @@ namespace Shado {
 			for (auto entity : group) {
 				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
-				Renderer2D::DrawQuad(transform.getTransform(), sprite.color);
+				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 			}
 
 			Renderer2D::EndScene();

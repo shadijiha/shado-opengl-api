@@ -2,30 +2,15 @@ Scene: Untitled
 Entities:
   - Entity: 12837192831273
     TagComponent:
-      Tag: Square2
+      Tag: Empty Entity
     TransformComponent:
-      Translation: [5.11626863, -0.0113941431, 4.76837158e-07]
+      Translation: [-0.426144928, -0.0533637404, 0]
       Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
+      Scale: [9.60000038, 6.0999999, 1]
     SpriteRendererComponent:
       Color: [1, 0.999989986, 0.999989986, 1]
-      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven2.jpg
+      Texture: assets\TranscodedWallpaper.jpg
       TillingFactor: 1
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Camera 2
-    TransformComponent:
-      Translation: [0, 0, 4]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Camera:
-        ProjectionType: 1
-        PerspectiveFOV: 60
-        Near: 1
-        Far: 100
-      Primary: true
-      FixedAspectRatio: false
   - Entity: 12837192831273
     TagComponent:
       Tag: Cait queen
@@ -39,12 +24,27 @@ Entities:
       TillingFactor: 1
   - Entity: 12837192831273
     TagComponent:
-      Tag: Empty Entity
+      Tag: Camera 2
     TransformComponent:
-      Translation: [-0.426144928, -0.0533637404, 0]
+      Translation: [0, 0, 6.5999999]
       Rotation: [0, 0, 0]
-      Scale: [9.60000038, 6.0999999, 1]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 60
+        Near: 1
+        Far: 100
+      Primary: true
+      FixedAspectRatio: false
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Square2
+    TransformComponent:
+      Translation: [5.11626863, -0.0113941431, 4.76837158e-07]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
     SpriteRendererComponent:
       Color: [1, 0.999989986, 0.999989986, 1]
-      Texture: assets\TranscodedWallpaper.jpg
+      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven2.jpg
       TillingFactor: 1

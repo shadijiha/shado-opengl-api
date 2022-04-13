@@ -9,8 +9,7 @@ namespace Shado {
 
 	// Change when projects are added
 	extern const std::filesystem::path g_AssetsPath = "assets";
-
-
+	
 	ContentBrowserPanel::ContentBrowserPanel()
 		: ContentBrowserPanel(g_AssetsPath)
 	{
@@ -21,6 +20,7 @@ namespace Shado {
 	{
 		m_DirectoryIcon = CreateRef<Texture2D>("resources/icons/DirectoryIcon.png");
 		m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
+		m_SceneIcon = CreateRef<Texture2D>("resources/icons/scene.png");
 
 		setDirectory(m_CurrentDirectory);
 	}
@@ -129,6 +129,8 @@ namespace Shado {
 			}
 			icon = imagesThumbnails[path.string()];
 
+		} else if (path.extension() == ".shadoscene") {
+			icon = m_SceneIcon;
 		}
 		return icon->getRendererID();
 	}
