@@ -411,11 +411,14 @@ namespace Shado {
 			ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
 
 			// Camera
-			const auto& runtimeCamera = m_ActiveScene->getPrimaryCameraEntity().getComponent<CameraComponent>().camera;
-			const auto& editorCamera = m_EditorCamera;
-			auto projection = m_SceneState == SceneState::Edit ? editorCamera.getProjectionMatrix() : runtimeCamera->getProjectionMatrix();
-			glm::mat4 cameraView = m_SceneState == SceneState::Edit ? editorCamera.getViewMatrix() : runtimeCamera->getViewMatrix();
+			auto runtimeCamera = m_ActiveScene->getPrimaryCameraEntity();
+			auto& editorCamera = m_EditorCamera;
+			auto projection = m_SceneState == SceneState::Edit ? editorCamera.getProjectionMatrix() : runtimeCamera.getComponent<CameraComponent>().camera->getProjectionMatrix();
+			glm::mat4 cameraView = m_SceneState == SceneState::Edit ? editorCamera.getViewMatrix() : glm::inverse(runtimeCamera.getComponent<TransformComponent>().getTransform());
 
+			if (m_SceneState == SceneState::Play) {
+				SHADO_INFO("");
+			}
 
 			// Entity transform
 			auto& tc = selected.getComponent<TransformComponent>();
