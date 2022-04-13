@@ -9,6 +9,8 @@
 #include "math/Math.h"
 
 namespace Shado {
+	extern const std::filesystem::path g_AssetsPath;
+
 	static void saveScene();
 	static void newScene();
 	static void openScene();
@@ -218,6 +220,25 @@ namespace Shado {
 			uint32_t textureID = buffer->getColorAttachmentRendererID();
 			ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
 
+			// For drag and drop
+			if (ImGui::BeginDragDropTarget()) {
+
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+					const wchar_t* pathStr = (const wchar_t*)payload->Data;
+					auto path = g_AssetsPath / pathStr;
+					auto extension = path.extension();
+
+					if (extension == ".shadoscene")
+						openScene(path);
+					else if (extension == ".jpg" || extension == ".png") {
+						if (m_HoveredEntity)
+							m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
+					}					
+				}
+				
+				ImGui::EndDragDropTarget();
+			}
+
 			// Gizmos
 			Entity selected = m_sceneHierarchyPanel.getSelected();
 			if (selected && m_GuizmosOperation != -1) {
@@ -340,16 +361,18 @@ namespace Shado {
 
 	void EditorLayer::openScene() {
 		auto filepath = FileDialogs::openFile("Shado Scene(*.shadoscene)\0*.shadoscene\0");
+		if (!filepath.empty())
+			openScene(filepath);
+	}
 
-		if (!filepath.empty()) {
-			Ref<Scene> scene = CreateRef<Scene>();
-			scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+	void EditorLayer::openScene(const std::filesystem::path& path) {
+		Ref<Scene> scene = CreateRef<Scene>();
+		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
-			SceneSerializer serializer(scene);
-			serializer.deserialize(filepath);
+		SceneSerializer serializer(scene);
+		serializer.deserialize(path.string());
 
-			m_ActiveScene = scene;
-			m_sceneHierarchyPanel.setContext(scene);
-		}
+		m_ActiveScene = scene;
+		m_sceneHierarchyPanel.setContext(scene);		
 	}
 }

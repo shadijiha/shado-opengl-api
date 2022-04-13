@@ -8,11 +8,11 @@
 namespace Shado {
 
 	// Change when projects are added
-	static const std::filesystem::path s_AssetsPath = "assets";
+	extern const std::filesystem::path g_AssetsPath = "assets";
 
 
 	ContentBrowserPanel::ContentBrowserPanel()
-		: ContentBrowserPanel(s_AssetsPath)
+		: ContentBrowserPanel(g_AssetsPath)
 	{
 	}
 
@@ -21,17 +21,24 @@ namespace Shado {
 	{
 		m_DirectoryIcon = CreateRef<Texture2D>("resources/icons/DirectoryIcon.png");
 		m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
+
+		setDirectory(m_CurrentDirectory);
 	}
 
 	void ContentBrowserPanel::onImGuiRender() {
-	
+
+		// Recheck the filesystem every 200 tick
+		if (tick++ % 500 == 0)
+			setDirectory(m_CurrentDirectory);
+
 		ImGui::Begin("Content Browser");
 
-		if (m_CurrentDirectory != std::filesystem::path(s_AssetsPath))
+		if (m_CurrentDirectory != std::filesystem::path(g_AssetsPath))
 		{
 			if (ImGui::Button("<-"))
 			{
 				m_CurrentDirectory = m_CurrentDirectory.parent_path();
+				setDirectory(m_CurrentDirectory);
 			}
 		}
 
@@ -46,10 +53,11 @@ namespace Shado {
 
 		ImGui::Columns(columnCount, 0, false);
 
-		for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
+		bool changeDir = false;
+		for (auto& directoryEntry : directories)
 		{
 			const auto& path = directoryEntry.path();
-			auto relativePath = std::filesystem::relative(path, s_AssetsPath);
+			auto relativePath = std::filesystem::relative(path, g_AssetsPath);
 			std::string filenameString = relativePath.filename().string();
 
 			ImGui::PushID(filenameString.c_str());
@@ -67,8 +75,11 @@ namespace Shado {
 			ImGui::PopStyleColor();
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 			{
-				if (directoryEntry.is_directory())
+				if (directoryEntry.is_directory()) {
 					m_CurrentDirectory /= path.filename();
+					changeDir = true;
+					
+				}				
 
 			}
 			ImGui::TextWrapped(filenameString.c_str());
@@ -85,6 +96,22 @@ namespace Shado {
 
 		// TODO: status bar
 		ImGui::End();
+
+		if (changeDir)
+			setDirectory(m_CurrentDirectory);
 	}
 
+	void ContentBrowserPanel::setDirectory(const std::filesystem::path& path) {
+		directories.clear();
+		for (auto& directoryEntry : std::filesystem::directory_iterator(path)) {
+			directories.push_back(directoryEntry);
+		}
+
+		using P = std::filesystem::directory_entry;
+		std::sort(directories.begin(), directories.end(), [](const P& a, const P& b) {
+			if (a.is_directory() && !b.is_directory()) return true;
+			if (!a.is_directory() && b.is_directory()) return false;
+			return a.path().filename() < b.path().filename();
+		});
+	}
 }

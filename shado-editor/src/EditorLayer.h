@@ -24,7 +24,7 @@ namespace Shado {
 		void saveScene();
 		void newScene();
 		void openScene();
-
+		void openScene(const std::filesystem::path&);
 	private:
 		EditorCamera m_EditorCamera;
 
