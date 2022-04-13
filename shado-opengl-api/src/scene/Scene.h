@@ -17,6 +17,7 @@ namespace Shado {
 		void onDraw();
 
 		void onViewportResize(uint32_t width, uint32_t height);
+		Entity getPrimaryCameraEntity();
 
 	private:
 		entt::registry m_Registry;

@@ -21,6 +21,7 @@ IncludeDir["spdlog"] = "shado-opengl-api/vendor/spdlog/include"
 IncludeDir["yaml_cpp"] = "shado-opengl-api/vendor/yaml-cpp/include"
 IncludeDir["box2d"] = "shado-opengl-api/vendor/box2d/include"
 IncludeDir["entt"] = "shado-opengl-api/vendor/entt/include"
+IncludeDir["ImGuizmo"] = "shado-opengl-api/vendor/ImGuizmo"
 
 group "Dependancies"
 	include "shado-opengl-api/vendor/GLFW"
@@ -44,7 +45,10 @@ project "shado-opengl-api"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.hpp",
-		"%{prj.name}/vendor/entt/include/**.hpp"
+		"%{prj.name}/vendor/entt/include/**.hpp",
+
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.h",
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp"
 	}
 
 	includedirs
@@ -57,7 +61,8 @@ project "shado-opengl-api"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
-		"%{IncludeDir.yaml_cpp}"
+		"%{IncludeDir.yaml_cpp}",
+		"%{IncludeDir.ImGuizmo}"
 	}
 
 	links

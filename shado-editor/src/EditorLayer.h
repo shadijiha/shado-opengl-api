@@ -15,6 +15,7 @@ namespace Shado {
 		void onDestroy() override;
 		void onEvent(Event& event) override;
 
+	
 	private:
 		bool onKeyPressed(KeyPressedEvent& e);
 
@@ -32,8 +33,11 @@ namespace Shado {
 		ImVec2 m_viewportPanelSize;
 		Ref<Scene> m_ActiveScene;
 
+		int m_GuizmosOperation = -1;
+
 		// Panels
 		SceneHierarchyPanel m_sceneHierarchyPanel;
+
 	};
 
 

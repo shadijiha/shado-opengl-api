@@ -16,3 +16,6 @@
 [submodule "shado-opengl-api/vendor/yaml-cpp"]
 	path = shado-opengl-api/vendor/yaml-cpp
 	url = https://github.com/TheCherno/yaml-cpp.git
+[submodule "shado-opengl-api/vendor/ImGuizmo"]
+	path = shado-opengl-api/vendor/ImGuizmo
+	url = https://github.com/TheCherno/ImGuizmo.git

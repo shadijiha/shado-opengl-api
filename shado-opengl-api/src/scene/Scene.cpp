@@ -92,4 +92,15 @@ namespace Shado {
 			}
 		}
 	}
+
+	Entity Scene::getPrimaryCameraEntity() {
+		auto cams = m_Registry.view<CameraComponent>();
+		for (auto entity : cams) {
+			const auto& camera = cams.get<CameraComponent>(entity);
+
+			if (camera.primary)
+				return { entity, this };			
+		}
+		return {};
+	}
 }

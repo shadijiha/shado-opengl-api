@@ -16,17 +16,14 @@ namespace Shado {
 
 		void onImGuiRender();
 
+		Entity getSelected() const { return m_Selected; }
+
 	private:
 		void drawEntityNode(Entity e);
 		void drawComponents(Entity e);
 	private:
 		Ref<Scene> m_Context;
 		Entity m_Selected;
-
-
 	};
-
-
-
 }
 

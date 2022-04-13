@@ -1,8 +1,12 @@
 #include "EditorLayer.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Application.h"
 #include "scene/SceneSerializer.h"
 #include "scene/utils/SceneUtils.h"
+#include "ImGuizmo/ImGuizmo.h"
+#include "math/Math.h"
 
 namespace Shado {
 	static void saveScene();
@@ -171,10 +175,32 @@ namespace Shado {
 	                ImGui::EndMenu();
 	            }
 
+				if (ImGui::BeginMenu("Guizmos")) {
+
+					if (ImGui::MenuItem("Translation")) {
+						m_GuizmosOperation = ImGuizmo::OPERATION::TRANSLATE;
+					}
+
+					if (ImGui::MenuItem("Rotation")) {
+						m_GuizmosOperation = ImGuizmo::OPERATION::ROTATE;
+					}
+
+					if (ImGui::MenuItem("Scale")) {
+						m_GuizmosOperation = ImGuizmo::OPERATION::SCALE;
+					}
+
+					if (ImGui::MenuItem("None")) {
+						m_GuizmosOperation = -1;
+					}
+
+					ImGui::EndMenu();
+				}
+
 	            ImGui::EndMenuBar();
 	        }
 		}
 
+		// Viewport
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 			ImGui::Begin("Viewport");
@@ -184,9 +210,44 @@ namespace Shado {
 
 			m_viewportPanelSize = ImGui::GetContentRegionAvail();
 
-
 			uint32_t textureID = buffer->getColorAttachmentRendererID();
 			ImGui::Image((void*)textureID, { m_ViewportSize.x, m_ViewportSize.y }, ImVec2(0, 1), ImVec2(1, 0));
+
+
+			// Gizmos
+			Entity selected = m_sceneHierarchyPanel.getSelected();
+			if (selected && m_GuizmosOperation != -1) {
+				ImGuizmo::SetOrthographic(false);
+				ImGuizmo::SetDrawlist();
+
+				float windowWidth = ImGui::GetWindowWidth();
+				float windowHeight = ImGui::GetWindowHeight();
+				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+
+				// Camera
+				auto cameraEntity = m_ActiveScene->getPrimaryCameraEntity();
+				const auto& camera = cameraEntity.getComponent<CameraComponent>().camera;
+				const auto& projection = camera->getProjectionMatrix();
+				glm::mat4 cameraView = glm::inverse(cameraEntity.getComponent<TransformComponent>().getTransform());
+
+				// Entity transform
+				auto& tc = selected.getComponent<TransformComponent>();
+				auto transform = tc.getTransform();
+				
+				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(projection),
+					(ImGuizmo::OPERATION)m_GuizmosOperation, ImGuizmo::LOCAL, glm::value_ptr(transform));
+
+				if (ImGuizmo::IsUsing()) {
+					glm::vec3 position, rotation, scale;
+					Math::decomposeTransform(transform, position, rotation, scale);
+
+					auto deltaRotation = rotation -  tc.rotation;	// To avoid gimbull lock
+					tc.position = transform[3];
+					tc.rotation += deltaRotation;
+					tc.scale = scale;
+				}
+			}
+
 			ImGui::End();
 			ImGui::PopStyleVar();
 		}
