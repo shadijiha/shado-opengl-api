@@ -80,7 +80,7 @@ namespace Shado {
 			if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
 			{
 				int pixelData = buffer->readPixel(1, mouseX, mouseY);
-				SHADO_INFO("{0}, {1}, {2}", mouseX, mouseY, pixelData);
+				m_HoveredEntity = pixelData == -1 ? Entity() : Entity{ (entt::entity)(uint32_t)pixelData, m_ActiveScene.get()};
 			}
 
         }
@@ -224,9 +224,7 @@ namespace Shado {
 				ImGuizmo::SetOrthographic(false);
 				ImGuizmo::SetDrawlist();
 
-				float windowWidth = ImGui::GetWindowWidth();
-				float windowHeight = ImGui::GetWindowHeight();
-				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+				ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
 
 				// Camera
 				const auto& camera = m_EditorCamera;
@@ -274,6 +272,7 @@ namespace Shado {
 
 		EventDispatcher dispatcher(event);
 		dispatcher.dispatch<KeyPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onKeyPressed));
+		dispatcher.dispatch<MouseButtonPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));
 	}
 
 	// Helpers
@@ -312,6 +311,13 @@ namespace Shado {
 			case KeyCode::R:
 				m_GuizmosOperation = ImGuizmo::OPERATION::SCALE;
 				break;
+		}
+		return false;
+	}
+
+	bool EditorLayer::onMouseButtonPressed(MouseButtonPressedEvent& e) {
+		if (e.getMouseButton() == GLFW_MOUSE_BUTTON_LEFT && m_viewportHovered && !ImGuizmo::IsOver()) {
+			m_sceneHierarchyPanel.setSelected(m_HoveredEntity);
 		}
 		return false;
 	}

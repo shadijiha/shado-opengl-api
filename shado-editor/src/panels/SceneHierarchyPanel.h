@@ -12,6 +12,7 @@ namespace Shado {
 		SceneHierarchyPanel() = default;
 		SceneHierarchyPanel(const Ref<Scene>& scene);
 
+		void setSelected(Entity entity);
 		void setContext(const Ref<Scene>& scene);
 
 		void onImGuiRender();

@@ -18,6 +18,7 @@ namespace Shado {
 	
 	private:
 		bool onKeyPressed(KeyPressedEvent& e);
+		bool onMouseButtonPressed(MouseButtonPressedEvent& e);
 
 		void saveScene();
 		void newScene();
@@ -38,7 +39,6 @@ namespace Shado {
 
 		// Panels
 		SceneHierarchyPanel m_sceneHierarchyPanel;
+		Entity m_HoveredEntity;
 	};
-
-
 }

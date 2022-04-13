@@ -36,6 +36,8 @@ namespace Shado {
 	
 	struct SpriteRendererComponent {
 		glm::vec4 color= {1, 1, 1, 1};
+		Ref<Texture2D> texture = nullptr;
+		float tilingFactor = 1.0f;
 
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;

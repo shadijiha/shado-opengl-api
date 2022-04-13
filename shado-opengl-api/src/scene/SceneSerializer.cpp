@@ -181,7 +181,10 @@ namespace Shado {
 				if (spriteRendererComponent)
 				{
 					auto& src = deserializedEntity.addComponent<SpriteRendererComponent>();
+					auto texturePath = spriteRendererComponent["Texture"].as<std::string>();
 					src.color = spriteRendererComponent["Color"].as<glm::vec4>();
+					src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
+					src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
 				}
 			}
 		}
@@ -263,7 +266,10 @@ namespace Shado {
 			out << YAML::BeginMap; // SpriteRendererComponent
 
 			auto& spriteRendererComponent = entity.getComponent<SpriteRendererComponent>();
+			std::string texturePath = spriteRendererComponent.texture ? spriteRendererComponent.texture->getFilePath() : "NULL";
 			out << YAML::Key << "Color" << YAML::Value << spriteRendererComponent.color;
+			out << YAML::Key << "Texture" << YAML::Value << texturePath;
+			out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
 
 			out << YAML::EndMap; // SpriteRendererComponent
 		}

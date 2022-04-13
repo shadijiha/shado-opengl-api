@@ -4,11 +4,16 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "imgui_internal.h"
+#include "scene/utils/SceneUtils.h"
 
 namespace Shado {
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
 		setContext(scene);
+	}
+
+	void SceneHierarchyPanel::setSelected(Entity entity) {
+		m_Selected = entity;
 	}
 
 	void SceneHierarchyPanel::setContext(const Ref<Scene>& scene) {
@@ -110,6 +115,26 @@ namespace Shado {
 
 		drawComponent<SpriteRendererComponent>("Sprite", entity, [](SpriteRendererComponent& sprite) {
 			ImGui::ColorEdit4("Colour", glm::value_ptr(sprite.color));
+
+			bool textureChanged = false;
+			std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
+
+			ImGui::InputText("Texture", (char*)texturePath.c_str(), texturePath.length(), ImGuiInputTextFlags_ReadOnly);
+
+			// File choose
+			ImGui::PushID(typeid(sprite.texture).hash_code());
+			if (ImGui::Button("...", { 24, 24 }) ) {
+				texturePath = FileDialogs::openFile("Image file (*.jpg, *.png)\0*.jpg;*.png\0");
+				textureChanged = true;
+			}
+			ImGui::PopID();
+
+			// Change texture
+			if (textureChanged && !texturePath.empty()) {
+				sprite.texture = CreateRef<Texture2D>(texturePath);
+			}
+
+			ImGui::DragFloat("Tilling factor", &sprite.tilingFactor);
 		});
 
 		drawComponent<CameraComponent>("Camera", entity, [](CameraComponent& camera) {

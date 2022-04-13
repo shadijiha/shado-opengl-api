@@ -456,9 +456,9 @@ namespace Shado {
 	}
 
 	void Renderer2D::DrawSprite(const glm::mat4& transform, SpriteRendererComponent& src, int entityID) {
-		//if (src.Texture)
-		//	DrawQuad(transform, src.Texture, src.TilingFactor, src.Color, entityID);
-		//else
+		if (src.texture)
+			DrawQuad(transform, src.texture, src.tilingFactor, src.color, entityID);
+		else
 			DrawQuad(transform, src.color, entityID);
 	}
 
