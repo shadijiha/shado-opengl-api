@@ -22,6 +22,9 @@ namespace Shado {
 		//io.ConfigViewportsNoAutoMerge = true;
 		//io.ConfigViewportsNoTaskBarIcon = true;
 
+		io.FontGlobalScale = Application::get().getWindow().getWindowScale().first;
+		//ImGui::GetStyle().ScaleAllSizes(Application::get().getWindow().getWindowScale().first);
+	
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
 		//ImGui::StyleColorsClassic();
@@ -76,7 +79,7 @@ namespace Shado {
 		ImGuiIO& io = ImGui::GetIO();
 		Application& app = Application::get();
 		io.DisplaySize = ImVec2(app.getWindow().getWidth(), app.getWindow().getHeight());
-
+		
 		// Render
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
