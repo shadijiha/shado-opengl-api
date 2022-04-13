@@ -61,18 +61,11 @@ namespace Shado {
 			std::string filenameString = relativePath.filename().string();
 
 			ImGui::PushID(filenameString.c_str());
-			Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
+			
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
-			// If it is an image
-			if (path.extension() == ".jpg" || path.extension() == ".png") {
-				if (imagesThumbnails.find(path.string()) == imagesThumbnails.end()) {
-					imagesThumbnails[path.string()] = CreateRef<Texture2D>(path.string());
-				}
-				icon = imagesThumbnails[path.string()];
-
-			}
-			ImGui::ImageButton((ImTextureID)icon->getRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+			uint32_t rendererId = getThumbnail(directoryEntry);
+			ImGui::ImageButton((ImTextureID)rendererId, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
 			
 
 			if (ImGui::BeginDragDropSource())
@@ -123,5 +116,20 @@ namespace Shado {
 			if (!a.is_directory() && b.is_directory()) return false;
 			return a.path().filename() < b.path().filename();
 		});
+	}
+
+	uint32_t ContentBrowserPanel::getThumbnail(const std::filesystem::directory_entry& directoryEntry) {
+		Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
+
+		// If it is an image
+		const auto path = directoryEntry.path();
+		if (path.extension() == ".jpg" || path.extension() == ".png") {
+			if (imagesThumbnails.find(path.string()) == imagesThumbnails.end()) {
+				imagesThumbnails[path.string()] = CreateRef<Texture2D>(path.string());
+			}
+			icon = imagesThumbnails[path.string()];
+
+		}
+		return icon->getRendererID();
 	}
 }

@@ -14,6 +14,7 @@ namespace Shado {
 
 	private:
 		void setDirectory(const std::filesystem::path& path);
+		uint32_t getThumbnail(const std::filesystem::directory_entry&);
 	private:
 		std::filesystem::path m_CurrentDirectory;
 
@@ -25,4 +26,5 @@ namespace Shado {
 
 		std::unordered_map<std::string, Ref<Texture2D>> imagesThumbnails;
 	};
+
 }

@@ -7,6 +7,7 @@
 #include "scene/utils/SceneUtils.h"
 
 namespace Shado {
+	extern const std::filesystem::path g_AssetsPath;
 
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
 		setContext(scene);
@@ -119,6 +120,7 @@ namespace Shado {
 			bool textureChanged = false;
 			std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
 
+
 			ImGui::InputText("Texture", (char*)texturePath.c_str(), texturePath.length(), ImGuiInputTextFlags_ReadOnly);
 
 			// Image
@@ -126,10 +128,27 @@ namespace Shado {
 				ImGui::Image((void*)sprite.texture->getRendererID(), { 60, 60 }, ImVec2(0, 1), ImVec2(1, 0));
 			}
 
+			// For drag and drop
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					const wchar_t* path = (const wchar_t*)payload->Data;
+					std::filesystem::path texturePath = std::filesystem::path(g_AssetsPath) / path;
+					Ref<Texture2D> texture = CreateRef<Texture2D>(texturePath.string());
+					if (texture->isLoaded())
+						sprite.texture = texture;
+					else
+						SHADO_CORE_WARN("Could not load texture {0}", texturePath.filename().string());
+				}
+
+				ImGui::EndDragDropTarget();
+			}
+
 			// File choose
 			ImGui::PushID(typeid(sprite.texture).hash_code());
 			ImGui::SameLine();
-			if (ImGui::Button("...", { 24, 24 }) ) {
+			if (ImGui::Button("...", { 24, 24 })) {
 				texturePath = FileDialogs::openFile("Image file (*.jpg, *.png)\0*.jpg;*.png\0");
 				textureChanged = true;
 			}

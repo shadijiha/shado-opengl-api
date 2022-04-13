@@ -14,6 +14,8 @@ namespace Shado {
 		void bind(uint32_t slot = 0) const;
 		void unbind() const;
 
+		bool isLoaded() const { return m_IsLoaded; }
+
 		int getWidth() const { return m_Width; }
 		int getHeight() const { return m_Height; }
 		uint32_t getRendererID() const { return m_RendererID; }
@@ -34,5 +36,6 @@ namespace Shado {
 		unsigned int m_DataFormat;
 
 		std::string m_FilePath;
+		bool m_IsLoaded = false;
 	};
 }
