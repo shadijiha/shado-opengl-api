@@ -4,7 +4,7 @@
 #include <imgui.h>	// keep this here
 
 namespace Shado {
-
+	
 	class ImguiLayer : public Layer
 	{
 	public:
@@ -23,6 +23,13 @@ namespace Shado {
 
 		void setBlockEvents(bool b) { m_BlockEvents = b; }
 		bool isBlockingEvents() const { return m_BlockEvents; }
+
+		enum FontIndex {
+			BOLD = 0, REGULAR = 1
+		};
+
+	private:
+		void setDarkThemeColors();
 	private:
 		float m_Time;
 		bool m_ShowDemo;

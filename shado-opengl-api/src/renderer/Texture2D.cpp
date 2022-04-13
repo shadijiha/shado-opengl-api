@@ -26,7 +26,7 @@ namespace Shado {
 	}
 
 	Texture2D::Texture2D(const std::string& path)
-		: m_RendererID(0), m_Width(0), m_Height(0)
+		: m_RendererID(0), m_Width(0), m_Height(0), m_FilePath(path)
 	{
 		int width, height, channels;
 		stbi_set_flip_vertically_on_load(1);

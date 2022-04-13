@@ -6,40 +6,33 @@ namespace Shado {
 
 	class EditorCamera : public Camera
 	{
-		friend class EditorCameraController;
 	public:
 		EditorCamera() = default;
-		EditorCamera(const glm::mat4& projectionMatrix);
+		EditorCamera(float fov, float aspectRatio, float nearClip, float farClip);
 
-		void Focus();
 		void OnUpdate(TimeStep ts);
 		void OnEvent(Event& e);
 
 		inline float GetDistance() const { return m_Distance; }
 		inline void SetDistance(float distance) { m_Distance = distance; }
 
-		inline void SetViewportSize(uint32_t width, uint32_t height) { m_ViewportWidth = width; m_ViewportHeight = height; }
+		inline void SetViewportSize(float width, float height) { m_ViewportWidth = width; m_ViewportHeight = height; UpdateProjection(); }
 
+		const glm::mat4& getProjectionMatrix() const override { return m_ProjectionMatrix; }
 		const glm::mat4& getViewMatrix() const override { return m_ViewMatrix; }
 		glm::mat4 getViewProjectionMatrix() const override { return m_ProjectionMatrix * m_ViewMatrix; }
 
-		glm::vec3 GetUpDirection();
-		glm::vec3 GetRightDirection();
-		glm::vec3 GetForwardDirection();
+		glm::vec3 GetUpDirection() const;
+		glm::vec3 GetRightDirection() const;
+		glm::vec3 GetForwardDirection() const;
 		const glm::vec3& GetPosition() const { return m_Position; }
 		glm::quat GetOrientation() const;
 
-		float GetExposure() const { return m_Exposure; }
-		float& GetExposure() { return m_Exposure; }
-
 		float GetPitch() const { return m_Pitch; }
 		float GetYaw() const { return m_Yaw; }
-
-	protected:
-		virtual void reCalculateViewMatrix() { UpdateCameraView(); };
-		
 	private:
-		void UpdateCameraView();
+		void UpdateProjection();
+		void UpdateView();
 
 		bool OnMouseScroll(MouseScrolledEvent& e);
 
@@ -47,40 +40,27 @@ namespace Shado {
 		void MouseRotate(const glm::vec2& delta);
 		void MouseZoom(float delta);
 
-		glm::vec3 CalculatePosition();
+		glm::vec3 CalculatePosition() const;
 
 		std::pair<float, float> PanSpeed() const;
 		float RotationSpeed() const;
 		float ZoomSpeed() const;
-	protected:
-		void reCalculateProjectionMatix() override	{}
+
+		virtual void reCalculateViewMatrix() override;
+		virtual void reCalculateProjectionMatix() override;
 	private:
+		float m_FOV = 45.0f, m_AspectRatio = 1.778f;
+
 		glm::mat4 m_ViewMatrix;
-		glm::vec3 m_Position, m_Rotation, m_FocalPoint;
+		glm::vec3 m_Position = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 m_FocalPoint = { 0.0f, 0.0f, 0.0f };
 
-		bool m_Panning, m_Rotating;
-		glm::vec2 m_InitialMousePosition;
-		glm::vec3 m_InitialFocalPoint, m_InitialRotation;
+		glm::vec2 m_InitialMousePosition = { 0.0f, 0.0f };
 
-		float m_Distance;
-		float m_Pitch, m_Yaw;
+		float m_Distance = 10.0f;
+		float m_Pitch = 0.0f, m_Yaw = 0.0f;
 
-		float m_Exposure = 0.8f;
-
-		uint32_t m_ViewportWidth = 1280, m_ViewportHeight = 720;
+		float m_ViewportWidth = 1280, m_ViewportHeight = 720;
 	};
 
-	// =========================================
-
-	class EditorCameraController : public CameraController {
-	public:
-		EditorCameraController();
-		
-		void onUpdate(TimeStep dt) override;
-		void onEvent(Event& e) override;
-		
-	protected:
-		bool onMouseScrolled(MouseScrolledEvent& e) override;
-		bool onWindowResized(WindowResizeEvent& e) override;
-	};
 }

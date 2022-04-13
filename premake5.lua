@@ -18,15 +18,18 @@ IncludeDir["GLEW"] = "shado-opengl-api/vendor/GLEW/include"
 IncludeDir["imgui"] = "shado-opengl-api/vendor/imgui"
 IncludeDir["glm"] = "shado-opengl-api/vendor/glm"
 IncludeDir["spdlog"] = "shado-opengl-api/vendor/spdlog/include"
---IncludeDir["shadoScript"] = "shado-opengl-api/vendor/shado-script/shado-script/src"
+IncludeDir["yaml_cpp"] = "shado-opengl-api/vendor/yaml-cpp/include"
 IncludeDir["box2d"] = "shado-opengl-api/vendor/box2d/include"
 IncludeDir["entt"] = "shado-opengl-api/vendor/entt/include"
+IncludeDir["ImGuizmo"] = "shado-opengl-api/vendor/ImGuizmo"
 
-include "shado-opengl-api/vendor/GLFW"
-include "shado-opengl-api/vendor/GLEW"
-include "shado-opengl-api/vendor/imgui"
---include "shado-opengl-api/vendor/shado-script/premakeProj.lua"
-include "shado-opengl-api/vendor/box2d"
+group "Dependancies"
+	include "shado-opengl-api/vendor/GLFW"
+	include "shado-opengl-api/vendor/GLEW"
+	include "shado-opengl-api/vendor/imgui"
+	include "shado-opengl-api/vendor/yaml-cpp"
+	include "shado-opengl-api/vendor/box2d"
+group ""
 
 project "shado-opengl-api"
 	location "shado-opengl-api"
@@ -42,7 +45,10 @@ project "shado-opengl-api"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.hpp",
-		"%{prj.name}/vendor/entt/include/**.hpp"
+		"%{prj.name}/vendor/entt/include/**.hpp",
+
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.h",
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp"
 	}
 
 	includedirs
@@ -54,7 +60,9 @@ project "shado-opengl-api"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.entt}",
-		"%{IncludeDir.box2d}"
+		"%{IncludeDir.box2d}",
+		"%{IncludeDir.yaml_cpp}",
+		"%{IncludeDir.ImGuizmo}"
 	}
 
 	links
@@ -64,8 +72,8 @@ project "shado-opengl-api"
 		"ImGui",
 		"gdi32.lib",
 		"opengl32.lib",
---		"shado-script",
-		"box2d"
+		"box2d",
+		"yaml-cpp"
 	}
 
 	filter "system:windows"

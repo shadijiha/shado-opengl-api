@@ -1,6 +1,9 @@
 #pragma once
 #include <glm/glm.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
 #include "Entity.h"
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
@@ -26,15 +29,15 @@ namespace Shado {
 		TransformComponent(const glm::vec3& position) : position(position) {}
 
 		glm::mat4 getTransform() const {
-			glm::mat4 _rotation = glm::rotate(glm::mat4(1.0f), rotation.x, {1, 0, 0})
-					* glm::rotate(glm::mat4(1.0f), rotation.y, { 0, 1, 0 })
-					* glm::rotate(glm::mat4(1.0f), rotation.z, { 0, 0, 1 });
+			glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
 			return glm::translate(glm::mat4(1.0f), position) * _rotation * glm::scale(glm::mat4(1.0f), scale);
 		}
 	};
 	
 	struct SpriteRendererComponent {
 		glm::vec4 color= {1, 1, 1, 1};
+		Ref<Texture2D> texture = nullptr;
+		float tilingFactor = 1.0f;
 
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;

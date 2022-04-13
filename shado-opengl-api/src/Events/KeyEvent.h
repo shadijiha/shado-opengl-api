@@ -4,12 +4,14 @@
 #include "Event.h"
 #include <sstream>
 
+#include "KeyCodes.h"
+
 namespace Shado {
 
 	class KeyEvent : public Event
 	{
 	public:
-		inline int getKeyCode() const { return m_KeyCode; }
+		inline KeyCode getKeyCode() const { return (KeyCode)m_KeyCode; }
 
 		EVENT_CLASS_CATEGORY(EventCategoryKeyboard | EventCategoryInput)
 	protected:

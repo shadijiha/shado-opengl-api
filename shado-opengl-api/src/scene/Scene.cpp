@@ -25,7 +25,7 @@ namespace Shado {
 		m_Registry.destroy(entity);
 	}
 
-	void Scene::onUpdate(TimeStep ts) {
+	void Scene::onUpdateRuntime(TimeStep ts) {
 		// Update script
 		{
 			m_Registry.view<NativeScriptComponent>().each([this, ts](auto entity, NativeScriptComponent& nsc) {
@@ -42,7 +42,7 @@ namespace Shado {
 		}
 	}
 
-	void Scene::onDraw() {
+	void Scene::onDrawRuntime() {
 
 		// Render 2D: Cameras
 		Camera* primaryCamera = nullptr;
@@ -77,6 +77,24 @@ namespace Shado {
 		}	
 	}
 
+	void Scene::onUpdateEditor(TimeStep ts, EditorCamera& camera) {
+	}
+
+	void Scene::onDrawEditor(EditorCamera& camera) {
+
+		Renderer2D::BeginScene(camera);
+
+		// Render stuff
+		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+		for (auto entity : group) {
+			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+
+			Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
+		}
+
+		Renderer2D::EndScene();
+	}
+
 	void Scene::onViewportResize(uint32_t width, uint32_t height) {
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
@@ -91,5 +109,16 @@ namespace Shado {
 				camera.setViewportSize(width, height);
 			}
 		}
+	}
+
+	Entity Scene::getPrimaryCameraEntity() {
+		auto cams = m_Registry.view<CameraComponent>();
+		for (auto entity : cams) {
+			const auto& camera = cams.get<CameraComponent>(entity);
+
+			if (camera.primary)
+				return { entity, this };			
+		}
+		return {};
 	}
 }
