@@ -2,6 +2,7 @@
 #include <filesystem>
 #include "renderer/Texture2D.h"
 #include "util/Util.h"
+#include <unordered_map>
 
 namespace Shado {
 	class ContentBrowserPanel {
@@ -21,5 +22,7 @@ namespace Shado {
 
 		std::vector<std::filesystem::directory_entry> directories;
 		uint32_t tick = 1;
+
+		std::unordered_map<std::string, Ref<Texture2D>> imagesThumbnails;
 	};
 }

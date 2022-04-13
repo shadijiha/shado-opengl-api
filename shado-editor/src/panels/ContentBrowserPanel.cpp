@@ -63,7 +63,17 @@ namespace Shado {
 			ImGui::PushID(filenameString.c_str());
 			Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+
+			// If it is an image
+			if (path.extension() == ".jpg" || path.extension() == ".png") {
+				if (imagesThumbnails.find(path.string()) == imagesThumbnails.end()) {
+					imagesThumbnails[path.string()] = CreateRef<Texture2D>(path.string());
+				}
+				icon = imagesThumbnails[path.string()];
+
+			}
 			ImGui::ImageButton((ImTextureID)icon->getRendererID(), { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
+			
 
 			if (ImGui::BeginDragDropSource())
 			{

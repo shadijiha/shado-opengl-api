@@ -2,25 +2,14 @@ Scene: Untitled
 Entities:
   - Entity: 12837192831273
     TagComponent:
-      Tag: Empty Entity
+      Tag: Square2
     TransformComponent:
-      Translation: [1.61350393, 1.63304973, 0]
+      Translation: [5.11626863, -0.0113941431, 4.76837158e-07]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     SpriteRendererComponent:
-      Color: [0.826254845, 0.542329431, 0.542329431, 1]
-      Texture: "NULL"
-      TillingFactor: 1
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Cait queen
-    TransformComponent:
-      Translation: [-2, 1.29999995, 0.5]
-      Rotation: [0.270526022, -0.490437567, -0.429351002]
-      Scale: [1, 1, 1]
-    SpriteRendererComponent:
-      Color: [0.999989986, 1, 0.999989986, 1]
-      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven.png
+      Color: [1, 0.999989986, 0.999989986, 1]
+      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven2.jpg
       TillingFactor: 1
   - Entity: 12837192831273
     TagComponent:
@@ -39,12 +28,23 @@ Entities:
       FixedAspectRatio: false
   - Entity: 12837192831273
     TagComponent:
-      Tag: Square2
+      Tag: Cait queen
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [3.54016209, 1.0140487, 3.89654493]
+      Rotation: [0.270526052, -0.490437657, -0.429351002]
+      Scale: [0.99999994, 1, 1]
+    SpriteRendererComponent:
+      Color: [0.999989986, 1, 0.999989986, 1]
+      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven.png
+      TillingFactor: 1
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Empty Entity
+    TransformComponent:
+      Translation: [-0.426144928, -0.0533637404, 0]
       Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
+      Scale: [9.60000038, 6.0999999, 1]
     SpriteRendererComponent:
       Color: [1, 0.999989986, 0.999989986, 1]
-      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven2.jpg
+      Texture: assets\TranscodedWallpaper.jpg
       TillingFactor: 1
