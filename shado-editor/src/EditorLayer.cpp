@@ -175,7 +175,7 @@ namespace Shado {
 	                ImGui::EndMenu();
 	            }
 
-				if (ImGui::BeginMenu("Guizmos")) {
+				if (ImGui::BeginMenu("Gizmos")) {
 
 					if (ImGui::MenuItem("Translation")) {
 						m_GuizmosOperation = ImGuizmo::OPERATION::TRANSLATE;
@@ -233,9 +233,15 @@ namespace Shado {
 				// Entity transform
 				auto& tc = selected.getComponent<TransformComponent>();
 				auto transform = tc.getTransform();
-				
+
+				// Snapping
+				bool snap = Input::isKeyPressed(KeyCode::LeftControl);
+				float snapValue = m_GuizmosOperation == ImGuizmo::OPERATION::ROTATE ? 45.0f : 0.5f;	// Snap to 45 degrees for rotation, and 0.5m for scale and translation
+				float snapValues[3] = { snapValue, snapValue, snapValue };
+
+
 				ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(projection),
-					(ImGuizmo::OPERATION)m_GuizmosOperation, ImGuizmo::LOCAL, glm::value_ptr(transform));
+					(ImGuizmo::OPERATION)m_GuizmosOperation, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
 
 				if (ImGuizmo::IsUsing()) {
 					glm::vec3 position, rotation, scale;
@@ -288,6 +294,20 @@ namespace Shado {
 			case KeyCode::O:
 				if (control)
 					openScene();
+				break;
+
+			// Gizmos
+			case KeyCode::Q:
+				m_GuizmosOperation = -1;
+				break;
+			case KeyCode::W:
+				m_GuizmosOperation = ImGuizmo::OPERATION::TRANSLATE;
+				break;
+			case KeyCode::E:
+				m_GuizmosOperation = ImGuizmo::OPERATION::ROTATE;
+				break;
+			case KeyCode::R:
+				m_GuizmosOperation = ImGuizmo::OPERATION::SCALE;
 				break;
 		}
 	}
