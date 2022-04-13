@@ -24,7 +24,7 @@ namespace Shado {
 		void openScene();
 
 	private:
-		OrthoCameraController m_camera_controller;
+		EditorCamera m_EditorCamera;
 
 		bool m_viewportFocused = false, m_viewportHovered = false;
 		glm::vec2 m_ViewportSize = {0, 0};
@@ -37,7 +37,6 @@ namespace Shado {
 
 		// Panels
 		SceneHierarchyPanel m_sceneHierarchyPanel;
-
 	};
 
 

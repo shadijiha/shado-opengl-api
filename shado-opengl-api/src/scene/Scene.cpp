@@ -25,7 +25,7 @@ namespace Shado {
 		m_Registry.destroy(entity);
 	}
 
-	void Scene::onUpdate(TimeStep ts) {
+	void Scene::onUpdateRuntime(TimeStep ts) {
 		// Update script
 		{
 			m_Registry.view<NativeScriptComponent>().each([this, ts](auto entity, NativeScriptComponent& nsc) {
@@ -42,7 +42,7 @@ namespace Shado {
 		}
 	}
 
-	void Scene::onDraw() {
+	void Scene::onDrawRuntime() {
 
 		// Render 2D: Cameras
 		Camera* primaryCamera = nullptr;
@@ -75,6 +75,23 @@ namespace Shado {
 
 			Renderer2D::EndScene();
 		}	
+	}
+
+	void Scene::onUpdateEditor(TimeStep ts, EditorCamera& camera) {
+	}
+
+	void Scene::onDrawEditor(EditorCamera& camera) {
+		Renderer2D::BeginScene(camera);
+
+		// Render stuff
+		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+		for (auto entity : group) {
+			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+
+			Renderer2D::DrawQuad(transform.getTransform(), sprite.color);
+		}
+
+		Renderer2D::EndScene();
 	}
 
 	void Scene::onViewportResize(uint32_t width, uint32_t height) {

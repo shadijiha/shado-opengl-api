@@ -57,11 +57,11 @@ public:
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<KeyPressedEvent>([&](KeyPressedEvent& event) {
 
-			if (event.getKeyCode() == (int)KeyCode::Escape) {
+			if (event.getKeyCode() == KeyCode::Escape) {
 				Application::get().getWindow().setMode(WindowMode::WINDOWED);
 			}
 
-			if (event.getKeyCode() == (int)KeyCode::F) {
+			if (event.getKeyCode() == KeyCode::F) {
 				Application::get().getWindow().setMode(WindowMode::FULLSCREEN);
 			}
 

@@ -14,7 +14,7 @@ namespace Shado {
 	static void openScene();
 
 	EditorLayer::EditorLayer()
-		: Layer("Editor"), m_camera_controller(Application::get().getWindow().getAspectRatio(), true)
+		: Layer("Editor")
 	{
 		Application::get().getWindow().setTitle("Shado Engine Editor");
 	}
@@ -54,22 +54,22 @@ namespace Shado {
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
-   //      if (m_viewportFocused)
-			// m_camera_controller.onUpdate(dt);
+        if (m_viewportFocused)
+			m_EditorCamera.OnUpdate(dt);
 
 		// If viewports don't match recreate frame buffer
 		if (m_ViewportSize != *((glm::vec2*)&m_viewportPanelSize) && m_viewportPanelSize.x > 0 && m_viewportPanelSize.y > 0) {
 			m_ViewportSize = { m_viewportPanelSize.x, m_viewportPanelSize.y };
 			buffer->resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 
-			m_camera_controller.onResize(m_ViewportSize.x, m_ViewportSize.y);
+			m_EditorCamera.SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
 
 			m_ActiveScene->onViewportResize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
 		}
 
 
         // Update Scene
-        m_ActiveScene->onUpdate(dt);
+        m_ActiveScene->onUpdateEditor(dt, m_EditorCamera);
 	}
 
 	void EditorLayer::onDraw() {
@@ -80,7 +80,7 @@ namespace Shado {
         {
             //Renderer2D::BeginScene(m_camera_controller.getCamera());
             // Draw Scene
-            m_ActiveScene->onDraw();
+            m_ActiveScene->onDrawEditor(m_EditorCamera);
 
             //Renderer2D::DrawQuad({ 0.5, 0.5 }, { 1, 1 }, Color::CYAN);
            // Renderer2D::EndScene();
@@ -206,7 +206,7 @@ namespace Shado {
 			ImGui::Begin("Viewport");
 			m_viewportFocused = ImGui::IsWindowFocused();
 			m_viewportHovered = ImGui::IsWindowHovered();
-			Application::get().getUILayer()->setBlockEvents(!m_viewportFocused || !m_viewportHovered);
+			Application::get().getUILayer()->setBlockEvents(!m_viewportFocused && !m_viewportHovered);
 
 			m_viewportPanelSize = ImGui::GetContentRegionAvail();
 
@@ -225,10 +225,9 @@ namespace Shado {
 				ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
 
 				// Camera
-				auto cameraEntity = m_ActiveScene->getPrimaryCameraEntity();
-				const auto& camera = cameraEntity.getComponent<CameraComponent>().camera;
-				const auto& projection = camera->getProjectionMatrix();
-				glm::mat4 cameraView = glm::inverse(cameraEntity.getComponent<TransformComponent>().getTransform());
+				const auto& camera = m_EditorCamera;
+				const auto& projection = camera.getProjectionMatrix();
+				glm::mat4 cameraView = camera.getViewMatrix();
 
 				// Entity transform
 				auto& tc = selected.getComponent<TransformComponent>();
@@ -267,7 +266,7 @@ namespace Shado {
 	}
 
 	void EditorLayer::onEvent(Event& event) {
-        //m_camera_controller.onEvent(event);
+        m_EditorCamera.OnEvent(event);
 
 		EventDispatcher dispatcher(event);
 		dispatcher.dispatch<KeyPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onKeyPressed));
@@ -310,6 +309,7 @@ namespace Shado {
 				m_GuizmosOperation = ImGuizmo::OPERATION::SCALE;
 				break;
 		}
+		return false;
 	}
 
 	void EditorLayer::saveScene() {
