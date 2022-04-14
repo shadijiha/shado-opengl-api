@@ -70,8 +70,10 @@ namespace Shado {
 
 			// Context menu to create 
 			if (ImGui::BeginPopupContextItem()) {
-				if (ImGui::MenuItem("Open in Explorer"))
+				if (ImGui::MenuItem("Open..."))
 					Dialog::openPathInExplorer(path.string());
+				if (ImGui::MenuItem("Open in Explorer"))
+					Dialog::openPathInExplorer(directoryEntry.is_directory() ? path.string() : path.parent_path().string());
 
 				ImGui::EndPopup();
 			}
