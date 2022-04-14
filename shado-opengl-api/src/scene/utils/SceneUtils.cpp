@@ -1,5 +1,4 @@
 #include "SceneUtils.h"
-#include <Windows.h>
 #include <commdlg.h>
 #include "Application.h"
 #include <GLFW/glfw3.h>
@@ -52,6 +51,22 @@ namespace Shado {
 			return ofn.lpstrFile;
 
 		return std::string();
+	}
+
+	/**
+	 *
+	 * Dialog class
+	 */
+	void Dialog::alert(const std::string& message, const std::string& alertTitle , DialogIcon icon) {
+		std::wstring WMessage = std::wstring(message.begin(), message.end());
+		std::wstring WTitle = std::wstring(alertTitle.begin(), alertTitle.end());
+		HWND handler = glfwGetWin32Window(Application::get().getWindow().getNativeWindow());
+		MessageBox(
+			handler,
+			WMessage.c_str(),
+			WTitle.c_str(),
+			(UINT)icon
+		);
 	}
 }
 

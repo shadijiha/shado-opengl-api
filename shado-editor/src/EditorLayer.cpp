@@ -317,6 +317,16 @@ namespace Shado {
 	}
 
 	void EditorLayer::openScene(const std::filesystem::path& path) {
+		if (m_SceneState != SceneState::Edit)
+			onSceneStop();
+
+		if (path.extension().string() != ".shadoscene") {
+			std::string message = "Could not load scene file " + path.string();
+			SHADO_WARN(message);
+			Dialog::alert(message, "Scene load error", Dialog::DialogIcon::ERROR_ICON);
+			return;
+		}
+
 		Ref<Scene> scene = CreateRef<Scene>();
 		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
@@ -393,12 +403,11 @@ namespace Shado {
 				auto path = g_AssetsPath / pathStr;
 				auto extension = path.extension();
 
-				if (extension == ".shadoscene")
-					openScene(path);
-				else if (extension == ".jpg" || extension == ".png") {
+				if (extension == ".jpg" || extension == ".png") {
 					if (m_HoveredEntity)
 						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
-				}
+				} else
+					openScene(path);
 			}
 
 			ImGui::EndDragDropTarget();

@@ -13,6 +13,10 @@ namespace Shado {
 	Scene::Scene() {
 	}
 
+	Scene::Scene(Scene& other) {
+		
+	}
+
 	Scene::~Scene() {
 	}
 

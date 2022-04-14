@@ -12,6 +12,7 @@ namespace Shado {
 	class Scene {
 	public:
 		Scene();
+		Scene(Scene& other);
 		~Scene();
 
 		Entity createEntity(const std::string& name = "");
