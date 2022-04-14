@@ -172,6 +172,13 @@ namespace Shado {
 			ImGui::DragFloat("Tilling factor", &sprite.tilingFactor);
 		});
 
+		drawComponent<CircleRendererComponent>("Circle Renderer", entity, [](CircleRendererComponent& circle) {
+			ImGui::ColorEdit4("Colour", glm::value_ptr(circle.color));
+			ImGui::DragFloat("Radius", &circle.radius);
+			ImGui::DragFloat("Thickness", &circle.thickness, 0.05);
+			ImGui::DragFloat("Fade", &circle.fade, 0.01);
+		});
+
 		drawComponent<CameraComponent>("Camera", entity, [](CameraComponent& camera) {
 			// Select menu to change camera type
 			const char* projectionTypesString[] = { "Orthographic", "Orbit (Perspective)" };
@@ -390,6 +397,11 @@ namespace Shado {
 		if (ImGui::BeginPopup("AddComponent")) {
 			if (!m_Selected.hasComponent<SpriteRendererComponent>() && ImGui::MenuItem("Sprite renderer")) {
 				m_Selected.addComponent<SpriteRendererComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!m_Selected.hasComponent<CircleRendererComponent>() && ImGui::MenuItem("Circle renderer")) {
+				m_Selected.addComponent<CircleRendererComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

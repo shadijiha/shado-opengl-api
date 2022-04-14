@@ -64,8 +64,6 @@ namespace Shado {
 
 			if (!m_minimized) {
 				/* Render here */
-				//Renderer2D::Clear();
-
 				// Draw scenes here
 				for (Layer* layer : layers) {
 					if (layer == nullptr) {

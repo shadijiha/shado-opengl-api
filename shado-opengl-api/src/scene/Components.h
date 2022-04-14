@@ -47,6 +47,13 @@ namespace Shado {
 		SpriteRendererComponent(const glm::vec4& color) : color(color) {}
 	};
 
+	struct CircleRendererComponent : SpriteRendererComponent {
+		glm::vec4 color = { 1, 1, 1, 1 };
+		float radius = 0.5f;
+		float thickness = 1.0f;
+		float fade = 0.005f;
+	};
+
 	struct CameraComponent {
 		enum class Type {
 			Orthographic = 0, Orbit = 1
