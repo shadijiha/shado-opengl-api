@@ -112,7 +112,7 @@ public:
 		Renderer2D::BeginScene(camera.getCamera());
 		
 		Renderer2D::DrawQuad({ 0, 0, 0 }, { 1, 1 }, { 1, 1, 1, 1 });
-		Renderer2D::DrawRotatedQuad({ 0, 0, -3 }, { 2, 2 }, 45.0f, { 0.3, 0.614, 0.21, 1.0 });
+		Renderer2D::DrawRotatedQuad({ 0, 0, -3 }, { 2, 2 }, {0, 0, 45.0f }, { 0.3, 0.614, 0.21, 1.0 });
 
 		Renderer2D::EndScene();
 	}

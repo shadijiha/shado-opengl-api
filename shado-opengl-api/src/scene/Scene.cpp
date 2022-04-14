@@ -39,6 +39,7 @@ namespace Shado {
 		// Copy components (except ID Component and Tag component)
 		CopyComponent<TransformComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<SpriteRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<CircleRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<CameraComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
@@ -75,6 +76,7 @@ namespace Shado {
 
 		CopyComponentIfExists<TransformComponent>(newEntity, source);
 		CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
+		CopyComponentIfExists<CircleRendererComponent>(newEntity, source);
 		CopyComponentIfExists<CameraComponent>(newEntity, source);
 		CopyComponentIfExists<NativeScriptComponent>(newEntity, source);
 		CopyComponentIfExists<RigidBody2DComponent>(newEntity, source);
@@ -168,6 +170,17 @@ namespace Shado {
 				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 			}
 
+			// Draw circles
+			{
+				auto view = m_Registry.view<TransformComponent, CircleRendererComponent>();
+				for (auto entity : view)
+				{
+					auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
+
+					Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
+				}
+			}
+
 			Renderer2D::EndScene();
 		}	
 	}
@@ -179,12 +192,23 @@ namespace Shado {
 
 		Renderer2D::BeginScene(camera);
 
-		// Render stuff
+		// Render Quads stuff
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 		for (auto entity : group) {
 			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
 			Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
+		}
+
+		// Draw circles
+		{
+			auto view = m_Registry.view<TransformComponent, CircleRendererComponent>();
+			for (auto entity : view)
+			{
+				auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
+
+				Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
+			}
 		}
 
 		Renderer2D::EndScene();

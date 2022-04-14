@@ -174,7 +174,6 @@ namespace Shado {
 
 		drawComponent<CircleRendererComponent>("Circle Renderer", entity, [](CircleRendererComponent& circle) {
 			ImGui::ColorEdit4("Colour", glm::value_ptr(circle.color));
-			ImGui::DragFloat("Radius", &circle.radius);
 			ImGui::DragFloat("Thickness", &circle.thickness, 0.05);
 			ImGui::DragFloat("Fade", &circle.fade, 0.01);
 		});
