@@ -19,7 +19,7 @@ public:
 		specification.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::DEPTH24STENCIL8 };
 		specification.Width = Application::get().getWindow().getWidth();
 		specification.Height = Application::get().getWindow().getHeight();
-		buffer = Framebuffer::create(specification);
+		//buffer = Framebuffer::create(specification);
 
 		Renderer2D::SetClearColor({ 0, 0, 0, 1 });
 	}
@@ -30,7 +30,7 @@ public:
 	}
 	 
 	void onDraw() override {
-		buffer->bind();
+		//buffer->bind();
 		Renderer2D::Clear();
 		Renderer2D::BeginScene(orthoCamera.getCamera());
 
@@ -45,7 +45,7 @@ public:
 		}
 
 		Renderer2D::EndScene();
-		buffer->unbind();
+		//buffer->unbind();
 	}
 
 	void onDestroy() override {}
@@ -77,11 +77,16 @@ public:
 	}
 
 	void onImGuiRender() override {
-		ImGui::SliderFloat4("Sphere Colour", (float*)&color, 0, 1.0f);
+		ImGui::Begin("Hehexd");
+		ImGui::Text("hehexd");
+		
+		/*ImGui::SliderFloat4("Sphere Colour", (float*)&color, 0, 1.0f);
 		ImGui::SliderInt("Tiling factor", &tileFactor, 1, 100);
 
 		uint32_t textureID = buffer->getColorAttachmentRendererID();
-		ImGui::Image((void*)textureID, {1280.0f, 720.0f}, ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image((void*)textureID, {1280.0f, 720.0f}, ImVec2(0, 1), ImVec2(1, 0));*/
+
+		ImGui::End();
 	}
 
 private:
@@ -93,48 +98,14 @@ private:
 	Color color = { 1, 1, 1 };
 	int tileFactor = 1;
 
-	Ref<Framebuffer> buffer;
+	//Ref<Framebuffer> buffer;
 };
-
-class TestLayer2 : public Layer {
-public:
-	TestLayer2() :
-		Layer("layer1"),
-		camera(Application::get().getWindow().getAspectRatio())
-	{
-	}
-
-	void onUpdate(TimeStep dt) override {
-		camera.onUpdate(dt);
-	}
-
-	void onDraw() override {
-		Renderer2D::BeginScene(camera.getCamera());
-		
-		Renderer2D::DrawQuad({ 0, 0, 0 }, { 1, 1 }, { 1, 1, 1, 1 });
-		Renderer2D::DrawRotatedQuad({ 0, 0, -3 }, { 2, 2 }, {0, 0, 45.0f }, { 0.3, 0.614, 0.21, 1.0 });
-
-		Renderer2D::EndScene();
-	}
-
-	void onEvent(Event& e) override {
-		camera.onEvent(e);
-	}
-
-	void onImGuiRender() override {
-		ImGui::TextColored({ 0.5, 0.5, 0, 1 }, "LULW");
-	}
-
-	OrbitCameraController camera;
-};
-
 
 int main(int argc, const char** argv)
 {
 	auto& application = Application::get();
 	application.getWindow().resize(1920, 1080);
 	application.submit(new TestLayer);
-	application.submit(new TestLayer2);
 	application.run();
 
 	Application::destroy();
