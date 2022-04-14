@@ -22,6 +22,7 @@ IncludeDir["yaml_cpp"] = "shado-opengl-api/vendor/yaml-cpp/include"
 IncludeDir["box2d"] = "shado-opengl-api/vendor/box2d/include"
 IncludeDir["entt"] = "shado-opengl-api/vendor/entt/include"
 IncludeDir["ImGuizmo"] = "shado-opengl-api/vendor/ImGuizmo"
+IncludeDir["mono"] = "mono/include/mono-2.0"
 
 group "Dependancies"
 	include "shado-opengl-api/vendor/GLFW"
@@ -62,7 +63,8 @@ project "shado-opengl-api"
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
 		"%{IncludeDir.yaml_cpp}",
-		"%{IncludeDir.ImGuizmo}"
+		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.mono}"
 	}
 
 	links
@@ -74,7 +76,9 @@ project "shado-opengl-api"
 		"opengl32.lib",
 		"box2d",
 		"yaml-cpp",
-		"shcore.lib"
+		"shcore.lib",
+		"mono/mono-2.0-sgen.lib",
+		--"mono/mono-2.0-sgen.dll"
 	}
 
 	filter "system:windows"
@@ -129,6 +133,7 @@ project "sandbox"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
+		"%{IncludeDir.mono}",	-- TODO : remove this
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"
 	}
@@ -184,6 +189,7 @@ project "shado-editor"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
+		"%{IncludeDir.mono}",	-- TODO: remove this
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"
 	}
