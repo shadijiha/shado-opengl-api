@@ -267,6 +267,17 @@ namespace Shado {
 			ImGui::DragFloat("Restitution", &bc.restitution, 0.01f, 0);
 			ImGui::DragFloat("Restitution Threshold", &bc.restitutionThreshold, 0.01f, 0);
 		});
+
+		drawComponent<CircleCollider2DComponent>("Circle Collider 2D", entity, [](CircleCollider2DComponent& bc) {
+
+			ImGui::DragFloat2("Radius modifier", &bc.radius, 0.1f);
+			ImGui::DragFloat("Density", &bc.density, 0.01f, 0, 1.0f);
+			ImGui::DragFloat("Friction", &bc.friction, 0.01f, 0, 1.0f);
+
+			ImGui::Separator();
+			ImGui::DragFloat("Restitution", &bc.restitution, 0.01f, 0);
+			ImGui::DragFloat("Restitution Threshold", &bc.restitutionThreshold, 0.01f, 0);
+		});
 	}
 	
 	template<typename T>
@@ -411,6 +422,11 @@ namespace Shado {
 
 			if (!m_Selected.hasComponent<BoxCollider2DComponent>() &&  ImGui::MenuItem("Box Collider 2D")) {
 				m_Selected.addComponent<BoxCollider2DComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!m_Selected.hasComponent<CircleCollider2DComponent>() && ImGui::MenuItem("Circle Collider 2D")) {
+				m_Selected.addComponent<CircleCollider2DComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

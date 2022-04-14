@@ -1,5 +1,26 @@
 Scene: Untitled
 Entities:
+  - Entity: 5086028238303760612
+    TagComponent:
+      Tag: Circle
+    TransformComponent:
+      Translation: [0.936424196, 1.83382869, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CircleRendererComponent:
+      Color: [0.839215696, 0.381760836, 0.381760836, 0.588235319]
+      Thickness: 1
+      Fade: 0.00499999989
+    RigidBody2DComponent:
+      Type: 2
+      FixedRotation: false
+    CircleCollider2DComponent:
+      Offset: [0, 0]
+      Radius: 0.5
+      Density: 1
+      Friction: 0.5
+      Restitution: 0.430000007
+      RestitutionThreshold: 0.119999997
   - Entity: 14640050186583152364
     TagComponent:
       Tag: Ground
@@ -110,3 +131,14 @@ Entities:
       Friction: 0.5
       Restitution: 0.550000012
       RestitutionThreshold: 0.0599999987
+  - Entity: 3893768362195619926
+    TagComponent:
+      Tag: Sun
+    TransformComponent:
+      Translation: [-4.5167613, 2.4190135, -1.08133924]
+      Rotation: [0, 0, 0]
+      Scale: [4, 4, 1]
+    CircleRendererComponent:
+      Color: [0.857142866, 0.854943633, 0.287920594, 1]
+      Thickness: 1
+      Fade: 1.02499998

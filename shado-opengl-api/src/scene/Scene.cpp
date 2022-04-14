@@ -7,6 +7,7 @@
 #include "box2d/b2_body.h"
 #include "box2d/b2_fixture.h"
 #include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_circle_shape.h"
 
 namespace Shado {
 	template<typename Component>
@@ -44,7 +45,7 @@ namespace Shado {
 		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<BoxCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-
+		CopyComponent<CircleCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		
 	}
 
@@ -81,6 +82,7 @@ namespace Shado {
 		CopyComponentIfExists<NativeScriptComponent>(newEntity, source);
 		CopyComponentIfExists<RigidBody2DComponent>(newEntity, source);
 		CopyComponentIfExists<BoxCollider2DComponent>(newEntity, source);
+		CopyComponentIfExists<CircleCollider2DComponent>(newEntity, source);
 
 		return newEntity;
 	}
@@ -282,6 +284,23 @@ namespace Shado {
 
 				b2Fixture* fixture = body->CreateFixture(&fixtureDef);
 				collider.runtimeFixture = fixture;
+			}
+
+			if (entity.hasComponent<CircleCollider2DComponent>())
+			{
+				auto& cc2d = entity.getComponent<CircleCollider2DComponent>();
+
+				b2CircleShape circleShape;
+				circleShape.m_p.Set(cc2d.offset.x, cc2d.offset.y);
+				circleShape.m_radius = transform.scale.x * cc2d.radius;
+
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &circleShape;
+				fixtureDef.density = cc2d.density;
+				fixtureDef.friction = cc2d.friction;
+				fixtureDef.restitution = cc2d.restitution;
+				fixtureDef.restitutionThreshold = cc2d.restitutionThreshold;
+				body->CreateFixture(&fixtureDef);
 			}
 		}
 	}

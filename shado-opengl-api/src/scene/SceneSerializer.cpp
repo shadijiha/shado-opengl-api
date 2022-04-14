@@ -216,6 +216,20 @@ namespace Shado {
 					src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
 				}
 
+				auto circleRendererComponent = entity["CircleRendererComponent"];
+				if (circleRendererComponent)
+				{
+					auto& src = deserializedEntity.addComponent<CircleRendererComponent>();
+					
+					src.color = circleRendererComponent["Color"].as<glm::vec4>();
+					src.thickness = circleRendererComponent["Thickness"].as<float>();
+					src.fade = circleRendererComponent["Fade"].as<float>();
+
+					//auto texturePath = circleRendererComponent["Texture"].as<std::string>();
+					//src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
+					//src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
+				}
+
 				auto rigidBodyComponent = entity["RigidBody2DComponent"];
 				if (rigidBodyComponent)
 				{
@@ -234,6 +248,18 @@ namespace Shado {
 					src.friction = boxColliderComponent["Friction"].as<float>();
 					src.restitution = boxColliderComponent["Restitution"].as<float>();
 					src.restitutionThreshold = boxColliderComponent["RestitutionThreshold"].as<float>();
+				}
+
+				auto circleCollider2DComponent = entity["CircleCollider2DComponent"];
+				if (circleCollider2DComponent)
+				{
+					auto& src = deserializedEntity.addComponent<CircleCollider2DComponent>();
+					src.offset = circleCollider2DComponent["Offset"].as<glm::vec2>();
+					src.radius = circleCollider2DComponent["Radius"].as<float>();
+					src.density = circleCollider2DComponent["Density"].as<float>();
+					src.friction = circleCollider2DComponent["Friction"].as<float>();
+					src.restitution = circleCollider2DComponent["Restitution"].as<float>();
+					src.restitutionThreshold = circleCollider2DComponent["RestitutionThreshold"].as<float>();
 				}
 			}
 		}
@@ -325,6 +351,23 @@ namespace Shado {
 			out << YAML::EndMap; // SpriteRendererComponent
 		}
 
+		if (entity.hasComponent<CircleRendererComponent>())
+		{
+			out << YAML::Key << "CircleRendererComponent";
+			out << YAML::BeginMap; // SpriteRendererComponent
+
+			auto& circleRendererComponent = entity.getComponent<CircleRendererComponent>();
+			//std::string texturePath = circleRendererComponent.texture ? circleRendererComponent.texture->getFilePath() : "NULL";
+			out << YAML::Key << "Color" << YAML::Value << circleRendererComponent.color;
+			//out << YAML::Key << "Texture" << YAML::Value << texturePath;
+			//out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
+
+			out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
+			out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
+
+			out << YAML::EndMap; // SpriteRendererComponent
+		}
+
 		if (entity.hasComponent<RigidBody2DComponent>())
 		{
 			out << YAML::Key << "RigidBody2DComponent";
@@ -351,6 +394,22 @@ namespace Shado {
 			out << YAML::Key << "RestitutionThreshold" << YAML::Value << boxColliderComponent.restitutionThreshold;
 
 			out << YAML::EndMap; // BoxCollider2DComponent
+		}
+
+		if (entity.hasComponent<CircleCollider2DComponent>())
+		{
+			out << YAML::Key << "CircleCollider2DComponent";
+			out << YAML::BeginMap; // BoxCollider2DComponent
+
+			auto& circleCollider2DComponent = entity.getComponent<CircleCollider2DComponent>();
+			out << YAML::Key << "Offset" << YAML::Value << circleCollider2DComponent.offset;
+			out << YAML::Key << "Radius" << YAML::Value << circleCollider2DComponent.radius;
+			out << YAML::Key << "Density" << YAML::Value << circleCollider2DComponent.density;
+			out << YAML::Key << "Friction" << YAML::Value << circleCollider2DComponent.friction;
+			out << YAML::Key << "Restitution" << YAML::Value << circleCollider2DComponent.restitution;
+			out << YAML::Key << "RestitutionThreshold" << YAML::Value << circleCollider2DComponent.restitutionThreshold;
+
+			out << YAML::EndMap; // circleCollider2DComponent
 		}
 
 		out << YAML::EndMap; // Entity
