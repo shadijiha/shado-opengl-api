@@ -10,6 +10,9 @@
 #include "cameras/OrthoCamera.h"
 
 namespace Shado {
+	struct IDComponent {
+		UUID id;
+	};
 
 	struct TagComponent {
 		std::string tag;

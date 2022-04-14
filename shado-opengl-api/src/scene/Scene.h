@@ -1,6 +1,7 @@
 #pragma once
 #include "entt.hpp"
 #include "cameras/EditorCamera.h"
+#include "ui/UUID.h"
 #include "util/Util.h"
 
 class b2World;
@@ -14,6 +15,7 @@ namespace Shado {
 		~Scene();
 
 		Entity createEntity(const std::string& name = "");
+		Entity createEntityWithUUID(const std::string& name, Shado::UUID id);
 		void destroyEntity(Entity entity);
 
 		void onRuntimeStart();

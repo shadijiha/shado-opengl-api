@@ -7,7 +7,6 @@
 #include "box2d/b2_body.h"
 #include "box2d/b2_fixture.h"
 #include "box2d/b2_polygon_shape.h"
-#include "box2d/b2_polygon_shape.h"
 
 namespace Shado {
 
@@ -18,12 +17,18 @@ namespace Shado {
 	}
 
 	Entity Scene::createEntity(const std::string& name) {
+		return createEntityWithUUID(name, UUID());
+	}
+
+	Entity Scene::createEntityWithUUID(const std::string& name, Shado::UUID uuid) {
 		entt::entity id = m_Registry.create();
 		Entity entity = { id, this };
 
+		entity.addComponent<IDComponent>().id = uuid;
 		entity.addComponent<TransformComponent>();
+
 		auto& tag = entity.addComponent<TagComponent>();
-		tag.tag = name.empty() ? std::string("Entity ") + std::to_string((uint32_t)id) : name;
+		tag.tag = name.empty() ? std::string("Entity ") + std::to_string((uint64_t)uuid) : name;
 
 		return entity;
 	}

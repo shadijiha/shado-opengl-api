@@ -169,7 +169,7 @@ namespace Shado {
 
 				SHADO_CORE_TRACE("Deserialized entity with ID = {0}, name = {1}", uuid, name);
 
-				Entity deserializedEntity = m_Scene->createEntity(name);
+				Entity deserializedEntity = m_Scene->createEntityWithUUID(name, uuid);
 
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent)
@@ -228,12 +228,12 @@ namespace Shado {
 				if (boxColliderComponent)
 				{
 					auto& src = deserializedEntity.addComponent<BoxCollider2DComponent>();
-					src.offset = spriteRendererComponent["Offset"].as<glm::vec2>();
-					src.size = spriteRendererComponent["Size"].as<glm::vec2>();
-					src.density = spriteRendererComponent["Density"].as<float>();
-					src.friction = spriteRendererComponent["Friction"].as<float>();
-					src.restitution = spriteRendererComponent["Restitution"].as<float>();
-					src.restitutionThreshold = spriteRendererComponent["RestitutionThreshold"].as<float>();
+					src.offset = boxColliderComponent["Offset"].as<glm::vec2>();
+					src.size = boxColliderComponent["Size"].as<glm::vec2>();
+					src.density = boxColliderComponent["Density"].as<float>();
+					src.friction = boxColliderComponent["Friction"].as<float>();
+					src.restitution = boxColliderComponent["Restitution"].as<float>();
+					src.restitutionThreshold = boxColliderComponent["RestitutionThreshold"].as<float>();
 				}
 			}
 		}
@@ -249,8 +249,10 @@ namespace Shado {
 	// Helpers
 	static void SerializeEntity(YAML::Emitter& out, Entity entity)
 	{
+		SHADO_CORE_ASSERT(entity.hasComponent<IDComponent>(), "No ID component");
+
 		out << YAML::BeginMap; // Entity
-		out << YAML::Key << "Entity" << YAML::Value << "12837192831273"; // TODO: Entity ID goes here
+		out << YAML::Key << "Entity" << YAML::Value << entity.getComponent<IDComponent>().id; // TODO: Entity ID goes here
 
 		if (entity.hasComponent<TagComponent>())
 		{
