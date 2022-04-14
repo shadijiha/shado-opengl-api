@@ -32,6 +32,9 @@ namespace Shado {
 		void onViewportResize(uint32_t width, uint32_t height);
 		Entity getPrimaryCameraEntity();
 
+		void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
+		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
+
 	private:
 		entt::registry m_Registry;
 		uint32_t m_ViewportWidth = 0;
@@ -39,6 +42,7 @@ namespace Shado {
 		std::string name = "Untitled";
 
 		b2World* m_World = nullptr;
+		bool m_PhysicsEnabled = true;
 
 		friend class Entity;
 		friend class SceneSerializer;

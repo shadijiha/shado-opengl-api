@@ -432,20 +432,23 @@ namespace Shado {
 		// Gizmos
 		Entity selected = m_sceneHierarchyPanel.getSelected();
 		if (selected && m_GuizmosOperation != -1) {
-			ImGuizmo::SetOrthographic(false);
+			// Camera
+			auto runtimeCamera = m_ActiveScene->getPrimaryCameraEntity();
+			auto cameraComponent = runtimeCamera.getComponent<CameraComponent>();
+			auto& editorCamera = m_EditorCamera;
+			auto projection = m_SceneState == SceneState::Edit ? editorCamera.getProjectionMatrix() : cameraComponent.camera->getProjectionMatrix();
+			glm::mat4 cameraView = m_SceneState == SceneState::Edit ? editorCamera.getViewMatrix() : glm::inverse(runtimeCamera.getComponent<TransformComponent>().getTransform());
+
+			// Disable or enable orthographic depending on if we are using Ortho camera or not
+			if (m_SceneState == SceneState::Edit)
+				ImGuizmo::SetOrthographic(false);
+			else
+				ImGuizmo::SetOrthographic(cameraComponent.type == CameraComponent::Type::Orthographic);
+
+
 			ImGuizmo::SetDrawlist();
 
 			ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
-
-			// Camera
-			auto runtimeCamera = m_ActiveScene->getPrimaryCameraEntity();
-			auto& editorCamera = m_EditorCamera;
-			auto projection = m_SceneState == SceneState::Edit ? editorCamera.getProjectionMatrix() : runtimeCamera.getComponent<CameraComponent>().camera->getProjectionMatrix();
-			glm::mat4 cameraView = m_SceneState == SceneState::Edit ? editorCamera.getViewMatrix() : glm::inverse(runtimeCamera.getComponent<TransformComponent>().getTransform());
-
-			if (m_SceneState == SceneState::Play) {
-				SHADO_INFO("");
-			}
 
 			// Entity transform
 			auto& tc = selected.getComponent<TransformComponent>();
@@ -461,6 +464,10 @@ namespace Shado {
 				(ImGuizmo::OPERATION)m_GuizmosOperation, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
 
 			if (ImGuizmo::IsUsing()) {
+				// Pause physics if we are using gizmos
+				m_ActiveScene->enablePhysics(false);
+				m_ActiveScene->softResetPhysics();
+
 				glm::vec3 position, rotation, scale;
 				Math::decomposeTransform(transform, position, rotation, scale);
 
@@ -468,6 +475,10 @@ namespace Shado {
 				tc.position = transform[3];
 				tc.rotation += deltaRotation;
 				tc.scale = scale;
+			}
+			else {
+				// If Gizmos are not in use then resume physics
+				m_ActiveScene->enablePhysics(true);
 			}
 		}
 
