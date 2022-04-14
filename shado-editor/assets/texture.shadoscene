@@ -32,27 +32,6 @@ Entities:
       Color: [1, 0.999989986, 0.999989986, 1]
       Texture: assets\TranscodedWallpaper.jpg
       TillingFactor: 1
-  - Entity: 10215186095850814243
-    TagComponent:
-      Tag: Cait queen
-    TransformComponent:
-      Translation: [-0.451225281, 1.46128714, -3.7252903e-09]
-      Rotation: [0, 0, 0.690116405]
-      Scale: [0.999999881, 0.999999881, 1]
-    SpriteRendererComponent:
-      Color: [0.999989986, 1, 0.999989986, 1]
-      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven.png
-      TillingFactor: 1
-    RigidBody2DComponent:
-      Type: 2
-      FixedRotation: false
-    BoxCollider2DComponent:
-      Offset: [0, 0]
-      Size: [0.5, 0.5]
-      Density: 1
-      Friction: 0.5
-      Restitution: 0
-      RestitutionThreshold: 0.5
   - Entity: 9421790944700721427
     TagComponent:
       Tag: Camera
@@ -89,3 +68,45 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+  - Entity: 2031708777841601908
+    TagComponent:
+      Tag: Cait queen
+    TransformComponent:
+      Translation: [-0.451225281, 1.46128714, -3.7252903e-09]
+      Rotation: [0, 0, 0.690116405]
+      Scale: [0.999999881, 0.999999881, 1]
+    SpriteRendererComponent:
+      Color: [0.999989986, 1, 0.999989986, 1]
+      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven.png
+      TillingFactor: 1
+    RigidBody2DComponent:
+      Type: 2
+      FixedRotation: false
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 7417286772743092740
+    TagComponent:
+      Tag: Cait queen
+    TransformComponent:
+      Translation: [-2.36026001, 1.4612869, -3.72529074e-09]
+      Rotation: [0, 0, 0.690116405]
+      Scale: [0.999999881, 0.999999881, 1]
+    SpriteRendererComponent:
+      Color: [0.999989986, 1, 0.999989986, 1]
+      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven.png
+      TillingFactor: 1
+    RigidBody2DComponent:
+      Type: 2
+      FixedRotation: false
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0.550000012
+      RestitutionThreshold: 0.0599999987

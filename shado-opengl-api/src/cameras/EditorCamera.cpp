@@ -74,7 +74,7 @@ namespace Shado {
 
 	void EditorCamera::OnUpdate(TimeStep ts)
 	{
-		if (Input::isKeyPressed(KeyCode::LeftControl))
+		if (Input::isKeyPressed(KeyCode::LeftShift))
 		{
 			const glm::vec2& mouse{ Input::getMouseX(), Input::getMouseY() };
 			glm::vec2 delta = (mouse - m_InitialMousePosition) * 0.003f;

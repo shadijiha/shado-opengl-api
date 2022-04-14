@@ -68,7 +68,10 @@ namespace Shado {
 	}
 
 	Entity Scene::duplicateEntity(Entity source) {
-		Entity newEntity = createEntity(source.getComponent<TagComponent>().tag);
+		if (!source)
+			return {};
+
+		Entity newEntity = createEntity(source.getComponent<TagComponent>().tag + " (2)");
 
 		CopyComponentIfExists<TransformComponent>(newEntity, source);
 		CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
@@ -81,6 +84,8 @@ namespace Shado {
 	}
 
 	void Scene::destroyEntity(Entity entity) {
+		if (!entity)
+			return;
 		m_Registry.destroy(entity);
 	}
 

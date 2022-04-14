@@ -267,6 +267,16 @@ namespace Shado {
 					openScene();
 				break;
 
+			// Entity
+			case KeyCode::D:
+				if (control)
+					m_ActiveScene->duplicateEntity(m_sceneHierarchyPanel.getSelected());
+				break;
+			case KeyCode::Delete:
+				m_ActiveScene->destroyEntity(m_sceneHierarchyPanel.getSelected());
+				m_sceneHierarchyPanel.resetSelection();
+				break;
+
 			// Gizmos
 			case KeyCode::Q:
 				m_GuizmosOperation = -1;
@@ -344,6 +354,7 @@ namespace Shado {
 	void EditorLayer::onScenePlay() {
 		m_SceneState = SceneState::Play;
 		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.get());
+		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 		m_ActiveScene->onRuntimeStart();
 	}
 
@@ -351,6 +362,7 @@ namespace Shado {
 		m_SceneState = SceneState::Edit;
 		m_ActiveScene->onRuntimeStop();
 		m_ActiveScene = m_EditorScene;
+		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
 
 	// =============================== UI Stuff
@@ -440,7 +452,7 @@ namespace Shado {
 			auto transform = tc.getTransform();
 
 			// Snapping
-			bool snap = Input::isKeyPressed(KeyCode::LeftShift);
+			bool snap = Input::isKeyPressed(KeyCode::LeftControl);
 			float snapValue = m_GuizmosOperation == ImGuizmo::OPERATION::ROTATE ? 45.0f : 0.5f;	// Snap to 45 degrees for rotation, and 0.5m for scale and translation
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 

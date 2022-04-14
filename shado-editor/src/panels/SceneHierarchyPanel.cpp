@@ -25,30 +25,37 @@ namespace Shado {
 	void SceneHierarchyPanel::onImGuiRender() {
 		ImGui::Begin("Scene Hierachy");
 
-		m_Context->m_Registry.each([this](auto entityID) {
-			Entity entity = { entityID, m_Context.get() };
-			drawEntityNode(entity);
-		});
+		if (m_Context) {
 
-		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
-			m_Selected = {};
+			m_Context->m_Registry.each([this](auto entityID) {
+				Entity entity = { entityID, m_Context.get() };
+				drawEntityNode(entity);
+				});
+
+			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+				m_Selected = {};
+			}
+
+			// Context menu to create 
+			if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+				if (ImGui::MenuItem("Create empty Entity"))
+					m_Context->createEntity("Empty Entity");
+
+				ImGui::EndPopup();
+			}
 		}
-
-		// Context menu to create 
-		if (ImGui::BeginPopupContextWindow(0, 1, false)) {
-			if (ImGui::MenuItem("Create empty Entity"))
-				m_Context->createEntity("Empty Entity");
-
-			ImGui::EndPopup();
-		}
-
 		ImGui::End();
 
 		ImGui::Begin("Properties");
 		if (m_Selected) {
 			drawComponents(m_Selected);
 		}
+		
 		ImGui::End();
+	}
+
+	void SceneHierarchyPanel::resetSelection() {
+		m_Selected = {};
 	}
 
 	void SceneHierarchyPanel::drawEntityNode(Entity entity) {
@@ -66,8 +73,11 @@ namespace Shado {
 		// Context menu item
 		bool deleteEntity = false;
 		if (ImGui::BeginPopupContextItem()) {
+			if (ImGui::MenuItem("Duplicate Entity"))
+				m_Context->duplicateEntity(m_Selected);
+
 			if (ImGui::MenuItem("Delete Entity"))
-				deleteEntity = true;
+				deleteEntity = true;			
 
 			ImGui::EndPopup();
 		}

@@ -18,6 +18,7 @@ namespace Shado {
 		void onImGuiRender();
 
 		Entity getSelected() const { return m_Selected; }
+		void resetSelection();
 
 	private:
 		void drawEntityNode(Entity e);
