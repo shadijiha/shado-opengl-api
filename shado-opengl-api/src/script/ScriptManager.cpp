@@ -2,11 +2,36 @@
 #include "Debug.h"
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/exception.h>
+#include <filesystem>
+
+#ifdef SHADO_PLATFORM_WINDOWS
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
 
 namespace Shado {
 
+    // From https://stackoverflow.com/questions/67971007/how-do-i-make-this-a-relative-path
+    static std::string get_current_dir() {
+        char buff[FILENAME_MAX]; //create string buffer to hold path
+        GetCurrentDir(buff, FILENAME_MAX);
+        std::string current_working_dir(buff);
+        return current_working_dir;
+    }
+
+    static std::string getRootDir(const std::string& relative) {
+        std::filesystem::path path = get_current_dir();
+        auto parent = path.parent_path();
+        return (parent / relative).string();
+    }
+
 	void ScriptManager::init(const std::string& path) {
-        domain = mono_jit_init("my_app");
+        mono_set_dirs(getRootDir("mono/lib").c_str(), getRootDir("mono/etc").c_str());
+        domain = mono_jit_init("shado_engin_script");        
+
         assembly = mono_domain_assembly_open(domain, path.c_str());
         if (!assembly)
             SHADO_CORE_ERROR("Error loading assembly");
