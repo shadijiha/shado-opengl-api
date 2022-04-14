@@ -6,6 +6,28 @@
 #include "Components.h"
 
 namespace YAML {
+	template<>
+	struct convert<glm::vec2>
+	{
+		static Node encode(const glm::vec2& rhs)
+		{
+			Node node;
+			node.push_back(rhs.x);
+			node.push_back(rhs.y);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+
+		static bool decode(const Node& node, glm::vec2& rhs)
+		{
+			if (!node.IsSequence() || node.size() != 2)
+				return false;
+
+			rhs.x = node[0].as<float>();
+			rhs.y = node[1].as<float>();
+			return true;
+		}
+	};
 
 	template<>
 	struct convert<glm::vec3>
@@ -62,6 +84,13 @@ namespace YAML {
 }
 
 namespace Shado {
+
+	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v)
+	{
+		out << YAML::Flow;
+		out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
+		return out;
+	}
 
 	YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v)
 	{
@@ -186,6 +215,26 @@ namespace Shado {
 					src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
 					src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
 				}
+
+				auto rigidBodyComponent = entity["RigidBody2DComponent"];
+				if (rigidBodyComponent)
+				{
+					auto& src = deserializedEntity.addComponent<RigidBody2DComponent>();
+					src.type = (RigidBody2DComponent::BodyType)rigidBodyComponent["Type"].as<int>();
+					src.fixedRotation = rigidBodyComponent["FixedRotation"].as<bool>();
+				}
+
+				auto boxColliderComponent = entity["BoxCollider2DComponent"];
+				if (boxColliderComponent)
+				{
+					auto& src = deserializedEntity.addComponent<BoxCollider2DComponent>();
+					src.offset = spriteRendererComponent["Offset"].as<glm::vec2>();
+					src.size = spriteRendererComponent["Size"].as<glm::vec2>();
+					src.density = spriteRendererComponent["Density"].as<float>();
+					src.friction = spriteRendererComponent["Friction"].as<float>();
+					src.restitution = spriteRendererComponent["Restitution"].as<float>();
+					src.restitutionThreshold = spriteRendererComponent["RestitutionThreshold"].as<float>();
+				}
 			}
 		}
 
@@ -272,6 +321,34 @@ namespace Shado {
 			out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
 
 			out << YAML::EndMap; // SpriteRendererComponent
+		}
+
+		if (entity.hasComponent<RigidBody2DComponent>())
+		{
+			out << YAML::Key << "RigidBody2DComponent";
+			out << YAML::BeginMap; // RigidBody2DComponent
+
+			auto& rigidBocyComponent = entity.getComponent<RigidBody2DComponent>();
+			out << YAML::Key << "Type" << YAML::Value << (int)rigidBocyComponent.type;
+			out << YAML::Key << "FixedRotation" << YAML::Value << rigidBocyComponent.fixedRotation;
+
+			out << YAML::EndMap; // RigidBody2DComponent
+		}
+
+		if (entity.hasComponent<BoxCollider2DComponent>())
+		{
+			out << YAML::Key << "BoxCollider2DComponent";
+			out << YAML::BeginMap; // BoxCollider2DComponent
+
+			auto& boxColliderComponent = entity.getComponent<BoxCollider2DComponent>();
+			out << YAML::Key << "Offset" << YAML::Value << boxColliderComponent.offset;
+			out << YAML::Key << "Size" << YAML::Value << boxColliderComponent.size;
+			out << YAML::Key << "Density" << YAML::Value << boxColliderComponent.density;
+			out << YAML::Key << "Friction" << YAML::Value << boxColliderComponent.friction;
+			out << YAML::Key << "Restitution" << YAML::Value << boxColliderComponent.restitution;
+			out << YAML::Key << "RestitutionThreshold" << YAML::Value << boxColliderComponent.restitutionThreshold;
+
+			out << YAML::EndMap; // BoxCollider2DComponent
 		}
 
 		out << YAML::EndMap; // Entity

@@ -2,6 +2,13 @@
 #include "Components.h"
 #include "renderer/Renderer2D.h"
 #include "Entity.h"
+#include <box2d/b2_world.h>
+
+#include "box2d/b2_body.h"
+#include "box2d/b2_fixture.h"
+#include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_polygon_shape.h"
+
 namespace Shado {
 
 	Scene::Scene() {
@@ -25,6 +32,51 @@ namespace Shado {
 		m_Registry.destroy(entity);
 	}
 
+	void Scene::onRuntimeStart() {
+		// TODO make the physics adjustable
+		m_World = new b2World({ 0.0f, -9.8f });
+
+		auto view = m_Registry.view<RigidBody2DComponent>();
+		for (auto e : view) {
+			Entity entity = { e, this };
+
+			auto& transform = entity.getComponent<TransformComponent>();
+			auto& rb2D = entity.getComponent<RigidBody2DComponent>();
+			
+
+			b2BodyDef bodyDef;
+			bodyDef.type = (b2BodyType)rb2D.type;	// TODO : maybe change this
+			bodyDef.fixedRotation = rb2D.fixedRotation;
+			bodyDef.position.Set(transform.position.x, transform.position.y);
+			bodyDef.angle = transform.rotation.z;
+
+			b2Body* body = m_World->CreateBody(&bodyDef);
+			rb2D.runtimeBody = body;
+
+			if (entity.hasComponent<BoxCollider2DComponent>()) {
+				auto& collider = entity.getComponent<BoxCollider2DComponent>();
+
+				b2PolygonShape polygonShape;
+				polygonShape.SetAsBox(transform.scale.x * collider.size.x, transform.scale.y * collider.size.y);
+
+				b2FixtureDef fixtureDef;
+				fixtureDef.restitution = collider.restitution;
+				fixtureDef.restitutionThreshold = collider.restitutionThreshold;
+				fixtureDef.friction = collider.friction;
+				fixtureDef.density = collider.density;
+				fixtureDef.shape = &polygonShape;
+
+				b2Fixture* fixture = body->CreateFixture(&fixtureDef);
+				collider.runtimeFixture = fixture;
+			}			
+		}
+	}
+
+	void Scene::onRuntimeStop() {
+		delete m_World;
+		m_World = nullptr;
+	}
+
 	void Scene::onUpdateRuntime(TimeStep ts) {
 		// Update script
 		{
@@ -39,6 +91,25 @@ namespace Shado {
 
 				nsc.script->onUpdate(ts);
 			});
+		}
+
+		// Update physics
+		const int32_t velocityIterations = 6;
+		const int32_t positionIterations = 2;
+		m_World->Step(ts, velocityIterations, positionIterations);
+
+		// Get transforms from box 2d
+		auto view = m_Registry.view<RigidBody2DComponent>();
+		for(auto e : view) {
+			Entity entity = { e, this };
+
+			auto& transform = entity.getComponent<TransformComponent>();
+			auto& rb2D = entity.getComponent<RigidBody2DComponent>();
+
+			b2Body* body = (b2Body*)rb2D.runtimeBody;
+			transform.position.x = body->GetPosition().x;
+			transform.position.y = body->GetPosition().y;
+			transform.rotation.z = body->GetAngle();
 		}
 	}
 

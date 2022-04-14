@@ -127,4 +127,34 @@ namespace Shado {
 		}
 	};
 
+	// Physics
+	struct RigidBody2DComponent {
+		enum class BodyType	{STATIC = 0, KINEMATIC, DYNAMIC	};
+
+		BodyType type = BodyType::STATIC;
+		bool fixedRotation = false;
+
+		// b2 body
+		void* runtimeBody = nullptr;
+
+		RigidBody2DComponent() = default;
+		RigidBody2DComponent(const RigidBody2DComponent&) = default;
+	};
+
+	struct BoxCollider2DComponent {
+		glm::vec2 offset = { 0, 0 };
+		glm::vec2 size = { 0.5f, 0.5f };
+
+		// TODO : Should be moved to a physics material
+		float density = 1.0f;
+		float friction = 0.5f;
+		float restitution = 0;
+		float restitutionThreshold = 0.5f;
+
+		// b2 Fixture
+		void* runtimeFixture = nullptr;
+
+		BoxCollider2DComponent() = default;
+		BoxCollider2DComponent(const BoxCollider2DComponent&) = default;
+	};
 }

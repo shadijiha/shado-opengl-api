@@ -2,6 +2,74 @@ Scene: Untitled
 Entities:
   - Entity: 12837192831273
     TagComponent:
+      Tag: Ground
+    TransformComponent:
+      Translation: [0, -1.57678843, 1.23798943]
+      Rotation: [0, 0, 0]
+      Scale: [10.0887213, 1, 1]
+    SpriteRendererComponent:
+      Color: [1, 1, 1, 1]
+      Texture: "NULL"
+      TillingFactor: 1
+    RigidBody2DComponent:
+      Type: 0
+      FixedRotation: false
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [1, 1]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: BG
+    TransformComponent:
+      Translation: [-0.426144928, -0.0533637404, -4.19608974]
+      Rotation: [0, 0, 0]
+      Scale: [9.60000038, 6.0999999, 1]
+    SpriteRendererComponent:
+      Color: [1, 0.999989986, 0.999989986, 1]
+      Texture: assets\TranscodedWallpaper.jpg
+      TillingFactor: 1
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Cait queen
+    TransformComponent:
+      Translation: [-0.174353093, 0.857375741, -3.7252903e-09]
+      Rotation: [0, 0, 0.782158911]
+      Scale: [0.999999881, 0.999999881, 1]
+    SpriteRendererComponent:
+      Color: [0.999989986, 1, 0.999989986, 1]
+      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven.png
+      TillingFactor: 1
+    RigidBody2DComponent:
+      Type: 2
+      FixedRotation: false
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [1, 1]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0
+      RestitutionThreshold: 0.5
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        OrthographicSize: 5
+        Near: -2
+        Far: 100
+      Primary: true
+      FixedAspectRatio: false
+  - Entity: 12837192831273
+    TagComponent:
       Tag: Square2
     TransformComponent:
       Translation: [5.11626863, -0.0113941431, 4.76837158e-07]
@@ -10,41 +78,4 @@ Entities:
     SpriteRendererComponent:
       Color: [1, 0.999989986, 0.999989986, 1]
       Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven2.jpg
-      TillingFactor: 1
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Camera 2
-    TransformComponent:
-      Translation: [0, 2.79999995, 6.5999999]
-      Rotation: [-0.371755123, 0, 0]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Camera:
-        ProjectionType: 1
-        PerspectiveFOV: 60
-        Near: 1
-        Far: 100
-      Primary: true
-      FixedAspectRatio: false
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Cait queen
-    TransformComponent:
-      Translation: [3.54016209, 1.0140487, 3.89654493]
-      Rotation: [0.270526052, -0.490437657, -0.429351002]
-      Scale: [0.99999994, 1, 1]
-    SpriteRendererComponent:
-      Color: [0.999989986, 1, 0.999989986, 1]
-      Texture: D:\Code\Projects\shado-opengl-api\shado-editor\assets\riven.png
-      TillingFactor: 1
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Empty Entity
-    TransformComponent:
-      Translation: [-0.426144928, -0.0533637404, 0]
-      Rotation: [0, 0, 0]
-      Scale: [9.60000038, 6.0999999, 1]
-    SpriteRendererComponent:
-      Color: [1, 0.999989986, 0.999989986, 1]
-      Texture: assets\TranscodedWallpaper.jpg
       TillingFactor: 1

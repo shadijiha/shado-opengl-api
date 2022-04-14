@@ -3,6 +3,8 @@
 #include "cameras/EditorCamera.h"
 #include "util/Util.h"
 
+class b2World;
+
 namespace Shado {
 	class Entity;
 
@@ -13,6 +15,9 @@ namespace Shado {
 
 		Entity createEntity(const std::string& name = "");
 		void destroyEntity(Entity entity);
+
+		void onRuntimeStart();
+		void onRuntimeStop();
 
 		void onUpdateRuntime(TimeStep ts);
 		void onDrawRuntime();
@@ -28,6 +33,8 @@ namespace Shado {
 		uint32_t m_ViewportWidth = 0;
 		uint32_t m_ViewportHeight = 0;
 		std::string name = "Untitled";
+
+		b2World* m_World = nullptr;
 
 		friend class Entity;
 		friend class SceneSerializer;

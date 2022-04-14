@@ -331,10 +331,12 @@ namespace Shado {
 	// ============================== For runtime
 	void EditorLayer::onScenePlay() {
 		m_SceneState = SceneState::Play;
+		m_ActiveScene->onRuntimeStart();
 	}
 
 	void EditorLayer::onSceneStop() {
 		m_SceneState = SceneState::Edit;
+		m_ActiveScene->onRuntimeStop();
 	}
 
 	// =============================== UI Stuff
