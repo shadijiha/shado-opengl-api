@@ -68,5 +68,9 @@ namespace Shado {
 			(UINT)icon
 		);
 	}
+
+	void Dialog::openPathInExplorer(const std::string& path) {
+		ShellExecuteA(NULL, "open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+	}
 }
 

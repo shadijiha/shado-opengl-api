@@ -30,7 +30,7 @@ namespace Shado {
 			m_Context->m_Registry.each([this](auto entityID) {
 				Entity entity = { entityID, m_Context.get() };
 				drawEntityNode(entity);
-				});
+			});
 
 			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
 				m_Selected = {};

@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "renderer/Texture2D.h"
+#include "scene/utils/SceneUtils.h"
 #include "util/Util.h"
 
 namespace Shado {
@@ -66,7 +67,14 @@ namespace Shado {
 
 			uint32_t rendererId = getThumbnail(directoryEntry);
 			ImGui::ImageButton((ImTextureID)rendererId, { thumbnailSize, thumbnailSize }, { 0, 1 }, { 1, 0 });
-			
+
+			// Context menu to create 
+			if (ImGui::BeginPopupContextItem()) {
+				if (ImGui::MenuItem("Open in Explorer"))
+					Dialog::openPathInExplorer(path.string());
+
+				ImGui::EndPopup();
+			}
 
 			if (ImGui::BeginDragDropSource())
 			{
