@@ -18,6 +18,11 @@ namespace Shado {
 			return m_Scene->m_Registry.emplace<T>(m_EntityHandle, std::forward<Args>(args)...);
 		}
 
+		template<typename T, typename ... Args>
+		T& addOrReplaceComponent(Args&& ... args) {
+			return m_Scene->m_Registry.emplace_or_replace<T>(m_EntityHandle, std::forward<Args>(args)...);
+		}
+
 		template<typename T>
 		T& getComponent() {
 			SHADO_CORE_ASSERT(hasComponent<T>(), "Entity does not have component!");
@@ -35,7 +40,11 @@ namespace Shado {
 			m_Scene->m_Registry.remove<T>(m_EntityHandle);
 		}
 
-		operator bool()		const { return m_EntityHandle != entt::null; }
+		bool isValid()	const {
+			return m_EntityHandle != entt::null && m_Scene->m_Registry.valid(m_EntityHandle);
+		}
+
+		operator bool()		const { return isValid(); }
 		operator uint32_t() const { return (uint32_t)m_EntityHandle; }
 		operator entt::entity() const { return m_EntityHandle; }
 

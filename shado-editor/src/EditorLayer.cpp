@@ -295,7 +295,7 @@ namespace Shado {
 		auto filepath = m_ScenePath.empty() ? FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0") : m_ScenePath;
 		
 		if (!filepath.empty()) {
-			SceneSerializer serializer(m_ActiveScene);
+			SceneSerializer serializer(m_EditorScene);
 			serializer.serialize(filepath);
 			m_ScenePath = filepath;
 		}		
@@ -305,6 +305,7 @@ namespace Shado {
 		Ref<Scene> scene = CreateRef<Scene>();
 		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 		m_ActiveScene = scene;
+		m_EditorScene = m_ActiveScene;
 		m_sceneHierarchyPanel.setContext(scene);
 		m_ScenePath = "";
 	}
@@ -333,7 +334,8 @@ namespace Shado {
 		SceneSerializer serializer(scene);
 		serializer.deserialize(path.string());
 
-		m_ActiveScene = scene;
+		m_EditorScene = scene;
+		m_ActiveScene = m_EditorScene;
 		m_sceneHierarchyPanel.setContext(scene);
 		m_ScenePath = path.string();
 	}
@@ -341,12 +343,14 @@ namespace Shado {
 	// ============================== For runtime
 	void EditorLayer::onScenePlay() {
 		m_SceneState = SceneState::Play;
+		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.get());
 		m_ActiveScene->onRuntimeStart();
 	}
 
 	void EditorLayer::onSceneStop() {
 		m_SceneState = SceneState::Edit;
 		m_ActiveScene->onRuntimeStop();
+		m_ActiveScene = m_EditorScene;
 	}
 
 	// =============================== UI Stuff

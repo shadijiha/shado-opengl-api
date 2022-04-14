@@ -9,11 +9,41 @@
 #include "box2d/b2_polygon_shape.h"
 
 namespace Shado {
+	template<typename Component>
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap);
+	template<typename Component>
+	static void CopyComponentIfExists(Entity dst, Entity src);
 
 	Scene::Scene() {
 	}
 
-	Scene::Scene(Scene& other) {
+	Scene::Scene(Scene& other)
+	{
+		m_ViewportWidth = other.m_ViewportWidth;
+		m_ViewportHeight = other.m_ViewportHeight;
+		name = other.name + " [Runtime]";
+
+		auto& srcSceneRegistry = other.m_Registry;
+		auto& dstSceneRegistry = m_Registry;
+		std::unordered_map<UUID, entt::entity> enttMap;
+
+		auto idView = srcSceneRegistry.view<IDComponent>();
+		for(auto e : idView) {
+			UUID uuid = srcSceneRegistry.get<IDComponent>(e).id;
+			const auto& tag = srcSceneRegistry.get<TagComponent>(e).tag;
+
+			Entity entity = createEntityWithUUID(tag, uuid);
+			enttMap[uuid] = (entt::entity)entity;
+		}
+
+		// Copy components (except ID Component and Tag component)
+		CopyComponent<TransformComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<SpriteRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<CameraComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<BoxCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+
 		
 	}
 
@@ -35,6 +65,19 @@ namespace Shado {
 		tag.tag = name.empty() ? std::string("Entity ") + std::to_string((uint64_t)uuid) : name;
 
 		return entity;
+	}
+
+	Entity Scene::duplicateEntity(Entity source) {
+		Entity newEntity = createEntity(source.getComponent<TagComponent>().tag);
+
+		CopyComponentIfExists<TransformComponent>(newEntity, source);
+		CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
+		CopyComponentIfExists<CameraComponent>(newEntity, source);
+		CopyComponentIfExists<NativeScriptComponent>(newEntity, source);
+		CopyComponentIfExists<RigidBody2DComponent>(newEntity, source);
+		CopyComponentIfExists<BoxCollider2DComponent>(newEntity, source);
+
+		return newEntity;
 	}
 
 	void Scene::destroyEntity(Entity entity) {
@@ -200,5 +243,28 @@ namespace Shado {
 				return { entity, this };			
 		}
 		return {};
+	}
+
+	// Helpers
+	template<typename Component>
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
+	{
+		auto view = src.view<Component>();
+		for (auto e : view)
+		{
+			UUID uuid = src.get<IDComponent>(e).id;
+			SHADO_CORE_ASSERT(enttMap.find(uuid) != enttMap.end(), "");
+			entt::entity dstEnttID = enttMap.at(uuid);
+
+			auto& component = src.get<Component>(e);
+			dst.emplace_or_replace<Component>(dstEnttID, component);
+		}
+	}
+
+	template<typename Component>
+	static void CopyComponentIfExists(Entity dst, Entity src)
+	{
+		if (src.hasComponent<Component>())
+			dst.addOrReplaceComponent<Component>(src.getComponent<Component>());
 	}
 }

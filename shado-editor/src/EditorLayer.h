@@ -41,7 +41,10 @@ namespace Shado {
 
 		glm::vec2 m_ViewportBounds[2];
 		ImVec2 m_viewportPanelSize;
+
+		// Scenes
 		Ref<Scene> m_ActiveScene;
+		Ref<Scene> m_EditorScene;
 
 		int m_GuizmosOperation = -1;
 		std::string m_ScenePath;

@@ -17,6 +17,7 @@ namespace Shado {
 
 		Entity createEntity(const std::string& name = "");
 		Entity createEntityWithUUID(const std::string& name, Shado::UUID id);
+		Entity duplicateEntity(Entity entity);
 		void destroyEntity(Entity entity);
 
 		void onRuntimeStart();
