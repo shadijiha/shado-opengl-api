@@ -73,7 +73,8 @@ project "shado-opengl-api"
 		"gdi32.lib",
 		"opengl32.lib",
 		"box2d",
-		"yaml-cpp"
+		"yaml-cpp",
+		"shcore.lib"
 	}
 
 	filter "system:windows"

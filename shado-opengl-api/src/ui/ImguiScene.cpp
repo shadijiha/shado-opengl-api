@@ -26,7 +26,7 @@ namespace Shado {
 		io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Bold.ttf", 18.0f);
 		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Regular.ttf", 18.0f);
 		io.FontGlobalScale = Application::get().getWindow().getWindowScale().first;
-		//ImGui::GetStyle().ScaleAllSizes(Application::get().getWindow().getWindowScale().first);
+		ImGui::GetStyle().ScaleAllSizes(Application::get().getWindow().getWindowScale().first);
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();

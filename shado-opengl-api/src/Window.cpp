@@ -7,7 +7,7 @@
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "GL/glew.h"
-//#include <shellscalingapi.h>
+#include <shellscalingapi.h>
 
 #define BIND_EVENT_FN(x) std::bind(&Window::x, this, std::placeholders::_1)
 
@@ -49,7 +49,7 @@ namespace Shado {
 		monitor = glfwGetPrimaryMonitor();
 
 		
-		//SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+		SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 	}
 
 	Window::Window()
