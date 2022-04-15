@@ -1,7 +1,7 @@
 ﻿#include "OrbitCamera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
-#include "../Debug.h"
+#include "../debug/Debug.h"
 #include "../Events/input.h"
 #include "../Events/KeyCodes.h"
 

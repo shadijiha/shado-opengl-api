@@ -1,8 +1,5 @@
 ﻿#include "Texture2D.h"
-
-#include "Debug.h"
-
-
+#include "debug/Profile.h"
 #include "stb_image.h"
 #include "GL/glew.h"
 #include <GLFW/glfw3.h>
@@ -11,7 +8,8 @@ namespace Shado {
 	
 	Texture2D::Texture2D(uint32_t width, uint32_t height)
 		: m_Width(width), m_Height(height) {
-		
+		SHADO_PROFILE_FUNCTION();
+
 		m_InternalFormat = GL_RGBA8;
 		m_DataFormat = GL_RGBA;
 
@@ -28,6 +26,8 @@ namespace Shado {
 	Texture2D::Texture2D(const std::string& path)
 		: m_RendererID(0), m_Width(0), m_Height(0), m_FilePath(path)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		int width, height, channels;
 		stbi_set_flip_vertically_on_load(1);
 		

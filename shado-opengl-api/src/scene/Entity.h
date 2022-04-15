@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Debug.h"
+#include "debug/Debug.h"
 #include "Scene.h"
 #include "entt.hpp"
 

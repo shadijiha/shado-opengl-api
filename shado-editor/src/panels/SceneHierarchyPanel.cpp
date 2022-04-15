@@ -5,6 +5,7 @@
 
 #include "imgui_internal.h"
 #include "scene/utils/SceneUtils.h"
+#include "debug/Profile.h"
 
 namespace Shado {
 	extern const std::filesystem::path g_AssetsPath;
@@ -23,6 +24,8 @@ namespace Shado {
 	}
 
 	void SceneHierarchyPanel::onImGuiRender() {
+		SHADO_PROFILE_FUNCTION();
+
 		ImGui::Begin("Scene Hierachy");
 
 		if (m_Context) {
@@ -59,6 +62,7 @@ namespace Shado {
 	}
 
 	void SceneHierarchyPanel::drawEntityNode(Entity entity) {
+		SHADO_PROFILE_FUNCTION();
 
 		TagComponent& tc = entity.getComponent<TagComponent>();
 		
@@ -101,6 +105,7 @@ namespace Shado {
 	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight);
 
 	void SceneHierarchyPanel::drawComponents(Entity entity) {
+		SHADO_PROFILE_FUNCTION();
 
 		drawComponent<TagComponent>("Tag", entity, [](TagComponent& tc) {
 			char buffer[512];
@@ -282,6 +287,8 @@ namespace Shado {
 	
 	template<typename T>
 	static void drawComponent(const char* label, Entity entity, std::function<void(T&)> ui, bool allowDeletion) {
+		SHADO_PROFILE_FUNCTION();
+
 		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap
 				| ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding
 				| ImGuiTreeNodeFlags_AllowItemOverlap;

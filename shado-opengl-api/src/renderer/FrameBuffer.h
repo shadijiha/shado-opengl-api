@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <glm/vec2.hpp>
 
-#include "Debug.h"
+#include "debug/Debug.h"
 #include "util/Util.h"
 
 namespace Shado {

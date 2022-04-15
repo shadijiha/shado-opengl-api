@@ -97,7 +97,7 @@ project "shado-opengl-api"
 		--}
 	
 	filter "configurations:Debug"
-		defines "SHADO_DEBUG"
+		defines {"SHADO_DEBUG", "SHADO_PROFILE"}
 		symbols "On"
 	
 	filter "configurations:Release"

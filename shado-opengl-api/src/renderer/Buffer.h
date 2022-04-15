@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <vector>
-#include "Debug.h"
+#include "debug/Debug.h"
 
 namespace Shado {
 	

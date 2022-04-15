@@ -7,7 +7,7 @@
 #include "Application.h"
 #include "renderer/Renderer2D.h"
 #include "renderer/Shader.h"
-#include "Debug.h"
+#include "debug/Profile.h"
 #include "renderer/Buffer.h"
 #include "renderer/Texture2D.h"
 #include "renderer/VertexArray.h"

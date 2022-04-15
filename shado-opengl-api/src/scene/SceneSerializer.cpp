@@ -1,5 +1,5 @@
 ﻿#include "SceneSerializer.h"
-#include "Debug.h"
+#include "debug/Profile.h"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 
@@ -115,6 +115,8 @@ namespace Shado {
 	}
 	
 	void SceneSerializer::serialize(const std::string& filepath) {
+		SHADO_PROFILE_FUNCTION();
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << m_Scene->name;
@@ -139,6 +141,8 @@ namespace Shado {
 	}
 
 	bool SceneSerializer::deserialize(const std::string& filepath) {
+		SHADO_PROFILE_FUNCTION();
+
 		YAML::Node data;
 		try
 		{

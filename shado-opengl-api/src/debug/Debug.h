@@ -31,8 +31,9 @@ namespace Shado {
 
 		bool hasInit;
 	};
-}
 
+
+}
 
 #ifdef SHADO_ENABLE_ASSERTS
 #define SHADO_ASSERT(x, ...) { if(!(x)) { SHADO_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
@@ -70,3 +71,5 @@ namespace Shado {
 #define SHADO_ERROR(...)         spdlog::error(__VA_ARGS__)
 #define SHADO_CRITICAL(...)      spdlog::critical(__VA_ARGS__)
 #endif
+
+

@@ -1,6 +1,5 @@
 ﻿#include "Application.h"
-
-#include "Debug.h"
+#include "debug/Profile.h"
 #include "GL/glew.h"
 #include "renderer/Renderer2D.h"
 #include <algorithm>
@@ -148,6 +147,8 @@ namespace Shado {
 	}
 	
 	void Application::destroy() {
+		SHADO_PROFILE_FUNCTION();
+
 		for (Layer*& layer : singleton->layers) {
 			layer->onDestroy();
 			delete layer;
@@ -157,6 +158,7 @@ namespace Shado {
 
 		singleton->m_Running = false;
 
+		Renderer2D::Shutdown();
 		delete singleton;
 	}
 

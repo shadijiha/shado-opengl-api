@@ -1,7 +1,8 @@
-#include "ContentBrowserPanel.h";
+#include "ContentBrowserPanel.h"
 #include <imgui.h>
 #include <filesystem>
 
+#include "debug/Profile.h"
 #include "renderer/Texture2D.h"
 #include "scene/utils/SceneUtils.h"
 #include "util/Util.h"
@@ -27,10 +28,13 @@ namespace Shado {
 	}
 
 	void ContentBrowserPanel::onImGuiRender() {
+		SHADO_PROFILE_FUNCTION();
 
 		// Recheck the filesystem every 200 tick
-		if (tick++ % 500 == 0)
+		if (tick++ % 500 == 0) {
 			setDirectory(m_CurrentDirectory);
+			tick = 1;
+		}			
 
 		ImGui::Begin("Content Browser");
 
@@ -115,6 +119,8 @@ namespace Shado {
 	}
 
 	void ContentBrowserPanel::setDirectory(const std::filesystem::path& path) {
+		SHADO_PROFILE_FUNCTION();
+
 		directories.clear();
 		for (auto& directoryEntry : std::filesystem::directory_iterator(path)) {
 			directories.push_back(directoryEntry);

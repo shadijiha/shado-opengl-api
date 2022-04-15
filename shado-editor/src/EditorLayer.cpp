@@ -26,7 +26,7 @@ namespace Shado {
 	}
 
 	void EditorLayer::onInit() {
-        Renderer2D::Init();
+		SHADO_PROFILE_FUNCTION();;
 
 		m_IconPlay = CreateRef<Texture2D>("resources/icons/PlayButton.png");
 		m_IconStop = CreateRef<Texture2D>("resources/icons/StopButton.png");
@@ -45,7 +45,7 @@ namespace Shado {
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
-        
+		SHADO_PROFILE_FUNCTION();
 
 		// If viewports don't match recreate frame buffer
 		if (m_ViewportSize != *((glm::vec2*)&m_viewportPanelSize) && m_viewportPanelSize.x > 0 && m_viewportPanelSize.y > 0) {
@@ -73,6 +73,7 @@ namespace Shado {
 	}
 
 	void EditorLayer::onDraw() {
+		SHADO_PROFILE_FUNCTION();
 
 		 Renderer2D::ResetStats();
          buffer->bind();
@@ -109,6 +110,8 @@ namespace Shado {
 	}
 
     void EditorLayer::onImGuiRender() {
+		SHADO_PROFILE_FUNCTION();
+
         static bool p_open = true;
         static bool opt_fullscreen = true;
         static bool opt_padding = false;
@@ -367,6 +370,8 @@ namespace Shado {
 
 	// =============================== UI Stuff
 	void EditorLayer::UI_ToolBar() {
+		SHADO_PROFILE_FUNCTION();
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -394,6 +399,8 @@ namespace Shado {
 	}
 
 	void EditorLayer::UI_Viewport() {
+		SHADO_PROFILE_FUNCTION();
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 });
 		ImGui::Begin("Viewport");
 		auto viewportMinRegion = ImGui::GetWindowContentRegionMin();

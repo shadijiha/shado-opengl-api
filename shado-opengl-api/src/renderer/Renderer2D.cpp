@@ -1,7 +1,7 @@
 ﻿#include "Renderer2D.h"
 #include <GL/glew.h>
 #include "Buffer.h"
-#include "Debug.h"
+#include "debug/Profile.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include "cameras/OrbitCamera.h"
@@ -101,6 +101,8 @@ namespace Shado {
 
 	void Renderer2D::Init()
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		s_Init = true;
 
 		s_Data.QuadVertexArray = VertexArray::create();
@@ -197,13 +199,15 @@ namespace Shado {
 
 	void Renderer2D::Shutdown()
 	{
-		
+		SHADO_PROFILE_FUNCTION();
 
 		delete[] s_Data.QuadVertexBufferBase;
 	}
 
 	void Renderer2D::BeginScene(const Camera& camera)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		s_Data.CameraBuffer.ViewProjection = camera.getViewProjectionMatrix();
 		s_Data.CameraUniformBuffer->setData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
@@ -212,6 +216,8 @@ namespace Shado {
 
 	void Renderer2D::BeginScene(const Camera& camera, const glm::mat4& transform)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		s_Data.CameraBuffer.ViewProjection = camera.getProjectionMatrix() * glm::inverse(transform);
 		s_Data.CameraUniformBuffer->setData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
@@ -220,11 +226,15 @@ namespace Shado {
 
 	void Renderer2D::EndScene()
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		Flush();
 	}
 
 	void Renderer2D::StartBatch()
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
 
@@ -321,6 +331,8 @@ namespace Shado {
 
 	void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color, int entityID)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		constexpr size_t quadVertexCount = 4;
 		const float textureIndex = 0.0f; // White Texture
 		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
@@ -347,6 +359,8 @@ namespace Shado {
 
 	void Renderer2D::DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor, int entityID)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		constexpr size_t quadVertexCount = 4;
 		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
@@ -396,6 +410,8 @@ namespace Shado {
 
 	void Renderer2D::DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
 			* _rotation
@@ -411,6 +427,8 @@ namespace Shado {
 
 	void Renderer2D::DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
 			* _rotation
@@ -421,6 +439,7 @@ namespace Shado {
 
 	void Renderer2D::DrawCircle(const glm::mat4& transform, const glm::vec4& color, float thickness /*= 1.0f*/, float fade /*= 0.005f*/, int entityID /*= -1*/)
 	{
+		SHADO_PROFILE_FUNCTION();
 		// TODO: implement for circles
 		// if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 		// 	NextBatch();
@@ -443,6 +462,8 @@ namespace Shado {
 
 	void Renderer2D::DrawLine(const glm::vec3& p0, glm::vec3& p1, const glm::vec4& color, int entityID)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		s_Data.LineVertexBufferPtr->Position = p0;
 		s_Data.LineVertexBufferPtr->Color = color;
 		s_Data.LineVertexBufferPtr->EntityID = entityID;
@@ -458,6 +479,8 @@ namespace Shado {
 
 	void Renderer2D::DrawRect(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, int entityID)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		glm::vec3 p0 = glm::vec3(position.x - size.x * 0.5f, position.y - size.y * 0.5f, position.z);
 		glm::vec3 p1 = glm::vec3(position.x + size.x * 0.5f, position.y - size.y * 0.5f, position.z);
 		glm::vec3 p2 = glm::vec3(position.x + size.x * 0.5f, position.y + size.y * 0.5f, position.z);
@@ -471,6 +494,8 @@ namespace Shado {
 
 	void Renderer2D::DrawRect(const glm::mat4& transform, const glm::vec4& color, int entityID)
 	{
+		SHADO_PROFILE_FUNCTION();
+
 		glm::vec3 lineVertices[4];
 		for (size_t i = 0; i < 4; i++)
 			lineVertices[i] = transform * s_Data.QuadVertexPositions[i];
@@ -511,12 +536,16 @@ namespace Shado {
 	}
 
 	void Renderer2D::CmdDrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) {
+		SHADO_PROFILE_FUNCTION();
+
 		vertexArray->bind();
 		uint32_t count = indexCount ? indexCount : vertexArray->getIndexBuffers()->getCount();
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
 	}
 
 	void Renderer2D::CmdDrawIndexedLine(const Ref<VertexArray>& vertexArray, uint32_t vertexCount) {
+		SHADO_PROFILE_FUNCTION();
+
 		vertexArray->bind();
 		glDrawArrays(GL_LINES, 0, vertexCount);
 	}

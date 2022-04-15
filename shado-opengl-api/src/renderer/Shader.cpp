@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <fstream>
 #include <array>
-#include "Debug.h"
+#include "debug/Debug.h"
 #include "glm/gtc/type_ptr.hpp"
 
 namespace Shado {
