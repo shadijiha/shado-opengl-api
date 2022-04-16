@@ -30,8 +30,6 @@ namespace Shado {
 		uint32_t m_RendererID;
 		uint32_t m_Width, m_Height;
 
-		unsigned char* m_ImageData;
-
 		unsigned int m_InternalFormat;
 		unsigned int m_DataFormat;
 

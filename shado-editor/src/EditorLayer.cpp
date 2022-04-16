@@ -427,7 +427,7 @@ namespace Shado {
 				auto extension = path.extension();
 
 				if (extension == ".jpg" || extension == ".png") {
-					if (m_HoveredEntity)
+					if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>())
 						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
 				} else
 					openScene(path);

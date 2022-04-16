@@ -1,5 +1,5 @@
 #include "ScriptManager.h"
-#include "Debug.h"
+#include "debug/Debug.h"
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/exception.h>
 #include <filesystem>
@@ -101,6 +101,28 @@ namespace Shado {
         MonoMethod* method = mono_method_desc_search_in_image(desc, image);
         mono_method_desc_free(desc);
         return method;
+    }
+
+    std::list<MonoClass*> ScriptManager::getAssemblyClassList()
+    {
+        std::list<MonoClass*> class_list;
+
+        const MonoTableInfo* table_info = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
+
+        int rows = mono_table_info_get_rows(table_info);
+
+        /* For each row, get some of its values */
+        for (int i = 0; i < rows; i++)
+        {
+            MonoClass* _class = nullptr;
+            uint32_t cols[MONO_TYPEDEF_SIZE];
+            mono_metadata_decode_row(table_info, i, cols, MONO_TYPEDEF_SIZE);
+            const char* name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
+            const char* name_space = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
+            _class = mono_class_from_name(image, name_space, name);
+            class_list.push_back(_class);
+        }
+        return class_list;
     }
 
 }

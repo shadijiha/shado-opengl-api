@@ -1,4 +1,5 @@
 #pragma once
+#include <list>
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 #include <string>
@@ -16,7 +17,9 @@ namespace Shado {
 		static void invokeInstanceMethod(const std::string& methodSignature, MonoObject* obj, void** args = nullptr);
 	
 		static MonoObject* createObject(const std::string& klass, const std::string& constructorSignature = "", void** args = nullptr);
-	
+
+		static std::list<MonoClass*> getAssemblyClassList();
+
 	private:
 		static MonoClass* getClass(const std::string& namesace, const std::string& klass);
 		static MonoMethod* getMethod(const std::string& methodSignature);
