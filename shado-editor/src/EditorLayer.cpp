@@ -7,6 +7,8 @@
 #include "scene/utils/SceneUtils.h"
 #include "ImGuizmo/ImGuizmo.h"
 #include "math/Math.h"
+#include "script/ScriptManager.h"
+#include "scriptUtils/ScriptGeneration.h"
 
 namespace Shado {
 	extern const std::filesystem::path g_AssetsPath;
@@ -26,7 +28,7 @@ namespace Shado {
 	}
 
 	void EditorLayer::onInit() {
-		SHADO_PROFILE_FUNCTION();;
+		SHADO_PROFILE_FUNCTION();
 
 		m_IconPlay = CreateRef<Texture2D>("resources/icons/PlayButton.png");
 		m_IconStop = CreateRef<Texture2D>("resources/icons/StopButton.png");
@@ -200,6 +202,37 @@ namespace Shado {
 
 	                ImGui::EndMenu();
 	            }
+
+				if (ImGui::BeginMenu("Script"))
+				{
+					if (ImGui::MenuItem("Set Script DLL")) {
+						std::string path = FileDialogs::openFile("Dynamic linked library (*.dll)\0*.dll");
+						ScriptManager::reload(path);
+					}
+
+					// Reload project if valid
+					if (ScriptManager::hasValidDefautDLL() && ImGui::MenuItem("Reload Script DLL")) {
+						ScriptManager::reload();
+					}					
+
+					ImGui::Separator();
+
+					// New project
+					if (ImGui::MenuItem("Generate C# script project")) {
+						std::string projectPath = FileDialogs::chooseFolder();
+
+						if (!projectPath.empty()) {
+							// TODO: Prompt user for script project
+							Script::generateProject(projectPath, "Test Project");
+							Dialog::openPathInExplorer(projectPath);
+						}
+						else {
+							SHADO_CORE_ASSERT(false, "Invalid project path (maybe empty?)");
+						}
+					}
+
+					ImGui::EndMenu();
+				}
 
 				if (ImGui::BeginMenu("Gizmos")) {
 

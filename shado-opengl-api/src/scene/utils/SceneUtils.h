@@ -10,6 +10,7 @@ namespace Shado {
 		static std::string openFile(const char* filter);
 		static std::string saveFile(const char* filter);
 
+		static std::string chooseFolder();
 	};
 
 	class Dialog {

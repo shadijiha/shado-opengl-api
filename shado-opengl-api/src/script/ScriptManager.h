@@ -10,6 +10,7 @@ namespace Shado {
 	public:
 		static void init(const std::string& path);
 		static void shutdown();
+		static void reload(const std::string& path = assemblyPathFallback);
 
 		static void addInternalCall(const std::string& methodSignature, const void* func);
 
@@ -20,6 +21,8 @@ namespace Shado {
 
 		static std::list<MonoClass*> getAssemblyClassList();
 
+		static void setAssemblyDefaultPath(const std::string& path)	{ assemblyPathFallback = path; }
+		static bool hasValidDefautDLL()								{ return !assemblyPathFallback.empty(); }
 	private:
 		static MonoClass* getClass(const std::string& namesace, const std::string& klass);
 		static MonoMethod* getMethod(const std::string& methodSignature);
@@ -29,5 +32,6 @@ namespace Shado {
 		inline static MonoAssembly* assembly;
 		inline static MonoImage* image;
 		inline static std::string s_namespace = "Shado";
+		inline static std::string assemblyPathFallback;
 	};
 }

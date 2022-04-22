@@ -3,8 +3,9 @@
 #include "Application.h"
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
+#include <shtypes.h>
 #include <GLFW/glfw3native.h>
-
+#include <shlobj_core.h>
 
 namespace Shado {
 
@@ -51,6 +52,32 @@ namespace Shado {
 			return ofn.lpstrFile;
 
 		return std::string();
+	}
+
+	std::string FileDialogs::chooseFolder() {
+		BROWSEINFO brwinfo = { 0 };
+		brwinfo.lpszTitle = L"Select Your Source Directory";
+		LPITEMIDLIST pitemidl = SHBrowseForFolder(&brwinfo);
+
+		if (pitemidl == 0)
+			return "";
+		
+		// get the full path of the folder
+		TCHAR path[MAX_PATH];
+		std::wstring result;
+		if (SHGetPathFromIDList(pitemidl, path))
+		{
+			result = path;
+		}
+
+		IMalloc* pMalloc = 0;
+		if (SUCCEEDED(SHGetMalloc(&pMalloc)))
+		{
+			pMalloc->Free(pitemidl);
+			pMalloc->Release();
+		}
+
+		return std::string(result.begin(), result.end());
 	}
 
 	/**

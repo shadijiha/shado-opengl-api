@@ -29,8 +29,10 @@ namespace Shado {
     }
 
 	void ScriptManager::init(const std::string& path) {
-        mono_set_dirs(getRootDir("mono/lib").c_str(), getRootDir("mono/etc").c_str());
-        domain = mono_jit_init("shado_engin_script");        
+        assemblyPathFallback = path;
+
+		mono_set_dirs(getRootDir("mono/lib").c_str(), getRootDir("mono/etc").c_str());
+        domain = mono_jit_init("shado_engine_script");        
 
         assembly = mono_domain_assembly_open(domain, path.c_str());
         if (!assembly)
@@ -51,10 +53,27 @@ namespace Shado {
 
     void ScriptManager::shutdown()
     {
-        mono_jit_cleanup(domain);
+        if (domain)
+			mono_jit_cleanup(domain);       
     }
 
-    void ScriptManager::addInternalCall(const std::string& methodSignature, const void* func) {
+	void ScriptManager::reload(const std::string& path) {
+        SHADO_CORE_ASSERT(!path.empty(), "Script DLL path cannot be empty");
+
+        shutdown();
+        init(path);
+
+        // unload 
+        /*MonoDomain* domainToUnload = mono_domain_get();
+        if (domainToUnload && domainToUnload != mono_get_root_domain())
+        {
+            mono_domain_set(mono_get_root_domain(), false);
+            //mono_thread_pop_appdomain_ref();
+            mono_domain_unload(domainToUnload);
+        }*/
+	}
+
+	void ScriptManager::addInternalCall(const std::string& methodSignature, const void* func) {
         mono_add_internal_call(methodSignature.c_str(), func);
     }
 
