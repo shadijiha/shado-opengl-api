@@ -14,11 +14,9 @@ namespace Shado {
 	public:
 		static void init();
 
-		static Ref<spdlog::logger>& getCoreLogger() { return s_CoreLogger; }
-		static Ref<spdlog::logger>& getClientLogger() { return s_ClientLogger; }
-	private:
-		static Ref<spdlog::logger> s_CoreLogger;
-		static Ref<spdlog::logger> s_ClientLogger;
+		static Ref<spdlog::logger>& getCoreLogger();
+		static Ref<spdlog::logger>& getClientLogger();
+
 	};
 
 

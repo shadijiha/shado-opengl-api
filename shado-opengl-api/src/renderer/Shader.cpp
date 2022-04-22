@@ -17,6 +17,7 @@ namespace Shado {
 	}
 
 	Shader::Shader(const std::string& filepath)
+		: filepath(filepath)
 	{
 		std::string source = readFile(filepath);
 		auto shaderSources = preProcess(source);

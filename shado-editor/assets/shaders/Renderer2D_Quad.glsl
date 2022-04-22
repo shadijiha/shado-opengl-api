@@ -1,5 +1,5 @@
-// Basic Texture Shader
-
+// This is an example of a shader file
+// Both vertex and fragment shaders are in the same file
 #type vertex
 #version 450 core
 

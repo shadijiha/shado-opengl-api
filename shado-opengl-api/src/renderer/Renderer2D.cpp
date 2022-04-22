@@ -410,6 +410,59 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
+	void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Shader> shader, int entityID) {
+
+		SHADO_PROFILE_FUNCTION();
+		shader->bind();
+
+		uint32_t quadIndices[6];
+		quadIndices[0] = 0;
+		quadIndices[1] = 1;
+		quadIndices[2] = 2;
+		quadIndices[3] = 2;
+		quadIndices[4] = 3;
+		quadIndices[5] = 0;
+
+		Ref<VertexArray> vertexArray = CreateRef<VertexArray>();
+		Ref<VertexBuffer> buffer = VertexBuffer::create(4 * sizeof(QuadVertex));
+		buffer->setLayout({
+			{ ShaderDataType::Float3, "a_Position"     },
+			{ ShaderDataType::Float4, "a_Color"        },
+			{ ShaderDataType::Float2, "a_TexCoord"     },
+			{ ShaderDataType::Float,  "a_TexIndex"     },
+			{ ShaderDataType::Float,  "a_TilingFactor" },
+			{ ShaderDataType::Int,    "a_EntityID"     }
+			});
+		vertexArray->addVertexBuffer(buffer);
+		Ref<IndexBuffer> indexBuffer = CreateRef<IndexBuffer>(quadIndices, 6);
+		vertexArray->setIndexBuffer(indexBuffer);
+
+		constexpr size_t quadVertexCount = 4;
+		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+
+		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+			NextBatch();
+
+		const glm::vec4 color = { 1, 1, 1, 1 };
+
+		shader->bind();
+
+		QuadVertex vertex[4];
+		for (size_t i = 0; i < quadVertexCount; i++)
+		{
+			vertex[i].Position = transform * s_Data.QuadVertexPositions[i];
+			vertex[i].Color = color;
+			vertex[i].TexCoord = textureCoords[i];
+			vertex[i].TexIndex = 0.0f;
+			vertex[i].TilingFactor = 1.0f;
+			vertex[i].EntityID = entityID;
+		}
+
+		buffer->setData(&vertex, 4 * sizeof(QuadVertex));
+
+		CmdDrawIndexed(vertexArray, indexBuffer->getCount());
+	}
+
 	void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.0f }, size, rotation, color);

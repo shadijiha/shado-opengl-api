@@ -10,11 +10,13 @@
 #include "Texture2D.h"
 
 namespace Shado {
+	extern const std::filesystem::path g_AssetsPath;
+
 	struct SpriteRendererComponent;
 
-	//inline std::string FLAT_COLOR_SHADER_PATH = FILE_PATH + "\\assets\\FlatColorShader.glsl";
-	//inline std::string TEXTURE2D_SHADER_PATH = FILE_PATH + "\\assets\\TextureShader.glsl";
-	//inline std::string LINES_SHADER_PATH = FILE_PATH + "\\assets\\Renderer2D_Lines.glsl";
+	inline const std::filesystem::path QUAD_SHADER = g_AssetsPath / "shaders/Renderer2D_Quad.glsl";
+	inline const std::filesystem::path CIRCLE_SHADER = g_AssetsPath / "shaders/Renderer2D_Circle.glsl";
+	inline const std::filesystem::path LINES_SHADER = g_AssetsPath / "shaders/Renderer2D_Line.glsl";
 
 	class Renderer2D
 	{
@@ -37,6 +39,7 @@ namespace Shado {
 
 		static void DrawQuad(const glm::mat4& transform, const glm::vec4& color, int entityID = -1);
 		static void DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor = 1.0f, const glm::vec4& tintColor = glm::vec4(1.0f), int entityID = -1);
+		static void DrawQuad(const glm::mat4& transform, Ref<Shader> shader, int entityID = -1);
 
 		static void DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color);
 		static void DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color);

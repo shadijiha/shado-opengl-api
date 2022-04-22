@@ -22,6 +22,7 @@ namespace Shado {
 		void setMat4(const std::string& name, const glm::mat4& value);
 
 		const std::string& getName() const { return m_Name; }
+		const std::string& getFilepath()	const { return filepath; }
 
 		void uploadUniformInt(const std::string& name, int value);
 		void uploadUniformIntArray(const std::string& name, int* values, uint32_t count);
@@ -40,5 +41,6 @@ namespace Shado {
 	private:
 		uint32_t m_Renderer2DID;
 		std::string m_Name;
+		std::string filepath;
 	};
 }

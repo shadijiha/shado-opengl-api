@@ -6,8 +6,8 @@
 // ******************** Debug Class ********************
 namespace Shado {
 
-	Ref<spdlog::logger> Log::s_CoreLogger;
-	Ref<spdlog::logger> Log::s_ClientLogger;
+	static Ref<spdlog::logger> s_CoreLogger;
+	static Ref<spdlog::logger> s_ClientLogger;
 
 	void Log::init()
 	{
@@ -27,5 +27,13 @@ namespace Shado {
 		spdlog::register_logger(s_ClientLogger);
 		s_ClientLogger->set_level(spdlog::level::trace);
 		s_ClientLogger->flush_on(spdlog::level::trace);
+	}
+
+	Ref<spdlog::logger>& Log::getCoreLogger() {
+		return s_CoreLogger;
+	}
+
+	Ref<spdlog::logger>& Log::getClientLogger() {
+		return s_ClientLogger;
 	}
 }

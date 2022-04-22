@@ -1,14 +1,10 @@
 #include "SceneHierarchyPanel.h"
-
-#include <variant>
-
 #include "scene/Components.h"
-
 #include <glm/gtc/type_ptr.hpp>
-
 #include "imgui_internal.h"
 #include "scene/utils/SceneUtils.h"
 #include "debug/Profile.h"
+#include <fstream>
 
 namespace Shado {
 	extern const std::filesystem::path g_AssetsPath;
@@ -106,7 +102,8 @@ namespace Shado {
 	static void drawComponent(const char* label, Entity entity, std::function<void(T&)> ui, bool allowDeletion = true);
 	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight);
-	static void drawTextureControl(void* spriteData);
+	static void drawTextureControl(void* spriteData, const std::string& type = "Quad");
+	static void generateShaderFile(const std::string& path, const std::string& type);
 
 	void SceneHierarchyPanel::drawComponents(Entity entity) {
 		SHADO_PROFILE_FUNCTION();
@@ -143,7 +140,7 @@ namespace Shado {
 			ImGui::DragFloat("Thickness", &circle.thickness, 0.05);
 			ImGui::DragFloat("Fade", &circle.fade, 0.01);
 
-			drawTextureControl(&circle);
+			drawTextureControl(&circle, "Circle");
 		});
 
 		drawComponent<CameraComponent>("Camera", entity, [](CameraComponent& camera) {
@@ -478,7 +475,7 @@ namespace Shado {
 		ImGui::PopItemWidth();
 	}
 
-	static void drawTextureControl(void* spriteData) {
+	static void drawTextureControl(void* spriteData, const std::string& type ) {
 		SpriteRendererComponent& sprite = *(SpriteRendererComponent*)spriteData;
 
 		// =========== Texture
@@ -502,7 +499,54 @@ namespace Shado {
 		// =========== Tilling factor
 		ImGui::DragFloat("Tilling factor", &sprite.tilingFactor, 0.01);
 
-		// =========== Shader
+		ImGui::Separator();
 
+		// =========== Shader
+		// Create Shader file
+		// only for quad for now
+		if (type != "Quad")
+			return;
+
+		std::string shaderPath = sprite.shader ? sprite.shader->getName().c_str() : "Default Shader";
+		drawInputTextWithChooseFile("Shader", shaderPath, { ".glsl", ".shader" }, typeid(sprite.shader).hash_code(),
+			[&](std::string path) {
+				sprite.shader = CreateRef<Shader>(path);
+			}
+		);
+
+		if (ImGui::Button("+")) {
+			std::string path = FileDialogs::saveFile("Shader file (*glsl)\0*.glsl\0");
+			if (!path.empty()) {
+				generateShaderFile(path, type);
+				Dialog::openPathInExplorer(path);
+			}
+		}
+
+		if (ImGui::Button("Recompile")) {
+			if (sprite.shader) {
+				sprite.shader = CreateRef<Shader>(sprite.shader->getFilepath());
+			}
+		}
+	}
+
+	static void generateShaderFile(const std::string& path, const std::string& type) {
+
+		auto filepath = type == "Circle" ? CIRCLE_SHADER : QUAD_SHADER;
+
+		std::ifstream file(filepath);
+		std::string shader;
+		if (file) {
+			shader = std::string((std::istreambuf_iterator<char>(file)),
+				std::istreambuf_iterator<char>());
+			file.close();
+		}
+		else {
+			SHADO_CORE_ERROR("Failed to generate shader file!");
+			return;
+		}
+
+		std::ofstream output(path);
+		output << shader << std::endl;
+		output.close();
 	}
 }
