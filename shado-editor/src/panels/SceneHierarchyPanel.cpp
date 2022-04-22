@@ -367,6 +367,69 @@ namespace Shado {
 		ImGui::PopID();
 	}
 
+	static void drawInputTextWithChooseFile(
+		const std::string label, const std::string& text, const std::vector<std::string>& dragAndDropExtensions, int id,
+		std::function<void(std::string)> onChange
+	) {
+		bool textureChanged = false;
+		ImGui::InputText(label.c_str(), (char*)text.c_str(), text.length(), ImGuiInputTextFlags_ReadOnly);
+		std::string texturePath;
+
+		// For drag and drop
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+			{
+				const wchar_t* path = (const wchar_t*)payload->Data;
+				std::filesystem::path dataPath = std::filesystem::path(g_AssetsPath) / path;
+
+				bool acceptable = dragAndDropExtensions.empty();
+				for (const auto& ext : dragAndDropExtensions) {
+					if (ext == dataPath.extension()) {
+						acceptable = true;
+						break;
+					}
+				}
+
+				if (acceptable)
+					onChange(dataPath.string());
+				else
+					SHADO_CORE_WARN("Invalid drag and drop file extension {0}", dataPath.filename());
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
+		// File choose
+		ImGui::PushID(id);
+		ImGui::SameLine();
+		if (ImGui::Button("...", { 24, 24 })) {
+
+			std::string buffer = "";
+			int count = 0;
+			for (const auto& ext : dragAndDropExtensions) {
+				buffer += "*" + ext;
+
+				if (count != dragAndDropExtensions.size() - 1)
+					buffer += ";";
+				count++;
+			}
+
+			// Need to do this because we have \0 in string body
+			std::string filter = "Files (";
+			filter += std::string((buffer + ")\0").c_str(), buffer.length() + 2);
+			filter += std::string((buffer + "\0").c_str(), buffer.length() + 1);
+
+			texturePath = FileDialogs::openFile(filter.c_str());
+			textureChanged = true;
+		}
+		ImGui::PopID();
+
+
+		if (textureChanged && !texturePath.empty())
+			onChange(texturePath);
+	}
+
 	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight) {
 		ImGui::SameLine();
 		ImGui::PushItemWidth(-1);
@@ -418,47 +481,28 @@ namespace Shado {
 	static void drawTextureControl(void* spriteData) {
 		SpriteRendererComponent& sprite = *(SpriteRendererComponent*)spriteData;
 
-		bool textureChanged = false;
+		// =========== Texture
 		std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
-		
-		ImGui::InputText("Texture", (char*)texturePath.c_str(), texturePath.length(), ImGuiInputTextFlags_ReadOnly);
+
+		drawInputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(sprite.texture).hash_code(),
+			[&](std::string path) {
+				Ref<Texture2D> texture = CreateRef<Texture2D>(path);
+				if (texture->isLoaded())
+					sprite.texture = texture;
+				else
+					SHADO_CORE_WARN("Could not load texture {0}", path);
+			}		
+		);
 
 		// Image
 		if (sprite.texture) {
 			ImGui::Image((void*)sprite.texture->getRendererID(), { 60, 60 }, ImVec2(0, 1), ImVec2(1, 0));
 		}
 
-		// For drag and drop
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-			{
-				const wchar_t* path = (const wchar_t*)payload->Data;
-				std::filesystem::path texturePath = std::filesystem::path(g_AssetsPath) / path;
-				Ref<Texture2D> texture = CreateRef<Texture2D>(texturePath.string());
-				if (texture->isLoaded())
-					sprite.texture = texture;
-				else
-					SHADO_CORE_WARN("Could not load texture {0}", texturePath.filename().string());
-			}
-
-			ImGui::EndDragDropTarget();
-		}
-
-		// File choose
-		ImGui::PushID(typeid(sprite.texture).hash_code());
-		ImGui::SameLine();
-		if (ImGui::Button("...", { 24, 24 })) {
-			texturePath = FileDialogs::openFile("Image file (*.jpg, *.png)\0*.jpg;*.png\0");
-			textureChanged = true;
-		}
-		ImGui::PopID();
-
-		// Change texture
-		if (textureChanged && !texturePath.empty()) {
-			sprite.texture = CreateRef<Texture2D>(texturePath);
-		}
-
+		// =========== Tilling factor
 		ImGui::DragFloat("Tilling factor", &sprite.tilingFactor, 0.01);
+
+		// =========== Shader
+
 	}
 }

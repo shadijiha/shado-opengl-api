@@ -41,6 +41,8 @@ namespace Shado {
 		glm::vec4 color= {1, 1, 1, 1};
 		Ref<Texture2D> texture = nullptr;
 		float tilingFactor = 1.0f;
+		Ref<Shader> shader = nullptr;
+
 
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;
@@ -51,6 +53,7 @@ namespace Shado {
 		glm::vec4 color = { 1, 1, 1, 1 };
 		Ref<Texture2D> texture = nullptr;
 		float tilingFactor = 1.0f;
+		Ref<Shader> shader = nullptr;
 		float thickness = 1.0f;
 		float fade = 0.005f;
 	};
