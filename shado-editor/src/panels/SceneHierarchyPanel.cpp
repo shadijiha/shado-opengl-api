@@ -1,4 +1,7 @@
 #include "SceneHierarchyPanel.h"
+
+#include <variant>
+
 #include "scene/Components.h"
 
 #include <glm/gtc/type_ptr.hpp>
@@ -103,6 +106,7 @@ namespace Shado {
 	static void drawComponent(const char* label, Entity entity, std::function<void(T&)> ui, bool allowDeletion = true);
 	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight);
+	static void drawTextureControl(void* spriteData);
 
 	void SceneHierarchyPanel::drawComponents(Entity entity) {
 		SHADO_PROFILE_FUNCTION();
@@ -131,56 +135,15 @@ namespace Shado {
 
 		drawComponent<SpriteRendererComponent>("Sprite", entity, [](SpriteRendererComponent& sprite) {
 			ImGui::ColorEdit4("Colour", glm::value_ptr(sprite.color));
-
-			bool textureChanged = false;
-			std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
-
-
-			ImGui::InputText("Texture", (char*)texturePath.c_str(), texturePath.length(), ImGuiInputTextFlags_ReadOnly);
-
-			// Image
-			if (sprite.texture) {
-				ImGui::Image((void*)sprite.texture->getRendererID(), { 60, 60 }, ImVec2(0, 1), ImVec2(1, 0));
-			}
-
-			// For drag and drop
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-				{
-					const wchar_t* path = (const wchar_t*)payload->Data;
-					std::filesystem::path texturePath = std::filesystem::path(g_AssetsPath) / path;
-					Ref<Texture2D> texture = CreateRef<Texture2D>(texturePath.string());
-					if (texture->isLoaded())
-						sprite.texture = texture;
-					else
-						SHADO_CORE_WARN("Could not load texture {0}", texturePath.filename().string());
-				}
-
-				ImGui::EndDragDropTarget();
-			}
-
-			// File choose
-			ImGui::PushID(typeid(sprite.texture).hash_code());
-			ImGui::SameLine();
-			if (ImGui::Button("...", { 24, 24 })) {
-				texturePath = FileDialogs::openFile("Image file (*.jpg, *.png)\0*.jpg;*.png\0");
-				textureChanged = true;
-			}
-			ImGui::PopID();
-
-			// Change texture
-			if (textureChanged && !texturePath.empty()) {
-				sprite.texture = CreateRef<Texture2D>(texturePath);
-			}
-
-			ImGui::DragFloat("Tilling factor", &sprite.tilingFactor);
+			drawTextureControl(&sprite);
 		});
 
 		drawComponent<CircleRendererComponent>("Circle Renderer", entity, [](CircleRendererComponent& circle) {
 			ImGui::ColorEdit4("Colour", glm::value_ptr(circle.color));
 			ImGui::DragFloat("Thickness", &circle.thickness, 0.05);
 			ImGui::DragFloat("Fade", &circle.fade, 0.01);
+
+			drawTextureControl(&circle);
 		});
 
 		drawComponent<CameraComponent>("Camera", entity, [](CameraComponent& camera) {
@@ -450,5 +413,52 @@ namespace Shado {
 			ImGui::EndPopup();
 		}
 		ImGui::PopItemWidth();
+	}
+
+	static void drawTextureControl(void* spriteData) {
+		SpriteRendererComponent& sprite = *(SpriteRendererComponent*)spriteData;
+
+		bool textureChanged = false;
+		std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
+		
+		ImGui::InputText("Texture", (char*)texturePath.c_str(), texturePath.length(), ImGuiInputTextFlags_ReadOnly);
+
+		// Image
+		if (sprite.texture) {
+			ImGui::Image((void*)sprite.texture->getRendererID(), { 60, 60 }, ImVec2(0, 1), ImVec2(1, 0));
+		}
+
+		// For drag and drop
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+			{
+				const wchar_t* path = (const wchar_t*)payload->Data;
+				std::filesystem::path texturePath = std::filesystem::path(g_AssetsPath) / path;
+				Ref<Texture2D> texture = CreateRef<Texture2D>(texturePath.string());
+				if (texture->isLoaded())
+					sprite.texture = texture;
+				else
+					SHADO_CORE_WARN("Could not load texture {0}", texturePath.filename().string());
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
+		// File choose
+		ImGui::PushID(typeid(sprite.texture).hash_code());
+		ImGui::SameLine();
+		if (ImGui::Button("...", { 24, 24 })) {
+			texturePath = FileDialogs::openFile("Image file (*.jpg, *.png)\0*.jpg;*.png\0");
+			textureChanged = true;
+		}
+		ImGui::PopID();
+
+		// Change texture
+		if (textureChanged && !texturePath.empty()) {
+			sprite.texture = CreateRef<Texture2D>(texturePath);
+		}
+
+		ImGui::DragFloat("Tilling factor", &sprite.tilingFactor, 0.01);
 	}
 }

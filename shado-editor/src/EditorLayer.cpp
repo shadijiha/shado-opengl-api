@@ -462,6 +462,9 @@ namespace Shado {
 				if (extension == ".jpg" || extension == ".png") {
 					if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>())
 						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
+
+					else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>())
+						m_HoveredEntity.getComponent<CircleRendererComponent>().texture = CreateRef<Texture2D>(path.string());
 				} else
 					openScene(path);
 			}

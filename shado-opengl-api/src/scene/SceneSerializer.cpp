@@ -229,9 +229,9 @@ namespace Shado {
 					src.thickness = circleRendererComponent["Thickness"].as<float>();
 					src.fade = circleRendererComponent["Fade"].as<float>();
 
-					//auto texturePath = circleRendererComponent["Texture"].as<std::string>();
-					//src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
-					//src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
+					auto texturePath = circleRendererComponent["Texture"].as<std::string>();
+					src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
+					src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
 				}
 
 				auto rigidBodyComponent = entity["RigidBody2DComponent"];
@@ -358,18 +358,18 @@ namespace Shado {
 		if (entity.hasComponent<CircleRendererComponent>())
 		{
 			out << YAML::Key << "CircleRendererComponent";
-			out << YAML::BeginMap; // SpriteRendererComponent
+			out << YAML::BeginMap; // CircleRendererComponent
 
 			auto& circleRendererComponent = entity.getComponent<CircleRendererComponent>();
-			//std::string texturePath = circleRendererComponent.texture ? circleRendererComponent.texture->getFilePath() : "NULL";
+			std::string texturePath = circleRendererComponent.texture ? circleRendererComponent.texture->getFilePath() : "NULL";
 			out << YAML::Key << "Color" << YAML::Value << circleRendererComponent.color;
-			//out << YAML::Key << "Texture" << YAML::Value << texturePath;
-			//out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
+			out << YAML::Key << "Texture" << YAML::Value << texturePath;
+			out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
 
 			out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
 			out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
 
-			out << YAML::EndMap; // SpriteRendererComponent
+			out << YAML::EndMap; // CircleRendererComponent
 		}
 
 		if (entity.hasComponent<RigidBody2DComponent>())

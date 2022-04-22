@@ -179,7 +179,10 @@ namespace Shado {
 				{
 					auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
 
-					Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
+					if (circle.texture)
+						Renderer2D::DrawCircle(transform.getTransform(), circle.texture, circle.tilingFactor, circle.color, circle.thickness, circle.fade, (int)entity);
+					else
+						Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
 				}
 			}
 
@@ -209,7 +212,10 @@ namespace Shado {
 			{
 				auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
 
-				Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
+				if (circle.texture)
+					Renderer2D::DrawCircle(transform.getTransform(), circle.texture, circle.tilingFactor, circle.color, circle.thickness, circle.fade, (int)entity);
+				else
+					Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
 			}
 		}
 

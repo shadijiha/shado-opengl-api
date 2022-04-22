@@ -37,6 +37,10 @@ namespace Shado {
 
 		// Editor-only
 		int EntityID;
+
+		glm::vec2 TexCoord;
+		float TexIndex;
+		float TilingFactor;
 	};
 
 	struct LineVertex
@@ -150,7 +154,10 @@ namespace Shado {
 			{ ShaderDataType::Float4, "a_Color"         },
 			{ ShaderDataType::Float,  "a_Thickness"     },
 			{ ShaderDataType::Float,  "a_Fade"          },
-			{ ShaderDataType::Int,    "a_EntityID"      }
+			{ ShaderDataType::Int,    "a_EntityID"      },
+			{ ShaderDataType::Float2,    "a_TexCoord"      },
+			{ ShaderDataType::Float,    "a_TexIndex"      },
+			{ ShaderDataType::Float,    "a_TilingFactor"      }
 			});
 		s_Data.CircleVertexArray->addVertexBuffer(s_Data.CircleVertexBuffer);
 		s_Data.CircleVertexArray->setIndexBuffer(quadIB); // Use quad IB
@@ -443,6 +450,7 @@ namespace Shado {
 		// TODO: implement for circles
 		// if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 		// 	NextBatch();
+		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
 		for (size_t i = 0; i < 4; i++)
 		{
@@ -452,6 +460,9 @@ namespace Shado {
 			s_Data.CircleVertexBufferPtr->Thickness = thickness;
 			s_Data.CircleVertexBufferPtr->Fade = fade;
 			s_Data.CircleVertexBufferPtr->EntityID = entityID;
+			s_Data.CircleVertexBufferPtr->TexIndex = 0.0f;
+			s_Data.CircleVertexBufferPtr->TilingFactor = 1.0f;
+			s_Data.CircleVertexBufferPtr->TexCoord = textureCoords[i];
 			s_Data.CircleVertexBufferPtr++;
 		}
 
@@ -460,6 +471,52 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
+	void Renderer2D::DrawCircle(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor, float thickness, float fade, int entityID)
+	{
+		SHADO_PROFILE_FUNCTION();
+
+		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+		
+		float textureIndex = 0.0f;
+		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++)
+		{
+			if (*s_Data.TextureSlots[i] == *texture)
+			{
+				textureIndex = (float)i;
+				break;
+			}
+		}
+
+		if (textureIndex == 0.0f)
+		{
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+				NextBatch();
+
+			textureIndex = (float)s_Data.TextureSlotIndex;
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+			s_Data.TextureSlotIndex++;
+		}
+
+		for (size_t i = 0; i < 4; i++)
+		{
+			s_Data.CircleVertexBufferPtr->WorldPosition = transform * s_Data.QuadVertexPositions[i];
+			s_Data.CircleVertexBufferPtr->LocalPosition = s_Data.QuadVertexPositions[i] * 2.0f;
+			s_Data.CircleVertexBufferPtr->Color = tintColor;
+			s_Data.CircleVertexBufferPtr->Thickness = thickness;
+			s_Data.CircleVertexBufferPtr->Fade = fade;
+			s_Data.CircleVertexBufferPtr->EntityID = entityID;
+
+			s_Data.CircleVertexBufferPtr->TexCoord = textureCoords[i];
+			s_Data.CircleVertexBufferPtr->TexIndex = textureIndex;
+			s_Data.CircleVertexBufferPtr->TilingFactor = tilingFactor;
+			s_Data.CircleVertexBufferPtr++;
+		}
+
+		s_Data.CircleIndexCount += 6;
+
+		s_Data.Stats.QuadCount++;
+	}
+	
 	void Renderer2D::DrawLine(const glm::vec3& p0, glm::vec3& p1, const glm::vec4& color, int entityID)
 	{
 		SHADO_PROFILE_FUNCTION();
