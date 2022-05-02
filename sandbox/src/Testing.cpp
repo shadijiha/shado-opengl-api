@@ -3,6 +3,8 @@
 
 using namespace Shado;
 
+extern const std::filesystem::path Shado::g_AssetsPath = "assets";
+
 class TestLayer : public Layer {
 public:
 	TestLayer() :

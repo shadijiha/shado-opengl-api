@@ -440,9 +440,6 @@ namespace Shado {
 		constexpr size_t quadVertexCount = 4;
 		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
-			NextBatch();
-
 		const glm::vec4 color = { 1, 1, 1, 1 };
 
 		shader->bind();
@@ -461,6 +458,8 @@ namespace Shado {
 		buffer->setData(&vertex, 4 * sizeof(QuadVertex));
 
 		CmdDrawIndexed(vertexArray, indexBuffer->getCount());
+		s_Data.Stats.DrawCalls++;
+		s_Data.Stats.QuadCount++;
 	}
 
 	void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color)

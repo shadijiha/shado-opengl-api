@@ -32,6 +32,7 @@ namespace Shado {
 		// UI Stuff
 		void UI_ToolBar();
 		void UI_Viewport();
+		void UI_RendererStats();
 	private:
 		EditorCamera m_EditorCamera;
 

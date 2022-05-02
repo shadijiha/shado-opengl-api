@@ -1,5 +1,6 @@
 #include "EditorLayer.h"
 
+#include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Application.h"
@@ -207,7 +208,25 @@ namespace Shado {
 				{
 					if (ImGui::MenuItem("Set Script DLL")) {
 						std::string path = FileDialogs::openFile("Dynamic linked library (*.dll)\0*.dll");
-						ScriptManager::reload(path);
+						if (!path.empty()) {
+							ScriptManager::reload(path);
+
+							auto classes = ScriptManager::getAssemblyClassList();
+							for (auto& klass : classes) {
+								std::cout << klass.toString().c_str();
+
+								if (klass.name == "Hehexd") {
+									void* args[1];
+									int arg1 = 34504023;
+									args[0] = &arg1;
+
+									ScriptClassInstance instance = ScriptManager::createObject(klass, ".ctor(int)", args);
+									long id = instance.unboxAndCastTo<long>(instance.getFieldValue("id"));
+
+									std::cout << "--> " << id;
+								}
+							}
+						}
 					}
 
 					// Reload project if valid
@@ -262,6 +281,7 @@ namespace Shado {
 		// UI
 		UI_Viewport();
 		UI_ToolBar();
+		UI_RendererStats();
 
 		m_sceneHierarchyPanel.onImGuiRender();
 		m_ContentPanel.onImGuiRender();
@@ -527,5 +547,19 @@ namespace Shado {
 
 		ImGui::End();
 		ImGui::PopStyleVar();
+	}
+
+	void EditorLayer::UI_RendererStats() {
+
+		ImGui::Begin("Renderer stats");
+
+		auto stats = Renderer2D::GetStats();
+
+		ImGui::Text("Draw calls: %d", stats.DrawCalls);
+		ImGui::Text("Quads count: %d", stats.QuadCount);
+		ImGui::Text("Lines calls: %d", stats.LineCount);
+		ImGui::Text("Total indices: %d", stats.GetTotalVertexCount());
+		ImGui::Text("Total vertices: %d", stats.GetTotalVertexCount());
+		ImGui::End();
 	}
 }

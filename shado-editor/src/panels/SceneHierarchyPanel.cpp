@@ -488,6 +488,7 @@ namespace Shado {
 					sprite.texture = texture;
 				else
 					SHADO_CORE_WARN("Could not load texture {0}", path);
+				SHADO_CORE_INFO("Loaded texture {0}", path.c_str());
 			}		
 		);
 

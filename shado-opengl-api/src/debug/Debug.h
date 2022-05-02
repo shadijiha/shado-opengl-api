@@ -1,6 +1,10 @@
 ﻿#pragma once
 #include <glm/detail/type_quat.hpp>
 #include "util/Util.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/string_cast.hpp"
+
 // This ignores all warnings raised inside External headers
 #pragma warning(push, 0)
 #include <spdlog/spdlog.h>
@@ -14,9 +18,11 @@ namespace Shado {
 	public:
 		static void init();
 
-		static Ref<spdlog::logger>& getCoreLogger();
-		static Ref<spdlog::logger>& getClientLogger();
-
+		static Ref<spdlog::logger>& getCoreLogger() { return s_CoreLogger; }
+		static Ref<spdlog::logger>& getClientLogger() { return s_ClientLogger; }
+	private:
+		static Ref<spdlog::logger> s_CoreLogger;
+		static Ref<spdlog::logger> s_ClientLogger;
 	};
 
 
@@ -50,6 +56,7 @@ inline OStream& operator<<(OStream& os, glm::qua<T, Q> quaternion)
 
 // Core log macros
 // Core log macros
+#if 1
 #define SHADO_CORE_TRACE(...)    ::Shado::Log::getCoreLogger()->trace(__VA_ARGS__)
 #define SHADO_CORE_INFO(...)     ::Shado::Log::getCoreLogger()->info(__VA_ARGS__)
 #define SHADO_CORE_WARN(...)     ::Shado::Log::getCoreLogger()->warn(__VA_ARGS__)
@@ -63,4 +70,18 @@ inline OStream& operator<<(OStream& os, glm::qua<T, Q> quaternion)
 #define SHADO_ERROR(...)         ::Shado::Log::getClientLogger()->error(__VA_ARGS__)
 #define SHADO_CRITICAL(...)      ::Shado::Log::getClientLogger()->critical(__VA_ARGS__)
 
+#else
+#define SHADO_CORE_TRACE(...)    spdlog::trace(__VA_ARGS__)
+#define SHADO_CORE_INFO(...)	 spdlog::info(__VA_ARGS__)
+#define SHADO_CORE_WARN(...)     spdlog::warn(__VA_ARGS__)
+#define SHADO_CORE_ERROR(...)    spdlog::error(__VA_ARGS__)
+#define SHADO_CORE_CRITICAL(...) spdlog::critical(__VA_ARGS__)
+
+// Client log macros
+#define SHADO_TRACE(...)         spdlog::trace(__VA_ARGS__)
+#define SHADO_INFO(...)          spdlog::info(__VA_ARGS__)
+#define SHADO_WARN(...)          spdlog::warn(__VA_ARGS__)
+#define SHADO_ERROR(...)         spdlog::error(__VA_ARGS__)
+#define SHADO_CRITICAL(...)      spdlog::critical(__VA_ARGS__)
+#endif
 

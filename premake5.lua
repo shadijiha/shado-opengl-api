@@ -200,9 +200,9 @@ project "shado-editor"
 	}
 
 	filter "system:windows"
-	cppdialect "C++17"
-	staticruntime "Off"
-	systemversion "latest"
+		cppdialect "C++17"
+		staticruntime "Off"
+		systemversion "latest"
 
 	defines
 	{

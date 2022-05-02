@@ -12,8 +12,6 @@ int main(int argc, const char** argv)
 	// void (*hehexd)(void) = []() { SHADO_CORE_INFO("HEllo!"); };
 	// ScriptManager::addInternalCall("Shado.TestClass::SayHello_Impl", hehexd);
 	// ScriptManager::invokeStaticMethod("Shado.TestClass::HelloCS()");
-
-
 	SHADO_PROFILE_BEGIN_SESSION("Startup", "ShadoProfile-Startup.json");
 	auto& application = Application::get();
 	application.getWindow().resize(1920, 1080);

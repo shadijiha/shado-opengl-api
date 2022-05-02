@@ -74,7 +74,6 @@ namespace Shado {
 
 	Texture2D::~Texture2D() {
 		glDeleteTextures(1, &m_RendererID);
-		SHADO_CORE_INFO("Deleted texture!");
 	}
 
 	void Texture2D::setData(void* data, uint32_t size) {

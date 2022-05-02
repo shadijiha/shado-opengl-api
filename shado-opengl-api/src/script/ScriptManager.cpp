@@ -2,7 +2,9 @@
 #include "debug/Debug.h"
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/exception.h>
+#include <mono/metadata/attrdefs.h>
 #include <filesystem>
+#include <iostream>
 
 #ifdef SHADO_PLATFORM_WINDOWS
 #include <direct.h>
@@ -27,6 +29,8 @@ namespace Shado {
         auto parent = path.parent_path();
         return (parent / relative).string();
     }
+
+    static ScriptFieldDesc::Visibility visibilityToEnum(uint32_t flags);
 
 	void ScriptManager::init(const std::string& path) {
         assemblyPathFallback = path;
@@ -94,21 +98,8 @@ namespace Shado {
         mono_method_desc_free(desc);
     }
 
-    MonoObject* ScriptManager::createObject(const std::string& klass, const std::string& constructorSignature, void** args) {
-        MonoClass* my_class = getClass("Shado", klass.c_str());
-        MonoObject* my_class_instance = mono_object_new(domain, my_class);
-
-        // Execute the costructor
-        if (args == nullptr && constructorSignature.empty()) {
-            mono_runtime_object_init(my_class_instance);
-        }
-        else
-        {
-            auto* method = getMethod(constructorSignature.c_str());
-            mono_runtime_invoke(method, my_class_instance, args, nullptr);
-        }
-
-        return my_class_instance;
+    ScriptClassInstance ScriptManager::createObject(const ScriptClassDesc& desc, const std::string& constructorSignature, void** args) {
+        return {domain, image, desc, constructorSignature, args};
     }
 
     MonoClass* ScriptManager::getClass(const std::string& namesace, const std::string& klass) {
@@ -122,9 +113,9 @@ namespace Shado {
         return method;
     }
 
-    std::list<MonoClass*> ScriptManager::getAssemblyClassList()
+	std::list<ScriptClassDesc> ScriptManager::getAssemblyClassList()
     {
-        std::list<MonoClass*> class_list;
+        std::list<ScriptClassDesc> class_list;
 
         const MonoTableInfo* table_info = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
 
@@ -133,15 +124,126 @@ namespace Shado {
         /* For each row, get some of its values */
         for (int i = 0; i < rows; i++)
         {
+            ScriptClassDesc desc;
+
             MonoClass* _class = nullptr;
             uint32_t cols[MONO_TYPEDEF_SIZE];
             mono_metadata_decode_row(table_info, i, cols, MONO_TYPEDEF_SIZE);
             const char* name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
             const char* name_space = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
             _class = mono_class_from_name(image, name_space, name);
-            class_list.push_back(_class);
+            
+            desc.name = name;
+            desc.name_space = name_space;
+            desc.klass = _class;
+
+            // Get all methodes
+            void* iter = NULL;
+            MonoMethod* method;
+            while (method = mono_class_get_methods(_class, &iter))
+            {
+                const char* methodName =  mono_method_get_name(method);
+                auto* methodSignature = mono_method_signature(method);
+                char* methodSignDesc = mono_signature_get_desc(methodSignature, 0);
+
+                desc.methodes[std::string(methodName) + "(" + methodSignDesc + ")"] = method;
+            }
+
+            void* fieldIt = nullptr;
+            MonoClassField* field;
+            while (field = mono_class_get_fields(_class, &fieldIt)) {
+                const char* fieldName = mono_field_get_name(field);
+                MonoType* type = mono_field_get_type(field);
+                uint32_t flags = mono_field_get_flags(field) & MONO_FIELD_ATTR_FIELD_ACCESS_MASK;
+
+                ScriptFieldDesc fieldDesc;
+                fieldDesc.name = fieldName;
+                fieldDesc.type = type;
+                fieldDesc.field = field;
+                fieldDesc.visibility = visibilityToEnum(flags);
+
+            	desc.fields[fieldName] = fieldDesc;
+            }
+
+            class_list.push_back(desc);
         }
         return class_list;
     }
+
+    static ScriptFieldDesc::Visibility visibilityToEnum(uint32_t flags) {
+        if (flags == MONO_FIELD_ATTR_PRIVATE)
+            return ScriptFieldDesc::Visibility::PRIVATE;
+        if (flags == MONO_FIELD_ATTR_FAM_AND_ASSEM)
+            return ScriptFieldDesc::Visibility::PROTECTED_AND_INTERNAL;
+        if (flags == MONO_FIELD_ATTR_ASSEMBLY)
+            return ScriptFieldDesc::Visibility::INTERNAL;
+        if (flags == MONO_FIELD_ATTR_FAMILY)
+            return ScriptFieldDesc::Visibility::PROTECTED;
+        if (flags == MONO_FIELD_ATTR_PUBLIC)
+            return ScriptFieldDesc::Visibility::PUBLIC;
+        return ScriptFieldDesc::Visibility::PRIVATE;
+    }
+
+    /**
+     *************************************************
+     ************** ScriptClassInstance **************
+     *************************************************
+     */
+    ScriptClassInstance::ScriptClassInstance(MonoDomain* domain, MonoImage* image, ScriptClassDesc desc, const std::string& ctorSignature,
+        void** args)
+	    : description(desc), image(image), domain(domain)
+	{
+        MonoObject* my_class_instance = mono_object_new(domain, desc.klass);
+
+        // Execute the costructor
+        if (args == nullptr && ctorSignature.empty()) {
+            mono_runtime_object_init(my_class_instance);
+        } else
+        {
+            auto* method = getMethod(ctorSignature);
+            mono_runtime_invoke(method, my_class_instance, args, nullptr);
+        }
+
+        instance = my_class_instance;
+    }
+
+	ScriptClassInstance::~ScriptClassInstance() {
+	}
+
+	MonoMethod* ScriptClassInstance::getMethod(const std::string& nameOrSignature, bool includesNamespace) {
+    	// See if method exists in description
+    	if (description.methodes.find(nameOrSignature) != description.methodes.end()) {
+    		return description.methodes[nameOrSignature];
+    	}
+
+    	// Otherwise get it from assembly
+        auto fullSignature = getFullSignature(nameOrSignature);
+    	MonoMethodDesc* desc = mono_method_desc_new(fullSignature.c_str(), true);
+    	MonoMethod* method = mono_method_desc_search_in_image(desc, image);
+    	mono_method_desc_free(desc);
+    	return method;
+    }
+
+    ScriptFieldDesc ScriptClassInstance::getField(const std::string& name) {
+        if (description.fields.find(name) == description.fields.end())
+            return {};
+        return description.fields[name];
+	}
+
+	MonoObject* ScriptClassInstance::invokeMethod(MonoMethod* method, void** args) {
+        return mono_runtime_invoke(method, instance, args, nullptr);
+	}
+
+	MonoObject* ScriptClassInstance::getFieldValue(const ScriptFieldDesc& field) {
+        return mono_field_get_value_object(domain, field.field, instance);
+	}
+
+	MonoObject* ScriptClassInstance::getFieldValue(const std::string& name) {
+        return getFieldValue(getField(name));
+	}
+
+	std::string ScriptClassInstance::getFullSignature(const std::string& methodNameAndArgs) {
+       return description.name_space + "." + description.name + "::" + methodNameAndArgs;
+	}
 
 }
