@@ -43,6 +43,8 @@ namespace Shado {
         Renderer2D::SetClearColor({ 0.1, 0.1, 0.1, 1 });
 
         m_ActiveScene = CreateRef<Scene>();
+		m_EditorScene = m_ActiveScene;
+		Scene::ActiveScene = m_ActiveScene;
 
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
@@ -213,18 +215,7 @@ namespace Shado {
 
 							auto classes = ScriptManager::getAssemblyClassList();
 							for (auto& klass : classes) {
-								std::cout << klass.toString().c_str();
-
-								if (klass.name == "Hehexd") {
-									void* args[1];
-									int arg1 = 34504023;
-									args[0] = &arg1;
-
-									ScriptClassInstance instance = ScriptManager::createObject(klass, ".ctor(int)", args);
-									long id = instance.unboxAndCastTo<long>(instance.getFieldValue("id"));
-
-									std::cout << "--> " << id;
-								}
+								std::cout << klass.name << " extends " << ScriptClassDesc::fromMonoClass(klass.parent).name << std::endl;
 							}
 						}
 					}
@@ -374,6 +365,7 @@ namespace Shado {
 		m_EditorScene = m_ActiveScene;
 		m_sceneHierarchyPanel.setContext(scene);
 		m_ScenePath = "";
+		Scene::ActiveScene = m_ActiveScene;
 	}
 
 	void EditorLayer::openScene() {
@@ -404,6 +396,7 @@ namespace Shado {
 		m_ActiveScene = m_EditorScene;
 		m_sceneHierarchyPanel.setContext(scene);
 		m_ScenePath = path.string();
+		Scene::ActiveScene = m_ActiveScene;
 	}
 
 	// ============================== For runtime
@@ -411,6 +404,8 @@ namespace Shado {
 		m_SceneState = SceneState::Play;
 		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.get());
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
+		Scene::ActiveScene = m_ActiveScene;
+		//m_sceneHierarchyPanel.setContext(m_ActiveScene); // TODO maybe uncomment this
 		m_ActiveScene->onRuntimeStart();
 	}
 
@@ -418,6 +413,7 @@ namespace Shado {
 		m_SceneState = SceneState::Edit;
 		m_ActiveScene->onRuntimeStop();
 		m_ActiveScene = m_EditorScene;
+		Scene::ActiveScene = m_ActiveScene;
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
 
@@ -496,19 +492,24 @@ namespace Shado {
 		Entity selected = m_sceneHierarchyPanel.getSelected();
 		if (selected && m_GuizmosOperation != -1) {
 			// Camera
-			auto runtimeCamera = m_ActiveScene->getPrimaryCameraEntity();
-			auto cameraComponent = runtimeCamera.getComponent<CameraComponent>();
-			auto& editorCamera = m_EditorCamera;
-			auto projection = m_SceneState == SceneState::Edit ? editorCamera.getProjectionMatrix() : cameraComponent.camera->getProjectionMatrix();
-			glm::mat4 cameraView = m_SceneState == SceneState::Edit ? editorCamera.getViewMatrix() : glm::inverse(runtimeCamera.getComponent<TransformComponent>().getTransform());
+			glm::mat4 projection, cameraView;
 
-			// Disable or enable orthographic depending on if we are using Ortho camera or not
-			if (m_SceneState == SceneState::Edit)
+			if (m_SceneState == SceneState::Edit) {
+
+				projection = m_EditorCamera.getProjectionMatrix();
+				cameraView = m_EditorCamera.getViewMatrix();
 				ImGuizmo::SetOrthographic(false);
-			else
+			}
+			else {
+				auto runtimeCamera = m_ActiveScene->getPrimaryCameraEntity();
+				auto cameraComponent = runtimeCamera.getComponent<CameraComponent>();
+
+				projection = cameraComponent.camera->getProjectionMatrix();
+				cameraView = glm::inverse(runtimeCamera.getComponent<TransformComponent>().getTransform());
+				// Disable or enable orthographic depending on if we are using Ortho camera or not
 				ImGuizmo::SetOrthographic(cameraComponent.type == CameraComponent::Type::Orthographic);
-
-
+			}
+			
 			ImGuizmo::SetDrawlist();
 
 			ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);

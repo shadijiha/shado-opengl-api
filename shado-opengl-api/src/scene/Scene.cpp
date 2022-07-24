@@ -46,7 +46,7 @@ namespace Shado {
 		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<BoxCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<CircleCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		
+		CopyComponent<ScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 	}
 
 	Scene::~Scene() {
@@ -94,17 +94,44 @@ namespace Shado {
 	}
 
 	void Scene::onRuntimeStart() {
+		// Init all Script objects that extend Entity
+		for(const auto& desc : ScriptManager::getChildrenOf("Entity")) {
+			ScriptManager::createObject(desc);
+		}
+		
+		auto view = m_Registry.view<ScriptComponent>();
+		for (auto e : view) {
+			Entity entity = { e, this };
+
+			auto& script = entity.getComponent<ScriptComponent>();
+			auto* create = script.object.getMethod("OnCreate");
+
+			if (create != nullptr)
+				script.object.invokeMethod(create);
+		}
+
 		// TODO make the physics adjustable
 		softResetPhysics();
 	}
 
 	void Scene::onRuntimeStop() {
+		auto view = m_Registry.view<ScriptComponent>();
+		for (auto e : view) {
+			Entity entity = { e, this };
+
+			auto& script = entity.getComponent<ScriptComponent>();
+
+			auto* destroy = script.object.getMethod("OnDestroyed");
+			if (destroy != nullptr)
+				script.object.invokeMethod(destroy);
+		}
+		
 		delete m_World;
 		m_World = nullptr;
 	}
 
 	void Scene::onUpdateRuntime(TimeStep ts) {
-		// Update script
+		// Update Native script
 		{
 			m_Registry.view<NativeScriptComponent>().each([this, ts](auto entity, NativeScriptComponent& nsc) {
 				// TODO: mave to onScenePlay
@@ -138,6 +165,21 @@ namespace Shado {
 				transform.position.y = body->GetPosition().y;
 				transform.rotation.z = body->GetAngle();
 			}
+		}
+
+		// Update C# script
+		auto scriptView = m_Registry.view<ScriptComponent>();
+		for (auto e : scriptView) {
+			Entity entity = { e, this };
+
+			auto& script = entity.getComponent<ScriptComponent>();
+			void* args[] = {
+				&ts
+			};
+
+			auto* update = script.object.getMethod("OnUpdate");
+			if (update != nullptr)
+				script.object.invokeMethod(update, args);
 		}
 	}
 
@@ -251,6 +293,17 @@ namespace Shado {
 
 			if (camera.primary)
 				return { entity, this };			
+		}
+		return {};
+	}
+
+	Entity Scene::getEntityById(uint64_t __id) {
+		auto ids = m_Registry.view<IDComponent>();
+		for (auto entity : ids) {
+			const auto& id = ids.get<IDComponent>(entity);
+
+			if (id.id == __id)
+				return { entity, this };
 		}
 		return {};
 	}

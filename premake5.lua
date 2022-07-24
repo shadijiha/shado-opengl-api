@@ -78,7 +78,8 @@ project "shado-opengl-api"
 		"yaml-cpp",
 		"shcore.lib",
 		"mono/mono-2.0-sgen.lib",
-		--"mono/mono-2.0-sgen.dll"
+		--"mono/mono-2.0-sgen.dll",
+		"cs-script"
 	}
 
 	filter "system:windows"
@@ -91,10 +92,11 @@ project "shado-opengl-api"
 			"SHADO_PLATFORM_WINDOWS", "GLEW_STATIC", "SHADO_ENABLE_ASSERTS"
 		}
 	
-		--postbuildcommands
-		--{
-		--	("{COPY} %{cfg.buildtarget.relpath} ../bin/" ..outputdir .. "/sandbox"),
-		--}
+		postbuildcommands
+		{
+			("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/shado-editor"),
+			("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/sandbox"),
+		}
 	
 	filter "configurations:Debug"
 		defines {"SHADO_DEBUG", "SHADO_PROFILE"}
@@ -189,7 +191,7 @@ project "shado-editor"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
-		"%{IncludeDir.mono}",	-- TODO: remove this
+		--"%{IncludeDir.mono}",	-- TODO: remove this
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"
 	}
@@ -197,6 +199,7 @@ project "shado-editor"
 	links
 	{
 		"shado-opengl-api",
+		"cs-script"
 	}
 
 	filter "system:windows"
@@ -220,4 +223,18 @@ project "shado-editor"
 	filter "configurations:Dist"
 		defines "SHADO_DIST"
 		optimize "Full"
+
+
+project "cs-script"
+	location "cs-script"
+	kind "SharedLib"
+	language "C#"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"%{prj.name}/src/**.cs",
+	}
 

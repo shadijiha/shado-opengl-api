@@ -30,10 +30,16 @@ namespace Shado {
 		void onDrawEditor(EditorCamera& camera);
 
 		void onViewportResize(uint32_t width, uint32_t height);
+
 		Entity getPrimaryCameraEntity();
+		Entity getEntityById(uint64_t id);
 
 		void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
 		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
+
+
+	public:
+		inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
 
 	private:
 		entt::registry m_Registry;

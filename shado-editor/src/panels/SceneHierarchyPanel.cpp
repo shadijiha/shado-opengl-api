@@ -243,6 +243,17 @@ namespace Shado {
 			ImGui::DragFloat("Restitution", &bc.restitution, 0.01f, 0);
 			ImGui::DragFloat("Restitution Threshold", &bc.restitutionThreshold, 0.01f, 0);
 		});
+
+		drawComponent<ScriptComponent>("C# Script", entity, [](ScriptComponent& bc) {
+
+			ImGui::Text("Class name %s", bc.className.c_str());
+
+			ImGui::Text("Fields");
+			for(auto& fields : bc.object.getDescription().fields) {
+				ImGui::Text("%s", fields.first.c_str());
+			}
+
+		});
 	}
 	
 	template<typename T>

@@ -1,10 +1,17 @@
 #include "ScriptManager.h"
 #include "debug/Debug.h"
+#include <mono/jit/jit.h>
+#include <mono/metadata/assembly.h>
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/exception.h>
 #include <mono/metadata/attrdefs.h>
 #include <filesystem>
 #include <iostream>
+
+#include "Events/input.h"
+#include "scene/Components.h"
+#include "scene/Entity.h"
+#include "scene/Scene.h"
 
 #ifdef SHADO_PLATFORM_WINDOWS
 #include <direct.h>
@@ -13,6 +20,12 @@
 #include <unistd.h>
 #define GetCurrentDir getcwd
 #endif
+
+#define REGISTER_COMPONENT(X)   registedComponents[#X] = ComponentsCallbacks( \
+	[](Entity e) { e.addComponent<X>(); },\
+	[](Entity e) { return e.hasComponent<X>(); },\
+	[](Entity e) { e.removeComponent<X>(); }\
+);
 
 namespace Shado {
 
@@ -32,6 +45,54 @@ namespace Shado {
 
     static ScriptFieldDesc::Visibility visibilityToEnum(uint32_t flags);
 
+	ScriptClassDesc ScriptClassDesc::fromMonoClass(MonoClass* klass) {
+        if (klass == nullptr)
+            return {};
+
+        ScriptClassDesc desc;
+
+        MonoClass* _class = klass;
+        const char* name = mono_class_get_name(_class);
+        const char* name_space = mono_class_get_namespace(_class);
+
+        MonoClass* parent = mono_class_get_parent(_class);
+
+        desc.name = name;
+        desc.name_space = name_space;
+        desc.klass = _class;
+        desc.parent = parent;
+
+        // Get all methodes
+        void* iter = NULL;
+        MonoMethod* method;
+        while (method = mono_class_get_methods(_class, &iter))
+        {
+            const char* methodName = mono_method_get_name(method);
+            auto* methodSignature = mono_method_signature(method);
+            char* methodSignDesc = mono_signature_get_desc(methodSignature, 0);
+
+            desc.methodes[std::string(methodName) + "(" + methodSignDesc + ")"] = method;
+        }
+
+        void* fieldIt = nullptr;
+        MonoClassField* field;
+        while (field = mono_class_get_fields(_class, &fieldIt)) {
+            const char* fieldName = mono_field_get_name(field);
+            MonoType* type = mono_field_get_type(field);
+            uint32_t flags = mono_field_get_flags(field) & MONO_FIELD_ATTR_FIELD_ACCESS_MASK;
+
+            ScriptFieldDesc fieldDesc;
+            fieldDesc.name = fieldName;
+            fieldDesc.type = type;
+            fieldDesc.field = field;
+            fieldDesc.visibility = visibilityToEnum(flags);
+
+            desc.fields[fieldName] = fieldDesc;
+        }
+
+        return desc;
+	}
+
 	void ScriptManager::init(const std::string& path) {
         assemblyPathFallback = path;
 
@@ -44,7 +105,7 @@ namespace Shado {
         image = mono_assembly_get_image(assembly);
 
         // Add costum functions
-
+        setUpAllInternalCalls();
 
         // In case of exception
         mono_install_unhandled_exception_hook([](MonoObject* exc, void* user_data) {
@@ -58,7 +119,9 @@ namespace Shado {
     void ScriptManager::shutdown()
     {
         if (domain)
-			mono_jit_cleanup(domain);       
+			mono_jit_cleanup(domain);
+
+        ScriptManager::registedComponents.clear();
     }
 
 	void ScriptManager::reload(const std::string& path) {
@@ -66,6 +129,16 @@ namespace Shado {
 
         shutdown();
         init(path);
+
+        // Register components
+        REGISTER_COMPONENT(SpriteRendererComponent);
+        REGISTER_COMPONENT(CircleRendererComponent);
+        REGISTER_COMPONENT(CameraComponent);
+        REGISTER_COMPONENT(ScriptComponent);
+
+        REGISTER_COMPONENT(RigidBody2DComponent);
+        REGISTER_COMPONENT(BoxCollider2DComponent);
+        REGISTER_COMPONENT(CircleCollider2DComponent);
 
         // unload 
         /*MonoDomain* domainToUnload = mono_domain_get();
@@ -116,26 +189,33 @@ namespace Shado {
 	std::list<ScriptClassDesc> ScriptManager::getAssemblyClassList()
     {
         std::list<ScriptClassDesc> class_list;
+        if (!image || !assembly) {
+            SHADO_CORE_WARN("mono image or assembly are null. Maybe script DLL not set?");
+            return class_list;
+        }
 
         const MonoTableInfo* table_info = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
-
+        
         int rows = mono_table_info_get_rows(table_info);
 
         /* For each row, get some of its values */
         for (int i = 0; i < rows; i++)
         {
-            ScriptClassDesc desc;
-
             MonoClass* _class = nullptr;
             uint32_t cols[MONO_TYPEDEF_SIZE];
             mono_metadata_decode_row(table_info, i, cols, MONO_TYPEDEF_SIZE);
             const char* name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
             const char* name_space = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
             _class = mono_class_from_name(image, name_space, name);
-            
+
+            ScriptClassDesc desc = ScriptClassDesc::fromMonoClass(_class);
+
+            /* MonoClass* parent = mono_class_get_parent(_class);
+
             desc.name = name;
             desc.name_space = name_space;
             desc.klass = _class;
+            desc.parent = parent;
 
             // Get all methodes
             void* iter = NULL;
@@ -164,13 +244,31 @@ namespace Shado {
 
             	desc.fields[fieldName] = fieldDesc;
             }
-
+            */
             class_list.push_back(desc);
         }
         return class_list;
     }
 
-    static ScriptFieldDesc::Visibility visibilityToEnum(uint32_t flags) {
+	std::list<ScriptClassDesc> ScriptManager::getChildrenOf(const std::string& parentName) {
+        std::list<ScriptClassDesc> descs;
+        for (auto& klazz : getAssemblyClassList())
+            if (klazz.parent && mono_class_get_name(klazz.parent) == parentName)
+                descs.push_back(klazz);
+        return descs;
+	}
+
+	ScriptClassDesc ScriptManager::getClassByName(const std::string& name) {
+		for (auto& klass : getAssemblyClassList()) {
+            if (klass.name == name)
+                return klass;
+		}
+
+        SHADO_CORE_ASSERT(false, "Invalid class name");
+        return ScriptClassDesc();
+	}
+
+	static ScriptFieldDesc::Visibility visibilityToEnum(uint32_t flags) {
         if (flags == MONO_FIELD_ATTR_PRIVATE)
             return ScriptFieldDesc::Visibility::PRIVATE;
         if (flags == MONO_FIELD_ATTR_FAM_AND_ASSEM)
@@ -242,8 +340,304 @@ namespace Shado {
         return getFieldValue(getField(name));
 	}
 
+	void* ScriptClassInstance::unbox(MonoObject* obj) {
+        return mono_object_unbox(obj);
+	}
+
 	std::string ScriptClassInstance::getFullSignature(const std::string& methodNameAndArgs) {
        return description.name_space + "." + description.name + "::" + methodNameAndArgs;
 	}
 
+
+    /**
+	 *************************************************
+	 ************** ScriptManager internal calls **************
+	 *************************************************
+	 */
+    static std::string getTypeName(MonoObject* type);
+
+	void ScriptManager::setUpAllInternalCalls() {
+#pragma region Entity
+        {
+            uint64_t (*CreateEntity)(MonoObject*, MonoObject*) = [](MonoObject* typeObj, MonoObject* instance) {
+                Entity e = Scene::ActiveScene->createEntity("Empty C# Entity");
+
+                MonoMethod* method = mono_class_get_method_from_name(mono_object_get_class(typeObj), "get_Name", 0);
+                MonoString* value = (MonoString*)mono_runtime_invoke(method, typeObj, nullptr, nullptr);
+                std::string name = mono_string_to_utf8(value);
+                SHADO_CORE_INFO("{0}", name);
+
+                ScriptComponent& component = e.addComponent<ScriptComponent>();
+                component.className = name;
+                component.object = ScriptClassInstance();
+                component.object.domain = domain;
+                component.object.image = image;
+                component.object.description = getClassByName(name);
+                component.object.instance = instance;
+                return (uint64_t)e.getComponent<IDComponent>().id;
+            };
+            addInternalCall("Shado.Entity::CreateEntity", CreateEntity);
+
+            Scene* (*GetActiveScene)() = []() {
+                return Scene::ActiveScene.get();
+            };
+            addInternalCall("Shado.Entity::GetActiveScene()", GetActiveScene);
+
+            void (*AddComponent_Native)(uint64_t,Scene*, MonoObject*) = [](uint64_t id, Scene* scene, MonoObject* type) {
+                std::string name = getTypeName(type);
+                registedComponents[name].addComponent(scene->getEntityById(id));
+            };
+            addInternalCall("Shado.Entity::AddComponent_Native", AddComponent_Native);
+
+            bool (*HasComponent_Native)(uint64_t, Scene*, MonoObject*) = [](uint64_t id, Scene* scene, MonoObject* type) {
+                std::string name = getTypeName(type);
+                return registedComponents[name].hasComponent(scene->getEntityById(id));
+            };
+            addInternalCall("Shado.Entity::HasComponent_Native", HasComponent_Native);
+        }
+
+#pragma endregion
+
+#pragma region Scene
+        {
+            MonoObject* (*GetPrimaryCameraEntity)(Scene*) = [](Scene* scene) {
+                ScriptClassDesc klass = getClassByName("Entity");
+                Entity e = scene->getPrimaryCameraEntity();
+
+                // Create C# object
+                uint64_t id = e.getComponent<IDComponent>().id;
+                void* args[2] = {
+                    &id,
+                    Scene::ActiveScene.get()
+                };
+               
+                auto instance = createObject(klass, ".ctor(ulong)", args);
+
+                return instance.instance;
+            };
+            addInternalCall("Shado.Scene::GetPrimaryCameraEntity(IntPtr)", GetPrimaryCameraEntity);
+        }
+#pragma endregion
+
+#pragma region TransformComponent
+        {
+            void (*GetPosition_Native)(uint64_t, glm::vec3&) = [](uint64_t id, glm::vec3& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                pos = entity.getComponent<TransformComponent>().position;
+            };
+            addInternalCall("Shado.TransformComponent::GetPosition_Native", GetPosition_Native);
+
+            void (*SetPosition_Native)(uint64_t, glm::vec3&) = [](uint64_t id, glm::vec3& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<TransformComponent>().position = pos;
+            };
+            addInternalCall("Shado.TransformComponent::SetPosition_Native", SetPosition_Native);
+
+            void (*GetRotation_Native)(uint64_t, glm::vec3&) = [](uint64_t id, glm::vec3& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                pos = entity.getComponent<TransformComponent>().rotation;
+            };
+            addInternalCall("Shado.TransformComponent::GetRotation_Native", GetRotation_Native);
+
+            void (*SetRotation_Native)(uint64_t, glm::vec3&) = [](uint64_t id, glm::vec3& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<TransformComponent>().rotation = pos;
+            };
+            addInternalCall("Shado.TransformComponent::SetRotation_Native", SetRotation_Native);
+
+            void (*GetScale_Native)(uint64_t, glm::vec3&) = [](uint64_t id, glm::vec3& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                pos = entity.getComponent<TransformComponent>().scale;
+            };
+            addInternalCall("Shado.TransformComponent::GetScale_Native", GetScale_Native);
+
+            void (*SetScale_Native)(uint64_t, glm::vec3&) = [](uint64_t id, glm::vec3& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<TransformComponent>().scale = pos;
+            };
+            addInternalCall("Shado.TransformComponent::SetScale_Native", SetScale_Native);
+        }
+
+#pragma endregion
+
+#pragma region SpriteRendererComponent
+        {
+            void (*GetColor_Native)(uint64_t, glm::vec4&) = [](uint64_t id, glm::vec4& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                pos = entity.getComponent<SpriteRendererComponent>().color;
+            };
+            addInternalCall("Shado.SpriteRendererComponent::GetColor_Native", GetColor_Native);
+
+            void (*SetColor_Native)(uint64_t, glm::vec4&) = [](uint64_t id, glm::vec4& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<SpriteRendererComponent>().color = pos;
+            };
+            addInternalCall("Shado.SpriteRendererComponent::SetColor_Native", SetColor_Native);
+
+            void (*SetTexture_Native)(uint64_t, Texture2D*) = [](uint64_t id, Texture2D* texture) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texture);
+            };
+            addInternalCall("Shado.SpriteRendererComponent::SetTexture_Native", SetTexture_Native);
+
+        }
+#pragma endregion
+
+#pragma region RigidBody2DComponent
+        {
+            void (*GetBodyType_Native)(uint64_t, int&) = [](uint64_t id, int& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                pos = (int)entity.getComponent<RigidBody2DComponent>().type;
+            };
+            addInternalCall("Shado.RigidBody2DComponent::GetBodyType_Native", GetBodyType_Native);
+
+            void (*SetBodyType_Native)(uint64_t, int&) = [](uint64_t id, int& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<RigidBody2DComponent>().type = (RigidBody2DComponent::BodyType)pos;
+            };
+            addInternalCall("Shado.RigidBody2DComponent::SetBodyType_Native", SetBodyType_Native);
+
+            void (*GetFixedRotation_Native)(uint64_t, bool&) = [](uint64_t id, bool& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                pos = entity.getComponent<RigidBody2DComponent>().fixedRotation;
+            };
+            addInternalCall("Shado.RigidBody2DComponent::GetFixedRotation_Native", GetFixedRotation_Native);
+
+            void (*SetFixedRotation_Native)(uint64_t, bool&) = [](uint64_t id, bool& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<RigidBody2DComponent>().fixedRotation = pos;
+            };
+            addInternalCall("Shado.RigidBody2DComponent::SetFixedRotation_Native", SetFixedRotation_Native);
+        }
+#pragma endregion
+
+#pragma region BoxCollider2DComponent
+        {
+            void (*GetOffset_Native)(uint64_t, glm::vec2&) = [](uint64_t id, glm::vec2& result) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                result = entity.getComponent<BoxCollider2DComponent>().offset;
+            };
+            addInternalCall("Shado.BoxCollider2DComponent::GetOffset_Native", GetOffset_Native);
+
+            void (*SetOffset_Native)(uint64_t, glm::vec2&) = [](uint64_t id, glm::vec2& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<BoxCollider2DComponent>().offset = pos;
+            };
+            addInternalCall("Shado.BoxCollider2DComponent::SetOffset_Native", SetOffset_Native);
+
+            void (*GetSize_Native)(uint64_t, glm::vec2&) = [](uint64_t id, glm::vec2& result) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                result = entity.getComponent<BoxCollider2DComponent>().size;
+            };
+            addInternalCall("Shado.BoxCollider2DComponent::GetSize_Native", GetSize_Native);
+
+            void (*SetSize_Native)(uint64_t, glm::vec2&) = [](uint64_t id, glm::vec2& pos) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                entity.getComponent<BoxCollider2DComponent>().size = pos;
+            };
+            addInternalCall("Shado.BoxCollider2DComponent::SetSize_Native", SetSize_Native);
+
+            void (*GetFloatVal_Native)(uint64_t, MonoString*, float&) = [](uint64_t id, MonoString* varName, float& result) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                std::string prop = mono_string_to_utf8(varName);
+
+                if (prop == "density") {
+                    result = entity.getComponent<BoxCollider2DComponent>().density;
+                } else if (prop == "friction") {
+                    result = entity.getComponent<BoxCollider2DComponent>().friction;
+                } else if (prop == "restitution") {
+                    result = entity.getComponent<BoxCollider2DComponent>().restitution;
+                } else if (prop == "restitutionThreshold") {
+                    result = entity.getComponent<BoxCollider2DComponent>().restitutionThreshold;
+                }
+
+                
+            };
+            addInternalCall("Shado.BoxCollider2DComponent::GetFloatVal_Native", GetFloatVal_Native);
+
+            void (*SetFloatVal_Native)(uint64_t, MonoString*, float&) = [](uint64_t id, MonoString* varName, float& input) {
+                Entity entity = Scene::ActiveScene->getEntityById(id);
+                std::string prop = mono_string_to_utf8(varName);
+
+                if (prop == "density") {
+                    entity.getComponent<BoxCollider2DComponent>().density = input;
+                } else if (prop == "friction") {
+                    entity.getComponent<BoxCollider2DComponent>().friction = input;
+                } else if (prop == "restitution") {
+                    entity.getComponent<BoxCollider2DComponent>().restitution = input;
+                } else if (prop == "restitutionThreshold") {
+                    entity.getComponent<BoxCollider2DComponent>().restitutionThreshold = input;
+                }
+            };
+            addInternalCall("Shado.BoxCollider2DComponent::SetFloatVal_Native", SetFloatVal_Native);
+        }
+#pragma endregion 
+
+#pragma region Debug
+        {
+            void (*Log)(MonoString*, int) = [](MonoString* obj, int type) {
+                std::string message = mono_string_to_utf8(obj);
+				switch (type) {
+					case 0:
+                        SHADO_ERROR(message);
+	                    break;
+					case 1:
+                        SHADO_WARN(message);
+	                    break;
+					case 2:
+                        SHADO_INFO(message);
+	                    break;
+				}
+            };
+            addInternalCall("Shado.Debug::Log", Log);
+        }
+#pragma endregion
+
+#pragma region Input
+        {
+            bool (*IsKeyPressed_Native)(KeyCode) = [](KeyCode keycode) {
+                return Input::isKeyPressed(keycode);
+            };
+            addInternalCall("Shado.Input::IsKeyPressed_Native", IsKeyPressed_Native);
+
+            bool (*IsMouseButtonPressed_Native)(int) = [](int keycode) {
+                return Input::isMouseButtonPressed(keycode);
+            };
+            addInternalCall("Shado.Input::IsMouseButtonPressed_Native", IsMouseButtonPressed_Native);
+
+
+            void (*GetMousePos_Native)(glm::vec2&) = [](glm::vec2& pos) {
+                pos = {Input::getMouseX(), Input::getMouseY()};
+            };
+            addInternalCall("Shado.Input::GetMousePos_Native", GetMousePos_Native);
+        }
+#pragma endregion
+
+#pragma region Texture2D
+        {
+            void (*CreateTexture2D_Native)(MonoString*, Texture2D*&, uint32_t&, uint32_t&, uint32_t&, uint32_t&, bool&) =
+                [](MonoString* path, Texture2D*& native, uint32_t& width, uint32_t& height, uint32_t& dataFormat, uint32_t& internalFormat, bool& loaded) {
+
+                Texture2D* texture = new Texture2D(mono_string_to_utf8(path));
+                native = texture;
+                width = texture->getWidth();
+                height = texture->getHeight();
+                loaded = texture->isLoaded();
+                dataFormat = texture->getDataFormat();
+                internalFormat = texture->getInternalFormat();
+            };
+            addInternalCall("Shado.Texture2D::CreateTexture2D_Native", CreateTexture2D_Native);
+
+        }
+#pragma endregion
+	}
+    
+    static std::string getTypeName(MonoObject* type) {
+
+        // Get the type class Name
+        MonoMethod* method = mono_class_get_method_from_name(mono_object_get_class(type), "get_Name", 0);
+        MonoString* value = (MonoString*)mono_runtime_invoke(method, type, nullptr, nullptr);
+        std::string name = mono_string_to_utf8(value);
+        return name;
+    }
 }

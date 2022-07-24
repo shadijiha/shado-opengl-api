@@ -20,6 +20,8 @@ namespace Shado {
 		int getHeight() const { return m_Height; }
 		uint32_t getRendererID() const { return m_RendererID; }
 		std::string getFilePath() const { return m_FilePath; }
+		int getDataFormat() const { return m_DataFormat; }
+		int getInternalFormat() const { return m_InternalFormat; }
 
 		bool operator==(const Texture2D& other) const
 		{

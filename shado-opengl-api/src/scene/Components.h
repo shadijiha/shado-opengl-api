@@ -8,6 +8,7 @@
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
+#include "script/ScriptManager.h"
 
 namespace Shado {
 	struct IDComponent {
@@ -75,6 +76,10 @@ namespace Shado {
 			init(width, height);
 		}
 		CameraComponent(const CameraComponent&) = default;
+		CameraComponent()
+			: CameraComponent(Type::Orthographic,
+					Application::get().getWindow().getWidth(), 
+					Application::get().getWindow().getHeight()) {}
 		~CameraComponent() { }
 
 		void setViewportSize(uint32_t width, uint32_t height) {
@@ -141,6 +146,14 @@ namespace Shado {
 		}
 	};
 
+	struct ScriptComponent {
+		std::string className;
+		ScriptClassInstance object;
+
+		ScriptComponent(){}
+		ScriptComponent(const ScriptComponent&) = default;
+	};
+
 	// Physics
 	struct RigidBody2DComponent {
 		enum class BodyType	{STATIC = 0, KINEMATIC, DYNAMIC	};
@@ -188,4 +201,5 @@ namespace Shado {
 		CircleCollider2DComponent() = default;
 		CircleCollider2DComponent(const CircleCollider2DComponent&) = default;
 	};
+
 }
