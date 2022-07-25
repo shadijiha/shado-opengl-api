@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using Shado.math;
 
 namespace Shado {
 
@@ -7,6 +8,8 @@ namespace Shado {
 
         public ulong Id { get; private set; }
         public Scene Scene { get; private set; }
+
+        public TransformComponent Transform => GetComponent<TransformComponent>();
 
         protected Entity() {
             Id = CreateEntity(this.GetType(), this);
@@ -46,6 +49,10 @@ namespace Shado {
             return HasComponent_Native(Id, Scene.GetNative(), typeof(T));
         }
 
+        public void Destroy() {
+            Destroy_Native(Id, Scene.GetNative());
+        }
+
         public static Entity Create()
         {
             return new Entity();
@@ -63,5 +70,8 @@ namespace Shado {
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern bool HasComponent_Native(ulong id, IntPtr scene, Type type);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern bool Destroy_Native(ulong id, IntPtr scene);
     }
 }

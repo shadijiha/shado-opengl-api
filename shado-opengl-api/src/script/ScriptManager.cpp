@@ -108,12 +108,12 @@ namespace Shado {
         setUpAllInternalCalls();
 
         // In case of exception
-        mono_install_unhandled_exception_hook([](MonoObject* exc, void* user_data) {
-            MonoObject* other = NULL;
-            MonoString* str = mono_object_to_string(exc, &other);
-            SHADO_CORE_WARN("[C++] exception caught: {0}", mono_string_to_utf8(str));
-            throw std::exception("hehexd");
-        }, nullptr);
+		mono_install_unhandled_exception_hook([](MonoObject* exc, void* user_data) {
+			MonoObject* other = NULL;
+			MonoString* str = mono_object_to_string(exc, &other);
+			SHADO_CORE_WARN("[C++] exception caught: {0}", mono_string_to_utf8(str));
+			throw std::exception("hehexd");
+		}, nullptr);
     }
 
     void ScriptManager::shutdown()
@@ -394,6 +394,12 @@ namespace Shado {
                 return registedComponents[name].hasComponent(scene->getEntityById(id));
             };
             addInternalCall("Shado.Entity::HasComponent_Native", HasComponent_Native);
+
+            void (*Destroy_Native)(uint64_t, Scene*) = [](uint64_t id, Scene* scene) {
+                Entity e = scene->getEntityById(id);
+                scene->destroyEntity(e);
+            };
+            addInternalCall("Shado.Entity::Destroy_Native", Destroy_Native);
         }
 
 #pragma endregion
@@ -404,6 +410,9 @@ namespace Shado {
                 ScriptClassDesc klass = getClassByName("Entity");
                 Entity e = scene->getPrimaryCameraEntity();
 
+                if (!e.isValid())
+                    return (MonoObject*)nullptr;
+
                 // Create C# object
                 uint64_t id = e.getComponent<IDComponent>().id;
                 void* args[2] = {
@@ -411,11 +420,11 @@ namespace Shado {
                     Scene::ActiveScene.get()
                 };
                
-                auto instance = createObject(klass, ".ctor(ulong)", args);
+                auto instance = createObject(klass, ".ctor(ulong,intptr)", args);
 
                 return instance.instance;
             };
-            addInternalCall("Shado.Scene::GetPrimaryCameraEntity(IntPtr)", GetPrimaryCameraEntity);
+            addInternalCall("Shado.Scene::GetPrimaryCameraEntity_Native", GetPrimaryCameraEntity);
         }
 #pragma endregion
 

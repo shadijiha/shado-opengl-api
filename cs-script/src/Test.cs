@@ -7,10 +7,15 @@ using Shado.math;
 
 namespace Shado
 {
+    
     public class Test : Entity
     {
-
+        private Entity camera;
+        private List<Entity> entities = new List<Entity>();
+        private bool flag = false;
         protected override void OnCreate() {
+            camera = Scene.GetPrimaryCameraEntity();
+
             Debug.Info("Hehexd slol {0}", Id);
 
             if (!HasComponent<SpriteRendererComponent>())
@@ -25,20 +30,47 @@ namespace Shado
                 entity.GetComponent<TransformComponent>().Position = new Vector3(i * 2, 0.0f, 0.0f);
                 var sprite = entity.AddComponent<SpriteRendererComponent>();
                 sprite.Color = new Vector4((i + 0.1f) / 3.0f, 0.0f, 0.3f * (i - 0.5f), 1.0f);
-                sprite.Texture = texture;
+                //sprite.Texture = texture;
 
                 var rb = entity.AddComponent<RigidBody2DComponent>();
                 rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
 
                 var bc = entity.AddComponent<BoxCollider2DComponent>();
                 bc.Restitution = 0.7f;
-                Debug.Warn(sprite.Color);
+ 
+                entities.Add(entity);
             }
         }
 
         protected override void OnUpdate(float dt)
         {
-            //Debug.Info(Input.GetMousePos());
+            if (!flag && Input.IsKeyPressed(KeyCode.Space)) {
+                entities[0].Destroy();
+                entities.RemoveAt(0);
+                flag = true;
+            }
+
+            if (camera != null)
+            {
+                if (Input.IsKeyPressed(KeyCode.D))
+                {
+                    camera.Transform.Position += new Vector3(0.05f, 0.0f, 0.0f);
+                }
+                else if (Input.IsKeyPressed(KeyCode.A))
+                {
+                    camera.Transform.Position -= new Vector3(0.05f, 0.0f, 0.0f);
+                }
+
+                if (Input.IsKeyPressed(KeyCode.W))
+                {
+                    camera.Transform.Position += new Vector3(0.0f, 0.05f, 0.0f);
+                }
+                else if (Input.IsKeyPressed(KeyCode.S))
+                {
+                    camera.Transform.Position -= new Vector3(0.0f, 0.05f, 0.0f);
+                }
+            }
+
         }
 
         protected override void OnDestroyed()

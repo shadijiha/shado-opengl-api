@@ -215,7 +215,7 @@ namespace Shado {
 
 							auto classes = ScriptManager::getAssemblyClassList();
 							for (auto& klass : classes) {
-								std::cout << klass.name << " extends " << ScriptClassDesc::fromMonoClass(klass.parent).name << std::endl;
+								//std::cout << klass.toString()  << std::endl;
 							}
 						}
 					}

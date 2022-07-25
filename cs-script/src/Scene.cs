@@ -12,12 +12,12 @@ namespace Shado
         }
 
         public Entity GetPrimaryCameraEntity() {
-            return GetPrimaryCameraEntity(native);
+            return GetPrimaryCameraEntity_Native(native);
         }
 
         internal IntPtr GetNative() { return native; }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern Entity GetPrimaryCameraEntity(IntPtr scene);
+        private static extern Entity GetPrimaryCameraEntity_Native(IntPtr scene);
     }
 }
