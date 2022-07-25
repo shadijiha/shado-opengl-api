@@ -91,25 +91,25 @@ namespace Shado
         public Texture2D Texture {
             get
             {
-                /*Vector4 result;
-                GetColor_Native(Entity.Id, out result);
-                return result;*/
-                return null;
+                return GetTexture_Native(Entity);
             }
             set
             {
-                SetTexture_Native(Entity.Id, value.Native);
+                SetTexture_Native(Entity.Id, value.Path);
             }
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void GetColor_Native(ulong entityID, out Vector4 result);
+        private static extern void GetColor_Native(ulong entityID, out Vector4 result);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void SetColor_Native(ulong entityID, ref Vector4 result);
+        private static extern void SetColor_Native(ulong entityID, ref Vector4 result);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void SetTexture_Native(ulong entityID, IntPtr texturePtr);
+        private static extern void SetTexture_Native(ulong entityID, string texturePath);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern Texture2D GetTexture_Native(EntityDesc entity);
     }
 
     public class RigidBody2DComponent : Component {

@@ -25,12 +25,12 @@ namespace Shado
             component.Color = new Vector4(0.3f, 1.0f, 0.7f, 1.0f);
 
             Texture2D texture = new Texture2D(@"assets\riven.png");
-            for (int i = 0; i < 3; i++) { 
+            for (int i = 1; i < 4; i++) { 
                 Entity entity = Entity.Create();
                 entity.GetComponent<TransformComponent>().Position = new Vector3(i * 2, 0.0f, 0.0f);
                 var sprite = entity.AddComponent<SpriteRendererComponent>();
-                sprite.Color = new Vector4((i + 0.1f) / 3.0f, 0.0f, 0.3f * (i - 0.5f), 1.0f);
-                //sprite.Texture = texture;
+                //sprite.Color = new Vector4((i + 0.1f) / 3.0f, 0.0f, 0.3f * (i - 0.5f), 1.0f);
+                sprite.Texture = texture;
 
                 var rb = entity.AddComponent<RigidBody2DComponent>();
                 rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
@@ -45,6 +45,11 @@ namespace Shado
         protected override void OnUpdate(float dt)
         {
             if (!flag && Input.IsKeyPressed(KeyCode.Space)) {
+
+                Texture2D texture = entities[0].GetComponent<SpriteRendererComponent>().Texture;
+                if (texture != null)
+                    Debug.Info(texture);
+
                 entities[0].Destroy();
                 entities.RemoveAt(0);
                 flag = true;
@@ -71,6 +76,8 @@ namespace Shado
                 }
             }
 
+
+            Renderer.DrawQuad(Vector3.Zero, Vector3.One, Vector3.Zero);
         }
 
         protected override void OnDestroyed()

@@ -121,6 +121,14 @@ namespace Shado {
         if (domain)
 			mono_jit_cleanup(domain);
 
+		MonoDomain* domainToUnload = mono_domain_get();
+		if (domainToUnload && domainToUnload != mono_get_root_domain())
+		{
+		    mono_domain_set(mono_get_root_domain(), false);
+		    //mono_thread_pop_appdomain_ref();
+		    mono_domain_unload(domainToUnload);
+		}
+
         ScriptManager::registedComponents.clear();
     }
 
@@ -340,6 +348,15 @@ namespace Shado {
         return getFieldValue(getField(name));
 	}
 
+	void ScriptClassInstance::setFieldValue(const ScriptFieldDesc& field, void* value) {
+        mono_field_set_value(instance, field.field, value);
+	}
+
+	void ScriptClassInstance::setFieldValue(const std::string& name, void* value) {
+        auto field = getField(name);
+        setFieldValue(field, value);
+	}
+
 	void* ScriptClassInstance::unbox(MonoObject* obj) {
         return mono_object_unbox(obj);
 	}
@@ -357,6 +374,11 @@ namespace Shado {
     static std::string getTypeName(MonoObject* type);
 
 	void ScriptManager::setUpAllInternalCalls() {
+        struct EntityDesc {
+            uint64_t id;
+            Scene* scene;
+        };
+
 #pragma region Entity
         {
             uint64_t (*CreateEntity)(MonoObject*, MonoObject*) = [](MonoObject* typeObj, MonoObject* instance) {
@@ -483,12 +505,39 @@ namespace Shado {
             };
             addInternalCall("Shado.SpriteRendererComponent::SetColor_Native", SetColor_Native);
 
-            void (*SetTexture_Native)(uint64_t, Texture2D*) = [](uint64_t id, Texture2D* texture) {
+            void (*SetTexture_Native)(uint64_t, MonoString*) = [](uint64_t id, MonoString* texture) {
                 Entity entity = Scene::ActiveScene->getEntityById(id);
-                entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texture);
+                entity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(mono_string_to_utf8(texture));
             };
             addInternalCall("Shado.SpriteRendererComponent::SetTexture_Native", SetTexture_Native);
 
+            MonoObject* (*GetTexture_Native)(EntityDesc) = [](EntityDesc entityId) {
+                Entity entity = entityId.scene->getEntityById(entityId.id);
+                auto& sprite = entity.getComponent<SpriteRendererComponent>();
+
+                if (sprite.texture == nullptr)
+                    return (MonoObject*)nullptr;
+
+                auto klass = ScriptManager::getClassByName("Texture2D");
+                auto instance = ScriptManager::createObject(klass);
+
+                auto path = mono_string_new(domain, sprite.texture->getFilePath().c_str());
+                auto width = sprite.texture->getWidth();
+                auto height = sprite.texture->getHeight();
+                auto dataFormat = sprite.texture->getDataFormat();
+                auto internalFormat = sprite.texture->getInternalFormat();
+                auto loaded = sprite.texture->isLoaded();
+
+                instance.invokeMethod(instance.getMethod("set_Path"), path);               
+                instance.setFieldValue("Width", &width);
+                instance.setFieldValue("Height", &height);
+                instance.setFieldValue("DataFormat", &dataFormat);
+                instance.setFieldValue("InternalFormat", &internalFormat);
+                instance.setFieldValue("IsLoaded", &loaded);
+
+                return instance.instance;
+            };
+            addInternalCall("Shado.SpriteRendererComponent::GetTexture_Native", GetTexture_Native);
         }
 #pragma endregion
 
@@ -624,18 +673,37 @@ namespace Shado {
 
 #pragma region Texture2D
         {
-            void (*CreateTexture2D_Native)(MonoString*, Texture2D*&, uint32_t&, uint32_t&, uint32_t&, uint32_t&, bool&) =
-                [](MonoString* path, Texture2D*& native, uint32_t& width, uint32_t& height, uint32_t& dataFormat, uint32_t& internalFormat, bool& loaded) {
+            void (*CreateTexture2D_Native)(MonoString*, uint32_t&, uint32_t&, uint32_t&, uint32_t&, bool&) =
+                [](MonoString* path, uint32_t& width, uint32_t& height, uint32_t& dataFormat, uint32_t& internalFormat, bool& loaded) {
 
                 Texture2D* texture = new Texture2D(mono_string_to_utf8(path));
-                native = texture;
+                //native = texture;
                 width = texture->getWidth();
                 height = texture->getHeight();
                 loaded = texture->isLoaded();
                 dataFormat = texture->getDataFormat();
                 internalFormat = texture->getInternalFormat();
+
+                delete texture;
             };
             addInternalCall("Shado.Texture2D::CreateTexture2D_Native", CreateTexture2D_Native);
+
+            void (*DestroyTexture2D_Native)(Texture2D*) = [](Texture2D* native) {
+                delete native;
+            };
+            addInternalCall("Shado.Texture2D::DestroyTexture2D_Native", DestroyTexture2D_Native);
+
+        }
+#pragma endregion
+
+#pragma region Renderer
+        {
+            void (*DrawQuad_Native)(glm::vec3, glm::vec3, glm::vec3, glm::vec4) =
+                [](glm::vec3 pos, glm::vec3 size, glm::vec3 rot, glm::vec4 color) {
+
+                Renderer2D::DrawRotatedQuad(pos, size, rot, color);
+            };
+            addInternalCall("Shado.Renderer::DrawQuad_Native", DrawQuad_Native);
 
         }
 #pragma endregion

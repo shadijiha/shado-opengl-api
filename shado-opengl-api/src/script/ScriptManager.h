@@ -128,9 +128,18 @@ namespace Shado {
 		ScriptFieldDesc getField(const std::string& name);
 
 		MonoObject* invokeMethod(MonoMethod* method, void** args = nullptr);
+		MonoObject* invokeMethod(MonoMethod* method, void* arg) {
+			void* args[] = {
+				arg
+			};
+			return invokeMethod(method, (void**)args);
+		}
 
 		MonoObject* getFieldValue(const ScriptFieldDesc& field);
 		MonoObject* getFieldValue(const std::string& name);
+
+		void setFieldValue(const ScriptFieldDesc& field, void* value);
+		void setFieldValue(const std::string& name, void* value);
 
 		const ScriptClassDesc& getDescription() const { return description; }
 

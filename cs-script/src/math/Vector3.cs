@@ -15,6 +15,9 @@ namespace Shado.math
         public float Y;
         public float Z;
 
+        public static readonly Vector3 Zero = new Vector3(0, 0, 0);
+        public static readonly Vector3 One = new Vector3(1, 1, 1);
+
         public Vector3(float scalar)
         {
             X = Y = Z = scalar;

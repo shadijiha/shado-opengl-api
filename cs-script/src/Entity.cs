@@ -1,8 +1,15 @@
 using System;
 using System.Runtime.CompilerServices;
 using Shado.math;
+using System.Runtime.InteropServices;
 
 namespace Shado {
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct EntityDesc {
+        [FieldOffset(0)] public ulong id;
+        [FieldOffset(8)] public IntPtr scene;
+    }
 
     public class Entity {
 
@@ -58,6 +65,13 @@ namespace Shado {
             return new Entity();
         }
 
+        public static implicit operator EntityDesc(Entity e) { 
+            return new EntityDesc() {
+               id = e.Id,
+               scene = e.Scene.GetNative(),
+            };
+        }
+
         /// Internal calls!
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern ulong CreateEntity(Type type, Entity entity);
@@ -73,5 +87,6 @@ namespace Shado {
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern bool Destroy_Native(ulong id, IntPtr scene);
+
     }
 }
