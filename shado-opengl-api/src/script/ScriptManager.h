@@ -88,9 +88,11 @@ namespace Shado {
 		static std::list<ScriptClassDesc> getAssemblyClassList();
 		static std::list<ScriptClassDesc> getChildrenOf(const std::string& parentName);
 		static ScriptClassDesc getClassByName(const std::string& name);
+		static bool hasClass(const std::string& name, const std::string& name_space = "");
 
 		static void setAssemblyDefaultPath(const std::string& path)	{ assemblyPathFallback = path; }
 		static bool hasValidDefautDLL()								{ return !assemblyPathFallback.empty(); }
+		static std::string getDLLPath()								{ return assemblyPathFallback; }
 	private:
 		static MonoClass* getClass(const std::string& namesace, const std::string& klass);
 		static MonoMethod* getMethod(const std::string& methodSignature);
@@ -148,6 +150,8 @@ namespace Shado {
 		 */
 		//template<typename T>
 		void* unbox(MonoObject* obj);
+
+		MonoObject* getNative() { return instance; }
 
 	private:
 		std::string getFullSignature(const std::string& methodNameAndArgs);

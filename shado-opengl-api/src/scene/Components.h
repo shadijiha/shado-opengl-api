@@ -148,6 +148,7 @@ namespace Shado {
 
 	struct ScriptComponent {
 		std::string className;
+		ScriptClassDesc klass;
 		ScriptClassInstance object;
 
 		ScriptComponent(){}

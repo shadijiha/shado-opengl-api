@@ -7,7 +7,8 @@ namespace Shado
     {
         private IntPtr native;
 
-        internal Scene(IntPtr native) { 
+        internal Scene(IntPtr native) {
+            Console.WriteLine(native);
             this.native = native;
         }
 

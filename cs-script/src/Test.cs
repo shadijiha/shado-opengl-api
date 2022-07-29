@@ -16,7 +16,7 @@ namespace Shado
         protected override void OnCreate() {
             camera = Scene.GetPrimaryCameraEntity();
 
-            Debug.Info("Hehexd slol {0}", Id);
+            Debug.Info("Transform {0}", Transform.Position);
 
             if (!HasComponent<SpriteRendererComponent>())
                 AddComponent<SpriteRendererComponent>();

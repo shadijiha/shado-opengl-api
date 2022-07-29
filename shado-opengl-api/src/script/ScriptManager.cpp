@@ -276,6 +276,22 @@ namespace Shado {
         return ScriptClassDesc();
 	}
 
+	bool ScriptManager::hasClass(const std::string& name, const std::string& name_space) {
+
+        for (const auto& desc : getAssemblyClassList()) {
+            bool flag = false;
+            if (desc.name == name)
+                flag = true;
+
+            if (!name_space.empty() && desc.name_space == name_space) {
+                return flag && true;
+            } else if (flag)
+                return flag;                
+        }
+
+        return false;
+	}
+
 	static ScriptFieldDesc::Visibility visibilityToEnum(uint32_t flags) {
         if (flags == MONO_FIELD_ATTR_PRIVATE)
             return ScriptFieldDesc::Visibility::PRIVATE;
@@ -323,10 +339,21 @@ namespace Shado {
     	}
 
     	// Otherwise get it from assembly
-        auto fullSignature = getFullSignature(nameOrSignature);
-    	MonoMethodDesc* desc = mono_method_desc_new(fullSignature.c_str(), true);
-    	MonoMethod* method = mono_method_desc_search_in_image(desc, image);
-    	mono_method_desc_free(desc);
+        MonoMethod* method = nullptr;
+        {
+            auto fullSignature = getFullSignature(nameOrSignature);
+            MonoMethodDesc* desc = mono_method_desc_new(fullSignature.c_str(), true);
+            method = mono_method_desc_search_in_image(desc, image);
+            mono_method_desc_free(desc);
+        }
+
+        // Check if parent has it
+        if (method == nullptr) {
+            auto fullSignature = description.name_space + "." + mono_class_get_name(description.parent) + "::" + nameOrSignature;
+            MonoMethodDesc* desc = mono_method_desc_new(fullSignature.c_str(), true);
+            method = mono_method_desc_search_in_image(desc, image);
+            mono_method_desc_free(desc);            
+        }
     	return method;
     }
 

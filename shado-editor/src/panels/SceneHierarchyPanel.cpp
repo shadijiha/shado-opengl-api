@@ -244,12 +244,25 @@ namespace Shado {
 			ImGui::DragFloat("Restitution Threshold", &bc.restitutionThreshold, 0.01f, 0);
 		});
 
-		drawComponent<ScriptComponent>("C# Script", entity, [](ScriptComponent& bc) {
+		drawComponent<ScriptComponent>("C# Script", entity, [](ScriptComponent& sc) {
 
-			ImGui::Text("Class name %s", bc.className.c_str());
+			static char buffer[64];
+			strcpy(buffer, sc.className.c_str());
+			if(ImGui::InputText("Class", buffer, sizeof(buffer))) {
+
+				// Check if the class is valid
+				if(ScriptManager::hasClass(buffer)) {
+					sc.className = buffer;
+					sc.klass = ScriptManager::getClassByName(buffer);
+				} else {
+					SHADO_CORE_ERROR("Invalid class name {0}", buffer);
+				}
+			}
+
+			ImGui::Text("Class name %s", sc.className.c_str());
 
 			ImGui::Text("Fields");
-			for(auto& fields : bc.object.getDescription().fields) {
+			for(auto& fields : sc.object.getDescription().fields) {
 				ImGui::Text("%s", fields.first.c_str());
 			}
 
@@ -478,6 +491,11 @@ namespace Shado {
 
 			if (!m_Selected.hasComponent<NativeScriptComponent>() && ImGui::MenuItem("Native script")) {
 				m_Selected.addComponent<NativeScriptComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!m_Selected.hasComponent<ScriptComponent>() && ImGui::MenuItem("Script component")) {
+				m_Selected.addComponent<ScriptComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

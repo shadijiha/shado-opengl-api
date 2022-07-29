@@ -95,15 +95,30 @@ namespace Shado {
 
 	void Scene::onRuntimeStart() {
 		// Init all Script objects that extend Entity
-		for(const auto& desc : ScriptManager::getChildrenOf("Entity")) {
-			ScriptManager::createObject(desc);
-		}
+		/*for (const auto& desc : ScriptManager::getChildrenOf("Entity")) {
+			//ScriptManager::createObject(desc);
+			SHADO_CORE_INFO("{0}", desc.toString());
+		}*/
 		
 		auto view = m_Registry.view<ScriptComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
 
 			auto& script = entity.getComponent<ScriptComponent>();
+
+			// Create object based on class
+			script.object = ScriptManager::createObject(script.klass);
+
+			// TODO THIS IS A TERRIBLE SOLUTION CHANGE IT ASAP
+			auto& obj = script.object;
+			obj.invokeMethod(obj.getMethod("set_Id"), &entity.getComponent<IDComponent>().id);
+
+			// create C# Scene object
+			void* args[] = { this };
+			SHADO_CORE_INFO("Scene: {0}", (int)this);
+			auto sceneObj = ScriptManager::createObject(ScriptManager::getClassByName("Scene"), ".ctor(intptr)", args);
+			obj.invokeMethod(obj.getMethod("set_Scene"), sceneObj.getNative());
+
 			auto* create = script.object.getMethod("OnCreate");
 
 			if (create != nullptr)

@@ -120,6 +120,7 @@ namespace Shado {
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << m_Scene->name;
+		out << YAML::Key << "C#DLL" << YAML::Value << ScriptManager::getDLLPath(); // TODO: delete this
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		m_Scene->m_Registry.each([&](auto entityID)
 			{
@@ -158,6 +159,12 @@ namespace Shado {
 		std::string sceneName = data["Scene"].as<std::string>();
 		SHADO_CORE_TRACE("Deserializing scene '{0}'", sceneName);
 		m_Scene->name = sceneName;
+
+		// Load C# assembly
+		auto assembly = data["C#DLL"];
+		if (assembly) {
+			ScriptManager::reload(data["C#DLL"].as<std::string>());
+		}
 		
 		auto entities = data["Entities"];
 		if (entities)
@@ -264,6 +271,17 @@ namespace Shado {
 					src.friction = circleCollider2DComponent["Friction"].as<float>();
 					src.restitution = circleCollider2DComponent["Restitution"].as<float>();
 					src.restitutionThreshold = circleCollider2DComponent["RestitutionThreshold"].as<float>();
+				}
+
+				auto scriptComponent = entity["ScriptComponent"];
+				if (scriptComponent)
+				{
+					auto& src = deserializedEntity.addComponent<ScriptComponent>();
+					src.className = scriptComponent["class"].as<std::string>();
+					//auto name_space = scriptComponent["namespace"].as<std::string>();
+
+					// TODO: THIS MUSE BE REMOVED FROM HERE AND MOVED TO ScriptManager::init
+					src.klass = ScriptManager::getClassByName(src.className);
 				}
 			}
 		}
@@ -414,6 +432,17 @@ namespace Shado {
 			out << YAML::Key << "RestitutionThreshold" << YAML::Value << circleCollider2DComponent.restitutionThreshold;
 
 			out << YAML::EndMap; // circleCollider2DComponent
+		}
+
+		if (entity.hasComponent<ScriptComponent>())
+		{
+			out << YAML::Key << "ScriptComponent";
+			out << YAML::BeginMap; // ScriptComponent
+
+			auto& scriptComponent = entity.getComponent<ScriptComponent>();
+			out << YAML::Key << "class" << YAML::Value << scriptComponent.className;
+			out << YAML::Key << "namespace" << YAML::Value << scriptComponent.object.getDescription().name_space;
+			out << YAML::EndMap; // ScriptComponent
 		}
 
 		out << YAML::EndMap; // Entity
