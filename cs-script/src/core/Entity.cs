@@ -82,7 +82,7 @@ namespace Shado {
         public void Destroy() {
             OnDestroyed();
             Destroy_Native(Id, Scene.GetNative());
-            Scene = Scene.Null;
+            //Scene = Scene.Null;
         }
 
         public bool IsValid() {

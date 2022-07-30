@@ -39,13 +39,7 @@ namespace Sandbox
 
         protected override void OnUpdate(float dt)
         {
-            foreach (Entity entity in entities)
-            {
-                if (entity.IsValid()) {
-                    entity.Destroy();
-                }
-            }
-            entities.RemoveAll(p => !p.IsValid());
+            
         }
     }
 }

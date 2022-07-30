@@ -554,8 +554,6 @@ namespace Shado {
         {
             void (*GetPosition_Native)(uint64_t, glm::vec3&) = [](uint64_t id, glm::vec3& pos) {
                 Entity entity = Scene::ActiveScene->getEntityById(id);
-                if (!entity)
-                    __debugbreak();
                 pos = entity.getComponent<TransformComponent>().position;
             };
             addInternalCall("Shado.TransformComponent::GetPosition_Native", GetPosition_Native);
