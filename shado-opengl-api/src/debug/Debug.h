@@ -9,6 +9,7 @@
 #pragma warning(push, 0)
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+#include <spdlog/sinks/ringbuffer_sink.h>
 #pragma warning(pop)
 
 namespace Shado {
@@ -20,12 +21,14 @@ namespace Shado {
 
 		static Ref<spdlog::logger>& getCoreLogger() { return s_CoreLogger; }
 		static Ref<spdlog::logger>& getClientLogger() { return s_ClientLogger; }
+
+		static std::vector<std::string> getMessages() { return ringbuffer_sink->last_formatted(); }
+		static void clearMessages() { ringbuffer_sink->clear(); }
 	private:
 		static Ref<spdlog::logger> s_CoreLogger;
 		static Ref<spdlog::logger> s_ClientLogger;
+		inline static Ref<spdlog::sinks::ringbuffer_sink_mt> ringbuffer_sink = nullptr;
 	};
-
-
 }
 
 template<typename OStream, glm::length_t L, typename T, glm::qualifier Q>

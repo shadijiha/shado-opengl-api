@@ -276,7 +276,8 @@ namespace Shado {
 
 		m_sceneHierarchyPanel.onImGuiRender();
 		m_ContentPanel.onImGuiRender();
-		
+		m_ConsolPanel.onImGuiRender();
+
         ImGui::End();
 	}
 

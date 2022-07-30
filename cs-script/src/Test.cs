@@ -14,7 +14,7 @@ namespace Sandbox
         protected override void OnCreate() {
             //camera = Scene.GetPrimaryCameraEntity();
 
-            Debug.Info("Transform {0}", Transform.Position);
+            Debug.Warn("Transform {0}", Transform.Position);
 
             AddComponent<SpriteRendererComponent>();
             AddComponent<RigidBody2DComponent>().Type = RigidBody2DComponent.BodyType.DYNAMIC;

@@ -1,4 +1,5 @@
 #include "Shado.h"
+#include "panels/ConsolePanel.h"
 #include "panels/ContentBrowserPanel.h"
 #include "panels/SceneHierarchyPanel.h"
 
@@ -53,6 +54,7 @@ namespace Shado {
 		// Panels
 		SceneHierarchyPanel m_sceneHierarchyPanel;
 		ContentBrowserPanel m_ContentPanel;
+		ConsolePanel m_ConsolPanel;
 		Entity m_HoveredEntity;
 
 		// Scene runtime / editing

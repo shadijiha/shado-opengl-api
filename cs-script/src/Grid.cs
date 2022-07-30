@@ -12,7 +12,7 @@ namespace Sandbox
     {
         List<Entity> entities = new List<Entity>();
 
-        protected override void OnCreate()
+        /*protected override void OnCreate()
         {
 
             for (float y = -5.0f; y < 5.0f; y += 0.5f)
@@ -40,6 +40,6 @@ namespace Sandbox
         protected override void OnUpdate(float dt)
         {
             
-        }
+        }*/
     }
 }
