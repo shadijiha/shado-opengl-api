@@ -5,10 +5,11 @@ namespace Shado
 {
     public struct Scene
     {
-        private IntPtr native;
+        internal static readonly Scene Null = new Scene(IntPtr.Zero);
 
+        private IntPtr native;
+        
         internal Scene(IntPtr native) {
-            Console.WriteLine(native);
             this.native = native;
         }
 

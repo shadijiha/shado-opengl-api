@@ -94,31 +94,20 @@ namespace Shado {
 	}
 
 	void Scene::onRuntimeStart() {
-		// Init all Script objects that extend Entity
-		/*for (const auto& desc : ScriptManager::getChildrenOf("Entity")) {
-			//ScriptManager::createObject(desc);
-			SHADO_CORE_INFO("{0}", desc.toString());
-		}*/
-		
+		// Init all Script classes attached to entities
+		// for (auto& temp : ScriptManager::getAssemblyClassList()) {
+		// 	SHADO_CORE_INFO("{0}", temp.toString());
+		// }
+
 		auto view = m_Registry.view<ScriptComponent>();
 		for (auto e : view) {
 			Entity entity = { e, this };
 
+			UUID id = entity.getComponent<IDComponent>().id;
 			auto& script = entity.getComponent<ScriptComponent>();
 
 			// Create object based on class
-			script.object = ScriptManager::createObject(script.klass);
-
-			// TODO THIS IS A TERRIBLE SOLUTION CHANGE IT ASAP
-			auto& obj = script.object;
-			obj.invokeMethod(obj.getMethod("set_Id"), &entity.getComponent<IDComponent>().id);
-
-			// create C# Scene object
-			void* args[] = { this };
-			SHADO_CORE_INFO("Scene: {0}", (int)this);
-			auto sceneObj = ScriptManager::createObject(ScriptManager::getClassByName("Scene"), ".ctor(intptr)", args);
-			obj.invokeMethod(obj.getMethod("set_Scene"), sceneObj.getNative());
-
+			script.object = ScriptManager::createEntity(script.klass, id, this);			
 			auto* create = script.object.getMethod("OnCreate");
 
 			if (create != nullptr)
@@ -140,6 +129,8 @@ namespace Shado {
 			if (destroy != nullptr)
 				script.object.invokeMethod(destroy);
 		}
+
+		ScriptManager::requestThreadsDump();
 		
 		delete m_World;
 		m_World = nullptr;
@@ -372,7 +363,7 @@ namespace Shado {
 
 				b2CircleShape circleShape;
 				circleShape.m_p.Set(cc2d.offset.x, cc2d.offset.y);
-				circleShape.m_radius = transform.scale.x * cc2d.radius;
+				circleShape.m_radius = transform.scale.x * cc2d.radius.x;
 
 				b2FixtureDef fixtureDef;
 				fixtureDef.shape = &circleShape;

@@ -1,72 +1,68 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Shado.math
 {
     [StructLayout(LayoutKind.Explicit)]
     public struct Vector4
     {
-        [FieldOffset(0)] public float X;
-        [FieldOffset(4)] public float Y;
-        [FieldOffset(8)] public float Z;
-        [FieldOffset(12)] public float W;
+        [FieldOffset(0)] public float x;
+        [FieldOffset(4)] public float y;
+        [FieldOffset(8)] public float z;
+        [FieldOffset(12)] public float w;
 
         public Vector4(float scalar)
         {
-            X = Y = Z = W =scalar;
+            x = y = z = w =scalar;
         }
 
         public Vector4(float x, float y, float z, float w)
         {
-            X = x;
-            Y = y;
-            Z = z;
-            W = w;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.w = w;
         }
 
-        public Vector3 XYZ
+        public Vector3 xyz
         {
-            get { return new Vector3(X, Y, Z); }
-            set { X = value.X; Y = value.Y; Z = value.Z; }
+            get { return new Vector3(x, y, z); }
+            set { x = value.x; y = value.y; z = value.z; }
         }
 
         public static Vector4 operator+(Vector4 left, Vector4 right)
         {
-            return new Vector4(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);
+            return new Vector4(left.x + right.x, left.y + right.y, left.z + right.z, left.w + right.w);
         }
 
         public static Vector4 operator-(Vector4 left, Vector4 right)
         {
-            return new Vector4(left.X - right.X, left.Y - right.Y, left.Z - right.Z, left.W - right.W);
+            return new Vector4(left.x - right.x, left.y - right.y, left.z - right.z, left.w - right.w);
         }
 
         public static Vector4 operator*(Vector4 left, Vector4 right)
         {
-            return new Vector4(left.X * right.X, left.Y * right.Y, left.Z * right.Z, left.W * right.W);
+            return new Vector4(left.x * right.x, left.y * right.y, left.z * right.z, left.w * right.w);
         }
 
         public static Vector4 operator *(Vector4 left, float scalar)
         {
-            return new Vector4(left.X * scalar, left.Y * scalar, left.Z * scalar, left.W * scalar);
+            return new Vector4(left.x * scalar, left.y * scalar, left.z * scalar, left.w * scalar);
         }
 
         public static Vector4 operator *(float scalar, Vector4 right)
         {
-            return new Vector4(scalar * right.X, scalar * right.Y, scalar * right.Z, scalar * right.W);
+            return new Vector4(scalar * right.x, scalar * right.y, scalar * right.z, scalar * right.w);
         }
 
         public static Vector4 operator/(Vector4 left, Vector4 right)
         {
-            return new Vector4(left.X / right.X, left.Y / right.Y, left.Z / right.Z, left.W / right.W);
+            return new Vector4(left.x / right.x, left.y / right.y, left.z / right.z, left.w / right.w);
         }
 
         public static Vector4 operator /(Vector4 left, float scalar)
         {
-            return new Vector4(left.X / scalar, left.Y / scalar, left.Z / scalar, left.W / scalar);
+            return new Vector4(left.x / scalar, left.y / scalar, left.z / scalar, left.w / scalar);
         }
 
         public static Vector4 Lerp(Vector4 a, Vector4 b, float t)
@@ -77,12 +73,12 @@ namespace Shado.math
         }
 
         public static implicit operator Vector3(Vector4 v) {
-            return new Vector3(v.X, v.Y, v.Z);
+            return new Vector3(v.x, v.y, v.z);
         }
 
         public override string ToString()
         {
-            return $"{{{X}, {Y}, {Z}, {W}}}";
+            return $"{{{x}, {y}, {z}, {w}}}";
         }
 
     }

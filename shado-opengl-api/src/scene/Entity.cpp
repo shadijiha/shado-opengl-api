@@ -8,7 +8,7 @@
 namespace Shado {
 
 	Entity::Entity()
-		: m_Scene(nullptr)
+		: m_Scene(nullptr), m_EntityHandle(entt::null)
 	{
 	}
 

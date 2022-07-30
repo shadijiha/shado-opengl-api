@@ -1,25 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
+using Shado;
 using Shado.math;
 
-namespace Shado
-{
-    
+namespace Sandbox
+{   
     public class Test : Entity
     {
         private Entity camera;
         private List<Entity> entities = new List<Entity>();
         private bool flag = false;
         protected override void OnCreate() {
-            camera = Scene.GetPrimaryCameraEntity();
+            //camera = Scene.GetPrimaryCameraEntity();
 
             Debug.Info("Transform {0}", Transform.Position);
 
-            if (!HasComponent<SpriteRendererComponent>())
-                AddComponent<SpriteRendererComponent>();
+            AddComponent<SpriteRendererComponent>();
+            AddComponent<RigidBody2DComponent>().Type = RigidBody2DComponent.BodyType.DYNAMIC;
+            AddComponent<BoxCollider2DComponent>();
 
             SpriteRendererComponent component = GetComponent<SpriteRendererComponent>();
             component.Color = new Vector4(0.3f, 1.0f, 0.7f, 1.0f);
@@ -27,19 +26,24 @@ namespace Shado
             Texture2D texture = new Texture2D(@"assets\riven.png");
             for (int i = 1; i < 4; i++) { 
                 Entity entity = Entity.Create();
-                entity.GetComponent<TransformComponent>().Position = new Vector3(i * 2, 0.0f, 0.0f);
-                var sprite = entity.AddComponent<SpriteRendererComponent>();
-                //sprite.Color = new Vector4((i + 0.1f) / 3.0f, 0.0f, 0.3f * (i - 0.5f), 1.0f);
+                entity.Transform.Position = Transform.Position + new Vector3(i * 2, 0.0f, 0.0f);
+                entity.Transform.Rotation = Transform.Rotation;
+                entity.Tag = "hehexd " + i;
+
+                var sprite = entity.AddComponent<CircleRendererComponent>();
                 sprite.Texture = texture;
+
 
                 var rb = entity.AddComponent<RigidBody2DComponent>();
                 rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
 
-                var bc = entity.AddComponent<BoxCollider2DComponent>();
+                var bc = entity.AddComponent<CircleCollider2DComponent>();
                 bc.Restitution = 0.7f;
  
                 entities.Add(entity);
             }
+
+            //DestroyAfter(3);
         }
 
         protected override void OnUpdate(float dt)
@@ -76,13 +80,20 @@ namespace Shado
                 }
             }
 
-
-            Renderer.DrawQuad(Vector3.Zero, Vector3.One, Vector3.Zero);
         }
 
         protected override void OnDestroyed()
         {
             Debug.Info("{0} destroyed!", Id);
         }
+
+        private void DestroyAfter(int seconds) {
+
+            ThreadManager.Create(() => { 
+                Thread.Sleep(seconds * 1000);
+                this.Destroy();
+            }).Start();
+        }
+
     }
 }

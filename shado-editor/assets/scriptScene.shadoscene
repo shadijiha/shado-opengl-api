@@ -1,6 +1,16 @@
 Scene: Untitled
 C#DLL: D:\Code\Projects\shado-opengl-api\bin\Release-windows-x86_64\cs-script\cs-script.dll
 Entities:
+  - Entity: 2103704174380767001
+    TagComponent:
+      Tag: Grid
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ScriptComponent:
+      class: Grid
+      namespace: ""
   - Entity: 8678206904566530176
     TagComponent:
       Tag: Camera
@@ -50,7 +60,7 @@ Entities:
       RestitutionThreshold: 0.5
   - Entity: 6019557146951273462
     TagComponent:
-      Tag: Empty Entity
+      Tag: parent C# entity
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]

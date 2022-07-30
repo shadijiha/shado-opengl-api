@@ -34,24 +34,24 @@ namespace Shado.math
         public Vector3 Translation
         { 
             get { return new Vector3(D03, D13, D23); }
-            set { D03 = value.X; D13 = value.Y; D23 = value.Z; }
+            set { D03 = value.x; D13 = value.y; D23 = value.z; }
         }
 
         public static Matrix4 Translate(Vector3 translation)
         {
             Matrix4 result = new Matrix4(1.0f);
-            result.D03 = translation.X;
-            result.D13 = translation.Y;
-            result.D23 = translation.Z;
+            result.D03 = translation.x;
+            result.D13 = translation.y;
+            result.D23 = translation.z;
             return result;
         }
 
         public static Matrix4 Scale(Vector3 scale)
         {
             Matrix4 result = new Matrix4(1.0f);
-            result.D00 = scale.X;
-            result.D11 = scale.Y;
-            result.D22 = scale.Z;
+            result.D00 = scale.x;
+            result.D11 = scale.y;
+            result.D22 = scale.z;
             return result;
         }
 

@@ -14,29 +14,31 @@ namespace Shado {
 
 		template<typename T, typename... Args>
 		T& addComponent(Args&&... args) {
-			SHADO_CORE_ASSERT(!hasComponent<T>(), "Entity already has component!");
+			SHADO_CORE_ASSERT(isValid() && !hasComponent<T>(), "Entity already has component Or is not valid!");
 			return m_Scene->m_Registry.emplace<T>(m_EntityHandle, std::forward<Args>(args)...);
 		}
 
 		template<typename T, typename ... Args>
 		T& addOrReplaceComponent(Args&& ... args) {
+			SHADO_CORE_ASSERT(isValid(), "Invalid entity!")
 			return m_Scene->m_Registry.emplace_or_replace<T>(m_EntityHandle, std::forward<Args>(args)...);
 		}
 
 		template<typename T>
 		T& getComponent() {
-			SHADO_CORE_ASSERT(hasComponent<T>(), "Entity does not have component!");
+			SHADO_CORE_ASSERT(isValid() && hasComponent<T>(), "Entity does not have component or is not valid!");
 			return m_Scene->m_Registry.get<T>(m_EntityHandle);
 		}
 
 		template<typename T>
 		bool hasComponent() {
+			SHADO_CORE_ASSERT(isValid(), "Invalid entity!")
 			return m_Scene->m_Registry.any_of<T>(m_EntityHandle);
 		}
 
 		template<typename T>
 		void removeComponent() {
-			SHADO_CORE_ASSERT(hasComponent<T>(), "Entity does not have component!");
+			SHADO_CORE_ASSERT(isValid() && hasComponent<T>(), "Entity does not have component or is invalid!");
 			m_Scene->m_Registry.remove<T>(m_EntityHandle);
 		}
 

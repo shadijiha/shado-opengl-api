@@ -77,6 +77,7 @@ namespace Shado {
 		static void init(const std::string& path);
 		static void shutdown();
 		static void reload(const std::string& path = assemblyPathFallback);
+		static void requestThreadsDump();
 
 		static void addInternalCall(const std::string& methodSignature, const void* func);
 
@@ -84,6 +85,7 @@ namespace Shado {
 		static void invokeInstanceMethod(const std::string& methodSignature, MonoObject* obj, void** args = nullptr);
 	
 		static ScriptClassInstance createObject(const ScriptClassDesc& desc, const std::string& constructorSignature = "", void** args = nullptr);
+		static ScriptClassInstance createEntity(const ScriptClassDesc& desc, UUID id, Scene* scene);
 
 		static std::list<ScriptClassDesc> getAssemblyClassList();
 		static std::list<ScriptClassDesc> getChildrenOf(const std::string& parentName);

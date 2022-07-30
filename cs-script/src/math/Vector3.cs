@@ -11,72 +11,102 @@ namespace Shado.math
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector3
     {
-        public float X;
-        public float Y;
-        public float Z;
+        public float x;
+        public float y;
+        public float z;
 
         public static readonly Vector3 Zero = new Vector3(0, 0, 0);
         public static readonly Vector3 One = new Vector3(1, 1, 1);
 
         public Vector3(float scalar)
         {
-            X = Y = Z = scalar;
+            x = y = z = scalar;
         }
 
         public Vector3(float x, float y, float z)
         {
-            X = x;
-            Y = y;
-            Z = z;
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
 
         public Vector3(Vector2 vector)
         {
-            X = vector.X;
-            Y = vector.Y;
-            Z = 0.0f;
+            x = vector.x;
+            y = vector.y;
+            z = 0.0f;
         }
 
         public Vector3(Vector4 vector)
         {
-            X = vector.X;
-            Y = vector.Y;
-            Z = vector.Z;
+            x = vector.x;
+            y = vector.y;
+            z = vector.z;
         }
 
-        public Vector2 XY
+        public Vector2 xy
         {
-            get { return new Vector2(X, Y); }
-            set { X = value.X; Y = value.Y; }
+            get { return new Vector2(x, y); }
+            set { x = value.x; y = value.y; }
         }
-        public Vector2 XZ
+        public Vector2 xz
         {
-            get { return new Vector2(X, Z); }
-            set { X = value.X; Z = value.Y; }
+            get { return new Vector2(x, z); }
+            set { x = value.x; z = value.y; }
         }
-        public Vector2 YZ
+        public Vector2 yz
         {
-            get { return new Vector2(Y, Z); }
-            set { Y = value.X; Z = value.Y; }
+            get { return new Vector2(y, z); }
+            set { y = value.x; z = value.y; }
         }
 
         public static Vector3 operator +(Vector3 v1, Vector3 v2) { 
-            return new Vector3(v1.X + v2.X, v1.Y + v2.Y, v1.Z + v2.Z);
+            return new Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
         }
 
         public static Vector3 operator -(Vector3 v1, Vector3 v2)
         {
-            return new Vector3(v1.X - v2.X, v1.Y - v2.Y, v1.Z - v2.Z);
+            return new Vector3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+        }
+        public static Vector3 operator *(Vector3 v1, Vector3 v2)
+        {
+            return new Vector3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
+        }
+
+        public static Vector3 operator *(Vector3 v1, float scalar)
+        {
+            return new Vector3(v1.x * scalar, v1.y * scalar, v1.z * scalar);
+        }
+
+        public static Vector3 operator /(Vector3 v1, Vector3 v2)
+        {
+            return new Vector3(v1.x / v2.x, v1.y / v2.y, v1.z / v2.z);
+        }
+
+        public static Vector3 operator /(Vector3 v1, float scalar)
+        {
+            return new Vector3(v1.x / scalar, v1.y / scalar, v1.z / scalar);
+        }
+
+
+        public static Vector3 operator -(Vector3 vector)
+        {
+            return new Vector3(-vector.x, -vector.y, -vector.z);
         }
 
         public static implicit operator Vector2(Vector3 v)
         {
-            return new Vector2(v.X, v.Y);
+            return new Vector2(v.x, v.y);
+        }
+
+        public static explicit operator Vector4(Vector3 v)
+        {
+            return new Vector4(v.x, v.y, v.z, 1.0f);
         }
 
         public override string ToString()
         {
-            return $"{{{X}, {Y}, {Z}}}";
+            return $"{{{x}, {y}, {z}}}";
         }
     }
 }

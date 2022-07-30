@@ -235,7 +235,7 @@ namespace Shado {
 
 		drawComponent<CircleCollider2DComponent>("Circle Collider 2D", entity, [](CircleCollider2DComponent& bc) {
 
-			ImGui::DragFloat2("Radius modifier", &bc.radius, 0.1f);
+			ImGui::DragFloat("Radius modifier", &bc.radius.x, 0.1f);
 			ImGui::DragFloat("Density", &bc.density, 0.01f, 0, 1.0f);
 			ImGui::DragFloat("Friction", &bc.friction, 0.01f, 0, 1.0f);
 

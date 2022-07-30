@@ -266,7 +266,10 @@ namespace Shado {
 				{
 					auto& src = deserializedEntity.addComponent<CircleCollider2DComponent>();
 					src.offset = circleCollider2DComponent["Offset"].as<glm::vec2>();
-					src.radius = circleCollider2DComponent["Radius"].as<float>();
+
+					float tempRadius = circleCollider2DComponent["Radius"].as<float>();
+					src.radius = glm::vec2(tempRadius);
+
 					src.density = circleCollider2DComponent["Density"].as<float>();
 					src.friction = circleCollider2DComponent["Friction"].as<float>();
 					src.restitution = circleCollider2DComponent["Restitution"].as<float>();

@@ -16,11 +16,21 @@ namespace Shado {
         public ulong Id { get; private set; }
         public Scene Scene { get; private set; }
 
+        // Shortcut functions
         public TransformComponent Transform => GetComponent<TransformComponent>();
 
+        public string Tag {
+            get { return GetComponent<TagComponent>().Tag; }
+            set { GetComponent<TagComponent>().Tag = value; }
+        }
+
+        // END shortcut functions
         protected Entity() {
-            Id = CreateEntity(this.GetType(), this);
-            Scene = new Scene(GetActiveScene());
+            // Keep this in comment otherwise 1 extra unwanted entity
+            // will be created each time [C++] onRuntimeStart() is called
+
+            //Id = CreateEntity(this.GetType(), this);
+            //Scene = new Scene(GetActiveScene());
         }
 
         internal Entity(ulong id, IntPtr scene) {
@@ -37,6 +47,8 @@ namespace Shado {
 
         public T AddComponent<T>() where T : Component, new()
         {
+            Validate();
+
             if (HasComponent<T>())
                 return GetComponent<T>();
 
@@ -47,22 +59,45 @@ namespace Shado {
         }
 
         public T GetComponent<T>() where T : Component, new() {
+            Validate();
+
             T component = new T();
             component.Entity = this;
             return component;
         }
 
         public bool HasComponent<T>() where T : Component {
+            Validate();
+
             return HasComponent_Native(Id, Scene.GetNative(), typeof(T));
         }
 
+        public void RemoveComponent<T>() where T : Component, new()
+        {
+            Validate();
+
+            RemoveComponent_Native(Id, Scene.GetNative(), typeof(T));
+        }
+
         public void Destroy() {
+            OnDestroyed();
             Destroy_Native(Id, Scene.GetNative());
+            Scene = Scene.Null;
+        }
+
+        public bool IsValid() {
+            return IsValid_Native(Id, Scene.GetNative());
         }
 
         public static Entity Create()
         {
-            return new Entity();
+            Entity e = new Entity();
+            Scene scene = new Scene(GetActiveScene());
+            e.Scene = scene;
+
+            ulong id = CreateEntity(typeof(Entity), e);
+            e.Id = id; 
+            return e;
         }
 
         public static implicit operator EntityDesc(Entity e) { 
@@ -70,6 +105,11 @@ namespace Shado {
                id = e.Id,
                scene = e.Scene.GetNative(),
             };
+        }
+
+        private void Validate() {
+            if (!IsValid())
+                throw new InvalidOperationException("Entity is invalid");
         }
 
         /// Internal calls!
@@ -86,7 +126,12 @@ namespace Shado {
         private static extern bool HasComponent_Native(ulong id, IntPtr scene, Type type);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern void RemoveComponent_Native(ulong id, IntPtr scene, Type type);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern bool Destroy_Native(ulong id, IntPtr scene);
 
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern bool IsValid_Native(ulong id, IntPtr scene);
     }
 }

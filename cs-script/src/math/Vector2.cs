@@ -1,58 +1,52 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Shado.math
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector2
     {
-        public float X;
-        public float Y;
+        public float x;
+        public float y;
 
         public Vector2(float scalar)
         {
-            X = Y = scalar;
+            x = y = scalar;
         }
 
         public Vector2(float x, float y)
         {
-            X = x;
-            Y = y;
+            this.x = x;
+            this.y = y;
         }
 
         public Vector2(Vector3 vector)
         {
-            X = vector.X;
-            Y = vector.Y;
+            x = vector.x;
+            y = vector.y;
         }
 
         public void Clamp(Vector2 min, Vector2 max)
         {
-            if (X < min.X)
-                X = min.X;
-            if (X > max.X)
-                X = max.X;
+            if (x < min.x)
+                x = min.x;
+            if (x > max.x)
+                x = max.x;
 
-            if (Y < min.Y)
-                Y = min.Y;
-            if (Y > max.Y)
-                Y = max.Y;
+            if (y < min.y)
+                y = min.y;
+            if (y > max.y)
+                y = max.y;
         }
 
         public static Vector2 operator -(Vector2 vector)
         {
-            return new Vector2(-vector.X, -vector.Y);
+            return new Vector2(-vector.x, -vector.y);
         }
-
 
         public override string ToString()
         {
-            return $"{{{X}, {Y}}}";
+            return $"{{{x}, {y}}}";
         }
-
     }
 }

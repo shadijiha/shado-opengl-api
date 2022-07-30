@@ -188,7 +188,8 @@ namespace Shado {
 
 	struct CircleCollider2DComponent {
 		glm::vec2 offset = { 0.0f, 0.0f };
-		float radius = 0.5f;
+		glm::vec2 radius = glm::vec2(0.5f);	// The Y component is ignored, this is just here to be able
+								// To type pun in ScriptManager setupInteralCalls
 
 		// TODO: move into physics material in the future maybe
 		float density = 1.0f;
