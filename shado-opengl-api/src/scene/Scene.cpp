@@ -90,6 +90,28 @@ namespace Shado {
 	void Scene::destroyEntity(Entity entity) {
 		if (!entity)
 			return;
+
+		// Destroy physics
+		if (m_World) {
+
+			if (entity.hasComponent<RigidBody2DComponent>()) {
+				auto& rb = entity.getComponent<RigidBody2DComponent>();
+				auto* body = (b2Body*)rb.runtimeBody;
+
+				if (entity.hasComponent<BoxCollider2DComponent>()) {
+					auto& bc = entity.getComponent<BoxCollider2DComponent>();
+					body->DestroyFixture((b2Fixture*)bc.runtimeFixture);
+				}				
+				if (entity.hasComponent<CircleCollider2DComponent>()) {
+					auto& bc = entity.getComponent<CircleCollider2DComponent>();
+					body->DestroyFixture((b2Fixture*)bc.runtimeFixture);
+				}
+				
+				m_World->DestroyBody((b2Body*)rb.runtimeBody);				
+			}
+	
+		}
+
 		m_Registry.destroy(entity);
 	}
 

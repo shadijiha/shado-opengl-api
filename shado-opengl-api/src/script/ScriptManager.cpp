@@ -162,7 +162,8 @@ namespace Shado {
 	}
 
 	void ScriptManager::requestThreadsDump() {
-        invokeStaticMethod("Shado.ThreadManager::KillAll");
+        if (image)
+			invokeStaticMethod("Shado.ThreadManager::KillAll");
 	}
 
 	void ScriptManager::addInternalCall(const std::string& methodSignature, const void* func) {

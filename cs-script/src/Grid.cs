@@ -41,8 +41,7 @@ namespace Sandbox
         {
             foreach (Entity entity in entities)
             {
-                if (entity.IsValid() && entity.Transform.Position.y < -100.0f) {
-                    Debug.Info("About to destroy {0}", entity.Id);
+                if (entity.IsValid()) {
                     entity.Destroy();
                 }
             }
