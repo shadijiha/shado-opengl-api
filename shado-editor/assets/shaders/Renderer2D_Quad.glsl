@@ -97,5 +97,6 @@ void main()
 	}
 
 	o_Color = texColor;
+	//o_Color.a = Input.Color.a;
 	o_EntityID = v_EntityID;
 }
