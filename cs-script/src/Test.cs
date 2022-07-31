@@ -12,13 +12,14 @@ namespace Sandbox
         private List<Entity> entities = new List<Entity>();
         private bool flag = false;
         protected override void OnCreate() {
-            //camera = Scene.GetPrimaryCameraEntity();
+            camera = Scene.GetPrimaryCameraEntity();
 
             Debug.Warn("Transform {0}", Transform.Position);
 
             AddComponent<SpriteRendererComponent>();
             AddComponent<RigidBody2DComponent>().Type = RigidBody2DComponent.BodyType.DYNAMIC;
-            AddComponent<BoxCollider2DComponent>();
+            var bcparent = AddComponent<BoxCollider2DComponent>();
+            bcparent.Restitution = 0.9f;
 
             SpriteRendererComponent component = GetComponent<SpriteRendererComponent>();
             component.Color = new Vector4(0.3f, 1.0f, 0.7f, 1.0f);
@@ -85,6 +86,17 @@ namespace Sandbox
         protected override void OnDestroyed()
         {
             Debug.Info("{0} destroyed!", Id);
+        }
+
+        protected override void OnCollision2D(Collision2DInfo info, Entity other)
+        {
+            var sprite = GetComponent<SpriteRendererComponent>();
+            sprite.Color = new Vector4(
+                (sprite.Color.x + 0.1f) % 1.0f,
+                (sprite.Color.y + 0.05f) % 1.0f,
+                (sprite.Color.z + 0.025f) % 1.0f, 1.0f);
+
+            Transform.Position = new Vector3(0, 5.0f, 0);
         }
 
         private void DestroyAfter(int seconds) {

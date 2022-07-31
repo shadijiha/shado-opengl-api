@@ -17,10 +17,12 @@ struct _MonoAssembly;
 struct _MonoImage;
 struct _MonoType;
 struct _MonoClassField;
+struct _MonoArray;
 
 typedef struct _MonoClass MonoClass;
 typedef struct _MonoImage MonoImage;
 typedef struct _MonoMethod MonoMethod;
+typedef struct _MonoArray MonoArray;
 
 typedef struct _MonoObject MonoObject;
 typedef struct _MonoException MonoException;
@@ -86,6 +88,7 @@ namespace Shado {
 	
 		static ScriptClassInstance createObject(const ScriptClassDesc& desc, const std::string& constructorSignature = "", void** args = nullptr);
 		static ScriptClassInstance createEntity(const ScriptClassDesc& desc, UUID id, Scene* scene);
+		static MonoArray* createArray(const ScriptClassDesc& klass, uint32_t size);
 
 		static std::list<ScriptClassDesc> getAssemblyClassList();
 		static std::list<ScriptClassDesc> getChildrenOf(const std::string& parentName);
@@ -95,6 +98,9 @@ namespace Shado {
 		static void setAssemblyDefaultPath(const std::string& path)	{ assemblyPathFallback = path; }
 		static bool hasValidDefautDLL()								{ return !assemblyPathFallback.empty(); }
 		static std::string getDLLPath()								{ return assemblyPathFallback; }
+		static bool hasInit() { return image != nullptr && domain != nullptr; }
+
+		static MonoImage* getImage() { return image; }
 	private:
 		static MonoClass* getClass(const std::string& namesace, const std::string& klass);
 		static MonoMethod* getMethod(const std::string& methodSignature);

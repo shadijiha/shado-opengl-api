@@ -32,7 +32,7 @@ namespace Shado {
 
 		template<typename T>
 		bool hasComponent() {
-			SHADO_CORE_ASSERT(isValid(), "Invalid entity!")
+			//SHADO_CORE_ASSERT(isValid(), "Invalid entity!")
 			return m_Scene->m_Registry.any_of<T>(m_EntityHandle);
 		}
 

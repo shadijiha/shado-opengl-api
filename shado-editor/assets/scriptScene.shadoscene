@@ -1,27 +1,42 @@
 Scene: Untitled
 C#DLL: D:\Code\Projects\shado-opengl-api\bin\Release-windows-x86_64\cs-script\cs-script.dll
 Entities:
-  - Entity: 17417652477653909342
+  - Entity: 2103704174380767001
     TagComponent:
-      Tag: Empty Entity
-    TransformComponent:
-      Translation: [-4.69726658, 0.439225137, 0.242878377]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    SpriteRendererComponent:
-      Color: [0.792156875, 0.450980395, 0.450980395, 0.227450982]
-      Texture: "NULL"
-      TillingFactor: 1
-  - Entity: 6019557146951273462
-    TagComponent:
-      Tag: parent C# entity
+      Tag: Grid
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     ScriptComponent:
-      class: Test
+      class: Grid
       namespace: ""
+  - Entity: 8678206904566530176
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [0, 0, 7.19999981]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 60
+        Near: 1
+        Far: 100
+      Primary: true
+      FixedAspectRatio: false
+  - Entity: 2506007876773283283
+    TagComponent:
+      Tag: Bg
+    TransformComponent:
+      Translation: [4.76837158e-07, 0, -2.20000005]
+      Rotation: [0, 0, 0]
+      Scale: [20, 14.9585896, 1]
+    SpriteRendererComponent:
+      Color: [1, 1, 1, 1]
+      Texture: assets\TranscodedWallpaper.jpg
+      TillingFactor: 1
   - Entity: 12100939401437711390
     TagComponent:
       Tag: Ground
@@ -43,39 +58,13 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
-  - Entity: 2506007876773283283
+  - Entity: 6019557146951273462
     TagComponent:
-      Tag: Bg
-    TransformComponent:
-      Translation: [4.76837158e-07, 0, -2.20000005]
-      Rotation: [0, 0, 0]
-      Scale: [20, 14.9585896, 1]
-    SpriteRendererComponent:
-      Color: [1, 1, 1, 1]
-      Texture: assets\TranscodedWallpaper.jpg
-      TillingFactor: 1
-  - Entity: 8678206904566530176
-    TagComponent:
-      Tag: Camera
-    TransformComponent:
-      Translation: [0, 0, 7.19999981]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    CameraComponent:
-      Camera:
-        ProjectionType: 1
-        PerspectiveFOV: 60
-        Near: 1
-        Far: 100
-      Primary: true
-      FixedAspectRatio: false
-  - Entity: 2103704174380767001
-    TagComponent:
-      Tag: Grid
+      Tag: parent C# entity
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     ScriptComponent:
-      class: Grid
+      class: Test
       namespace: ""

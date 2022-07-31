@@ -15,7 +15,7 @@ namespace Sandbox
         protected override void OnCreate()
         {
 
-            for (float y = -5.0f; y < 5.0f; y += 0.5f)
+            /*for (float y = -5.0f; y < 5.0f; y += 0.5f)
             {
                 for (float x = -5.0f; x < 5.0f; x += 0.5f)
                 {
@@ -34,7 +34,7 @@ namespace Sandbox
 
                     entities.Add(entity);
                 }
-             }
+             }*/
         }
 
         protected override void OnUpdate(float dt)

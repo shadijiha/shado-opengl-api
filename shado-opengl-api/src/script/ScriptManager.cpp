@@ -199,32 +199,52 @@ namespace Shado {
      */
 	ScriptClassInstance ScriptManager::createEntity(const ScriptClassDesc& desc, UUID id, Scene* scene) {
 
-        SHADO_CORE_ASSERT(std::string("Entity") == mono_class_get_name(desc.parent), "Class must be a child of Entity");
+        SHADO_CORE_ASSERT(
+            desc.name == "Entity" ||
+            std::string("Entity") == mono_class_get_name(desc.parent), "Class must be a child of Entity"
+        );
 
-        // Create object
-        MonoObject* obj = mono_object_new(domain, desc.klass);
-        mono_runtime_object_init(obj);
+        // If the class desc is Entity it self
+        if (desc.name == "Entity") {
 
-        ScriptClassInstance instance;
-        instance.instance = obj;
-        instance.description = desc;
-        instance.image = image;
-        instance.domain = domain;
+            void* args[] = {
+                &id,
+                &scene
+            };
+            return createObject(getClassByName("Entity"), ".ctor(ulong,intptr)", args);
+        }
+        // Else if it is a child of Entity
+        else {
+           
+            // Create object
+            MonoObject* obj = mono_object_new(domain, desc.klass);
+            mono_runtime_object_init(obj);
 
-        // I really should use the Properties instead of the generated get and set functions
-        // but whatever who cares
-        auto* set_Id = mono_class_get_method_from_name(desc.parent, "set_Id", 1);
-        instance.invokeMethod(set_Id, &id);
+            ScriptClassInstance instance;
+            instance.instance = obj;
+            instance.description = desc;
+            instance.image = image;
+            instance.domain = domain;
 
-		// create C# Scene object
-		void* args[1] = { &scene };
-		auto sceneObj = createObject(getClassByName("Scene"), ".ctor(intptr)", args);
+            // I really should use the Properties instead of the generated get and set functions
+            // but whatever who cares
+            auto* set_Id = mono_class_get_method_from_name(desc.parent, "set_Id", 1);
+            instance.invokeMethod(set_Id, &id);
 
-        auto* set_Scene = mono_class_get_method_from_name(desc.parent, "set_Scene", 1);
-        instance.invokeMethod(set_Scene, sceneObj.getNative());
+            // create C# Scene object
+            void* args[1] = { &scene };
+            auto sceneObj = createObject(getClassByName("Scene"), ".ctor(intptr)", args);
 
-    
-        return instance;
+            auto* set_Scene = mono_class_get_method_from_name(desc.parent, "set_Scene", 1);
+            instance.invokeMethod(set_Scene, sceneObj.getNative());
+
+
+            return instance;
+        }
+	}
+
+	MonoArray* ScriptManager::createArray(const ScriptClassDesc& klass, uint32_t size) {
+        return mono_array_new(domain, klass.klass, size);
 	}
 
 	MonoClass* ScriptManager::getClass(const std::string& namesace, const std::string& klass) {
@@ -523,9 +543,10 @@ namespace Shado {
 
                 // Create C# object
                 uint64_t id = e.getComponent<IDComponent>().id;
+                Scene* ptr = Scene::ActiveScene.get();
                 void* args[2] = {
                     &id,
-                    Scene::ActiveScene.get()
+                    &ptr
                 };
                
                 auto instance = createObject(klass, ".ctor(ulong,intptr)", args);

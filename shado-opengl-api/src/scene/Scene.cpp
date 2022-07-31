@@ -3,6 +3,8 @@
 #include "renderer/Renderer2D.h"
 #include "Entity.h"
 #include <box2d/b2_world.h>
+#include <mono/metadata/appdomain.h>
+#include <mono/metadata/object.h>
 
 #include "box2d/b2_body.h"
 #include "box2d/b2_fixture.h"
@@ -11,6 +13,104 @@
 #include "box2d/b2_contact.h"
 
 namespace Shado {
+	/**
+	 * **********************************
+	 ************************************
+	 * **********************************
+	 */
+	 // This is here to avoid havning to include box2d in header files
+	class Physics2DCallback : public b2ContactListener {
+	private:
+		struct Collision2DInfo {
+			glm::vec2 normal;
+			MonoArray* points;
+			MonoArray* separations;
+		};
+	public:
+		Physics2DCallback(Scene* scene): scene(scene) {}
+
+		void BeginContact(b2Contact* contact) override {
+			// Entity A
+			uint64_t idA = contact->GetFixtureA()->GetBody()->GetUserData().pointer;
+			uint64_t idB = contact->GetFixtureB()->GetBody()->GetUserData().pointer;
+
+			Entity entityA = scene->getEntityById(idA);
+			Entity entityB = scene->getEntityById(idB);
+			
+			// Call the Entity::OnCollision2D in C#
+			if (!ScriptManager::hasInit())
+				return;
+
+			const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
+			if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
+				auto& script = entityA.getComponent<ScriptComponent>();
+
+				auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
+				auto collisionInfo = buildContactInfoObject(contact);
+				void* args[] = {
+					&collisionInfo,
+					entityBCSharp.getNative()
+				};
+
+				script.object.invokeMethod(script.object.getMethod("OnCollision2D"), args);
+			}
+
+			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
+				auto& script = entityB.getComponent<ScriptComponent>();
+
+				auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
+				auto collisionInfo = buildContactInfoObject(contact);
+				void* args[] = {
+					&collisionInfo,
+					entityACSharp.getNative()
+				};
+
+				script.object.invokeMethod(script.object.getMethod("OnCollision2D"), args);
+			}
+		}
+		void EndContact(b2Contact* contact) override {}
+
+		Collision2DInfo buildContactInfoObject(b2Contact* contact) {
+
+			b2WorldManifold manifold;
+			contact->GetWorldManifold(&manifold);
+
+			// Create C# object
+			glm::vec2 normal = { manifold.normal.x, manifold.normal.y};
+
+			// Create points array
+			auto vector2f = ScriptManager::getClassByName("Vector2");
+			auto* pointsCS = ScriptManager::createArray(vector2f, 2);
+			auto* separationsCS = ScriptManager::createArray(ScriptClassDesc::fromMonoClass(mono_get_single_class()), 2);
+
+			for(int i = 0; i < 2; i++) {
+				glm::vec2 points = { manifold.points[i].x, manifold.points[i].y };
+				mono_array_set(pointsCS, glm::vec2, i, points);
+			}
+
+			for (int i = 0; i < 2; i++) {
+				mono_array_set(separationsCS, float, i, manifold.separations[i]);
+			}
+
+			Collision2DInfo result = {
+				normal,
+				pointsCS,
+				separationsCS
+			};
+
+			return result;
+		}
+	private:
+		Scene* scene;
+	};
+
+	/**
+	 * **********************************
+	 ************ SCENE CLASS ***********
+	 * **********************************
+	 */
+	static Physics2DCallback* s_physics2DCallback = nullptr;
+
 	template<typename Component>
 	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap);
 	template<typename Component>
@@ -157,6 +257,9 @@ namespace Shado {
 		
 		delete m_World;
 		m_World = nullptr;
+
+		delete s_physics2DCallback;
+		s_physics2DCallback = nullptr;
 	}
 
 	void Scene::onUpdateRuntime(TimeStep ts) {
@@ -344,7 +447,9 @@ namespace Shado {
 		}
 
 		// TODO make the physics adjustable
+		s_physics2DCallback = new Physics2DCallback(this);
 		m_World = new b2World({ 0.0f, -9.8f });
+		m_World->SetContactListener(s_physics2DCallback);
 
 		auto view = m_Registry.view<RigidBody2DComponent>();
 		for (auto e : view) {
@@ -427,4 +532,6 @@ namespace Shado {
 		if (src.hasComponent<Component>())
 			dst.addOrReplaceComponent<Component>(src.getComponent<Component>());
 	}
+
+
 }

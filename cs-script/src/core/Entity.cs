@@ -44,7 +44,8 @@ namespace Shado {
 
         protected virtual void OnDestroyed() { }
 
-
+        protected virtual void OnCollision2D(Collision2DInfo info, Entity other) { }
+        
         public T AddComponent<T>() where T : Component, new()
         {
             Validate();
