@@ -8,6 +8,7 @@
 #include "box2d/b2_fixture.h"
 #include "box2d/b2_polygon_shape.h"
 #include "box2d/b2_circle_shape.h"
+#include "box2d/b2_contact.h"
 
 namespace Shado {
 	template<typename Component>
@@ -230,7 +231,7 @@ namespace Shado {
 			}
 		}
 
-		
+		static EditorCamera camera;
 		if (primaryCamera) {
 			Renderer2D::BeginScene(*primaryCamera, cameraTransform);
 
@@ -242,7 +243,7 @@ namespace Shado {
 				if (!sprite.shader)
 					Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 				else
-					Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, (int)entity);
+					Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, sprite.color, (int)entity);
 			}
 
 			// Draw circles
@@ -278,7 +279,7 @@ namespace Shado {
 			if (!sprite.shader)
 				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 			else
-				Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, (int)entity);
+				Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, sprite.color, (int)entity);
 		}
 
 		// Draw circles
@@ -349,6 +350,7 @@ namespace Shado {
 		for (auto e : view) {
 			Entity entity = { e, this };
 
+			auto& id = entity.getComponent<IDComponent>();
 			auto& transform = entity.getComponent<TransformComponent>();
 			auto& rb2D = entity.getComponent<RigidBody2DComponent>();
 
@@ -359,8 +361,13 @@ namespace Shado {
 			bodyDef.position.Set(transform.position.x, transform.position.y);
 			bodyDef.angle = transform.rotation.z;
 
+			b2BodyUserData useData;
+			useData.pointer = id.id;
+			bodyDef.userData = useData;
+
 			b2Body* body = m_World->CreateBody(&bodyDef);
 			rb2D.runtimeBody = body;
+			
 
 			if (entity.hasComponent<BoxCollider2DComponent>()) {
 				auto& collider = entity.getComponent<BoxCollider2DComponent>();

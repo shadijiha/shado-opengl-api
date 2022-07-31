@@ -12,7 +12,7 @@ namespace Sandbox
     {
         List<Entity> entities = new List<Entity>();
 
-        /*protected override void OnCreate()
+        protected override void OnCreate()
         {
 
             for (float y = -5.0f; y < 5.0f; y += 0.5f)
@@ -24,13 +24,13 @@ namespace Sandbox
                     entity.Transform.Scale = new Vector3(0.45f, 0.45f, 0);
                     entity.Tag = $"Grid cell {x}, {y}";
 
-                    var sprite = entity.AddComponent<CircleRendererComponent>();
+                    var sprite = entity.AddComponent<SpriteRendererComponent>();
                     sprite.Color = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
 
                     var rb = entity.AddComponent<RigidBody2DComponent>();
                     rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
 
-                    entity.AddComponent<CircleCollider2DComponent>();
+                    entity.AddComponent<BoxCollider2DComponent>();
 
                     entities.Add(entity);
                 }
@@ -39,7 +39,7 @@ namespace Sandbox
 
         protected override void OnUpdate(float dt)
         {
-            
-        }*/
+           
+        }
     }
 }

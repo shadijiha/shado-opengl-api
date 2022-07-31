@@ -10,13 +10,12 @@
 #include "math/Math.h"
 #include "script/ScriptManager.h"
 #include "scriptUtils/ScriptGeneration.h"
+#include "ui/UI.h"
 
 namespace Shado {
 	extern const std::filesystem::path g_AssetsPath;
 
-	static void saveScene();
-	static void newScene();
-	static void openScene();
+	static TimeStep lastDt = 1 / 60.0f;
 
 	EditorLayer::EditorLayer()
 		: Layer("Editor")
@@ -50,6 +49,8 @@ namespace Shado {
 	}
 
 	void EditorLayer::onUpdate(TimeStep dt) {
+		lastDt = dt;
+
 		SHADO_PROFILE_FUNCTION();
 
 		// If viewports don't match recreate frame buffer
@@ -273,6 +274,7 @@ namespace Shado {
 		UI_Viewport();
 		UI_ToolBar();
 		UI_RendererStats();
+		UI_Settings();
 
 		m_sceneHierarchyPanel.onImGuiRender();
 		m_ContentPanel.onImGuiRender();
@@ -562,6 +564,38 @@ namespace Shado {
 		ImGui::Text("Lines calls: %d", stats.LineCount);
 		ImGui::Text("Total indices: %d", stats.GetTotalVertexCount());
 		ImGui::Text("Total vertices: %d", stats.GetTotalVertexCount());
+		ImGui::NewLine();
+		ImGui::Text("FPS: %d", (int)lastDt.toFPS());
+		ImGui::End();
+	}
+
+	void EditorLayer::UI_Settings() {
+
+		ImGui::Begin("Settings");
+
+		static bool CPUZSorting = true;
+		static bool VSync = Application::get().getWindow().isVSync();
+
+		if (ImGui::Checkbox("Enable CPU alpha Z sorting", &CPUZSorting)) {
+			Renderer2D::setCPUAlphaZSorting(CPUZSorting);
+		}
+
+		if (ImGui::Checkbox("VSync", &VSync)) {
+			Application::get().getWindow().setVSync(VSync);
+		}
+
+		static std::string currentType = "";
+		UI::DropDown("Window mode", {
+			{ "", []() { }  },
+			{ "Windowed", []() { Application::get().getWindow().setMode(WindowMode::WINDOWED); }  },
+			{ "Borderless", []() { Application::get().getWindow().setMode(WindowMode::BORDERLESS_WINDOWED); }  },
+			{ "Fullscreen", []() { Application::get().getWindow().setMode(WindowMode::FULLSCREEN); }  },
+		}, currentType);
+
+		static float windowOpacity = 1.0;
+		if (ImGui::DragFloat("Opacity", &windowOpacity, 0.01, 0.1f, 1.0f))
+			Application::get().getWindow().setOpacity(windowOpacity);
+
 		ImGui::End();
 	}
 }

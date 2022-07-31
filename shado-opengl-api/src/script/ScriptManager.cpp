@@ -135,7 +135,10 @@ namespace Shado {
     }
 
 	void ScriptManager::reload(const std::string& path) {
-        SHADO_CORE_ASSERT(!path.empty(), "Script DLL path cannot be empty");
+        if (path.empty()) {
+            SHADO_CORE_WARN("Script DLL path cannot be empty");
+            return;
+        }        
 
         shutdown();
         init(path);

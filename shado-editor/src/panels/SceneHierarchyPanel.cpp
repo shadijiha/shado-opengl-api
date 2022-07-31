@@ -108,7 +108,12 @@ namespace Shado {
 	void SceneHierarchyPanel::drawComponents(Entity entity) {
 		SHADO_PROFILE_FUNCTION();
 
-		drawComponent<TagComponent>("Tag", entity, [](TagComponent& tc) {
+		drawComponent<TagComponent>("Tag", entity, [&entity](TagComponent& tc) {
+
+			// Display ID
+			auto id = entity.getComponent<IDComponent>().id;
+			ImGui::Text("ID: %lu", id);
+
 			char buffer[512];
 			memset(buffer, 0, sizeof(buffer));
 			strcpy_s(buffer, sizeof(buffer), tc.tag.c_str());
@@ -183,7 +188,7 @@ namespace Shado {
 			}
 
 			float nearClip = camera.camera->getNearClip(), farClip = camera.camera->getFarClip();
-			if (ImGui::DragFloat("Near clip", &nearClip, 0.5f, camera.type == CameraComponent::Type::Orbit ? 1.0f : -30.0, 1000)) {
+			if (ImGui::DragFloat("Near clip", &nearClip, 0.1f, camera.type == CameraComponent::Type::Orbit ? 0.1f : 0.1, 1000)) {
 				camera.camera->setNearClip(nearClip);
 			}
 

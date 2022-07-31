@@ -15,6 +15,7 @@
 
 namespace Shado {
 
+
 	struct QuadVertex
 	{
 		glm::vec3 Position;
@@ -52,6 +53,12 @@ namespace Shado {
 		int EntityID;
 	};
 
+	struct QuadFace {
+		uint32_t vertexCount = 4;
+		float zBuffer;
+		std::vector<QuadVertex> vertices;
+	};
+
 	struct Renderer2DData
 	{
 		static const uint32_t MaxQuads = 20000;
@@ -63,6 +70,7 @@ namespace Shado {
 		Ref<VertexBuffer> QuadVertexBuffer;
 		Ref<Shader> QuadShader;
 		Ref<Texture2D> WhiteTexture;
+		std::vector<QuadFace> transparentQuads;
 
 		Ref<VertexArray> CircleVertexArray;
 		Ref<VertexBuffer> CircleVertexBuffer;
@@ -258,6 +266,21 @@ namespace Shado {
 	{
 		if (s_Data.QuadIndexCount)
 		{
+			// This is here because when batch rendering, OpenGL depth test does not work
+			// as intended
+			if (CPUAlphaZSorting) {
+				// Sort transparent objects by Z
+				std::sort(s_Data.transparentQuads.begin(), s_Data.transparentQuads.end(), [](QuadFace& a, QuadFace& b) { return a.zBuffer < b.zBuffer; });
+				// Add the transparent objects to the end of the array
+				for (const auto& face : s_Data.transparentQuads) {
+					for (size_t i = 0; i < face.vertexCount; i++) {
+						*s_Data.QuadVertexBufferPtr = face.vertices[i];
+						s_Data.QuadVertexBufferPtr++;
+					}
+				}
+				s_Data.transparentQuads.clear();
+			}
+
 			uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.QuadVertexBufferPtr - (uint8_t*)s_Data.QuadVertexBufferBase);
 			s_Data.QuadVertexBuffer->setData(s_Data.QuadVertexBufferBase, dataSize);
 
@@ -348,19 +371,37 @@ namespace Shado {
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
+		QuadVertex temp[quadVertexCount];
 		for (size_t i = 0; i < quadVertexCount; i++)
 		{
-			s_Data.QuadVertexBufferPtr->Position = transform * s_Data.QuadVertexPositions[i];
-			s_Data.QuadVertexBufferPtr->Color = color;
-			s_Data.QuadVertexBufferPtr->TexCoord = textureCoords[i];
-			s_Data.QuadVertexBufferPtr->TexIndex = textureIndex;
-			s_Data.QuadVertexBufferPtr->TilingFactor = tilingFactor;
-			s_Data.QuadVertexBufferPtr->EntityID = entityID;
-			s_Data.QuadVertexBufferPtr++;
+			temp[i].Position = transform * s_Data.QuadVertexPositions[i];
+			temp[i].Color = color;
+			temp[i].TexCoord = textureCoords[i];
+			temp[i].TexIndex = textureIndex;
+			temp[i].TilingFactor = tilingFactor;
+			temp[i].EntityID = entityID;
+		}
+
+		// If entity is transparent, Draw it later
+		QuadFace face;
+		for (size_t i = 0; i < quadVertexCount; i++) {
+			if (CPUAlphaZSorting && color.a < 1.0f) {
+				face.vertices.push_back(temp[i]);
+			}
+			else {
+				*s_Data.QuadVertexBufferPtr = temp[i];
+				s_Data.QuadVertexBufferPtr++;
+			}
+		}
+
+		// Again check if there's an alpha
+		// if yes, don't add the quad now, wait until the Flush so the alpha quads are drawn on top of everything
+		if (CPUAlphaZSorting && color.a < 1.0f) {
+			face.zBuffer = transform[3].z;
+			s_Data.transparentQuads.push_back(face);
 		}
 
 		s_Data.QuadIndexCount += 6;
-
 		s_Data.Stats.QuadCount++;
 	}
 
@@ -410,7 +451,7 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Shader> shader, int entityID) {
+	void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Shader> shader, const glm::vec4& color, int entityID) {
 
 		SHADO_PROFILE_FUNCTION();
 		shader->bind();
@@ -439,8 +480,6 @@ namespace Shado {
 
 		constexpr size_t quadVertexCount = 4;
 		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
-
-		const glm::vec4 color = { 1, 1, 1, 1 };
 
 		shader->bind();
 

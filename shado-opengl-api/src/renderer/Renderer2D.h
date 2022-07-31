@@ -39,7 +39,7 @@ namespace Shado {
 
 		static void DrawQuad(const glm::mat4& transform, const glm::vec4& color, int entityID = -1);
 		static void DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor = 1.0f, const glm::vec4& tintColor = glm::vec4(1.0f), int entityID = -1);
-		static void DrawQuad(const glm::mat4& transform, Ref<Shader> shader, int entityID = -1);
+		static void DrawQuad(const glm::mat4& transform, Ref<Shader> shader, const glm::vec4& color = {1,1,1,1}, int entityID = -1);
 
 		static void DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color);
 		static void DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color);
@@ -57,7 +57,11 @@ namespace Shado {
 
 		static float GetLineWidth();
 		static void SetLineWidth(float width);
+
+		static void setCPUAlphaZSorting(bool b) { CPUAlphaZSorting = b; }
+
 		static bool hasInitialized() { return s_Init; }
+		
 
 		// Stats
 		struct Statistics
@@ -75,6 +79,7 @@ namespace Shado {
 		static void CmdDrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0);
 		static void CmdDrawIndexedLine(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0);
 		inline static bool s_Init = false;
+		inline static bool CPUAlphaZSorting = true;
 
 	private:
 		static void StartBatch();
