@@ -6,7 +6,7 @@
 #include <mono/metadata/exception.h>
 #include <mono/metadata/attrdefs.h>
 #include <mono/metadata/threads.h>
-#include <mono/metadata/environment.h>
+#include <mono/metadata/mono-gc.h>
 #include <filesystem>
 #include <iostream>
 
@@ -99,8 +99,16 @@ namespace Shado {
         assemblyPathFallback = path;
 
 		mono_set_dirs(getRootDir("mono/lib").c_str(), getRootDir("mono/etc").c_str());
-        domain = mono_jit_init("shado_engine_script");        
 
+        // Create root domain
+        if (!rootDomain)
+			rootDomain = mono_jit_init("shado_engine_script [ROOT]");
+
+        // Create and set child domain
+        domain = mono_domain_create_appdomain("shado_engine_script [CHILD]", NULL);
+        mono_domain_set(domain, false);
+
+        // load assembly
         assembly = mono_domain_assembly_open(domain, path.c_str());
         if (!assembly)
             SHADO_CORE_ERROR("Error loading assembly");
@@ -109,7 +117,7 @@ namespace Shado {
         // Add costum functions
         setUpAllInternalCalls();
 
-        // In case of exception
+        // In case of unhandled exception
 		mono_install_unhandled_exception_hook([](MonoObject* exc, void* user_data) {
 			MonoObject* other = NULL;
 			MonoString* str = mono_object_to_string(exc, &other);
@@ -120,17 +128,31 @@ namespace Shado {
 
     void ScriptManager::shutdown()
     {
-        if (domain)
-			mono_jit_cleanup(domain);
+        MonoDomain* domainToUnload = domain;
 
-		MonoDomain* domainToUnload = mono_domain_get();
 		if (domainToUnload && domainToUnload != mono_get_root_domain())
 		{
-		    mono_domain_set(mono_get_root_domain(), false);
+            
+            //mono_assembly_close(assembly);
+            //mono_assemblies_cleanup();
+            //mono_runtime_set_shutting_down();
+            //mono_threads_set_shutting_down();
+            //mono_thread_pool_cleanup();
+
+            //mono_jit_cleanup(domainToUnload);
 		    //mono_thread_pop_appdomain_ref();
-		    mono_domain_unload(domainToUnload);
+		    //mono_domain_unload(domainToUnload);
+             //mono_domain_set(rootDomain, 0);
+             //mono_domain_unload(domain);
+            //mono_gc_collect(mono_gc_max_generation());
 		}
 
+        //if (image)
+		//	mono_images_cleanup();
+
+        //mono_assemblies_cleanup();
+        //mono_assembly_close(assembly);
+        //mono_assembly_close(assembly);
         ScriptManager::registedComponents.clear();
     }
 

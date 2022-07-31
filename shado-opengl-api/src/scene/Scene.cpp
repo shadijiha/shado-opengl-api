@@ -30,46 +30,13 @@ namespace Shado {
 		Physics2DCallback(Scene* scene): scene(scene) {}
 
 		void BeginContact(b2Contact* contact) override {
-			// Entity A
-			uint64_t idA = contact->GetFixtureA()->GetBody()->GetUserData().pointer;
-			uint64_t idB = contact->GetFixtureB()->GetBody()->GetUserData().pointer;
-
-			Entity entityA = scene->getEntityById(idA);
-			Entity entityB = scene->getEntityById(idB);
-			
-			// Call the Entity::OnCollision2D in C#
-			if (!ScriptManager::hasInit())
-				return;
-
-			const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
-			if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
-				auto& script = entityA.getComponent<ScriptComponent>();
-
-				auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
-				auto collisionInfo = buildContactInfoObject(contact);
-				void* args[] = {
-					&collisionInfo,
-					entityBCSharp.getNative()
-				};
-
-				script.object.invokeMethod(script.object.getMethod("OnCollision2D"), args);
-			}
-
-			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
-				auto& script = entityB.getComponent<ScriptComponent>();
-
-				auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
-				auto collisionInfo = buildContactInfoObject(contact);
-				void* args[] = {
-					&collisionInfo,
-					entityACSharp.getNative()
-				};
-
-				script.object.invokeMethod(script.object.getMethod("OnCollision2D"), args);
-			}
+			invokeCollisionFunction(contact, "OnCollision2DEnter");
 		}
-		void EndContact(b2Contact* contact) override {}
+		void EndContact(b2Contact* contact) override {
+			invokeCollisionFunction(contact, "OnCollision2DLeave");
+		}
 
+	private:
 		Collision2DInfo buildContactInfoObject(b2Contact* contact) {
 
 			b2WorldManifold manifold;
@@ -99,6 +66,46 @@ namespace Shado {
 			};
 
 			return result;
+		}
+
+		void invokeCollisionFunction(b2Contact* contact, const std::string& functionName) {
+			// Entity A
+			uint64_t idA = contact->GetFixtureA()->GetBody()->GetUserData().pointer;
+			uint64_t idB = contact->GetFixtureB()->GetBody()->GetUserData().pointer;
+
+			Entity entityA = scene->getEntityById(idA);
+			Entity entityB = scene->getEntityById(idB);
+
+			// Call the Entity::OnCollision2D in C#
+			if (!ScriptManager::hasInit())
+				return;
+
+			const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
+			if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
+				auto& script = entityA.getComponent<ScriptComponent>();
+
+				auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
+				auto collisionInfo = buildContactInfoObject(contact);
+				void* args[] = {
+					&collisionInfo,
+					entityBCSharp.getNative()
+				};
+
+				script.object.invokeMethod(script.object.getMethod(functionName), args);
+			}
+
+			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
+				auto& script = entityB.getComponent<ScriptComponent>();
+
+				auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
+				auto collisionInfo = buildContactInfoObject(contact);
+				void* args[] = {
+					&collisionInfo,
+					entityACSharp.getNative()
+				};
+
+				script.object.invokeMethod(script.object.getMethod(functionName), args);
+			}
 		}
 	private:
 		Scene* scene;

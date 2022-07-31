@@ -6,11 +6,14 @@ using Shado.math;
 
 namespace Sandbox
 {   
+   
     public class Test : Entity
     {
+        private SpriteRendererComponent sprite; 
         private Entity camera;
-        private List<Entity> entities = new List<Entity>();
+        //private List<Entity> entities = new List<Entity>();
         private bool flag = false;
+
         protected override void OnCreate() {
             camera = Scene.GetPrimaryCameraEntity();
 
@@ -19,10 +22,11 @@ namespace Sandbox
             AddComponent<SpriteRendererComponent>();
             AddComponent<RigidBody2DComponent>().Type = RigidBody2DComponent.BodyType.DYNAMIC;
             var bcparent = AddComponent<BoxCollider2DComponent>();
-            bcparent.Restitution = 0.9f;
+            bcparent.Restitution = 0.7f;
+            bcparent.RestitutionThreshold = 0.6f;
 
-            SpriteRendererComponent component = GetComponent<SpriteRendererComponent>();
-            component.Color = new Vector4(0.3f, 1.0f, 0.7f, 1.0f);
+            sprite = GetComponent<SpriteRendererComponent>();
+            sprite.Color = new Vector4(0.3f, 1.0f, 0.7f, 1.0f);
 
             Texture2D texture = new Texture2D(@"assets\riven.png");
             for (int i = 1; i < 4; i++) { 
@@ -41,7 +45,7 @@ namespace Sandbox
                 var bc = entity.AddComponent<CircleCollider2DComponent>();
                 bc.Restitution = 0.7f;
  
-                entities.Add(entity);
+                //entities.Add(entity);
             }
 
             //DestroyAfter(3);
@@ -51,12 +55,12 @@ namespace Sandbox
         {
             if (!flag && Input.IsKeyPressed(KeyCode.Space)) {
 
-                Texture2D texture = entities[0].GetComponent<SpriteRendererComponent>().Texture;
-                if (texture != null)
-                    Debug.Info(texture);
+                //Texture2D texture = entities[0].GetComponent<SpriteRendererComponent>().Texture;
+                //if (texture != null)
+                //    Debug.Info(texture);
 
-                entities[0].Destroy();
-                entities.RemoveAt(0);
+                //entities[0].Destroy();
+                //entities.RemoveAt(0);
                 flag = true;
             }
 
@@ -81,6 +85,12 @@ namespace Sandbox
                 }
             }
 
+            var pos = Transform.Position;
+            pos.Normalize();
+            sprite.Color = new Vector4(
+                Math.Abs(pos.x), Math.Abs(pos.y), Math.Abs(pos.z), 1.0f
+            );
+            
         }
 
         protected override void OnDestroyed()
@@ -88,16 +98,18 @@ namespace Sandbox
             Debug.Info("{0} destroyed!", Id);
         }
 
-        protected override void OnCollision2D(Collision2DInfo info, Entity other)
+        protected override void OnCollision2DEnter(Collision2DInfo info, Entity other)
         {
-            var sprite = GetComponent<SpriteRendererComponent>();
-            sprite.Color = new Vector4(
-                (sprite.Color.x + 0.1f) % 1.0f,
-                (sprite.Color.y + 0.05f) % 1.0f,
-                (sprite.Color.z + 0.025f) % 1.0f, 1.0f);
-
-            Transform.Position = new Vector3(0, 5.0f, 0);
+           // var sprite = GetComponent<SpriteRendererComponent>();
+            //sprite.Color = Color.White;
         }
+
+        protected override void OnCollision2DLeave(Collision2DInfo info, Entity other)
+        {
+            //var sprite = GetComponent<SpriteRendererComponent>();
+            //sprite.Color = Vector4.One;
+        }
+
 
         private void DestroyAfter(int seconds) {
 

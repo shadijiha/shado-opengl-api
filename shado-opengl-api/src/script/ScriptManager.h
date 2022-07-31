@@ -108,6 +108,7 @@ namespace Shado {
 		static void setUpAllInternalCalls();
 
 	private:
+		inline static MonoDomain* rootDomain;
 		inline static MonoDomain* domain;
 		inline static MonoAssembly* assembly;
 		inline static MonoImage* image;

@@ -60,6 +60,13 @@ namespace Shado.math
             set { y = value.x; z = value.y; }
         }
 
+        public void Normalize() { 
+            var mag = (float)Math.Sqrt(x * x + y * y + z * z);
+            x /= mag;
+            y /= mag;
+            z /= mag;
+        }
+
         public static Vector3 operator +(Vector3 v1, Vector3 v2) { 
             return new Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
         }

@@ -11,6 +11,9 @@ namespace Shado.math
         [FieldOffset(8)] public float z;
         [FieldOffset(12)] public float w;
 
+        public static readonly Vector4 Zero = new Vector4(0, 0, 0, 0);
+        public static readonly Vector4 One = new Vector4(1, 1, 1,1);
+
         public Vector4(float scalar)
         {
             x = y = z = w =scalar;
