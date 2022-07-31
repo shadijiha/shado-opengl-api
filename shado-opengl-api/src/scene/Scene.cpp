@@ -46,9 +46,12 @@ namespace Shado {
 			glm::vec2 normal = { manifold.normal.x, manifold.normal.y};
 
 			// Create points array
-			auto vector2f = ScriptManager::getClassByName("Vector2");
+			static auto vector2f = ScriptManager::getClassByName("Vector2");
 			auto* pointsCS = ScriptManager::createArray(vector2f, 2);
-			auto* separationsCS = ScriptManager::createArray(ScriptClassDesc::fromMonoClass(mono_get_single_class()), 2);
+
+			ScriptClassDesc desc;		// Avoid creating and populating the whole object
+			desc.klass = mono_get_single_class();
+			auto* separationsCS = ScriptManager::createArray(desc, 2);
 
 			for(int i = 0; i < 2; i++) {
 				glm::vec2 points = { manifold.points[i].x, manifold.points[i].y };

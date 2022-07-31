@@ -99,6 +99,7 @@ namespace Shado {
         assemblyPathFallback = path;
 
 		mono_set_dirs(getRootDir("mono/lib").c_str(), getRootDir("mono/etc").c_str());
+		
 
         // Create root domain
         if (!rootDomain)
@@ -144,7 +145,10 @@ namespace Shado {
 		    //mono_domain_unload(domainToUnload);
              //mono_domain_set(rootDomain, 0);
              //mono_domain_unload(domain);
-            //mono_gc_collect(mono_gc_max_generation());
+             //mono_jit_cleanup(rootDomain);
+
+             //rootDomain = nullptr;
+             //domain = nullptr;
 		}
 
         //if (image)
@@ -353,9 +357,17 @@ namespace Shado {
 	}
 
 	ScriptClassDesc ScriptManager::getClassByName(const std::string& name) {
+        // Check cache
+        if (class_cache.find(name) != class_cache.end()) {
+            return class_cache[name];
+        }
+
 		for (auto& klass : getAssemblyClassList()) {
-            if (klass.name == name)
+            if (klass.name == name) {
+                class_cache[name] = klass;
                 return klass;
+            }
+                
 		}
 
         SHADO_CORE_ASSERT(false, "Invalid class name");

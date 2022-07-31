@@ -115,6 +115,7 @@ namespace Shado {
 		inline static std::string s_namespace = "Shado";
 		inline static std::string assemblyPathFallback;
 
+		inline static std::unordered_map<std::string, ScriptClassDesc> class_cache;
 
 		struct ComponentsCallbacks {
 			std::function<void(Entity)> addComponent;
