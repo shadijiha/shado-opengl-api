@@ -26,6 +26,21 @@ namespace Shado {
 	Texture2D::Texture2D(const std::string& path)
 		: m_RendererID(0), m_Width(0), m_Height(0), m_FilePath(path)
 	{
+		// If texture is in cache,
+		// Then just copy it
+		if (cache.find(m_FilePath) != cache.end()) {
+			auto& data = cache[path];
+			data.refCount++;
+
+			m_RendererID = data.texture->m_RendererID;
+			m_Width = data.texture->m_Width;
+			m_Height = data.texture->m_Height;
+			m_DataFormat = data.texture->m_DataFormat;
+			m_InternalFormat = data.texture->m_InternalFormat;
+			m_IsLoaded = true;
+			return;
+		}
+
 		SHADO_PROFILE_FUNCTION();
 
 		int width, height, channels;
@@ -73,7 +88,31 @@ namespace Shado {
 	}
 
 	Texture2D::~Texture2D() {
-		glDeleteTextures(1, &m_RendererID);
+		// Check if texture is referenced
+		if (cache.find(m_FilePath) != cache.end()) {
+			auto& data = cache[m_FilePath];
+
+			if (data.refCount - 1 <= 0) {
+				glDeleteTextures(1, &m_RendererID);
+				cache.erase(m_FilePath);
+			} else
+				data.refCount -= 1;
+		}
+		else {
+			glDeleteTextures(1, &m_RendererID);
+		}		
+	}
+
+	Ref<Texture2D> Texture2D::create(const std::string& path) {
+
+		if (cache.find(path) != cache.end())
+			return cache[path].texture;
+
+		// Add to cache
+		Ref<Texture2D> text = CreateRef<Texture2D>(path);
+		cache[path] = { text, 1 };
+
+		return text;
 	}
 
 	void Texture2D::setData(void* data, uint32_t size) {

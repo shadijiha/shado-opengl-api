@@ -11,10 +11,16 @@ namespace Sandbox
     public class Grid : Entity
     {
         List<Entity> entities = new List<Entity>();
-
+        Random random = new Random();
         protected override void OnCreate()
         {
-            float max = 5.0f;// 5.0f;
+            Texture2D[] texture = {
+                new Texture2D(@"assets\riven.png"),
+                new Texture2D(@"assets\riven2.jpg"),
+                new Texture2D(@"assets\riven3.png")
+            };
+
+            const float max = 5.0f;// 5.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
                 for (float x = -5.0f; x < max; x += 0.5f)
@@ -26,6 +32,7 @@ namespace Sandbox
 
                     var sprite = entity.AddComponent<SpriteRendererComponent>();
                     sprite.Color = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
+                    sprite.Texture = texture[random.Next(texture.Length)];
 
                     var rb = entity.AddComponent<RigidBody2DComponent>();
                     rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;

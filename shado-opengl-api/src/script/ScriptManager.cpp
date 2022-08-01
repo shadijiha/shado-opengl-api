@@ -678,9 +678,9 @@ namespace Shado {
 
                 std::string typeName = getTypeName(type);
                 if (typeName == "SpriteRendererComponent")
-					entity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(mono_string_to_utf8(texture));
+                    entity.getComponent<SpriteRendererComponent>().texture = Texture2D::create(mono_string_to_utf8(texture));
                 else
-                    entity.getComponent<CircleRendererComponent>().texture = CreateRef<Texture2D>(mono_string_to_utf8(texture));
+                    entity.getComponent<CircleRendererComponent>().texture = Texture2D::create(mono_string_to_utf8(texture));
             };
             addInternalCall("Shado.SpriteRendererComponent::SetTexture_Native", SetTexture_Native);
 

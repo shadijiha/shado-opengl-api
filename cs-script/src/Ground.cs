@@ -15,10 +15,13 @@ namespace Sandbox
 
         protected override void OnCreate()
         {
-            ThreadManager.Create(() => { 
-                Thread.Sleep(2 * 1000);
-                Debug.Info(collisions);
-            }).Start();
+            /*ThreadManager.Create(() => {
+                while (true) {
+                    Thread.Sleep(2 * 1000);
+                    Debug.Info(collisions);
+                }
+                
+            }).Start();*/
         }
 
         protected override void OnCollision2DEnter(Collision2DInfo info, Entity other) {

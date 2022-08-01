@@ -86,30 +86,35 @@ namespace Shado {
 			const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
 			if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
 				auto& script = entityA.getComponent<ScriptComponent>();
+				auto* OnFunc = script.object.getMethod(functionName);
 
-				auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
-				auto collisionInfo = buildContactInfoObject(contact);
-				void* args[] = {
-					&collisionInfo,
-					entityBCSharp.getNative()
-				};
-
-				if (auto* OnFunc = script.object.getMethod(functionName))
+				if (OnFunc) 
+				{
+					auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
+					auto collisionInfo = buildContactInfoObject(contact);
+					void* args[] = {
+						&collisionInfo,
+						entityBCSharp.getNative()
+					};
 					script.object.invokeMethod(OnFunc, args);
+				}
+					
 			}
 
 			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
 				auto& script = entityB.getComponent<ScriptComponent>();
+				auto* OnFunc = script.object.getMethod(functionName);
 
-				auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
-				auto collisionInfo = buildContactInfoObject(contact);
-				void* args[] = {
-					&collisionInfo,
-					entityACSharp.getNative()
-				};
+				if (OnFunc) {
 
-				if (auto* OnFunc= script.object.getMethod(functionName))
+					auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
+					auto collisionInfo = buildContactInfoObject(contact);
+					void* args[] = {
+						&collisionInfo,
+						entityACSharp.getNative()
+					};
 					script.object.invokeMethod(OnFunc, args);
+				}
 			}
 		}
 	private:

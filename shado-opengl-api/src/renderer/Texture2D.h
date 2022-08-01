@@ -1,13 +1,21 @@
 ﻿#pragma once
 #include <string>
+#include <unordered_map>
+
+#include "util/Util.h"
 
 namespace Shado {
 	
 	class Texture2D {
 	public:
+		/**
+		 * Use the create function instead of Texture2D for caching
+		 */
 		Texture2D(uint32_t width, uint32_t height);
 		Texture2D(const std::string& path);
 		~Texture2D();
+
+		static Ref<Texture2D> create(const std::string& path);
 
 		void setData(void* data, uint32_t size);
 
@@ -37,5 +45,14 @@ namespace Shado {
 
 		std::string m_FilePath;
 		bool m_IsLoaded = false;
+
+		// Cache texture
+		struct TextureInfo {
+			Ref<Texture2D> texture;
+			uint32_t refCount = 0;
+		};
+
+		inline static std::unordered_map<std::string, TextureInfo> cache;
 	};
+
 }
