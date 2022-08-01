@@ -94,7 +94,8 @@ namespace Shado {
 					entityBCSharp.getNative()
 				};
 
-				script.object.invokeMethod(script.object.getMethod(functionName), args);
+				if (auto* OnFunc = script.object.getMethod(functionName))
+					script.object.invokeMethod(OnFunc, args);
 			}
 
 			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
@@ -107,7 +108,8 @@ namespace Shado {
 					entityACSharp.getNative()
 				};
 
-				script.object.invokeMethod(script.object.getMethod(functionName), args);
+				if (auto* OnFunc= script.object.getMethod(functionName))
+					script.object.invokeMethod(OnFunc, args);
 			}
 		}
 	private:
