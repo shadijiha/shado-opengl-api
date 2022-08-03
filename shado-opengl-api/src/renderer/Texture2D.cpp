@@ -92,10 +92,13 @@ namespace Shado {
 		if (cache.find(m_FilePath) != cache.end()) {
 			auto& data = cache[m_FilePath];
 
+			// If the texture is no longer referenced
+			// Then deleted from GL and from cache
 			if (data.refCount - 1 <= 0) {
 				glDeleteTextures(1, &m_RendererID);
 				cache.erase(m_FilePath);
 			} else
+				// Otherwise just decrement the ref count
 				data.refCount -= 1;
 		}
 		else {

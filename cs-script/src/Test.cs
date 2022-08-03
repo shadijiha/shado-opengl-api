@@ -11,7 +11,7 @@ namespace Sandbox
     {
         private SpriteRendererComponent sprite; 
         private Entity camera;
-        //private List<Entity> entities = new List<Entity>();
+        private List<Entity> entities = new List<Entity>();
         private bool flag = false;
 
         protected override void OnCreate() {
@@ -45,7 +45,7 @@ namespace Sandbox
                 var bc = entity.AddComponent<CircleCollider2DComponent>();
                 bc.Restitution = 0.7f;
  
-                //entities.Add(entity);
+                entities.Add(entity);
             }
 
             //DestroyAfter(3);
@@ -54,13 +54,9 @@ namespace Sandbox
         protected override void OnUpdate(float dt)
         {
             if (!flag && Input.IsKeyPressed(KeyCode.Space)) {
-
-                //Texture2D texture = entities[0].GetComponent<SpriteRendererComponent>().Texture;
-                //if (texture != null)
-                //    Debug.Info(texture);
-
-                //entities[0].Destroy();
-                //entities.RemoveAt(0);
+                Debug.Info("hehexd");
+                entities[0].Destroy();
+                entities.RemoveAt(0);
                 flag = true;
             }
 
@@ -100,8 +96,9 @@ namespace Sandbox
 
         protected override void OnCollision2DEnter(Collision2DInfo info, Entity other)
         {
-           // var sprite = GetComponent<SpriteRendererComponent>();
+            // var sprite = GetComponent<SpriteRendererComponent>();
             //sprite.Color = Color.White;
+            //Destroy();
         }
 
         protected override void OnCollision2DLeave(Collision2DInfo info, Entity other)

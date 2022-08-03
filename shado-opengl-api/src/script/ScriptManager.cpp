@@ -14,6 +14,7 @@
 #include "scene/Components.h"
 #include "scene/Entity.h"
 #include "scene/Scene.h"
+#include "util/ParticuleSystem.h"
 
 #ifdef SHADO_PLATFORM_WINDOWS
 #include <direct.h>
@@ -510,9 +511,7 @@ namespace Shado {
             uint64_t (*CreateEntity)(MonoObject*, MonoObject*) = [](MonoObject* typeObj, MonoObject* instance) {
                 Entity e = Scene::ActiveScene->createEntity("Empty C# Entity");
 
-                MonoMethod* method = mono_class_get_method_from_name(mono_object_get_class(typeObj), "get_Name", 0);
-                MonoString* value = (MonoString*)mono_runtime_invoke(method, typeObj, nullptr, nullptr);
-                std::string name = mono_string_to_utf8(value);
+                std::string name = getTypeName(typeObj);
 
                 ScriptComponent& component = e.addComponent<ScriptComponent>();
                 component.className = name;
@@ -915,6 +914,44 @@ namespace Shado {
             };
             addInternalCall("Shado.Renderer::DrawQuad_Native", DrawQuad_Native);
 
+        }
+#pragma endregion
+
+#pragma region ParticuleSystem
+        {
+            ParticuleSystem* (*Constrcut_Native)() = []() {
+                return new ParticuleSystem();
+            };
+            addInternalCall("Shado.ParticuleSystem::Constrcut_Native", Constrcut_Native);
+
+
+            void (*Destroy_Native)(ParticuleSystem*) = [](ParticuleSystem* ptr) {
+                delete ptr;
+            };
+            addInternalCall("Shado.ParticuleSystem::Destroy_Native", Destroy_Native);
+
+            void (*OnUpdate_Native)(ParticuleSystem*, float dt) = [](ParticuleSystem* ptr, float dt) {
+                if (ptr) {
+                    ptr->onUpdate(dt);
+                    ptr->onDraw();
+                }
+            };
+            addInternalCall("Shado.ParticuleSystem::OnUpdate_Native", OnUpdate_Native);
+
+            void (*Emit_Native)(ParticuleSystem*, ParticuleProps&) = [](ParticuleSystem* ptr, ParticuleProps& props) {
+                if (ptr) {
+                    ptr->emit(props);
+                }
+            };
+            addInternalCall("Shado.ParticuleSystem::Emit_Native", Emit_Native);
+
+            uint32_t (*Count_Native)(ParticuleSystem*) = [](ParticuleSystem* ptr) {
+                if (ptr) {
+                    return ptr->poolSize();
+                }
+                return (uint32_t)0;
+            };
+            addInternalCall("Shado.ParticuleSystem::Count_Native", Count_Native);
         }
 #pragma endregion
 	}

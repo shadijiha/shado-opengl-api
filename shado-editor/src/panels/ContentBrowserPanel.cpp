@@ -11,7 +11,9 @@ namespace Shado {
 
 	// Change when projects are added
 	extern const std::filesystem::path g_AssetsPath = "assets";
-	
+
+	static bool isImage(const std::filesystem::path& path);
+
 	ContentBrowserPanel::ContentBrowserPanel()
 		: ContentBrowserPanel(g_AssetsPath)
 	{
@@ -86,6 +88,16 @@ namespace Shado {
 			{
 				const wchar_t* itemPath = relativePath.c_str();
 				ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath, (wcslen(itemPath) + 1) * sizeof(wchar_t));
+
+				// Drag and drop preview
+				if (isImage(path)) {
+					Ref<Texture2D> text = Texture2D::create(path.string());
+					ImGui::Image((void*)text->getRendererID(), { thumbnailSize / 2, thumbnailSize / 2 }, { 0, 1 }, { 1, 0 });
+				}
+				else {
+					ImGui::Text(path.string().c_str());
+				}
+
 				ImGui::EndDragDropSource();
 			}
 
@@ -139,7 +151,7 @@ namespace Shado {
 
 		// If it is an image
 		const auto path = directoryEntry.path();
-		if (path.extension() == ".jpg" || path.extension() == ".png") {
+		if (isImage(path)) {
 			if (imagesThumbnails.find(path.string()) == imagesThumbnails.end()) {
 				imagesThumbnails[path.string()] = CreateRef<Texture2D>(path.string());
 			}
@@ -149,5 +161,9 @@ namespace Shado {
 			icon = m_SceneIcon;
 		}
 		return icon->getRendererID();
+	}
+
+	static bool isImage(const std::filesystem::path& path) {
+		return path.extension() == ".jpg" || path.extension() == ".png";
 	}
 }

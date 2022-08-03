@@ -209,6 +209,12 @@ namespace Shado {
 		if (!entity)
 			return;
 
+		// If currently inside animation
+		if (m_World && m_World->IsLocked()) {
+			toDestroy.push_back(entity);
+			return;
+		}
+
 		// Destroy physics
 		if (m_World) {
 
@@ -315,6 +321,15 @@ namespace Shado {
 				transform.rotation.z = body->GetAngle();
 			}
 		}
+
+		// After world has update delete all entities that need to be deleted
+		if (toDestroy.size() > 0) {
+			for (auto& to_delete : toDestroy) {
+				destroyEntity(to_delete);
+			}
+			toDestroy.clear();
+		}
+
 
 		// Update C# script
 		auto scriptView = m_Registry.view<ScriptComponent>();

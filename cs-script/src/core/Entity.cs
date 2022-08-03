@@ -92,6 +92,18 @@ namespace Shado {
             return IsValid_Native(Id, Scene.GetNative());
         }
 
+        public static T Create<T>(Func<T> creator) where T : Entity
+        {
+            T e = creator.Invoke();
+            Scene scene = new Scene(GetActiveScene());
+            e.Scene = scene;
+
+            ulong id = CreateEntity(typeof(T), e);
+            e.Id = id;
+            e.OnCreate();
+            return e;
+        }
+
         public static Entity Create()
         {
             Entity e = new Entity();
@@ -99,7 +111,8 @@ namespace Shado {
             e.Scene = scene;
 
             ulong id = CreateEntity(typeof(Entity), e);
-            e.Id = id; 
+            e.Id = id;
+            e.OnCreate();
             return e;
         }
 

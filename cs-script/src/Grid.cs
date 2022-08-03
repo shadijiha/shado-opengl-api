@@ -8,45 +8,80 @@ using Shado.math;
 
 namespace Sandbox
 {
+    
     public class Grid : Entity
     {
-        List<Entity> entities = new List<Entity>();
-        Random random = new Random();
+        ParticuleSystem system = new ParticuleSystem();
         protected override void OnCreate()
         {
-            Texture2D[] texture = {
-                new Texture2D(@"assets\riven.png"),
-                new Texture2D(@"assets\riven2.jpg"),
-                new Texture2D(@"assets\riven3.png")
-            };
 
-            const float max = 5.0f;// 5.0f;
+            const float max = 5.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
                 for (float x = -5.0f; x < max; x += 0.5f)
                 {
-                    Entity entity = Create();
-                    entity.Transform.Position = Transform.Position + new Vector3(x, y, 0);
-                    entity.Transform.Scale = new Vector3(0.45f, 0.45f, 0);
-                    entity.Tag = $"Grid cell {x}, {y}";
+                    //GridCell GridCell = Create(() => new GridCell(this, x, y));
 
-                    var sprite = entity.AddComponent<SpriteRendererComponent>();
-                    sprite.Color = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
-                    sprite.Texture = texture[random.Next(texture.Length)];
-
-                    var rb = entity.AddComponent<RigidBody2DComponent>();
-                    rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
-
-                    entity.AddComponent<BoxCollider2DComponent>();
-
-                    entities.Add(entity);
                 }
              }
+
+            for (int i = 0; i < 1000; i++) {
+                ParticuleProps props = new ParticuleProps();
+                props.position = Vector3.Zero;
+                props.velocity = Vector3.One;
+                props.colorBegin = Color.Red;
+                props.colorEnd = Color.Blue;
+                props.sizeBegin = 0.1f;
+                props.sizeEnd = 0.2f;
+                props.sizeVariation = 0.01f;
+                props.lifeTime = 1.0f;
+
+
+                system.Emit(props);
+            }
         }
 
         protected override void OnUpdate(float dt)
         {
-           
+            Debug.Info(system.Count());
+            //system.OnUpdate(dt);
+        }
+    }
+
+    class GridCell : Entity {
+        static readonly Texture2D[] texture = {
+              new Texture2D(@"assets\riven.png"),
+              new Texture2D(@"assets\riven2.jpg"),
+              new Texture2D(@"assets\riven3.png")
+         };
+        static Random random = new Random();
+
+        float x, y;
+        Entity parent;
+        public GridCell(Entity parent, float x, float y) { 
+            this.x = x;
+            this.y = y;
+            this.parent = parent;
+        }
+        protected override void OnCreate() {
+           Transform.Position = parent.Transform.Position + new Vector3(x, y, 0);
+           Transform.Scale = new Vector3(0.45f, 0.45f, 0);
+           Tag = $"Grid cell {x}, {y}";
+
+            var sprite = AddComponent<SpriteRendererComponent>();
+            sprite.Color = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
+            sprite.Texture = texture[random.Next(texture.Length)];
+ 
+            var rb = AddComponent<RigidBody2DComponent>();
+            rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
+
+            AddComponent<BoxCollider2DComponent>();
+        }
+
+        protected override void OnCollision2DEnter(Collision2DInfo info, Entity other)
+        {
+            if (other.Tag.ToLower() == "ground")
+                Destroy();
         }
     }
 }

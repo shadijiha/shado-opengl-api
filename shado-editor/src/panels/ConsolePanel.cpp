@@ -15,7 +15,9 @@ namespace Shado	{
 
 		std::vector<std::string> messages = Log::getMessages();
 
-		ImGui::Begin("Console");
+		char buffer[512];
+		sprintf(buffer, "Console (%d)###Console", messages.size());
+		ImGui::Begin(buffer);
 
 		if(ImGui::Button("Clear")) {
 			Log::clearMessages();
@@ -34,7 +36,6 @@ namespace Shado	{
 		ImGui::EndChild();	
 
 		ImGui::End();
-
 	}
 
 	Ref<Texture2D> ConsolePanel::detectMessageType(const std::string& message) const {

@@ -48,6 +48,8 @@ namespace Shado {
 		uint32_t m_ViewportHeight = 0;
 		std::string name = "Untitled";
 
+		std::vector<Entity> toDestroy;
+
 		b2World* m_World = nullptr;
 		bool m_PhysicsEnabled = true;
 

@@ -39,7 +39,7 @@ Entities:
     TagComponent:
       Tag: Bg
     TransformComponent:
-      Translation: [4.76837158e-07, 0, -2.20000005]
+      Translation: [4.76837158e-07, 0.651086211, -2.20000005]
       Rotation: [0, 0, 0]
       Scale: [20, 14.9585896, 1]
     SpriteRendererComponent:
@@ -65,7 +65,7 @@ Entities:
     TagComponent:
       Tag: Grid
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [-0.113862753, 7.21671391, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     ScriptComponent:
