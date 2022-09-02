@@ -1,10 +1,11 @@
 ﻿#pragma once
 
-#include "opengl.h"
+#include "renderer/opengl.h"
 #include <string>
 
 #include "Events/Event.h"
 #include "Events/ApplicationEvent.h"
+#include <utility>
 
 namespace Shado {
 
@@ -34,6 +35,7 @@ namespace Shado {
 		uint32_t getHeight() const;
 		uint32_t getPosX() const;
 		uint32_t getPosY() const;
+		std::pair<float, float> getWindowScale()	const;
 		float getAspectRatio() const { return (float)getWidth() / (float)getHeight(); }
 		const std::string& getTitle() const { return m_Data.title; }
 		WindowMode getMode() const { return m_Mode; }

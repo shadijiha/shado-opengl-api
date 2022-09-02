@@ -1,7 +1,7 @@
 ﻿#include "OrbitCamera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
-#include "../Debug.h"
+#include "../debug/Debug.h"
 #include "../Events/input.h"
 #include "../Events/KeyCodes.h"
 
@@ -20,7 +20,7 @@ namespace Shado {
 		WorldUp = up;
 		m_Rotation = rotation;
 		m_AspectRatio = aspectRatio;
-		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, 0.1f, 100.0f);
+		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, nearClip, farClip);
 		updateCameraVectors();
 		reCalculateViewMatrix();
 	}
@@ -39,6 +39,12 @@ namespace Shado {
 
 	void OrbitCamera::setProjection(const glm::mat4& projectionMatrix) {
 		m_ProjectionMatrix = projectionMatrix;
+		reCalculateViewMatrix();
+	}
+
+	void OrbitCamera::setAspectRatio(float aspectRatio) {
+		this->m_AspectRatio = aspectRatio;
+		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, nearClip, farClip);
 		reCalculateViewMatrix();
 	}
 
@@ -83,6 +89,11 @@ namespace Shado {
 		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 
+	void OrbitCamera::reCalculateProjectionMatix() {
+		m_ProjectionMatrix = glm::perspective(glm::radians(Zoom), m_AspectRatio, nearClip, farClip);
+		reCalculateViewMatrix();
+	}
+
 	//=========================================================
 
 	OrbitCameraController::OrbitCameraController(float aspectRatio, bool rotation)
@@ -106,19 +117,19 @@ namespace Shado {
 		// Movement
 		float velocity = cam.MovementSpeed * dt;
 		bool hasChangedPos = false;
-		if (Input::isKeyPressed(SHADO_KEY_W)) {
+		if (Input::isKeyPressed(KeyCode::W)) {
 			m_CameraPosition += cam.Front * velocity;
 			hasChangedPos = true;
 		}
-		if (Input::isKeyPressed(SHADO_KEY_S)) {
+		if (Input::isKeyPressed(KeyCode::S)) {
 			m_CameraPosition -= cam.Front * velocity;
 			hasChangedPos = true;
 		}
-		if (Input::isKeyPressed(SHADO_KEY_A)) {
+		if (Input::isKeyPressed(KeyCode::A)) {
 			m_CameraPosition -= cam.Right * velocity;
 			hasChangedPos = true;
 		}
-		if (Input::isKeyPressed(SHADO_KEY_D)) {
+		if (Input::isKeyPressed(KeyCode::D)) {
 			m_CameraPosition += cam.Right * velocity;
 			hasChangedPos = true;
 		}
@@ -133,27 +144,27 @@ namespace Shado {
 
 			bool hasChangedRot = false;
 
-			if (Input::isKeyPressed(SHADO_KEY_UP)) {
+			if (Input::isKeyPressed(KeyCode::UpArrow)) {
 				m_CameraRotation.x += m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_DOWN)) {
+			if (Input::isKeyPressed(KeyCode::DownArrow)) {
 				m_CameraRotation.x -= m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_RIGHT)) {
+			if (Input::isKeyPressed(KeyCode::RightArrow)) {
 				m_CameraRotation.y += m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_LEFT)) {
+			if (Input::isKeyPressed(KeyCode::LeftArrow)) {
 				m_CameraRotation.y -= m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_Q)) {
+			if (Input::isKeyPressed(KeyCode::Q)) {
 				m_CameraRotation.z -= m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}
-			if (Input::isKeyPressed(SHADO_KEY_E)) {
+			if (Input::isKeyPressed(KeyCode::E)) {
 				m_CameraRotation.z += m_CameraRotationSpeed * dt;
 				hasChangedRot = true;
 			}

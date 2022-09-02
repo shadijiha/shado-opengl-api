@@ -1,6 +1,6 @@
 workspace "shado-opengl-api"
 	architecture "x64"
-	startproject "sandbox"
+	startproject "shado-editor"
 
 	configurations
 	{
@@ -18,14 +18,19 @@ IncludeDir["GLEW"] = "shado-opengl-api/vendor/GLEW/include"
 IncludeDir["imgui"] = "shado-opengl-api/vendor/imgui"
 IncludeDir["glm"] = "shado-opengl-api/vendor/glm"
 IncludeDir["spdlog"] = "shado-opengl-api/vendor/spdlog/include"
---IncludeDir["shadoScript"] = "shado-opengl-api/vendor/shado-script/shado-script/src"
+IncludeDir["yaml_cpp"] = "shado-opengl-api/vendor/yaml-cpp/include"
 IncludeDir["box2d"] = "shado-opengl-api/vendor/box2d/include"
+IncludeDir["entt"] = "shado-opengl-api/vendor/entt/include"
+IncludeDir["ImGuizmo"] = "shado-opengl-api/vendor/ImGuizmo"
+IncludeDir["mono"] = "mono/include/mono-2.0"
 
-include "shado-opengl-api/vendor/GLFW"
-include "shado-opengl-api/vendor/GLEW"
-include "shado-opengl-api/vendor/imgui"
---include "shado-opengl-api/vendor/shado-script/premakeProj.lua"
-include "shado-opengl-api/vendor/box2d"
+group "Dependancies"
+	include "shado-opengl-api/vendor/GLFW"
+	include "shado-opengl-api/vendor/GLEW"
+	include "shado-opengl-api/vendor/imgui"
+	include "shado-opengl-api/vendor/yaml-cpp"
+	include "shado-opengl-api/vendor/box2d"
+group ""
 
 project "shado-opengl-api"
 	location "shado-opengl-api"
@@ -40,7 +45,11 @@ project "shado-opengl-api"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/**.hpp"
+		"%{prj.name}/src/**.hpp",
+		"%{prj.name}/vendor/entt/include/**.hpp",
+
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.h",
+		"%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp"
 	}
 
 	includedirs
@@ -51,8 +60,11 @@ project "shado-opengl-api"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
---		"%{IncludeDir.shadoScript}",
-		"%{IncludeDir.box2d}"
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.box2d}",
+		"%{IncludeDir.yaml_cpp}",
+		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.mono}"
 	}
 
 	links
@@ -62,8 +74,12 @@ project "shado-opengl-api"
 		"ImGui",
 		"gdi32.lib",
 		"opengl32.lib",
---		"shado-script",
-		"box2d"
+		"box2d",
+		"yaml-cpp",
+		"shcore.lib",
+		"mono/mono-2.0-sgen.lib",
+		--"mono/mono-2.0-sgen.dll",
+		"cs-script"
 	}
 
 	filter "system:windows"
@@ -73,16 +89,17 @@ project "shado-opengl-api"
 
 		defines
 		{
-			"SHADO_PLATFORM_WINDOWS", "GLEW_STATIC"
+			"SHADO_PLATFORM_WINDOWS", "GLEW_STATIC", "SHADO_ENABLE_ASSERTS"
 		}
 	
-		--postbuildcommands
-		--{
-		--	("{COPY} %{cfg.buildtarget.relpath} ../bin/" ..outputdir .. "/sandbox"),
-		--}
+		postbuildcommands
+		{
+			("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/shado-editor"),
+			("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/sandbox"),
+		}
 	
 	filter "configurations:Debug"
-		defines "SHADO_DEBUG"
+		defines {"SHADO_DEBUG", "SHADO_PROFILE"}
 		symbols "On"
 	
 	filter "configurations:Release"
@@ -105,7 +122,8 @@ project "sandbox"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/src/**.hpp"
+		"%{prj.name}/src/**.hpp",
+		"%{prj.name}/vendor/entt/include/**.hpp"
 	}
 
 	includedirs
@@ -115,8 +133,9 @@ project "sandbox"
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
---		"%{IncludeDir.shadoScript}",
+		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
+		"%{IncludeDir.mono}",	-- TODO : remove this
 		"shado-opengl-api/src",
 		"shado-opengl-api/vendor"
 	}
@@ -147,3 +166,75 @@ project "sandbox"
 	filter "configurations:Dist"
 		defines "SHADO_DIST"
 		optimize "Full"
+
+project "shado-editor"
+	location "shado-editor"
+	kind "ConsoleApp"
+	language "C++"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/src/**.hpp"
+	}
+
+	includedirs
+	{
+		"%{IncludeDir.GLFW}", -- For some reason I need this and cherno doesn't
+		"%{IncludeDir.GLEW}", -- For some reason I need this and cherno doesn't
+		"%{IncludeDir.imgui}",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.box2d}",
+		--"%{IncludeDir.mono}",	-- TODO: remove this
+		"shado-opengl-api/src",
+		"shado-opengl-api/vendor"
+	}
+
+	links
+	{
+		"shado-opengl-api",
+		"cs-script"
+	}
+
+	filter "system:windows"
+		cppdialect "C++17"
+		staticruntime "Off"
+		systemversion "latest"
+
+	defines
+	{
+		"SHADO_PLATFORM_WINDOWS"
+	}
+
+	filter "configurations:Debug"
+		defines "SHADO_DEBUG"
+		symbols "On"
+
+	filter "configurations:Release"
+		defines "SHADO_RELEASE"
+		optimize "On"
+
+	filter "configurations:Dist"
+		defines "SHADO_DIST"
+		optimize "Full"
+
+
+project "cs-script"
+	location "cs-script"
+	kind "SharedLib"
+	language "C#"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"%{prj.name}/src/**.cs",
+	}
+

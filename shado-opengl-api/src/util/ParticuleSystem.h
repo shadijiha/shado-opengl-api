@@ -10,8 +10,11 @@ namespace Shado {
 	struct ParticuleProps {
 		glm::vec3 position;
 		glm::vec3 velocity, velocityVariation;
-		glm::vec4 colorBegin, colorEnd;
-		float sizeBegin, sizeEnd, sizeVariation;
+		glm::vec4 colorBegin;
+		glm::vec4 colorEnd;
+		float sizeBegin;
+		float sizeEnd;
+		float sizeVariation;
 		float lifeTime = 1.0f;
 	};
 	
@@ -24,6 +27,7 @@ namespace Shado {
 		void onUpdate(TimeStep ts);
 		void onDraw();
 
+		uint32_t poolSize() const { return m_ParticulePool.size(); }
 	private:
 
 		struct Particule {

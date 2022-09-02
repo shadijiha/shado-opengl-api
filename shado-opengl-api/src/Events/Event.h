@@ -51,7 +51,7 @@ namespace Shado {
 		}
 
 		inline bool isHandled() { return m_Handled; }
-
+		inline void setHandled(bool handled) { m_Handled = handled; }
 	protected:
 		bool m_Handled = false;
 	};

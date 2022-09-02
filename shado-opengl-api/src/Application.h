@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <string>
 #include <vector>
-#include "Renderer2D.h"
+#include "renderer/Renderer2D.h"
 #include "Events/Event.h"
 #include "Window.h"
 #include "ui/ImguiScene.h"
@@ -18,25 +18,25 @@ namespace Shado {
 		static void destroy();
 
 		static void close();
+		
 
 		void run();
-		void submit(Scene* scene);
+		void submit(Layer* scene);
 		void onEvent(Event& e);
 
-		void setActiveScene(Scene* scene);
-		void setActiveScene(const std::string& name);
-
 		Window& getWindow() { return *window; }
-
+		ImguiLayer* getUILayer() { return uiScene; }
+	private:
+		void Init();
 	private:
 		ScopedPtr<Window> window;		// TODO: This might be a bad idea, might want to revert to std::unique_ptr
 		ImguiLayer* uiScene;
 		float m_LastFrameTime = 0.0f;	// Time took to render last frame	
 		
 		bool m_Running = true;
+		bool m_minimized = false;
 
-		std::vector<Scene*> allScenes;
-		Scene* m_activeScene = nullptr;
+		std::vector<Layer*> layers;
 
 		static Application* singleton;
 	};

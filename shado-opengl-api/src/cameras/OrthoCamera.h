@@ -15,9 +15,12 @@ namespace Shado
 		OrthoCamera(float left, float right, float bottom, float top);
 
 		void setProjection(float left, float right, float bottom, float top);
-
+	
 	protected:
 		virtual void reCalculateViewMatrix() override;
+		virtual void reCalculateProjectionMatix() override;
+
+		float left, right, bottom, top;
 	};
 
 	/***************** CLASS OrthographicCameraController ********************/
@@ -28,6 +31,8 @@ namespace Shado
 
 		virtual void onUpdate(TimeStep dt) override;
 		virtual void onEvent(Event& e) override;
+
+		void onResize(float width, float height);
 
 	protected:
 		virtual bool onMouseScrolled(MouseScrolledEvent& e) override;

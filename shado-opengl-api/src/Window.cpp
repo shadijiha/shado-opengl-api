@@ -2,11 +2,12 @@
 
 
 #include "Application.h"
-#include "Debug.h"
+#include "debug/Debug.h"
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "GL/glew.h"
+#include <shellscalingapi.h>
 
 #define BIND_EVENT_FN(x) std::bind(&Window::x, this, std::placeholders::_1)
 
@@ -46,6 +47,9 @@ namespace Shado {
 		glfwGetWindowPos(native_window, &m_Position.first, &m_Position.second);
 
 		monitor = glfwGetPrimaryMonitor();
+
+		
+		SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 	}
 
 	Window::Window()
@@ -203,6 +207,13 @@ namespace Shado {
 		glfwGetWindowPos(native_window, &x, &y);
 
 		return y;
+	}
+
+	std::pair<float, float> Window::getWindowScale() const
+	{
+		float xscale, yscale;
+		glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+		return std::pair(xscale, yscale);
 	}
 
 	void Window::listenToEvents() {

@@ -8,14 +8,21 @@
 /***************** CLASS OrthographicCamera ********************/
 namespace Shado {
 	OrthoCamera::OrthoCamera(float left, float right, float bottom, float top)
+		: left(left), right(right), bottom(bottom), top(top)
 	{
-		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 100.0f);
+		nearClip = -2.0f;
+		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, getNearClip(), getFarClip());
 		m_ViewMatrix = glm::mat4(1.0);
 		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 
 	void OrthoCamera::setProjection(float left, float right, float bottom, float top) {
-		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 100.0f);
+		this->left = left;
+		this->right = right;
+		this->bottom = bottom;
+		this->top = top;
+
+		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, getNearClip(), getFarClip());
 		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 
@@ -24,6 +31,11 @@ namespace Shado {
 		glm::mat4 transform = glm::translate(glm::mat4(1.0f), m_Position) * glm::rotate(glm::mat4(1.0f), glm::radians(m_Rotation.z), glm::vec3(0, 0, 1));
 
 		m_ViewMatrix = glm::inverse(transform);
+		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
+	}
+
+	void OrthoCamera::reCalculateProjectionMatix() {
+		m_ProjectionMatrix = glm::ortho(left, right, bottom, top, getNearClip(), getFarClip());
 		m_viewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 
@@ -41,21 +53,21 @@ namespace Shado {
 	void OrthoCameraController::onUpdate(TimeStep dt)
 	{
 		// Movement
-		if (Input::isKeyPressed(SHADO_KEY_A))
+		if (Input::isKeyPressed(KeyCode::A))
 			m_CameraPosition.x -= m_CameraTranslationSpeed * dt;
-		else if (Input::isKeyPressed(SHADO_KEY_D))
+		else if (Input::isKeyPressed(KeyCode::D))
 			m_CameraPosition.x += m_CameraTranslationSpeed * dt;
 
-		if (Input::isKeyPressed(SHADO_KEY_W))
+		if (Input::isKeyPressed(KeyCode::W))
 			m_CameraPosition.y += m_CameraTranslationSpeed * dt;
-		else if (Input::isKeyPressed(SHADO_KEY_S))
+		else if (Input::isKeyPressed(KeyCode::S))
 			m_CameraPosition.y -= m_CameraTranslationSpeed * dt;
 
 		// Rotation
 		if (m_Rotation) {
-			if (Input::isKeyPressed(SHADO_KEY_Q))
+			if (Input::isKeyPressed(KeyCode::Q))
 				m_CameraRotation.z += m_CameraRotationSpeed * dt;
-			else if (Input::isKeyPressed(SHADO_KEY_E))
+			else if (Input::isKeyPressed(KeyCode::E))
 				m_CameraRotation.z -= m_CameraRotationSpeed * dt;
 
 			m_Camera->setRotation(m_CameraRotation);
@@ -72,6 +84,11 @@ namespace Shado {
 		dispatcher.dispatch<WindowResizeEvent>(SHADO_BIND_EVENT_FN(OrthoCameraController::onWindowResized));
 	}
 
+	void OrthoCameraController::onResize(float width, float height) {
+		m_aspectRatio = width / height;
+		((OrthoCamera*)m_Camera)->setProjection(-m_aspectRatio * m_ZoomLevel, m_aspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+	}
+
 	bool OrthoCameraController::onMouseScrolled(MouseScrolledEvent& e)
 	{
 		m_ZoomLevel -= e.getYOffset() * 0.25f;
@@ -83,8 +100,7 @@ namespace Shado {
 
 	bool OrthoCameraController::onWindowResized(WindowResizeEvent& e)
 	{
-		m_ZoomLevel = (float)e.getWidth() / (float)e.getHeight();
-		((OrthoCamera*)m_Camera)->setProjection(-m_aspectRatio * m_ZoomLevel, m_aspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
+		onResize((float)e.getWidth(), (float)e.getHeight());
 		return false;
 	}
 }

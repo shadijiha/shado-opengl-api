@@ -13,4 +13,9 @@ bin-int/
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
-sandbox/imgui.ini
+
+**.csproj
+**.csproj.filters
+**.csproj.user
+
+**/imgui.ini

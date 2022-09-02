@@ -1,14 +1,12 @@
 ﻿#include "Application.h"
-
-#include "Debug.h"
+#include "debug/Profile.h"
 #include "GL/glew.h"
-#include "Renderer2D.h"
+#include "renderer/Renderer2D.h"
 #include <algorithm>
 #include "cameras/OrthoCamera.h"
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
-#include "Renderer3D.h"
 #include "util/Random.h"
 
 namespace Shado {
@@ -23,6 +21,8 @@ namespace Shado {
 		Log::init();
 		Random::init();
 
+		
+
 		/* Initialize the library */
 		// TODO: Might want to un comment this if application crashes
 		//window = std::make_unique<Window>(width, height, title);
@@ -35,18 +35,11 @@ namespace Shado {
 
 	Application::~Application() {
 
-		for (Scene* scene : allScenes) {
-			if (scene == nullptr)
+		for (Layer* layer : layers) {
+			if (layer == nullptr)
 				continue;
-			
-			for (Layer* layer : m_activeScene->getLayers()) {
-				if (layer == nullptr)
-					continue;
-
-				layer->onDestroy();
-			}
-			
-			delete scene;
+			layer->onDestroy();
+			delete layer;
 		}
 
 		glfwTerminate();
@@ -55,13 +48,9 @@ namespace Shado {
 	void Application::run() {
 
 		// Init Renderer if it hasn't been done
-		if (!Renderer2D::hasInitialized()) {
-			Renderer2D::Init();
-			Renderer3D::Init();
-			uiScene->onInit();
-		}
+		Init();
 
-		if (allScenes.size() == 0)
+		if (layers.size() == 0)
 			SHADO_CORE_WARN("No layers to draw");
 
 
@@ -72,12 +61,10 @@ namespace Shado {
 			float timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 
-			/* Render here */
-			Renderer2D::Clear();
-
-			// Draw scenes here
-			if (m_activeScene != nullptr) {
-				for (Layer* layer : m_activeScene->getLayers()) {
+			if (!m_minimized) {
+				/* Render here */
+				// Draw scenes here
+				for (Layer* layer : layers) {
 					if (layer == nullptr) {
 						continue;
 					}
@@ -85,21 +72,18 @@ namespace Shado {
 					layer->onUpdate(timestep);
 					layer->onDraw();
 				}
-				m_activeScene->onUpdate(timestep);
-			}
-			uiScene->onUpdate(timestep);
-			uiScene->onDraw();
+				uiScene->onUpdate(timestep);
+				uiScene->onDraw();
 
-			// Render UI
-			uiScene->begin();
-			if (m_activeScene != nullptr) {
-				for (Layer* layer : m_activeScene->getLayers()) {
+				// Render UI
+				uiScene->begin();
+				for (Layer* layer : layers) {
 					if (layer != nullptr)
 						layer->onImGuiRender();
 				}
+				uiScene->onImGuiRender();
+				uiScene->end();
 			}
-			uiScene->onImGuiRender();
-			uiScene->end();
 
 			/* Swap front and back buffers */
 			/* Poll for and process events */
@@ -107,25 +91,14 @@ namespace Shado {
 		}
 	}
 
-	void Application::submit(Scene* scene) {
+	void Application::submit(Layer* layer) {
 
 		// Init Renderer if it hasn't been done
-		if (!Renderer2D::hasInitialized()) {
-			Renderer2D::Init();
-			Renderer3D::Init();
-			uiScene->onInit();
-		}
+		Init();
 
 		// Init all layers
-		for (const auto& layer : scene->getLayers()) {
-			layer->onInit();
-		}
-		
-		allScenes.push_back(scene);
-
-		// The first scene submitted should be the active one
-		if (m_activeScene == nullptr)
-			m_activeScene = scene;
+		layer->onInit();
+		layers.push_back(layer);
 
 		// Reverse sorting
 		/*std::sort(allScenes.begin(), allScenes.end(), [](Scene* a, Scene* b) {
@@ -134,69 +107,70 @@ namespace Shado {
 	}
 
 	void Application::onEvent(Event& e) {
-		if (m_activeScene == nullptr)
-			return;
-		
+		Init();
+
+		EventDispatcher dispatcher(e);
+		dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& evt) {
+			int width = evt.getWidth(), height = evt.getHeight();
+			if (width == 0 || height == 0)
+			{
+				m_minimized = true;
+				return false;
+			}
+			m_minimized = false;
+			glViewport(0, 0, width, height);
+
+			return false;
+		});
+
+		dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& evt) {
+			m_Running = false;
+			return true;
+		});
+
 		// Distaptch the event and excute the required code
 		// Pass Events to layer
-		for (Layer* layer : m_activeScene->getLayers()) {
+
+		uiScene->onEvent(e);
+		if (e.isHandled())
+			return;
+
+		for (auto it = layers.end(); it != layers.begin(); )
+		{
+			Layer* layer = (*--it);
 			if (layer != nullptr) {
 				layer->onEvent(e);
 				if (e.isHandled())
 					break;
-			}
+			}			
 		}
 	}
-
-	void Application::setActiveScene(Scene* scene) {
-		if (std::find(allScenes.begin(), allScenes.end(), scene) == allScenes.end()) {
-			SHADO_CORE_ERROR("Scene {0} is set as active but is not added to Application!", scene->getName());
-		}
-
-		// Unmount the current scene
-		if (m_activeScene != nullptr)
-			m_activeScene->onUnMount();
-
-		m_activeScene = scene;
-		m_activeScene->onMount();
-	}
-
-	void Application::setActiveScene(const std::string& name) {
-		Scene* ptr = nullptr;
-		for (Scene* scene : allScenes) {
-			if (scene->getName() == name) {
-				ptr = scene;
-				break;
-			}
-		}
-
-		// Scene was not found
-		if (ptr == nullptr) {
-			SHADO_CORE_ERROR("Attempted to set an invalid active scene ({0})!", name);
-			return;
-		}
-
-		setActiveScene(ptr);
-	}
-
+	
 	void Application::destroy() {
+		SHADO_PROFILE_FUNCTION();
 
-		for (Scene*& scene : singleton->allScenes) {
-			for (auto& layer : scene->getLayers()) {
-				layer->onDestroy();
-			}
-			delete scene;
-			scene = nullptr;
+		for (Layer*& layer : singleton->layers) {
+			layer->onDestroy();
+			delete layer;
+			layer = nullptr;
 		}
 		singleton->uiScene->onDestroy();
 
 		singleton->m_Running = false;
 
+		Renderer2D::Shutdown();
 		delete singleton;
 	}
 
 	void Application::close() {
 		singleton->m_Running = false;
+	}
+
+	void Application::Init() {
+		if (!Renderer2D::hasInitialized()) {
+			Renderer2D::Init();
+			uiScene->onInit();
+		}
 	}
 
 }

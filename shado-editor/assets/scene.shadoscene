@@ -1,0 +1,64 @@
+Scene: Untitled
+C#DLL: ""
+Entities:
+  - Entity: 1896692087071027858
+    TagComponent:
+      Tag: Circle
+    TransformComponent:
+      Translation: [2.18636417, 0, 2]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CircleRendererComponent:
+      Color: [0.68235296, 0.298039228, 0.298039228, 0.619607866]
+      Texture: "NULL"
+      TillingFactor: 1
+      Thickness: 1
+      Fade: 0.00499999989
+  - Entity: 1947563844764778802
+    TagComponent:
+      Tag: Cait my queen
+    TransformComponent:
+      Translation: [-1.62536132, -1.18839145, 2.46518922]
+      Rotation: [0, -0.387463182, -0.415388346]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Color: [0.352941185, 0.764705896, 0.368627459, 0.541176498]
+      Texture: "NULL"
+      TillingFactor: 1
+  - Entity: 10277185979072926219
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [0, 0, 4.30000019]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        OrthographicSize: 5
+        Near: -2
+        Far: 100
+      Primary: true
+      FixedAspectRatio: false
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Square2
+    TransformComponent:
+      Translation: [0, -0.100000001, 0]
+      Rotation: [0, 0, 0]
+      Scale: [15.3000002, 8.10000038, 1]
+    SpriteRendererComponent:
+      Color: [1, 0.999989986, 0.999989986, 1]
+      Texture: assets\TranscodedWallpaper.jpg
+      TillingFactor: 1
+  - Entity: 7288829595208125014
+    TagComponent:
+      Tag: hehexd
+    TransformComponent:
+      Translation: [-1.9277091, -1.28107285, 2.54903173]
+      Rotation: [0, 0, 0]
+      Scale: [1.59736538, 1.58937192, 1]
+    SpriteRendererComponent:
+      Color: [0.247058824, 0.333333343, 0.423529416, 0.470588237]
+      Texture: "NULL"
+      TillingFactor: 1

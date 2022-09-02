@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../VertexArray.h"
+#include "../renderer/VertexArray.h"
 #include "../cameras/Camera.h"
 
 namespace Shado {

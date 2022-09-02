@@ -26,6 +26,10 @@ namespace Shado {
         const glm::vec3& getRotation() const override;
         void setRotation(const glm::vec3& rot) override;
         void setProjection(const glm::mat4& projectionMatrix);
+        void setAspectRatio(float aspectRatio);
+        void setFOV(float fov) { Zoom = fov; reCalculateProjectionMatix(); }
+
+        float getFOV()  const { return Zoom; }
 
     private:
         // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -36,7 +40,9 @@ namespace Shado {
 
         void reCalculateViewMatrix() override;
 
-    private:
+	protected:
+		void reCalculateProjectionMatix() override;
+	private:
         // camera Attributes
         glm::vec3 Front;
         glm::vec3 Up;
