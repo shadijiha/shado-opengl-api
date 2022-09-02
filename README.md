@@ -1,4 +1,4 @@
-# shado-opengl-api
+# Shado Game engine (scroll for images)
 
 This is simplified version of unity game engine written from scratch in C++.
 This engine supports:
