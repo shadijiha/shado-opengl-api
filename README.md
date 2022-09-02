@@ -24,7 +24,14 @@ This engine was built from scratch and uses the following the following librarie
 ## Screenshots
 
 Here's a demo of the physics system
-![Physics system demo](https://github.com/shadijiha/shado-opengl-api/blob/editor/shado-editor/assets/screenshots/runtime.gif?raw=true)
+![Physics system demo](https://github.com/shadijiha/shado-opengl-api/blob/main/shado-editor/assets/screenshots/runtime.gif?raw=true)
 
 Here's a code snippet from the engine code (on the left in C++) and scripting code (on the right in C#)
-![Code demo](https://github.com/shadijiha/shado-opengl-api/blob/editor/shado-editor/assets/screenshots/code.jpg?raw=true)
+![Code demo](https://github.com/shadijiha/shado-opengl-api/blob/main/shado-editor/assets/screenshots/code.jpg?raw=true)
+
+## How to build and run?
+
+- Clone the main branch recursively <code>git clone --recursive https://github.com/shadijiha/shado-opengl-api.git</code>
+- Run setup.bat
+- Open the solution file, switch to release mode
+- Build and run and enjoy!
