@@ -20,12 +20,12 @@ namespace Sandbox
             {
                 for (float x = -5.0f; x < max; x += 0.5f)
                 {
-                    //GridCell GridCell = Create(() => new GridCell(this, x, y));
+                    GridCell GridCell = Create(() => new GridCell(this, x, y));
 
                 }
              }
 
-            for (int i = 0; i < 1000; i++) {
+           /* for (int i = 0; i < 1000; i++) {
                 ParticuleProps props = new ParticuleProps();
                 props.position = Vector3.Zero;
                 props.velocity = Vector3.One;
@@ -38,12 +38,12 @@ namespace Sandbox
 
 
                 system.Emit(props);
-            }
+            }*/
         }
 
         protected override void OnUpdate(float dt)
         {
-            Debug.Info(system.Count());
+            //Debug.Info(system.Count());
             //system.OnUpdate(dt);
         }
     }
@@ -80,8 +80,8 @@ namespace Sandbox
 
         protected override void OnCollision2DEnter(Collision2DInfo info, Entity other)
         {
-            if (other.Tag.ToLower() == "ground")
-                Destroy();
+            //if (other.Tag.ToLower() == "ground")
+            //    Destroy();
         }
     }
 }
