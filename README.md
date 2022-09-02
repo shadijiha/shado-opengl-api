@@ -24,4 +24,7 @@ This engine was built from scratch and uses the following the following librarie
 ## Screenshots
 
 Here's a demo of the physics system
-![Physics system demo](http://url/to/img.png)
+![Physics system demo](https://github.com/shadijiha/shado-opengl-api/blob/editor/shado-editor/assets/screenshots/runtime.gif?raw=true)
+
+Here's a code snippet from the engine code (on the left in C++) and scripting code (on the right in C#)
+![Code demo](https://github.com/shadijiha/shado-opengl-api/blob/editor/shado-editor/assets/screenshots/code.jpg?raw=true)
