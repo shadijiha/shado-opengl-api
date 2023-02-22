@@ -480,6 +480,7 @@ namespace Shado {
 		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 1);
 		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
 		m_OnUpdateMethod = scriptClass->GetMethod("OnUpdate", 1);
+		m_OnDestroyedMethod = scriptClass->GetMethod("OnDestroy", 0);
 
 		// Call Entity constructor
 		{

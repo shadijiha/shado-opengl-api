@@ -132,6 +132,7 @@ namespace Shado {
 		MonoMethod* m_Constructor = nullptr;
 		MonoMethod* m_OnCreateMethod = nullptr;
 		MonoMethod* m_OnUpdateMethod = nullptr;
+		MonoMethod* m_OnDestroyedMethod = nullptr;
 
 		inline static char s_FieldValueBuffer[16];
 
