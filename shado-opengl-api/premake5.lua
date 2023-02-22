@@ -29,7 +29,8 @@ project "shado-opengl-api"
         "%{IncludeDir.box2d}",
         "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.ImGuizmo}",
-        "%{IncludeDir.mono}"
+        "%{IncludeDir.mono}",
+        "%{IncludeDir.filewatch}"
     }
 
     links
@@ -44,7 +45,8 @@ project "shado-opengl-api"
         "shcore.lib",
         "mono/mono-2.0-sgen.lib",
         --"mono/mono-2.0-sgen.dll",
-        "cs-script"
+        "Shado-script-core",
+        "cs-sandbox"
     }
 
     filter "system:windows"

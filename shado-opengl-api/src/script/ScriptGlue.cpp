@@ -173,7 +173,7 @@ namespace Shado {
 				std::string_view typeName = typeid(Component).name();
 				size_t pos = typeName.find_last_of(':');
 				std::string_view structName = typeName.substr(pos + 1);
-				std::string managedTypename = fmt::format("Hazel.{}", structName);
+				std::string managedTypename = fmt::format("Shado.{}", structName);
 
 				MonoType* managedType = mono_reflection_type_from_name(managedTypename.data(), ScriptEngine::GetCoreAssemblyImage());
 				if (!managedType)
@@ -181,7 +181,7 @@ namespace Shado {
 					SHADO_CORE_ERROR("Could not find component type {}", managedTypename);
 					return;
 				}
-				s_EntityHasComponentFuncs[managedType] = [](Entity entity) { return entity.HasComponent<Component>(); };
+				s_EntityHasComponentFuncs[managedType] = [](Entity entity) { return entity.hasComponent<Component>(); };
 			}(), ...);
 	}
 

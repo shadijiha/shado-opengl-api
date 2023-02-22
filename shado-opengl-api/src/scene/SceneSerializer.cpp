@@ -82,7 +82,23 @@ namespace YAML {
 			return true;
 		}
 	};
+	
+	template<>
+	struct convert<Shado::UUID>
+	{
+		static Node encode(const Shado::UUID& uuid)
+		{
+			Node node;
+			node.push_back((uint64_t)uuid);
+			return node;
+		}
 
+		static bool decode(const Node& node, Shado::UUID& uuid)
+		{
+			uuid = node.as<uint64_t>();
+			return true;
+		}
+	};
 }
 
 namespace Shado {

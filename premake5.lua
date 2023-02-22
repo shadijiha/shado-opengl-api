@@ -22,6 +22,7 @@ IncludeDir["yaml_cpp"] = "%{wks.location}/shado-opengl-api/vendor/yaml-cpp/inclu
 IncludeDir["box2d"] = "%{wks.location}/shado-opengl-api/vendor/box2d/include"
 IncludeDir["entt"] = "%{wks.location}/shado-opengl-api/vendor/entt/include"
 IncludeDir["ImGuizmo"] = "%{wks.location}/shado-opengl-api/vendor/ImGuizmo"
+IncludeDir["filewatch"] = "%{wks.location}/shado-opengl-api/vendor/filewatch"
 IncludeDir["mono"] = "%{wks.location}/mono/include/mono-2.0"
 
 group "Dependancies"
@@ -36,8 +37,8 @@ include "shado-opengl-api"
 include "sandbox"
 include "shado-editor"
 
-project "cs-script"
-	location "cs-script"
+project "Shado-script-core"
+	location "Script projs/Shado-script-core"
 	kind "SharedLib"
 	language "C#"
 
@@ -46,6 +47,29 @@ project "cs-script"
 
 	files
 	{
-		"%{prj.name}/src/**.cs",
+		"Script projs/%{prj.name}/src/**.cs",
+	}
+
+	postbuildcommands
+	{
+		("{COPY} bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.dll shado-editor/resources/Scripts/Shado-script-core.dll"),
+	}
+
+project "cs-sandbox"
+	location "Script projs/cs-sandbox"
+	kind "SharedLib"
+	language "C#"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"Script projs/%{prj.name}/src/**.cs",
+	}
+
+	postbuildcommands
+	{
+		("{COPY} bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.dll shado-editor/resources/Scripts/cs-sandbox.dll"),
 	}
 

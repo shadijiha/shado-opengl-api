@@ -202,4 +202,14 @@ namespace Shado {
 		CircleCollider2DComponent(const CircleCollider2DComponent&) = default;
 	};
 
+	template<typename... Component>
+	struct ComponentGroup
+	{
+	};
+
+	using AllComponents =
+		ComponentGroup<TransformComponent, SpriteRendererComponent,
+		CircleRendererComponent, CameraComponent, ScriptComponent,
+		NativeScriptComponent, RigidBody2DComponent, BoxCollider2DComponent,
+		CircleCollider2DComponent>;
 }

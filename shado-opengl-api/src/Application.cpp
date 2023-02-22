@@ -61,6 +61,16 @@ namespace Shado {
 			float timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
 
+			// Execute main thread Queue
+			{
+				std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+				for (auto& func : m_MainThreadQueue)
+					func();
+
+				m_MainThreadQueue.clear();
+			}
+
 			if (!m_minimized) {
 				/* Render here */
 				// Draw scenes here
@@ -144,6 +154,13 @@ namespace Shado {
 					break;
 			}			
 		}
+	}
+
+	void Application::SubmitToMainThread(const std::function<void()>& function)
+	{
+		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+		m_MainThreadQueue.emplace_back(function);
 	}
 	
 	void Application::destroy() {

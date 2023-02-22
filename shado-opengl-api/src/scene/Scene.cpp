@@ -304,18 +304,18 @@ namespace Shado {
 				ScriptEngine::OnUpdateEntity(entity, ts);
 			}
 
-			m_Registry.view<NativeScriptComponent>().each([=](auto entity, auto& nsc)
-				{
-					// TODO: Move to Scene::OnScenePlay
-					if (!nsc.Instance)
-					{
-						nsc.Instance = nsc.InstantiateScript();
-						nsc.Instance->m_Entity = Entity{ entity, this };
-						nsc.Instance->OnCreate();
-					}
+			//m_Registry.view<NativeScriptComponent>().each([=](auto entity, auto& nsc)
+			//	{
+			//		// TODO: Move to Scene::OnScenePlay
+			//		if (!nsc.Instance)
+			//		{
+			//			nsc.Instance = nsc.InstantiateScript();
+			//			nsc.Instance->m_Entity = Entity{ entity, this };
+			//			nsc.Instance->OnCreate();
+			//		}
 
-					nsc.Instance->OnUpdate(ts);
-				});
+			//		nsc.Instance->OnUpdate(ts);
+			//	});
 		}
 
 		// Update physics
@@ -479,7 +479,7 @@ namespace Shado {
 		for (auto entity : view)
 		{
 			const TagComponent& tc = view.get<TagComponent>(entity);
-			if (tc.Tag == name)
+			if (tc.tag == name)
 				return Entity{ entity, this };
 		}
 		return {};

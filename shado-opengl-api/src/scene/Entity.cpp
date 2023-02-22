@@ -3,6 +3,7 @@
 #include "box2d/b2_fixture.h"
 #include "box2d/b2_polygon_shape.h"
 #include "renderer/Renderer2D.h"
+#include "scene/Components.h"
 
 
 namespace Shado {
@@ -19,5 +20,9 @@ namespace Shado {
 	}
 
 	Entity::~Entity() {
+	}
+	UUID Entity::getUUID()
+	{
+		return getComponent<IDComponent>().id;
 	}
 }

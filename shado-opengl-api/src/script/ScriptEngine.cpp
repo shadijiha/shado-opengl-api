@@ -16,6 +16,7 @@
 #include "../util/FileSystem.h"
 
 #include "../Project/Project.h"
+#include "scene/Components.h"
 
 namespace Shado {
 
@@ -151,7 +152,7 @@ namespace Shado {
 		{
 			s_Data->AssemblyReloadPending = true;
 
-			Application::Get().SubmitToMainThread([]()
+			Application::get().SubmitToMainThread([]()
 				{
 					s_Data->AppAssemblyFileWatcher.reset();
 					ScriptEngine::ReloadAssembly();
@@ -166,7 +167,7 @@ namespace Shado {
 		InitMono();
 		ScriptGlue::RegisterFunctions();
 
-		bool status = LoadAssembly("Resources/Scripts/Hazel-ScriptCore.dll");
+		bool status = LoadAssembly("Resources/Scripts/Shado-script-core.dll");
 		if (!status)
 		{
 			SHADO_CORE_ERROR("[ScriptEngine] Could not load Hazel-ScriptCore assembly.");
@@ -257,7 +258,7 @@ namespace Shado {
 
 		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
-		s_Data->AppAssemblyFileWatcher = CreateScope<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileSystemEvent);
+		s_Data->AppAssemblyFileWatcher = CreateRef<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileSystemEvent);
 		s_Data->AssemblyReloadPending = false;
 		return true;
 	}
@@ -290,10 +291,10 @@ namespace Shado {
 
 	void ScriptEngine::OnCreateEntity(Entity entity)
 	{
-		const auto& sc = entity.GetComponent<ScriptComponent>();
+		const auto& sc = entity.getComponent<ScriptComponent>();
 		if (ScriptEngine::EntityClassExists(sc.ClassName))
 		{
-			UUID entityID = entity.GetUUID();
+			UUID entityID = entity.getUUID();
 
 			Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
 			s_Data->EntityInstances[entityID] = instance;
@@ -310,9 +311,9 @@ namespace Shado {
 		}
 	}
 
-	void ScriptEngine::OnUpdateEntity(Entity entity, Timestep ts)
+	void ScriptEngine::OnUpdateEntity(Entity entity, TimeStep ts)
 	{
-		UUID entityUUID = entity.GetUUID();
+		UUID entityUUID = entity.getUUID();
 		if (s_Data->EntityInstances.find(entityUUID) != s_Data->EntityInstances.end())
 		{
 			Ref<ScriptInstance> instance = s_Data->EntityInstances[entityUUID];
@@ -361,9 +362,9 @@ namespace Shado {
 
 	ScriptFieldMap& ScriptEngine::GetScriptFieldMap(Entity entity)
 	{
-		SHADO_CORE_ASSERT(entity);
+		SHADO_CORE_ASSERT(entity, "");
 
-		UUID entityID = entity.GetUUID();
+		UUID entityID = entity.getUUID();
 		return s_Data->EntityScriptFields[entityID];
 	}
 
@@ -438,7 +439,7 @@ namespace Shado {
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)
 	{
-		SHADO_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end());
+		SHADO_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end(), "");
 		return s_Data->EntityInstances.at(uuid)->GetManagedObject();
 	}
 
@@ -482,7 +483,7 @@ namespace Shado {
 
 		// Call Entity constructor
 		{
-			UUID entityID = entity.GetUUID();
+			UUID entityID = entity.getUUID();
 			void* param = &entityID;
 			m_ScriptClass->InvokeMethod(m_Instance, m_Constructor, &param);
 		}

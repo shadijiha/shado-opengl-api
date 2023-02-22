@@ -24,6 +24,8 @@ namespace Shado {
 		void submit(Layer* scene);
 		void onEvent(Event& e);
 
+		void SubmitToMainThread(const std::function<void()>& function);
+
 		Window& getWindow() { return *window; }
 		ImguiLayer* getUILayer() { return uiScene; }
 	private:
@@ -37,6 +39,9 @@ namespace Shado {
 		bool m_minimized = false;
 
 		std::vector<Layer*> layers;
+
+		std::vector<std::function<void()>> m_MainThreadQueue;
+		std::mutex m_MainThreadQueueMutex;
 
 		static Application* singleton;
 	};
