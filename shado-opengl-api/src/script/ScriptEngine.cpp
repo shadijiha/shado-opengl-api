@@ -1,5 +1,4 @@
 #include "ScriptEngine.h"
-
 #include "ScriptGlue.h"
 
 #include "mono/jit/jit.h"
@@ -13,10 +12,10 @@
 
 #include "Application.h"
 #include "debug/Profile.h"
-#include "Hazel/Core/Buffer.h"
-#include "Hazel/Core/FileSystem.h"
+#include "../util/Buffer.h"
+#include "../util/FileSystem.h"
 
-#include "Hazel/Project/Project.h"
+#include "../Project/Project.h"
 
 namespace Shado {
 
@@ -34,11 +33,11 @@ namespace Shado {
 		{ "System.UInt32", ScriptFieldType::UInt },
 		{ "System.UInt64", ScriptFieldType::ULong },
 
-		{ "Hazel.Vector2", ScriptFieldType::Vector2 },
-		{ "Hazel.Vector3", ScriptFieldType::Vector3 },
-		{ "Hazel.Vector4", ScriptFieldType::Vector4 },
+		{ "Shado.Vector2", ScriptFieldType::Vector2 },
+		{ "Shado.Vector3", ScriptFieldType::Vector3 },
+		{ "Shado.Vector4", ScriptFieldType::Vector4 },
 
-		{ "Hazel.Entity", ScriptFieldType::Entity },
+		{ "Shado.Entity", ScriptFieldType::Entity },
 	};
 
 	namespace Utils {
@@ -67,7 +66,7 @@ namespace Shado {
 				{
 					ScopedBuffer pdbFileData = FileSystem::ReadFileBinary(pdbPath);
 					mono_debug_open_image_from_memory(image, pdbFileData.As<const mono_byte>(), pdbFileData.Size());
-					HZ_CORE_INFO("Loaded PDB {}", pdbPath);
+					SHADO_CORE_INFO("Loaded PDB {}", pdbPath);
 				}
 			}
 
@@ -91,7 +90,7 @@ namespace Shado {
 
 				const char* nameSpace = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
 				const char* name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
-				HZ_CORE_TRACE("{}.{}", nameSpace, name);
+				SHADO_CORE_TRACE("{}.{}", nameSpace, name);
 			}
 		}
 
@@ -102,7 +101,7 @@ namespace Shado {
 			auto it = s_ScriptFieldTypeMap.find(typeName);
 			if (it == s_ScriptFieldTypeMap.end())
 			{
-				HZ_CORE_ERROR("Unknown type: {}", typeName);
+				SHADO_CORE_ERROR("Unknown type: {}", typeName);
 				return ScriptFieldType::None;
 			}
 
@@ -131,10 +130,10 @@ namespace Shado {
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
 		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
 
-		Scope<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
+		Ref<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
 		bool AssemblyReloadPending = false;
 
-#ifdef HZ_DEBUG
+#ifdef SHADO_DEBUG
 		bool EnableDebugging = true;
 #else
 		bool EnableDebugging = false;
@@ -170,7 +169,7 @@ namespace Shado {
 		bool status = LoadAssembly("Resources/Scripts/Hazel-ScriptCore.dll");
 		if (!status)
 		{
-			HZ_CORE_ERROR("[ScriptEngine] Could not load Hazel-ScriptCore assembly.");
+			SHADO_CORE_ERROR("[ScriptEngine] Could not load Hazel-ScriptCore assembly.");
 			return;
 		}
 
@@ -178,7 +177,7 @@ namespace Shado {
 		status = LoadAppAssembly(scriptModulePath);
 		if (!status)
 		{
-			HZ_CORE_ERROR("[ScriptEngine] Could not load app assembly.");
+			SHADO_CORE_ERROR("[ScriptEngine] Could not load app assembly.");
 			return;
 		}
 
@@ -212,7 +211,7 @@ namespace Shado {
 		}
 
 		MonoDomain* rootDomain = mono_jit_init("HazelJITRuntime");
-		HZ_CORE_ASSERT(rootDomain);
+		SHADO_CORE_ASSERT(rootDomain, "");
 
 		// Store the root domain pointer
 		s_Data->RootDomain = rootDomain;
@@ -321,7 +320,7 @@ namespace Shado {
 		}
 		else
 		{
-			HZ_CORE_ERROR("Could not find ScriptInstance for entity {}", entityUUID);
+			SHADO_CORE_ERROR("Could not find ScriptInstance for entity {}", entityUUID);
 		}
 	}
 
@@ -362,7 +361,7 @@ namespace Shado {
 
 	ScriptFieldMap& ScriptEngine::GetScriptFieldMap(Entity entity)
 	{
-		HZ_CORE_ASSERT(entity);
+		SHADO_CORE_ASSERT(entity);
 
 		UUID entityID = entity.GetUUID();
 		return s_Data->EntityScriptFields[entityID];
@@ -439,7 +438,7 @@ namespace Shado {
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)
 	{
-		HZ_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end());
+		SHADO_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end());
 		return s_Data->EntityInstances.at(uuid)->GetManagedObject();
 	}
 

@@ -8,7 +8,7 @@
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
-#include "script/ScriptManager.h"
+//#include "script/ScriptManager.h"
 
 namespace Shado {
 	struct IDComponent {
@@ -147,9 +147,7 @@ namespace Shado {
 	};
 
 	struct ScriptComponent {
-		std::string className;
-		ScriptClassDesc klass;
-		ScriptClassInstance object;
+		std::string ClassName;
 
 		ScriptComponent(){}
 		ScriptComponent(const ScriptComponent&) = default;

@@ -2,6 +2,7 @@
 #include "debug/Debug.h"
 #include "Scene.h"
 #include "entt.hpp"
+#include "Components.h"
 
 namespace Shado {
 
@@ -44,6 +45,10 @@ namespace Shado {
 
 		bool isValid()	const {
 			return m_EntityHandle != entt::null && m_Scene->m_Registry.valid(m_EntityHandle);
+		}
+
+		UUID getUUID() {
+			return getComponent<IDComponent>().id;
 		}
 
 		operator bool()		const { return isValid(); }

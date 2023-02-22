@@ -1,6 +1,5 @@
 
 project "shado-opengl-api"
-    location "shado-opengl-api"
     kind "StaticLib"
     language "C++"
     staticruntime "off"
@@ -10,18 +9,17 @@ project "shado-opengl-api"
 
     files
     {
-        "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.cpp",
-        "%{prj.name}/src/**.hpp",
-        "%{prj.name}/vendor/entt/include/**.hpp",
-
-        "%{prj.name}/vendor/ImGuizmo/ImGuizmo.h",
-        "%{prj.name}/vendor/ImGuizmo/ImGuizmo.cpp"
+        "src/**.h",
+        "src/**.cpp",
+        "src/**.hpp",
+        "vendor/entt/include/**.hpp",
+        "vendor/ImGuizmo/ImGuizmo.h",
+        "vendor/ImGuizmo/ImGuizmo.cpp"
     }
 
     includedirs
     {
-        "%{prj.name}/src",
+        "src",
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.GLEW}",
         "%{IncludeDir.imgui}",

@@ -12,6 +12,8 @@
 #include "box2d/b2_circle_shape.h"
 #include "box2d/b2_contact.h"
 
+#include "script/ScriptEngine.h"
+
 namespace Shado {
 	/**
 	 * **********************************
@@ -39,83 +41,84 @@ namespace Shado {
 	private:
 		Collision2DInfo buildContactInfoObject(b2Contact* contact) {
 
-			b2WorldManifold manifold;
-			contact->GetWorldManifold(&manifold);
+			//b2WorldManifold manifold;
+			//contact->GetWorldManifold(&manifold);
 
-			// Create C# object
-			glm::vec2 normal = { manifold.normal.x, manifold.normal.y};
+			//// Create C# object
+			//glm::vec2 normal = { manifold.normal.x, manifold.normal.y};
 
-			// Create points array
-			static auto vector2f = ScriptManager::getClassByName("Vector2");
-			auto* pointsCS = ScriptManager::createArray(vector2f, 2);
+			//// Create points array
+			//static auto vector2f = ScriptManager::getClassByName("Vector2");
+			//auto* pointsCS = ScriptManager::createArray(vector2f, 2);
 
-			ScriptClassDesc desc;		// Avoid creating and populating the whole object
-			desc.klass = mono_get_single_class();
-			auto* separationsCS = ScriptManager::createArray(desc, 2);
+			//ScriptClassDesc desc;		// Avoid creating and populating the whole object
+			//desc.klass = mono_get_single_class();
+			//auto* separationsCS = ScriptManager::createArray(desc, 2);
 
-			for(int i = 0; i < 2; i++) {
-				glm::vec2 points = { manifold.points[i].x, manifold.points[i].y };
-				mono_array_set(pointsCS, glm::vec2, i, points);
-			}
+			//for(int i = 0; i < 2; i++) {
+			//	glm::vec2 points = { manifold.points[i].x, manifold.points[i].y };
+			//	mono_array_set(pointsCS, glm::vec2, i, points);
+			//}
 
-			for (int i = 0; i < 2; i++) {
-				mono_array_set(separationsCS, float, i, manifold.separations[i]);
-			}
+			//for (int i = 0; i < 2; i++) {
+			//	mono_array_set(separationsCS, float, i, manifold.separations[i]);
+			//}
 
-			Collision2DInfo result = {
-				normal,
-				pointsCS,
-				separationsCS
-			};
+			//Collision2DInfo result = {
+			//	normal,
+			//	pointsCS,
+			//	separationsCS
+			//};
 
-			return result;
+			//return result;
+			return {};
 		}
 
 		void invokeCollisionFunction(b2Contact* contact, const std::string& functionName) {
-			// Entity A
-			uint64_t idA = contact->GetFixtureA()->GetBody()->GetUserData().pointer;
-			uint64_t idB = contact->GetFixtureB()->GetBody()->GetUserData().pointer;
+			//// Entity A
+			//uint64_t idA = contact->GetFixtureA()->GetBody()->GetUserData().pointer;
+			//uint64_t idB = contact->GetFixtureB()->GetBody()->GetUserData().pointer;
 
-			Entity entityA = scene->getEntityById(idA);
-			Entity entityB = scene->getEntityById(idB);
+			//Entity entityA = scene->getEntityById(idA);
+			//Entity entityB = scene->getEntityById(idB);
 
-			// Call the Entity::OnCollision2D in C#
-			if (!ScriptManager::hasInit())
-				return;
+			//// Call the Entity::OnCollision2D in C#
+			//if (!ScriptManager::hasInit())
+			//	return;
 
-			const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
-			if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
-				auto& script = entityA.getComponent<ScriptComponent>();
-				auto* OnFunc = script.object.getMethod(functionName);
+			//const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
+			//if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
+			//	auto& script = entityA.getComponent<ScriptComponent>();
+			//	auto* OnFunc = script.object.getMethod(functionName);
 
-				if (OnFunc) 
-				{
-					auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
-					auto collisionInfo = buildContactInfoObject(contact);
-					void* args[] = {
-						&collisionInfo,
-						entityBCSharp.getNative()
-					};
-					script.object.invokeMethod(OnFunc, args);
-				}
-					
-			}
+			//	if (OnFunc) 
+			//	{
+			//		auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
+			//		auto collisionInfo = buildContactInfoObject(contact);
+			//		void* args[] = {
+			//			&collisionInfo,
+			//			entityBCSharp.getNative()
+			//		};
+			//		script.object.invokeMethod(OnFunc, args);
+			//	}
+			//		
+			//}
 
-			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
-				auto& script = entityB.getComponent<ScriptComponent>();
-				auto* OnFunc = script.object.getMethod(functionName);
+			//if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
+			//	auto& script = entityB.getComponent<ScriptComponent>();
+			//	auto* OnFunc = script.object.getMethod(functionName);
 
-				if (OnFunc) {
+			//	if (OnFunc) {
 
-					auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
-					auto collisionInfo = buildContactInfoObject(contact);
-					void* args[] = {
-						&collisionInfo,
-						entityACSharp.getNative()
-					};
-					script.object.invokeMethod(OnFunc, args);
-				}
-			}
+			//		auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
+			//		auto collisionInfo = buildContactInfoObject(contact);
+			//		void* args[] = {
+			//			&collisionInfo,
+			//			entityACSharp.getNative()
+			//		};
+			//		script.object.invokeMethod(OnFunc, args);
+			//	}
+			//}
 		}
 	private:
 		Scene* scene;
@@ -245,19 +248,19 @@ namespace Shado {
 		// 	SHADO_CORE_INFO("{0}", temp.toString());
 		// }
 
-		auto view = m_Registry.view<ScriptComponent>();
-		for (auto e : view) {
-			Entity entity = { e, this };
+		// Scripting
+		{
+			ScriptEngine::OnRuntimeStart(this);
 
-			UUID id = entity.getComponent<IDComponent>().id;
-			auto& script = entity.getComponent<ScriptComponent>();
+			// TODO: Add Awake function like Unity
 
-			// Create object based on class
-			script.object = ScriptManager::createEntity(script.klass, id, this);			
-			auto* create = script.object.getMethod("OnCreate");
-
-			if (create != nullptr)
-				script.object.invokeMethod(create);
+			// Instantiate all script entities
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto e : view)
+			{
+				Entity entity = { e, this };
+				ScriptEngine::OnCreateEntity(entity);
+			}
 		}
 
 		// TODO make the physics adjustable
@@ -265,18 +268,8 @@ namespace Shado {
 	}
 
 	void Scene::onRuntimeStop() {
-		auto view = m_Registry.view<ScriptComponent>();
-		for (auto e : view) {
-			Entity entity = { e, this };
 
-			auto& script = entity.getComponent<ScriptComponent>();
-
-			auto* destroy = script.object.getMethod("OnDestroyed");
-			if (destroy != nullptr)
-				script.object.invokeMethod(destroy);
-		}
-
-		ScriptManager::requestThreadsDump();
+		ScriptEngine::OnRuntimeStop();
 		
 		delete m_World;
 		m_World = nullptr;
@@ -299,6 +292,30 @@ namespace Shado {
 
 				nsc.script->onUpdate(ts);
 			});
+		}
+
+		// Update scripts
+		{
+			// C# Entity OnUpdate
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto e : view)
+			{
+				Entity entity = { e, this };
+				ScriptEngine::OnUpdateEntity(entity, ts);
+			}
+
+			m_Registry.view<NativeScriptComponent>().each([=](auto entity, auto& nsc)
+				{
+					// TODO: Move to Scene::OnScenePlay
+					if (!nsc.Instance)
+					{
+						nsc.Instance = nsc.InstantiateScript();
+						nsc.Instance->m_Entity = Entity{ entity, this };
+						nsc.Instance->OnCreate();
+					}
+
+					nsc.Instance->OnUpdate(ts);
+				});
 		}
 
 		// Update physics
@@ -328,22 +345,6 @@ namespace Shado {
 				destroyEntity(to_delete);
 			}
 			toDestroy.clear();
-		}
-
-
-		// Update C# script
-		auto scriptView = m_Registry.view<ScriptComponent>();
-		for (auto e : scriptView) {
-			Entity entity = { e, this };
-
-			auto& script = entity.getComponent<ScriptComponent>();
-			void* args[] = {
-				&ts
-			};
-
-			auto* update = script.object.getMethod("OnUpdate");
-			if (update != nullptr)
-				script.object.invokeMethod(update, args);
 		}
 	}
 
@@ -468,6 +469,18 @@ namespace Shado {
 
 			if (id.id == __id)
 				return { entity, this };
+		}
+		return {};
+	}
+
+	Entity Scene::findEntityByName(std::string_view name)
+	{
+		auto view = m_Registry.view<TagComponent>();
+		for (auto entity : view)
+		{
+			const TagComponent& tc = view.get<TagComponent>(entity);
+			if (tc.Tag == name)
+				return Entity{ entity, this };
 		}
 		return {};
 	}
