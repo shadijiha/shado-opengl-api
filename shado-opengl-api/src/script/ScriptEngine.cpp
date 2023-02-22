@@ -37,6 +37,7 @@ namespace Shado {
 		{ "Shado.Vector2", ScriptFieldType::Vector2 },
 		{ "Shado.Vector3", ScriptFieldType::Vector3 },
 		{ "Shado.Vector4", ScriptFieldType::Vector4 },
+		{ "Shado.Colour", ScriptFieldType::Colour },
 
 		{ "Shado.Entity", ScriptFieldType::Entity },
 	};

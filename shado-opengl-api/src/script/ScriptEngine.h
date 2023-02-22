@@ -25,7 +25,7 @@ namespace Shado {
 		Float, Double,
 		Bool, Char, Byte, Short, Int, Long,
 		UByte, UShort, UInt, ULong,
-		Vector2, Vector3, Vector4,
+		Vector2, Vector3, Vector4, Colour,
 		Entity
 	};
 
