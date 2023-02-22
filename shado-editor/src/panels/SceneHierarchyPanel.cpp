@@ -5,6 +5,8 @@
 #include "scene/utils/SceneUtils.h"
 #include "debug/Profile.h"
 #include <fstream>
+#include "script/ScriptEngine.h"
+#include "ui/UI.h"
 
 namespace Shado {
 	extern const std::filesystem::path g_AssetsPath;
@@ -249,29 +251,81 @@ namespace Shado {
 			ImGui::DragFloat("Restitution Threshold", &bc.restitutionThreshold, 0.01f, 0);
 		});
 
-		drawComponent<ScriptComponent>("C# Script", entity, [](ScriptComponent& sc) {
+		drawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable
+			{
+				bool scriptClassExists = ScriptEngine::EntityClassExists(component.ClassName);
 
-			static char buffer[64];
-			strcpy(buffer, sc.className.c_str());
-			if(ImGui::InputText("Class", buffer, sizeof(buffer))) {
+				static char buffer[64];
+				strcpy_s(buffer, sizeof(buffer), component.ClassName.c_str());
 
-				// Check if the class is valid
-				if(ScriptManager::hasClass(buffer)) {
-					sc.className = buffer;
-					sc.klass = ScriptManager::getClassByName(buffer);
-				} else {
-					SHADO_CORE_ERROR("Invalid class name {0}", buffer);
+				ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), !scriptClassExists);
+
+				if (ImGui::InputText("Class", buffer, sizeof(buffer)))
+				{
+					component.ClassName = buffer;
+					return;
 				}
-			}
 
-			ImGui::Text("Class name %s", sc.className.c_str());
+				// Fields
+				bool sceneRunning = scene->isRunning();
+				if (sceneRunning)
+				{
+					Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.getUUID());
+					if (scriptInstance)
+					{
+						const auto& fields = scriptInstance->GetScriptClass()->GetFields();
+						for (const auto& [name, field] : fields)
+						{
+							if (field.Type == ScriptFieldType::Float)
+							{
+								float data = scriptInstance->GetFieldValue<float>(name);
+								if (ImGui::DragFloat(name.c_str(), &data))
+								{
+									scriptInstance->SetFieldValue(name, data);
+								}
+							}
+						}
+					}
+				} else
+				{
+					if (scriptClassExists)
+					{
+						Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
+						const auto& fields = entityClass->GetFields();
 
-			ImGui::Text("Fields");
-			for(auto& fields : sc.object.getDescription().fields) {
-				ImGui::Text("%s", fields.first.c_str());
-			}
+						auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
+						for (const auto& [name, field] : fields)
+						{
+							// Field has been set in editor
+							if (entityFields.find(name) != entityFields.end())
+							{
+								ScriptFieldInstance& scriptField = entityFields.at(name);
 
-		});
+								// Display control to set it maybe
+								if (field.Type == ScriptFieldType::Float)
+								{
+									float data = scriptField.GetValue<float>();
+									if (ImGui::DragFloat(name.c_str(), &data))
+										scriptField.SetValue(data);
+								}
+							} else
+							{
+								// Display control to set it maybe
+								if (field.Type == ScriptFieldType::Float)
+								{
+									float data = 0.0f;
+									if (ImGui::DragFloat(name.c_str(), &data))
+									{
+										ScriptFieldInstance& fieldInstance = entityFields[name];
+										fieldInstance.Field = field;
+										fieldInstance.SetValue(data);
+									}
+								}
+							}
+						}
+					}
+				}
+			});
 	}
 	
 	template<typename T>

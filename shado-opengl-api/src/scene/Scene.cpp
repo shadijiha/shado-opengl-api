@@ -243,6 +243,7 @@ namespace Shado {
 	}
 
 	void Scene::onRuntimeStart() {
+		m_IsRunning = true;
 		// Init all Script classes attached to entities
 		// for (auto& temp : ScriptManager::getAssemblyClassList()) {
 		// 	SHADO_CORE_INFO("{0}", temp.toString());
@@ -268,6 +269,7 @@ namespace Shado {
 	}
 
 	void Scene::onRuntimeStop() {
+		m_IsRunning = false;
 
 		ScriptEngine::OnRuntimeStop();
 		

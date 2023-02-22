@@ -39,7 +39,7 @@ namespace Shado {
 		void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
 		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
 
-
+		bool isRunning() const { return m_IsRunning; }
 	public:
 		inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
 
@@ -53,6 +53,8 @@ namespace Shado {
 
 		b2World* m_World = nullptr;
 		bool m_PhysicsEnabled = true;
+
+		bool m_IsRunning = false;
 
 		friend class Entity;
 		friend class SceneSerializer;

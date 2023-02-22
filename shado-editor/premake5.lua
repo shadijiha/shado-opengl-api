@@ -1,17 +1,16 @@
 
 project "shado-editor"
-    location "shado-editor"
     kind "ConsoleApp"
     language "C++"
 
-    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
     files
     {
-        "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.cpp",
-        "%{prj.name}/src/**.hpp"
+        "src/**.h",
+        "src/**.cpp",
+        "src/**.hpp"
     }
 
     includedirs
@@ -24,8 +23,8 @@ project "shado-editor"
         "%{IncludeDir.entt}",
         "%{IncludeDir.box2d}",
         --"%{IncludeDir.mono}",	-- TODO: remove this
-        "shado-opengl-api/src",
-        "shado-opengl-api/vendor"
+        "%{wks.location}/shado-opengl-api/src",
+        "%{wks.location}/shado-opengl-api/vendor"
     }
 
     links

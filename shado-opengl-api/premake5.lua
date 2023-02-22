@@ -4,8 +4,8 @@ project "shado-opengl-api"
     language "C++"
     staticruntime "off"
 
-    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+    targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
     files
     {
@@ -43,7 +43,7 @@ project "shado-opengl-api"
         "box2d",
         "yaml-cpp",
         "shcore.lib",
-        "mono/mono-2.0-sgen.lib",
+        "%{wks.location}/mono/mono-2.0-sgen.lib",
         --"mono/mono-2.0-sgen.dll",
         "Shado-script-core",
         "cs-sandbox"
