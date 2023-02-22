@@ -11,9 +11,25 @@ namespace Shado
 		public Entity Entity { get; internal set; }
 	}
 
+	public class TagComponent : Component
+	{
+		public string Tag
+		{
+			get
+			{
+				InternalCalls.TagComponent_GetTag(Entity.ID, out string tag);
+				return tag;
+			}
+			set
+			{
+				InternalCalls.TagComponent_SetTag(Entity.ID, ref value);
+			}
+		}
+	}
+
 	public class TransformComponent : Component
 	{
-		public Vector3 Translation
+		public Vector3 position
 		{
 			get
 			{
@@ -23,6 +39,32 @@ namespace Shado
 			set
 			{
 				InternalCalls.TransformComponent_SetTranslation(Entity.ID, ref value);
+			}
+		}
+
+		public Vector3 rotation
+		{
+			get
+			{
+				InternalCalls.TransformComponent_GetRotation(Entity.ID, out Vector3 translation);
+				return translation;
+			}
+			set
+			{
+				InternalCalls.TransformComponent_SetRotation(Entity.ID, ref value);
+			}
+		}
+
+		public Vector3 scale
+		{
+			get
+			{
+				InternalCalls.TransformComponent_GetScale(Entity.ID, out Vector3 translation);
+				return translation;
+			}
+			set
+			{
+				InternalCalls.TransformComponent_SetScale(Entity.ID, ref value);
 			}
 		}
 	}

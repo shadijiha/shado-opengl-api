@@ -79,6 +79,24 @@ namespace Shado {
 		return entity.getUUID();
 	}
 
+	static void TagComponent_GetTag(UUID entityID, MonoString** outName) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		*outName = ScriptEngine::NewString(entity.getComponent<TagComponent>().tag.c_str());
+	}
+
+	static void TagComponent_SetTag(UUID entityID, MonoString** refName) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		entity.getComponent<TagComponent>().tag = mono_string_to_utf8(*refName);
+	}
+
 	static void TransformComponent_GetTranslation(UUID entityID, glm::vec3* outTranslation)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -98,6 +116,47 @@ namespace Shado {
 
 		entity.getComponent<TransformComponent>().position = *translation;
 	}
+
+	static void TransformComponent_GetRotation(UUID entityID, glm::vec3* outRotation)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		*outRotation = entity.getComponent<TransformComponent>().rotation;
+	}
+
+	static void TransformComponent_SetRotation(UUID entityID, glm::vec3* rotation)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		entity.getComponent<TransformComponent>().rotation = *rotation;
+	}
+
+	static void TransformComponent_GetScale(UUID entityID, glm::vec3* outScale)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		*outScale = entity.getComponent<TransformComponent>().scale;
+	}
+
+	static void TransformComponent_SetScale(UUID entityID, glm::vec3* scale)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		entity.getComponent<TransformComponent>().scale = *scale;
+	}
+
 
 	static void Rigidbody2DComponent_ApplyLinearImpulse(UUID entityID, glm::vec2* impulse, glm::vec2* point, bool wake)
 	{
@@ -208,8 +267,15 @@ namespace Shado {
 		SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
 		SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
 
+		SHADO_ADD_INTERNAL_CALL(TagComponent_GetTag);
+		SHADO_ADD_INTERNAL_CALL(TagComponent_SetTag);
+
 		SHADO_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
 		SHADO_ADD_INTERNAL_CALL(TransformComponent_SetTranslation);
+		SHADO_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
+		SHADO_ADD_INTERNAL_CALL(TransformComponent_SetRotation);
+		SHADO_ADD_INTERNAL_CALL(TransformComponent_GetScale);
+		SHADO_ADD_INTERNAL_CALL(TransformComponent_SetScale);
 
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulse);
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);

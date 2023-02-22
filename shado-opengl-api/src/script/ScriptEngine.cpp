@@ -432,6 +432,11 @@ namespace Shado {
 
 	}
 
+	MonoString* ScriptEngine::NewString(const char* str)
+	{
+		return mono_string_new(s_Data->AppDomain, str);
+	}
+
 	MonoImage* ScriptEngine::GetCoreAssemblyImage()
 	{
 		return s_Data->CoreAssemblyImage;
