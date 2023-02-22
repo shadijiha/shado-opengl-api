@@ -9,6 +9,8 @@
 #include "ImGuizmo/ImGuizmo.h"
 #include "math/Math.h"
 #include "ui/UI.h"
+#include "project/Project.h"
+#include "script/ScriptEngine.h"
 
 namespace Shado {
 	extern const std::filesystem::path g_AssetsPath;
@@ -175,7 +177,48 @@ namespace Shado {
 			// MENU BAR
 	        if (ImGui::BeginMenuBar())
 	        {
-	            if (ImGui::BeginMenu("File"))
+				if (ImGui::BeginMenu("File")) {
+
+					if (ImGui::MenuItem("New Project", "Ctrl+P+N")) {
+						Ref<Project> project = Project::New();
+						project->GetConfig().Name = "Test 123";
+						project->GetConfig().StartScene = "sample.shadoscene";
+					}
+
+					if (ImGui::MenuItem("Open Project...", "Ctrl+P+O")) {
+						std::string path = FileDialogs::openFile("Shado Project (*.sproj)\0*.sproj\0");
+
+						if (Project::Load(path))
+						{
+							ScriptEngine::Init();
+
+							auto startScenePath = Project::GetAssetFileSystemPath(Project::GetActive()->GetConfig().StartScene);
+							openScene(startScenePath);
+							m_ContentPanel = ContentBrowserPanel();
+
+						}
+					}
+
+					if (ImGui::MenuItem("Save Project...", "Ctrl+P+S")) {
+						std::string path = FileDialogs::chooseFolder();
+
+						Ref<Project> active = Project::GetActive();
+						active->GetConfig().AssetDirectory = path + "/Assets";
+						active->GetConfig().ScriptModulePath = "resources/Scripts";
+
+						Project::SaveActive(path);
+					}
+
+					// Disabling fullscreen would allow the window to be moved to the front of other windows,
+					// which we can't undo at the moment without finer window depth/z control.
+					if (ImGui::MenuItem("Exit")) {
+						Application::close();
+					}
+
+					ImGui::EndMenu();
+				}
+
+	            if (ImGui::BeginMenu("Scene"))
 	            {
 					// New scene
 					if (ImGui::MenuItem("New", "Ctrl+N")) {
@@ -183,7 +226,7 @@ namespace Shado {
 					}
 
 					// Open Scene file
-					if (ImGui::MenuItem("Open", "Ctrl+O")) {
+					if (ImGui::MenuItem("Open...", "Ctrl+O")) {
 						openScene();
 					}
 
@@ -195,12 +238,6 @@ namespace Shado {
 						m_ScenePath = "";
 						saveScene();
 					}
-
-	                // Disabling fullscreen would allow the window to be moved to the front of other windows,
-	                // which we can't undo at the moment without finer window depth/z control.
-	                if (ImGui::MenuItem("Exit")) {
-	                    Application::close();
-	                }
 
 	                ImGui::EndMenu();
 	            }
