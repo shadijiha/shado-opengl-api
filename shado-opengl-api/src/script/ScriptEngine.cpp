@@ -423,7 +423,6 @@ namespace Shado {
 					scriptClass->m_Fields[fieldName] = { fieldType, fieldName, field };
 				}
 			}
-
 		}
 
 		auto& entityClasses = s_Data->EntityClasses;
@@ -481,6 +480,14 @@ namespace Shado {
 		MonoObject* exception = nullptr;
 		return mono_runtime_invoke(method, instance, params, &exception);
 	}
+
+	const std::vector<MonoType*> ScriptClass::GetAttributes() const {
+	
+
+
+		return {};
+	}
+
 
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity)
 		: m_ScriptClass(scriptClass)

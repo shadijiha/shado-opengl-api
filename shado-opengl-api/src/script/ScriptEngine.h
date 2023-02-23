@@ -81,6 +81,7 @@ namespace Shado {
 		MonoObject* InvokeMethod(MonoObject* instance, MonoMethod* method, void** params = nullptr);
 
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; }
+		const std::vector<MonoType*> GetAttributes() const;
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;

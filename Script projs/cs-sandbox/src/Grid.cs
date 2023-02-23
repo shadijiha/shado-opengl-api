@@ -1,5 +1,6 @@
 ﻿using System;
 using Shado;
+using Shado.Editor;
 
 namespace Sandbox
 {
@@ -11,30 +12,36 @@ namespace Sandbox
         private float dir = 1;
 
         private Texture2D texture;
+        public Vector3 test;
 
         void OnCreate() {
-            Console.WriteLine("Created!" + translation);
             transform = GetComponent<TransformComponent>();
-
             texture = Texture2D.Create("Assets/riven2.jpg");
-            RemoveComponent<SpriteRendererComponent>();
-            var circle = AddComponent<CircleRendererComponent>();
-            circle.texture = texture;
+            GetComponent<SpriteRendererComponent>().texture = texture;
         }
 
         void OnUpdate(float dt) {
-            Vector3 pos = transform.position;
-            pos.x += moveRate * dt * dir;
-            transform.position = pos;
+            //Vector3 pos = transform.position;
+            //pos.x += moveRate * dt * dir;
+            //transform.position = pos;
 
-            if (pos.x > maxDelta || pos.x < -maxDelta) {
-                dir = -dir;
-            }
+            //if (pos.x > maxDelta || pos.x < -maxDelta) {
+            //    dir = -dir;
+            //}
 
-            GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
+            //GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
         }
     }
-    
+
+    [EditorTargetType(typeof(Vector3))]
+    public class Vector3Editor : Editor {
+        protected override void OnEditorDraw()
+        {
+            Vector3 vec = (Vector3)target;
+            Console.WriteLine("Drawing " + target);
+        }
+    }
+
     //public class Grid : Entity
     //{
     //    ParticuleSystem system = new ParticuleSystem();

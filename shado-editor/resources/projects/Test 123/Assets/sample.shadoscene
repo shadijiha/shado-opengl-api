@@ -47,6 +47,16 @@ Entities:
       Color: [0.699456096, 0.830837011, 0.458973378, 1]
       Texture: "NULL"
       TillingFactor: 1
+    RigidBody2DComponent:
+      Type: 2
+      FixedRotation: false
+    BoxCollider2DComponent:
+      Offset: [0, 0]
+      Size: [0.5, 0.5]
+      Density: 1
+      Friction: 0.5
+      Restitution: 0.720000029
+      RestitutionThreshold: 0.5
     ScriptComponent:
       ClassName: Sandbox.Test
       ScriptFields:
