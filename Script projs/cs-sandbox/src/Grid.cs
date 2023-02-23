@@ -38,7 +38,17 @@ namespace Sandbox
         protected override void OnEditorDraw()
         {
             Vector3 vec = (Vector3)target;
-            Console.WriteLine("Drawing " + target);
+            Console.WriteLine("Drawing " + vec);
+        }
+    }
+
+    [EditorTargetType(typeof(Texture2D))]
+    public class Texture2DEditor : Editor
+    {
+        protected override void OnEditorDraw()
+        {
+            Texture2D vec = (Texture2D)target;
+            Console.WriteLine("Drawing " + vec);
         }
     }
 

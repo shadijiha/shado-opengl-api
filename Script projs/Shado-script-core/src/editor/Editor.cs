@@ -11,6 +11,16 @@ namespace Shado.Editor
         internal object[] GetAttibutes() {
             return GetType().GetCustomAttributes(true);
         }
+
+        public Type GetTargetType() {
+            foreach (var attibute in GetAttibutes())
+            {
+                if (attibute.GetType() == typeof(EditorTargetType)) {
+                    return ((EditorTargetType)attibute).targetType;
+                }
+            }
+            return null;
+        }
     }
 
     public class EditorTargetType : System.Attribute { 

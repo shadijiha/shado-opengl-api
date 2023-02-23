@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <vector>
 
 extern "C" {
 	typedef struct _MonoClass MonoClass;
@@ -80,8 +81,8 @@ namespace Shado {
 		MonoMethod* GetMethod(const std::string& name, int parameterCount);
 		MonoObject* InvokeMethod(MonoObject* instance, MonoMethod* method, void** params = nullptr);
 
-		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; }
-		const std::vector<MonoType*> GetAttributes() const;
+		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
+		std::vector<MonoObject*> GetAttributes();
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;

@@ -132,6 +132,8 @@ namespace Shado {
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
 		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
 
+		std::unordered_map<std::string, Ref<ScriptClass>> EditorClasses;
+
 		Ref<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
 		bool AssemblyReloadPending = false;
 
@@ -376,6 +378,7 @@ namespace Shado {
 		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(s_Data->AppAssemblyImage, MONO_TABLE_TYPEDEF);
 		int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
 		MonoClass* entityClass = mono_class_from_name(s_Data->CoreAssemblyImage, "Shado", "Entity");
+		MonoClass* editorClass = mono_class_from_name(s_Data->CoreAssemblyImage, "Shado.Editor", "Editor");
 
 		for (int32_t i = 0; i < numTypes; i++)
 		{
@@ -395,33 +398,43 @@ namespace Shado {
 			if (monoClass == entityClass)
 				continue;
 
-			bool isEntity = mono_class_is_subclass_of(monoClass, entityClass, false);
-			if (!isEntity)
+			if (monoClass == editorClass)
 				continue;
 
-			Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className);
-			s_Data->EntityClasses[fullName] = scriptClass;
+			bool isEntity = mono_class_is_subclass_of(monoClass, entityClass, false);
+			if (isEntity) {
+
+				Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className);
+				s_Data->EntityClasses[fullName] = scriptClass;
 
 
-			// This routine is an iterator routine for retrieving the fields in a class.
-			// You must pass a gpointer that points to zero and is treated as an opaque handle
-			// to iterate over all of the elements. When no more values are available, the return value is NULL.
+				// This routine is an iterator routine for retrieving the fields in a class.
+				// You must pass a gpointer that points to zero and is treated as an opaque handle
+				// to iterate over all of the elements. When no more values are available, the return value is NULL.
 
-			int fieldCount = mono_class_num_fields(monoClass);
-			SHADO_CORE_WARN("{} has {} fields:", className, fieldCount);
-			void* iterator = nullptr;
-			while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
-			{
-				const char* fieldName = mono_field_get_name(field);
-				uint32_t flags = mono_field_get_flags(field);
-				if (flags & FIELD_ATTRIBUTE_PUBLIC)
+				int fieldCount = mono_class_num_fields(monoClass);
+				SHADO_CORE_WARN("{} has {} fields:", className, fieldCount);
+				void* iterator = nullptr;
+				while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
 				{
-					MonoType* type = mono_field_get_type(field);
-					ScriptFieldType fieldType = Utils::MonoTypeToScriptFieldType(type);
-					SHADO_CORE_WARN("  {} ({})", fieldName, Utils::ScriptFieldTypeToString(fieldType));
+					const char* fieldName = mono_field_get_name(field);
+					uint32_t flags = mono_field_get_flags(field);
+					if (flags & FIELD_ATTRIBUTE_PUBLIC)
+					{
+						MonoType* type = mono_field_get_type(field);
+						ScriptFieldType fieldType = Utils::MonoTypeToScriptFieldType(type);
+						SHADO_CORE_WARN("  {} ({})", fieldName, Utils::ScriptFieldTypeToString(fieldType));
 
-					scriptClass->m_Fields[fieldName] = { fieldType, fieldName, field };
+						scriptClass->m_Fields[fieldName] = { fieldType, fieldName, field };
+					}
 				}
+			}
+
+
+			bool isEditor = mono_class_is_subclass_of(monoClass, editorClass, false);
+			if (isEditor) {
+				Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className);
+				s_Data->EditorClasses[fullName] = scriptClass;
 			}
 		}
 
@@ -481,10 +494,7 @@ namespace Shado {
 		return mono_runtime_invoke(method, instance, params, &exception);
 	}
 
-	const std::vector<MonoType*> ScriptClass::GetAttributes() const {
-	
-
-
+	std::vector<MonoObject*> ScriptClass::GetAttributes() {
 		return {};
 	}
 
