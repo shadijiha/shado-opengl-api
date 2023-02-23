@@ -7,6 +7,11 @@ namespace Shado
 	{
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
 		internal extern static bool Entity_HasComponent(ulong entityID, Type componentType);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Entity_RemoveComponent(ulong entityID, Type componentType);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Entity_AddComponent(ulong entityID, Type componentType);
+
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
 		internal extern static ulong Entity_FindEntityByName(string name);
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -43,6 +48,33 @@ namespace Shado
 		internal extern static void TransformComponent_SetScale(ulong entityID, ref Vector3 scale);
 
 		/**
+		 * SpriteRenderer
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void SpriteRendererComponent_GetColour(ulong entityID, out Vector4 result, string klass);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void SpriteRendererComponent_SetColour(ulong entityID, ref Vector4 result, string klass);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static Texture2D SpriteRendererComponent_GetTexture(ulong entityID, string klass);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void SpriteRendererComponent_SetTexture(ulong entityID, IntPtr native, string klass);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void SpriteRendererComponent_GetTilingFactor(ulong entityID, out float result, string klass);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void SpriteRendererComponent_SetTilingFactor(ulong entityID, ref float result, string klass);
+
+		/**
+		 * CircleRenderer
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void CircleRendererComponent_GetFloatValue(ulong entityId, string fieldName, out float val);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void CircleRendererComponent_SetFloatValue(ulong entityId, string fieldName, ref float val);
+		
+		/**
 		 * Rigidbody2D
 		 **/
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -61,5 +93,14 @@ namespace Shado
 		 **/
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
 		internal extern static bool Input_IsKeyDown(KeyCode keycode);
+
+		/**
+		 * Texture2D
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static Texture2D Texture2D_Create(string filepath);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Texture2D_Destroy(IntPtr native);
 	}
 }

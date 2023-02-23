@@ -7,6 +7,7 @@
 
 #include "scene/Scene.h"
 #include "scene/Entity.h"
+#include "project/Project.h"
 
 #include "physics/Physics2D.h"
 
@@ -23,6 +24,8 @@
 namespace Shado {
 
 	static std::unordered_map<MonoType*, std::function<bool(Entity)>> s_EntityHasComponentFuncs;
+	static std::unordered_map<MonoType*, std::function<void(Entity)>> s_EntityRemoveComponentFuncs;
+	static std::unordered_map<MonoType*, std::function<void(Entity)>> s_EntityAddComponentFuncs;
 
 #define SHADO_ADD_INTERNAL_CALL(Name) mono_add_internal_call("Shado.InternalCalls::" #Name, Name)
 
@@ -64,6 +67,30 @@ namespace Shado {
 		return s_EntityHasComponentFuncs.at(managedType)(entity);
 	}
 
+	static void Entity_RemoveComponent(UUID entityID, MonoReflectionType* componentType)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		MonoType* managedType = mono_reflection_type_get_type(componentType);
+		SHADO_CORE_ASSERT(s_EntityRemoveComponentFuncs.find(managedType) != s_EntityRemoveComponentFuncs.end(), "");
+		s_EntityRemoveComponentFuncs.at(managedType)(entity);
+	}
+
+	static void Entity_AddComponent(UUID entityID, MonoReflectionType* componentType)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		MonoType* managedType = mono_reflection_type_get_type(componentType);
+		SHADO_CORE_ASSERT(s_EntityAddComponentFuncs.find(managedType) != s_EntityAddComponentFuncs.end(), "");
+		s_EntityAddComponentFuncs.at(managedType)(entity);
+	}
+
 	static uint64_t Entity_FindEntityByName(MonoString* name)
 	{
 		char* nameCStr = mono_string_to_utf8(name);
@@ -79,6 +106,9 @@ namespace Shado {
 		return entity.getUUID();
 	}
 
+	/**
+	* Tag
+	*/
 	static void TagComponent_GetTag(UUID entityID, MonoString** outName) {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
@@ -97,6 +127,9 @@ namespace Shado {
 		entity.getComponent<TagComponent>().tag = mono_string_to_utf8(*refName);
 	}
 
+	/**
+	* Transform
+	*/
 	static void TransformComponent_GetTranslation(UUID entityID, glm::vec3* outTranslation)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -157,7 +190,162 @@ namespace Shado {
 		entity.getComponent<TransformComponent>().scale = *scale;
 	}
 
+	/**
+	* Sprite Renderer
+	*/
+	static void SpriteRendererComponent_GetColour(UUID entityID, glm::vec4* refColour, MonoString* klass)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
 
+		std::string klassName = mono_string_to_utf8(klass);
+		if (klassName == "SpriteRendererComponent")
+			*refColour = entity.getComponent<SpriteRendererComponent>().color;
+		else if (klassName == "CircleRendererComponent")
+			*refColour = entity.getComponent<CircleRendererComponent>().color;
+		else
+			SHADO_ERROR("Unknown Sprite class {0}", klassName);
+	}
+
+	static void SpriteRendererComponent_SetColour(UUID entityID, glm::vec4* refColour, MonoString* klass)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		std::string klassName = mono_string_to_utf8(klass);
+		if (klassName == "SpriteRendererComponent")
+			entity.getComponent<SpriteRendererComponent>().color = *refColour;
+		else if (klassName == "CircleRendererComponent")
+			entity.getComponent<CircleRendererComponent>().color = *refColour;
+		else
+			SHADO_ERROR("Unknown Sprite class {0}", klassName);
+	}
+
+	static MonoObject* SpriteRendererComponent_GetTexture(UUID entityID, MonoString* klass)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		Texture2D* ptr = nullptr;
+		std::string klassName = mono_string_to_utf8(klass);
+		if (klassName == "SpriteRendererComponent") {
+			Ref<Texture2D> ref = entity.getComponent<SpriteRendererComponent>().texture;
+			ptr = ref == nullptr ? nullptr : ref.get();
+		} else if (klassName == "CircleRendererComponent") {
+			Ref<Texture2D> ref = entity.getComponent<CircleRendererComponent>().texture;
+			ptr = ref == nullptr ? nullptr : ref.get();
+		} else
+			SHADO_ERROR("Unknown Sprite class {0}", klassName);
+
+		if (ptr == nullptr)
+			return nullptr;
+
+		// Otherwise construct the C# object
+		ScriptClass klassType = ScriptClass("Shado", "Texture2D");
+		MonoMethod* ctor = klassType.GetMethod(".ctor", 2);
+		MonoObject* instance = klassType.Instantiate();
+
+		void* param[] = {
+			ptr,
+			ScriptEngine::NewString((ptr->getFilePath()).c_str())
+		};
+		klassType.InvokeMethod(instance, ctor, param);
+
+		return instance;
+	}
+
+	static void SpriteRendererComponent_SetTexture(UUID entityID, Texture2D* texturePtr, MonoString* klass)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		std::string klassName = mono_string_to_utf8(klass);
+		if (klassName == "SpriteRendererComponent") {
+			entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texturePtr);
+		} else if (klassName == "CircleRendererComponent") {
+			entity.getComponent<CircleRendererComponent>().texture = Ref<Texture2D>(texturePtr);
+		} else
+			SHADO_ERROR("Unknown Sprite class {0}", klassName);
+	}
+
+	static void SpriteRendererComponent_GetTilingFactor(UUID entityID, float* outTiling, MonoString* klass)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		std::string klassName = mono_string_to_utf8(klass);
+		if (klassName == "SpriteRendererComponent")
+			*outTiling = entity.getComponent<SpriteRendererComponent>().tilingFactor;
+		else if (klassName == "CircleRendererComponent")
+			*outTiling = entity.getComponent<CircleRendererComponent>().tilingFactor;
+		else
+			SHADO_ERROR("Unknown Sprite class {0}", klassName);
+	}
+
+	static void SpriteRendererComponent_SetTilingFactor(UUID entityID, float* refTiling, MonoString* klass)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		std::string klassName = mono_string_to_utf8(klass);
+		if (klassName == "SpriteRendererComponent")
+			entity.getComponent<SpriteRendererComponent>().tilingFactor = *refTiling;
+		else if (klassName == "CircleRendererComponent")
+			entity.getComponent<CircleRendererComponent>().tilingFactor = *refTiling;
+		else
+			SHADO_ERROR("Unknown Sprite class {0}", klassName);
+	}
+
+	/**
+	* Cricle Renderer
+	*/
+	static void CircleRendererComponent_GetFloatValue(UUID entityID, MonoString* fieldName, float* value)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		std::string field = mono_string_to_utf8(fieldName);
+		if (field == "fade")
+			*value = entity.getComponent<CircleRendererComponent>().fade;
+		else if (field == "thickness")
+			*value = entity.getComponent<CircleRendererComponent>().thickness;
+		else
+			SHADO_ERROR("Unknown field name {0}", field);
+	}
+
+	static void CircleRendererComponent_SetFloatValue(UUID entityID, MonoString* fieldName, float* value)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		std::string field = mono_string_to_utf8(fieldName);
+		if (field == "fade")
+			entity.getComponent<CircleRendererComponent>().fade = *value;
+		else if (field == "thickness")
+			entity.getComponent<CircleRendererComponent>().thickness = *value;
+		else
+			SHADO_ERROR("Unknown field name {0}", field);
+	}
+
+	/**
+	* Rigidbody2D
+	*/
 	static void Rigidbody2DComponent_ApplyLinearImpulse(UUID entityID, glm::vec2* impulse, glm::vec2* point, bool wake)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -219,9 +407,43 @@ namespace Shado {
 		body->SetType(Utils::Rigidbody2DTypeToBox2DBody(bodyType));
 	}
 
+	/**
+	* Input
+	*/
 	static bool Input_IsKeyDown(KeyCode keycode)
 	{
 		return Input::isKeyPressed(keycode);
+	}
+
+	/**
+	* Texture2D
+	*/
+	static MonoObject* Texture2D_Create(MonoString* filepath) {
+		std::filesystem::path path = std::string(mono_string_to_utf8(filepath));
+
+		if (!path.is_absolute())
+			path = Project::GetProjectDirectory() / path;
+
+		// Load textre
+		Texture2D* texture = new Texture2D(path.string());
+
+		// Create the C# Texture2D object instance
+		ScriptClass klass = ScriptClass("Shado", "Texture2D", true);
+		MonoMethod* ctor = klass.GetMethod(".ctor", 2);
+		void* param[] = {
+			&texture,
+			filepath
+		};
+		MonoObject* instance = klass.Instantiate(ctor, param);
+		
+		klass.InvokeMethod(instance, ctor, param);
+
+		return instance;
+	}
+
+	static void Texture2D_Destroy(Texture2D* ptr) {
+		// TODO? maybe need a flag in the class that checks if the object was constructed by C# or not
+		//delete ptr;
 	}
 
 	template<typename... Component>
@@ -240,7 +462,9 @@ namespace Shado {
 					SHADO_CORE_ERROR("Could not find component type {}", managedTypename);
 					return;
 				}
-				s_EntityHasComponentFuncs[managedType] = [](Entity entity) { return entity.hasComponent<Component>(); };
+				s_EntityHasComponentFuncs[managedType] =	[](Entity entity) { return entity.hasComponent<Component>(); };
+				s_EntityRemoveComponentFuncs[managedType] = [](Entity entity) {return entity.removeComponent<Component>(); };
+				s_EntityAddComponentFuncs[managedType] = [](Entity entity) {return entity.addComponent<Component>(); };
 			}(), ...);
 	}
 
@@ -265,6 +489,8 @@ namespace Shado {
 		SHADO_ADD_INTERNAL_CALL(GetScriptInstance);
 
 		SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
+		SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
+		SHADO_ADD_INTERNAL_CALL(Entity_AddComponent);
 		SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
 
 		SHADO_ADD_INTERNAL_CALL(TagComponent_GetTag);
@@ -277,6 +503,16 @@ namespace Shado {
 		SHADO_ADD_INTERNAL_CALL(TransformComponent_GetScale);
 		SHADO_ADD_INTERNAL_CALL(TransformComponent_SetScale);
 
+		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetColour);
+		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetColour);
+		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
+		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
+		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTilingFactor);
+		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTilingFactor);
+
+		SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_GetFloatValue);
+		SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_SetFloatValue);
+
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulse);
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetLinearVelocity);
@@ -284,6 +520,9 @@ namespace Shado {
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetType);
 
 		SHADO_ADD_INTERNAL_CALL(Input_IsKeyDown);
+
+		SHADO_ADD_INTERNAL_CALL(Texture2D_Create);
+		SHADO_ADD_INTERNAL_CALL(Texture2D_Destroy);
 	}
 
 }

@@ -76,7 +76,7 @@ namespace Shado {
 		ScriptClass() = default;
 		ScriptClass(const std::string& classNamespace, const std::string& className, bool isCore = false);
 
-		MonoObject* Instantiate();
+		MonoObject* Instantiate(MonoMethod* ctor = nullptr, void** args = nullptr);
 		MonoMethod* GetMethod(const std::string& name, int parameterCount);
 		MonoObject* InvokeMethod(MonoObject* instance, MonoMethod* method, void** params = nullptr);
 
@@ -175,7 +175,7 @@ namespace Shado {
 		static void InitMono();
 		static void ShutdownMono();
 
-		static MonoObject* InstantiateClass(MonoClass* monoClass);
+		static MonoObject* InstantiateClass(MonoClass* monoClass, MonoMethod* ctor = nullptr, void** args = nullptr);
 		static void LoadAssemblyClasses();
 
 		friend class ScriptClass;

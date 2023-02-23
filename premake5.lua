@@ -85,6 +85,6 @@ project "cs-sandbox"
 
 	postbuildcommands
 	{
-		("{COPY} \"%{wks.location}bin/Release-windows-x86_64/%{prj.name}/%{prj.name}.dll\" \"%{wks.location}shado-editor/resources/Scripts/cs-sandbox.dll\""),
+		("{COPY} \"%{wks.location}bin/Release-windows-x86_64/%{prj.name}/%{prj.name}.dll\" \"%{wks.location}shado-editor/resources/projects/Test 123/Assets/%{prj.name}.dll\""),
 	}
 

@@ -13,7 +13,7 @@ namespace Shado
 
 	public class TagComponent : Component
 	{
-		public string Tag
+		public string tag
 		{
 			get
 			{
@@ -69,11 +69,84 @@ namespace Shado
 		}
 	}
 
+	public class SpriteRendererComponent : Component
+	{
+		public Vector4 colour
+		{
+			get
+			{
+				Vector4 result;
+				InternalCalls.SpriteRendererComponent_GetColour(Entity.ID, out result, GetType().Name);
+				return result;
+			}
+			set
+			{
+				InternalCalls.SpriteRendererComponent_SetColour(Entity.ID, ref value, GetType().Name);
+			}
+		}
+
+        public Texture2D texture
+        {
+            get
+            {
+                return InternalCalls.SpriteRendererComponent_GetTexture(Entity.ID, GetType().Name);
+            }
+            set
+            {
+				InternalCalls.SpriteRendererComponent_SetTexture(Entity.ID, value.native, GetType().Name);
+            }
+        }
+
+        public float tilingFactor {
+			get
+			{
+				float result;
+				InternalCalls.SpriteRendererComponent_GetTilingFactor(Entity.ID, out result, GetType().Name);
+				return result;
+			}
+			set
+			{
+				InternalCalls.SpriteRendererComponent_SetTilingFactor(Entity.ID, ref value, GetType().Name);
+			}
+		}
+	}
+
+	public class CircleRendererComponent : SpriteRendererComponent
+	{
+		public float thickness
+		{
+			get
+			{
+				float result;
+				InternalCalls.CircleRendererComponent_GetFloatValue(Entity.ID, "thickness", out result);
+				return result;
+			}
+			set
+			{
+				InternalCalls.CircleRendererComponent_SetFloatValue(Entity.ID, "thickness", ref value);
+			}
+		}
+
+		public float fade
+		{
+			get
+			{
+				float result;
+				InternalCalls.CircleRendererComponent_GetFloatValue(Entity.ID, "fade", out result);
+				return result;
+			}
+			set
+			{
+				InternalCalls.CircleRendererComponent_SetFloatValue(Entity.ID, "fade", ref value);
+			}
+		}
+	}
+
 	public class RigidBody2DComponent : Component
 	{
 		public enum BodyType { Static = 0, Dynamic, Kinematic }
 
-		public Vector2 LinearVelocity
+		public Vector2 linearVelocity
 		{
 			get
 			{
@@ -82,7 +155,7 @@ namespace Shado
 			}
 		}
 
-		public BodyType Type
+		public BodyType type
 		{
 			get => InternalCalls.Rigidbody2DComponent_GetType(Entity.ID);
 			set => InternalCalls.Rigidbody2DComponent_SetType(Entity.ID, value);

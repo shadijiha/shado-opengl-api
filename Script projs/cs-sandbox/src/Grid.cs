@@ -3,9 +3,35 @@ using Shado;
 
 namespace Sandbox
 {
-    public class Test : Entity {
+    public class Test : Entity { 
+        public float maxDelta;
+        public float moveRate;
+        public float tilingFactor = 1.0f;
+        private TransformComponent transform;
+        private float dir = 1;
+
+        private Texture2D texture;
+
         void OnCreate() {
             Console.WriteLine("Created!" + translation);
+            transform = GetComponent<TransformComponent>();
+
+            texture = Texture2D.Create("Assets/riven2.jpg");
+            RemoveComponent<SpriteRendererComponent>();
+            var circle = AddComponent<CircleRendererComponent>();
+            circle.texture = texture;
+        }
+
+        void OnUpdate(float dt) {
+            Vector3 pos = transform.position;
+            pos.x += moveRate * dt * dir;
+            transform.position = pos;
+
+            if (pos.x > maxDelta || pos.x < -maxDelta) {
+                dir = -dir;
+            }
+
+            GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
         }
     }
     

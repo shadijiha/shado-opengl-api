@@ -1,16 +1,20 @@
 Scene: Untitled
 Entities:
-  - Entity: 5567411534524352017
+  - Entity: 7797631117387807493
     TagComponent:
-      Tag: Empty Entity
+      Tag: Camera
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [0, 0, 5]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    SpriteRendererComponent:
-      Color: [0.699456096, 0.830837011, 0.458973378, 1]
-      Texture: "NULL"
-      TillingFactor: 1
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        OrthographicSize: 5
+        Near: -2
+        Far: 100
+      Primary: true
+      FixedAspectRatio: false
   - Entity: 1816516960762403436
     TagComponent:
       Tag: Ground
@@ -32,3 +36,23 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+  - Entity: 5567411534524352017
+    TagComponent:
+      Tag: Empty Entity
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    SpriteRendererComponent:
+      Color: [0.699456096, 0.830837011, 0.458973378, 1]
+      Texture: "NULL"
+      TillingFactor: 1
+    ScriptComponent:
+      ClassName: Sandbox.Test
+      ScriptFields:
+        - Name: maxDelta
+          Type: Float
+          Data: 5
+        - Name: moveRate
+          Type: Float
+          Data: 0.5

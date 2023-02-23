@@ -57,6 +57,8 @@ namespace Shado {
 		Ref<Shader> shader = nullptr;
 		float thickness = 1.0f;
 		float fade = 0.005f;
+
+		CircleRendererComponent() = default;
 	};
 
 	struct CameraComponent {

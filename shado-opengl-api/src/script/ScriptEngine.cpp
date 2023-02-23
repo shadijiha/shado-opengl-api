@@ -171,7 +171,7 @@ namespace Shado {
 		bool status = LoadAssembly("resources/Scripts/Shado-script-core.dll");
 		if (!status)
 		{
-			SHADO_CORE_ERROR("[ScriptEngine] Could not load Hazel-ScriptCore assembly.");
+			SHADO_CORE_ERROR("[ScriptEngine] Could not load Shado-ScriptCore assembly.");
 			return;
 		}
 
@@ -188,7 +188,7 @@ namespace Shado {
 		ScriptGlue::RegisterComponents();
 
 		// Retrieve and instantiate class
-		s_Data->EntityClass = ScriptClass("Hazel", "Entity", true);
+		s_Data->EntityClass = ScriptClass("Shado", "Entity", true);
 	}
 
 	void ScriptEngine::Shutdown()
@@ -277,7 +277,7 @@ namespace Shado {
 		ScriptGlue::RegisterComponents();
 
 		// Retrieve and instantiate class
-		s_Data->EntityClass = ScriptClass("Hazel", "Entity", true);
+		s_Data->EntityClass = ScriptClass("Shado", "Entity", true);
 	}
 
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
@@ -375,7 +375,7 @@ namespace Shado {
 
 		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(s_Data->AppAssemblyImage, MONO_TABLE_TYPEDEF);
 		int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
-		MonoClass* entityClass = mono_class_from_name(s_Data->CoreAssemblyImage, "Hazel", "Entity");
+		MonoClass* entityClass = mono_class_from_name(s_Data->CoreAssemblyImage, "Shado", "Entity");
 
 		for (int32_t i = 0; i < numTypes; i++)
 		{
@@ -449,10 +449,14 @@ namespace Shado {
 		return s_Data->EntityInstances.at(uuid)->GetManagedObject();
 	}
 
-	MonoObject* ScriptEngine::InstantiateClass(MonoClass* monoClass)
+	MonoObject* ScriptEngine::InstantiateClass(MonoClass* monoClass, MonoMethod* ctor, void** args)
 	{
 		MonoObject* instance = mono_object_new(s_Data->AppDomain, monoClass);
-		mono_runtime_object_init(instance);
+
+		if (ctor == nullptr && args == nullptr)
+			mono_runtime_object_init(instance);
+		else
+			mono_runtime_invoke(ctor, instance, args, nullptr);
 		return instance;
 	}
 
@@ -462,9 +466,9 @@ namespace Shado {
 		m_MonoClass = mono_class_from_name(isCore ? s_Data->CoreAssemblyImage : s_Data->AppAssemblyImage, classNamespace.c_str(), className.c_str());
 	}
 
-	MonoObject* ScriptClass::Instantiate()
+	MonoObject* ScriptClass::Instantiate(MonoMethod* ctor, void** args)
 	{
-		return ScriptEngine::InstantiateClass(m_MonoClass);
+		return ScriptEngine::InstantiateClass(m_MonoClass, ctor, args);
 	}
 
 	MonoMethod* ScriptClass::GetMethod(const std::string& name, int parameterCount)

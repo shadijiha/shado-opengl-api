@@ -42,6 +42,24 @@ namespace Shado
 			return component;
 		}
 
+		public void RemoveComponent<T>() where T : Component, new() {
+			if (!HasComponent<T>())
+				return;
+
+			InternalCalls.Entity_RemoveComponent(ID, typeof(T));
+		}
+
+		public T AddComponent<T>() where T : Component, new()
+		{
+			if (HasComponent<T>())
+				return GetComponent<T>();
+
+			InternalCalls.Entity_AddComponent(ID, typeof(T));
+
+			T component = new T() { Entity = this };
+			return component;
+		}
+
 		public static Entity FindEntityByName(string name)
 		{
 			ulong entityID = InternalCalls.Entity_FindEntityByName(name);

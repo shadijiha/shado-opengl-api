@@ -8,13 +8,13 @@ namespace Shado
 
         // TODO: make aggressive inline
         public static readonly Colour Black = new Colour(0, 0, 0);
-        public static readonly Colour White = new Colour(1, 1, 1);
-        public static readonly Colour Red = new Colour(1, 0, 0);
-        public static readonly Colour Green = new Colour(0, 1, 0);
-        public static readonly Colour Blue = new Colour(0, 0, 1);
-        public static readonly Colour Yellow = new Colour(1, 1, 0);
-        public static readonly Colour Maganta = new Colour(1, 0, 1);
-        public static readonly Colour Cyan = new Colour(0, 1, 1);
+        public static readonly Colour White = new Colour(255, 255, 255);
+        public static readonly Colour Red = new Colour(255, 0, 0);
+        public static readonly Colour Green = new Colour(0, 255, 0);
+        public static readonly Colour Blue = new Colour(0, 0, 255);
+        public static readonly Colour Yellow = new Colour(255, 255, 0);
+        public static readonly Colour Maganta = new Colour(255, 0, 255);
+        public static readonly Colour Cyan = new Colour(0, 255, 255);
 
         public Colour(int r, int g, int b, int a)
         {
