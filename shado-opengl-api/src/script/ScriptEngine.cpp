@@ -132,7 +132,8 @@ namespace Shado {
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
 		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
 
-		std::unordered_map<std::string, Ref<ScriptClass>> EditorClasses;
+		std::unordered_map<MonoType*, Ref<ScriptClass>> EditorClasses;
+		std::unordered_map<MonoType*, Ref<ScriptInstance>> EditorInstances;
 
 		Ref<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
 		bool AssemblyReloadPending = false;
@@ -433,8 +434,19 @@ namespace Shado {
 
 			bool isEditor = mono_class_is_subclass_of(monoClass, editorClass, false);
 			if (isEditor) {
-				Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className);
-				s_Data->EditorClasses[fullName] = scriptClass;
+				ScriptClass* scriptClass = new ScriptClass(nameSpace, className);
+
+				// Get an instance of the class
+				Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(Ref<ScriptClass>(scriptClass));
+
+				// Call GetTargetType to get the type for
+				MonoType* typeFor = (MonoType*)scriptClass->InvokeMethod(
+					scriptInstance->GetManagedObject(),
+					scriptClass->GetMethod("GetTargetType", 0)
+				);
+
+				s_Data->EditorClasses[typeFor] = scriptInstance->GetScriptClass();
+				s_Data->EditorInstances[typeFor] = scriptInstance;
 			}
 		}
 
@@ -452,6 +464,22 @@ namespace Shado {
 	MonoImage* ScriptEngine::GetCoreAssemblyImage()
 	{
 		return s_Data->CoreAssemblyImage;
+	}
+
+
+	void ScriptEngine::InvokeCustomEditorForField(const ScriptField& field, ScriptFieldInstance& instanceField)
+	{
+		for (auto [typeFor, editorInstance] : s_Data->EditorInstances) {
+			// If we find custom editor, then invoke the OnEditorDraw func
+			if (typeFor == mono_field_get_type(field.ClassField)) {
+				editorInstance->SetFieldValue("target", instanceField.GetValue<MonoObject*>());
+				
+				editorInstance->GetScriptClass()->InvokeMethod(
+					editorInstance->GetManagedObject(),
+					editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0)
+				);
+			}
+		}
 	}
 
 
@@ -473,9 +501,12 @@ namespace Shado {
 	}
 
 	ScriptClass::ScriptClass(const std::string& classNamespace, const std::string& className, bool isCore)
-		: m_ClassNamespace(classNamespace), m_ClassName(className)
 	{
-		m_MonoClass = mono_class_from_name(isCore ? s_Data->CoreAssemblyImage : s_Data->AppAssemblyImage, classNamespace.c_str(), className.c_str());
+		m_ClassNamespace = classNamespace;
+		m_ClassName = className;
+		m_MonoClass = mono_class_from_name(isCore ? s_Data->CoreAssemblyImage : s_Data->AppAssemblyImage,
+			m_ClassNamespace.c_str(),
+			m_ClassName.c_str());
 	}
 
 	MonoObject* ScriptClass::Instantiate(MonoMethod* ctor, void** args)
@@ -494,11 +525,6 @@ namespace Shado {
 		return mono_runtime_invoke(method, instance, params, &exception);
 	}
 
-	std::vector<MonoObject*> ScriptClass::GetAttributes() {
-		return {};
-	}
-
-
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity)
 		: m_ScriptClass(scriptClass)
 	{
@@ -515,6 +541,12 @@ namespace Shado {
 			void* param = &entityID;
 			m_ScriptClass->InvokeMethod(m_Instance, m_Constructor, &param);
 		}
+	}
+
+	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass)
+		: m_ScriptClass(scriptClass)
+	{
+		m_Instance = scriptClass->Instantiate();
 	}
 
 	void ScriptInstance::InvokeOnCreate()

@@ -82,7 +82,6 @@ namespace Shado {
 		MonoObject* InvokeMethod(MonoObject* instance, MonoMethod* method, void** params = nullptr);
 
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
-		std::vector<MonoObject*> GetAttributes();
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;
@@ -98,6 +97,7 @@ namespace Shado {
 	{
 	public:
 		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);
+		ScriptInstance(Ref<ScriptClass> scriptClass);
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
@@ -167,6 +167,8 @@ namespace Shado {
 		static Ref<ScriptClass> GetEntityClass(const std::string& name);
 		static std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
 		static ScriptFieldMap& GetScriptFieldMap(Entity entity);
+
+		static void InvokeCustomEditorForField(const ScriptField& field, ScriptFieldInstance& instanceField);
 
 		static MonoImage* GetCoreAssemblyImage();
 

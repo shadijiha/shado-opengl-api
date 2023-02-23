@@ -321,6 +321,11 @@ namespace Shado {
 										fieldInstance.SetValue(data);
 									}
 								}
+								else {
+									ScriptFieldInstance& fieldInstance = entityFields[name];
+									fieldInstance.Field = field;
+									ScriptEngine::InvokeCustomEditorForField(field, fieldInstance);
+								}
 							}
 						}
 					}
