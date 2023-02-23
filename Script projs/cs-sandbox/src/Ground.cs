@@ -12,8 +12,7 @@ namespace Sandbox
     {
         volatile int collisions;
 
-
-        protected override void OnCreate()
+        void OnCreate()
         {
             /*ThreadManager.Create(() => {
                 while (true) {
@@ -24,9 +23,9 @@ namespace Sandbox
             }).Start();*/
         }
 
-        protected override void OnCollision2DEnter(Collision2DInfo info, Entity other) {
-            collisions++;
-        }
+        //protected override void OnCollision2DEnter(Collision2DInfo info, Entity other) {
+        //    collisions++;
+        //}
 
     }
 }

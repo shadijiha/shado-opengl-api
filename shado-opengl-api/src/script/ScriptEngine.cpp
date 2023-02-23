@@ -168,7 +168,7 @@ namespace Shado {
 		InitMono();
 		ScriptGlue::RegisterFunctions();
 
-		bool status = LoadAssembly("Resources/Scripts/Shado-script-core.dll");
+		bool status = LoadAssembly("resources/Scripts/Shado-script-core.dll");
 		if (!status)
 		{
 			SHADO_CORE_ERROR("[ScriptEngine] Could not load Hazel-ScriptCore assembly.");
@@ -199,7 +199,7 @@ namespace Shado {
 
 	void ScriptEngine::InitMono()
 	{
-		mono_set_assemblies_path("mono/lib");
+		mono_set_assemblies_path("../mono/lib");
 
 		if (s_Data->EnableDebugging)
 		{

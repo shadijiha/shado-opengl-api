@@ -89,5 +89,10 @@ namespace Shado
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return x * x + y * y + z * z; }
 		}
-	}
+
+        public override string ToString()
+        {
+            return $"Vec3({x}, {y}, {z})";
+        }
+    }
 }

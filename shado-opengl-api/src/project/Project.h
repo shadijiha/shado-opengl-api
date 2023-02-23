@@ -21,20 +21,20 @@ namespace Shado {
 	public:
 		static const std::filesystem::path& GetProjectDirectory()
 		{
-			SHADO_CORE_ASSERT(false, s_ActiveProject);
+			SHADO_CORE_ASSERT(s_ActiveProject, "");
 			return s_ActiveProject->m_ProjectDirectory;
 		}
 
 		static std::filesystem::path GetAssetDirectory()
 		{
-			SHADO_CORE_ASSERT(false, s_ActiveProject);
+			SHADO_CORE_ASSERT(s_ActiveProject, "");
 			return GetProjectDirectory() / s_ActiveProject->m_Config.AssetDirectory;
 		}
 
 		// TODO(Yan): move to asset manager when we have one
 		static std::filesystem::path GetAssetFileSystemPath(const std::filesystem::path& path)
 		{
-			SHADO_CORE_ASSERT(false, s_ActiveProject);
+			SHADO_CORE_ASSERT(s_ActiveProject, "");
 			return GetAssetDirectory() / path;
 		}
 

@@ -45,6 +45,11 @@ project "Shado-script-core"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	configurations
+	{
+		"Release"
+	}
+
 	files
 	{
 		"Script projs/%{prj.name}/src/**.cs",
@@ -52,7 +57,7 @@ project "Shado-script-core"
 
 	postbuildcommands
 	{
-		("{COPY} bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.dll shado-editor/resources/Scripts/Shado-script-core.dll"),
+		("{COPY} \"%{wks.location}bin/Release-windows-x86_64/%{prj.name}/%{prj.name}.dll\" \"%{wks.location}shado-editor/resources/Scripts/Shado-script-core.dll\""),
 	}
 
 project "cs-sandbox"
@@ -63,6 +68,16 @@ project "cs-sandbox"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	configurations
+	{
+		"Release"
+	}
+	
+	links
+	{
+		"Shado-script-core"
+	}
+
 	files
 	{
 		"Script projs/%{prj.name}/src/**.cs",
@@ -70,6 +85,6 @@ project "cs-sandbox"
 
 	postbuildcommands
 	{
-		("{COPY} bin/" .. outputdir .. "/%{prj.name}/%{prj.name}.dll shado-editor/resources/Scripts/cs-sandbox.dll"),
+		("{COPY} \"%{wks.location}bin/Release-windows-x86_64/%{prj.name}/%{prj.name}.dll\" \"%{wks.location}shado-editor/resources/Scripts/cs-sandbox.dll\""),
 	}
 

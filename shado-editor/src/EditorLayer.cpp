@@ -200,13 +200,13 @@ namespace Shado {
 					}
 
 					if (ImGui::MenuItem("Save Project...", "Ctrl+P+S")) {
-						std::string path = FileDialogs::chooseFolder();
-
+						//std::string path = FileDialogs::chooseFolder();
+						std::string path = std::filesystem::absolute("resources/projects/Test 123").string();
 						Ref<Project> active = Project::GetActive();
 						active->GetConfig().AssetDirectory = path + "/Assets";
-						active->GetConfig().ScriptModulePath = "resources/Scripts";
+						active->GetConfig().ScriptModulePath = "cs-sandbox.dll";
 
-						Project::SaveActive(path);
+						Project::SaveActive(path + "/Test 123.sproj");
 					}
 
 					// Disabling fullscreen would allow the window to be moved to the front of other windows,
