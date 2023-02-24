@@ -296,7 +296,7 @@ namespace Shado {
 					auto& src = deserializedEntity.addComponent<CircleCollider2DComponent>();
 					src.offset = circleCollider2DComponent["Offset"].as<glm::vec2>();
 
-					float tempRadius = circleCollider2DComponent["Radius"].as<float>();
+					glm::vec2 tempRadius = circleCollider2DComponent["Radius"].as<glm::vec2>();
 					src.radius = glm::vec2(tempRadius);
 
 					src.density = circleCollider2DComponent["Density"].as<float>();

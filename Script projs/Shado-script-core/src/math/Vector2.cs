@@ -31,7 +31,7 @@ namespace Shado
 			return new Vector2(a.x - b.x, a.y - b.y);
 		}
 
-		public static Vector2 operator *(Vector2 vector, float scalar)
+        public static Vector2 operator *(Vector2 vector, float scalar)
 		{
 			return new Vector2(vector.x * scalar, vector.x * scalar);
 		}

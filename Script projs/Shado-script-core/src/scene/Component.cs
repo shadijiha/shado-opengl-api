@@ -172,4 +172,136 @@ namespace Shado
 		}
 
 	}
+
+	public class BoxCollider2DComponent : Component { 
+		public Vector2 offset
+		{
+			get {
+				Vector2 result;
+				InternalCalls.BoxCollider2DComponent_GetVec2(Entity.ID, FieldToQuery.Offset, out result, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+				return result;
+			}
+			set {
+				InternalCalls.BoxCollider2DComponent_SetVec2(Entity.ID, FieldToQuery.Offset, ref value, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+			}
+        }
+
+		public Vector2 size
+		{
+			get
+			{
+				Vector2 result;
+				InternalCalls.BoxCollider2DComponent_GetVec2(Entity.ID, FieldToQuery.Size, out result, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+				return result;
+			}
+			set
+			{
+				InternalCalls.BoxCollider2DComponent_SetVec2(Entity.ID, FieldToQuery.Size, ref value, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+			}
+		}
+
+		public float density
+		{
+			get
+			{
+				float result;
+				InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.Density, out result, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+				return result;
+			}
+			set
+			{
+				InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.Density, ref value, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+			}
+		}
+
+		public float friction
+		{
+			get
+			{
+				float result;
+				InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.Friction, out result, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+				return result;
+			}
+			set
+			{
+				InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.Friction, ref value, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+			}
+		}
+
+		public float restitution
+		{
+			get
+			{
+				float result;
+				InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.Restitution, out result, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+				return result;
+			}
+			set
+			{
+				InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.Restitution, ref value, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+			}
+		}
+
+		public float restitutionThreshold
+		{
+			get
+			{
+				float result;
+				InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.RestitutionThreshold, out result, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+				return result;
+			}
+			set
+			{
+				InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.RestitutionThreshold, ref value, GetType() == typeof(BoxCollider2DComponent) ? FieldToQuery.BoxCollider : FieldToQuery.CircleCollider);
+			}
+		}
+
+		internal enum FieldToQuery
+		{
+			Density = 0,
+			Friction, Restitution, RestitutionThreshold,
+			Offset, Size,
+			CircleCollider, BoxCollider
+		}
+	}
+
+	public class CircleCollider2DComponent : BoxCollider2DComponent { }
+
+	public class CameraComponent : Component {
+
+		public bool primary
+        {
+			get
+			{
+				bool result;
+				InternalCalls.CameraComponent_GetPrimary(Entity.ID, out result);
+				return result;
+			}
+
+			set {
+				InternalCalls.CameraComponent_SetPrimary(Entity.ID, ref value);
+			}
+		}
+
+		public Type type {
+			get
+			{
+				Type result;
+				InternalCalls.CameraComponent_GetType(Entity.ID, out result);
+				return result;
+			}
+			set
+			{
+				InternalCalls.CameraComponent_SetType(Entity.ID, ref value);
+			}
+		}
+
+		public void SetViewport(uint width, uint height) {
+			InternalCalls.CameraComponent_SetViewport(Entity.ID, width, height);
+		}
+
+		public enum Type {
+			Orthographic = 0, Orbit = 1
+		}
+	}
 }

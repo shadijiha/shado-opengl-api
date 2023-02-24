@@ -4,8 +4,88 @@ using System.Threading;
 using Shado;
 
 namespace Sandbox
-{   
-   
+{
+    public class Test : Entity
+    {
+        public float maxDelta;
+        public float moveRate;
+        public float tilingFactor = 1.0f;
+        private TransformComponent transform;
+        private float dir = 1;
+
+        public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
+        public Colour colourTest;
+        public Vector3 test;
+
+        void OnCreate()
+        {
+            transform = GetComponent<TransformComponent>();
+            GetComponent<SpriteRendererComponent>().texture = texture;
+            //GetComponent<CircleCollider2DComponent>().restitution = 0.9f;
+
+            Log.Info(transform);
+        }
+
+        void OnUpdate(float dt)
+        {
+            GetComponent<SpriteRendererComponent>().colour = colourTest;
+            //GetComponent<SpriteRendererComponent>().texture = texture;
+            //Vector3 pos = transform.position;
+            //pos.x += moveRate * dt * dir;
+            //transform.position = pos;
+
+            //if (pos.x > maxDelta || pos.x < -maxDelta) {
+            //    dir = -dir;
+            //}
+
+            //GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
+        }
+    }
+
+    public class TestCamera : Entity {
+
+        public float moveDelta = 5.0f;
+        private CameraComponent camera;
+        private Entity camera2;
+
+        void OnCreate() { 
+            if (HasComponent<CameraComponent>())
+                camera = GetComponent<CameraComponent>();
+            camera2 = FindEntityByName("camera2");
+        }
+
+        void OnUpdate(float dt) {
+            
+            Vector3 pos = translation;
+            if (Input.IsKeyDown(KeyCode.W)) {
+                pos.y += moveDelta * dt;
+            }
+            if (Input.IsKeyDown(KeyCode.S))
+            {
+                pos.y -= moveDelta * dt;
+            }
+            if (Input.IsKeyDown(KeyCode.A))
+            {
+                pos.x -= moveDelta * dt;
+            }
+            if (Input.IsKeyDown(KeyCode.D))
+            {
+                pos.x += moveDelta * dt;
+            }
+            if (Input.IsKeyDown(KeyCode.Space))
+            {
+                camera.primary = false;
+                camera2.GetComponent<CameraComponent>().primary = true;
+            }
+            else {
+                camera.primary = true;
+                camera2.GetComponent<CameraComponent>().primary = false;
+            }
+            
+            translation = pos;
+        }
+    }
+
     //public class Test : Entity
     //{
     //    private SpriteRendererComponent sprite; 
@@ -43,7 +123,7 @@ namespace Sandbox
 
     //            var bc = entity.AddComponent<CircleCollider2DComponent>();
     //            bc.Restitution = 0.7f;
- 
+
     //            entities.Add(entity);
     //        }
 
@@ -85,7 +165,7 @@ namespace Sandbox
     //        sprite.Color = new Vector4(
     //            Math.Abs(pos.x), Math.Abs(pos.y), Math.Abs(pos.z), 1.0f
     //        );
-            
+
     //    }
 
     //    protected override void OnDestroyed()

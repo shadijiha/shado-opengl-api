@@ -4,37 +4,6 @@ using Shado.Editor;
 
 namespace Sandbox
 {
-    public class Test : Entity { 
-        public float maxDelta;
-        public float moveRate;
-        public float tilingFactor = 1.0f;
-        private TransformComponent transform;
-        private float dir = 1;
-
-        public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
-        public Colour colourTest;
-        public Vector3 test;
-
-        void OnCreate() {
-            transform = GetComponent<TransformComponent>();
-            GetComponent<SpriteRendererComponent>().texture = texture;
-        }
-
-        void OnUpdate(float dt) {
-            GetComponent<SpriteRendererComponent>().colour = colourTest;
-            //Vector3 pos = transform.position;
-            //pos.x += moveRate * dt * dir;
-            //transform.position = pos;
-
-            //if (pos.x > maxDelta || pos.x < -maxDelta) {
-            //    dir = -dir;
-            //}
-
-            //GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
-        }
-    }
-
-
     //public class Grid : Entity
     //{
     //    ParticuleSystem system = new ParticuleSystem();

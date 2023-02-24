@@ -23,6 +23,13 @@ namespace Shado
             return InternalCalls.Texture2D_Create(filepath);
         }
 
+        internal void Reset(string filepath)
+        {
+            IntPtr newHandle;
+            InternalCalls.Texture2D_Reset(native, filepath, out newHandle);
+            native = newHandle;
+        }
+
         public override string ToString()
         {
             return $"Texture2D({filepath}, {native})";
@@ -48,6 +55,7 @@ namespace Shado
             UI.Image(texture, new Vector2(60, 60));
             UI.InputTextFileChoose(fieldName, texture.filepath, textureExtension, path => {
                 Console.WriteLine(path);
+                texture.Reset(path);
             });
         }
     }

@@ -199,7 +199,7 @@ namespace Shado {
 						}
 					}
 
-					if (ImGui::MenuItem("Save Project...", "Ctrl+P+S")) {
+					if (Project::GetActive() && ImGui::MenuItem("Save Project...", "Ctrl+P+S")) {
 						//std::string path = FileDialogs::chooseFolder();
 						std::string path = std::filesystem::absolute("resources/projects/Test 123").string();
 						Ref<Project> active = Project::GetActive();

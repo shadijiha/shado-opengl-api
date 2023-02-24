@@ -410,6 +410,174 @@ namespace Shado {
 	}
 
 	/**
+	* BoxCollider2DComponent
+	*/
+	enum class BoxCollider2DComponent_FieldToQuery
+	{
+		Density = 0,
+		Friction, Restitution, RestitutionThreshold,
+		Offset, Size,
+		CircleCollider, BoxCollider
+	};
+
+	static void BoxCollider2DComponent_GetVec2(UUID entityID, BoxCollider2DComponent_FieldToQuery field, glm::vec2* outValue, BoxCollider2DComponent_FieldToQuery componentType) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		BoxCollider2DComponent& bc = (componentType == BoxCollider2DComponent_FieldToQuery::BoxCollider
+				? entity.getComponent<BoxCollider2DComponent>() : 
+				  (BoxCollider2DComponent&)entity.getComponent<CircleCollider2DComponent>()
+			);
+		
+		switch (field) {
+			case BoxCollider2DComponent_FieldToQuery::Offset: 
+				*outValue = bc.offset;
+				break;
+			case BoxCollider2DComponent_FieldToQuery::Size:
+				*outValue = bc.size;
+				break;
+			default:
+				SHADO_CORE_ERROR("Invalid BoxCollider2DComponent query field {0}", (int)field);
+				break;
+		}
+	}
+
+	static void BoxCollider2DComponent_SetVec2(UUID entityID, BoxCollider2DComponent_FieldToQuery field, glm::vec2* refValue, BoxCollider2DComponent_FieldToQuery componentType) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		BoxCollider2DComponent& bc = (componentType == BoxCollider2DComponent_FieldToQuery::BoxCollider
+			? entity.getComponent<BoxCollider2DComponent>() :
+			(BoxCollider2DComponent&)entity.getComponent<CircleCollider2DComponent>()
+			);
+
+		switch (field) {
+		case BoxCollider2DComponent_FieldToQuery::Offset:
+			bc.offset = *refValue;
+			break;
+		case BoxCollider2DComponent_FieldToQuery::Size:
+			bc.size = *refValue;
+			break;
+		default:
+			SHADO_CORE_ERROR("Invalid BoxCollider2DComponent query field {0}", (int)field);
+			break;
+		}
+	}
+
+	static void BoxCollider2DComponent_GetFloat(UUID entityID, BoxCollider2DComponent_FieldToQuery field, float* value, BoxCollider2DComponent_FieldToQuery componentType) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		BoxCollider2DComponent& bc = (componentType == BoxCollider2DComponent_FieldToQuery::BoxCollider
+			? entity.getComponent<BoxCollider2DComponent>() :
+			(BoxCollider2DComponent&)entity.getComponent<CircleCollider2DComponent>()
+			);
+
+		switch (field) {
+		case BoxCollider2DComponent_FieldToQuery::Density:
+			*value = bc.density;
+			break;
+		case BoxCollider2DComponent_FieldToQuery::Friction:
+			*value = bc.friction;
+			break;
+		case BoxCollider2DComponent_FieldToQuery::Restitution:
+			*value = bc.restitution;
+			break;
+		case BoxCollider2DComponent_FieldToQuery::RestitutionThreshold:
+			*value = bc.restitutionThreshold;
+			break;
+		default:
+			SHADO_CORE_ERROR("Invalid BoxCollider2DComponent query field {0}", (int)field);
+			break;
+		}
+	}
+
+	static void BoxCollider2DComponent_SetFloat(UUID entityID, BoxCollider2DComponent_FieldToQuery field, float* value, BoxCollider2DComponent_FieldToQuery componentType) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		BoxCollider2DComponent& bc = (componentType == BoxCollider2DComponent_FieldToQuery::BoxCollider
+			? entity.getComponent<BoxCollider2DComponent>() :
+			(BoxCollider2DComponent&)entity.getComponent<CircleCollider2DComponent>()
+			);
+
+		switch (field) {
+		case BoxCollider2DComponent_FieldToQuery::Density:
+			bc.density = *value;
+			break;
+		case BoxCollider2DComponent_FieldToQuery::Friction:
+			bc.friction = *value;
+			break;
+		case BoxCollider2DComponent_FieldToQuery::Restitution:
+			bc.restitution = *value;
+			break;
+		case BoxCollider2DComponent_FieldToQuery::RestitutionThreshold:
+			bc.restitutionThreshold = *value;
+			break;
+		default:
+			SHADO_CORE_ERROR("Invalid BoxCollider2DComponent query field {0}", (int)field);
+			break;
+		}
+	}
+
+	/**
+	 * Camera component
+	 */
+	static void CameraComponent_GetPrimary(UUID entityID, bool* primary) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		*primary = entity.getComponent<CameraComponent>().primary;
+	}
+
+	static void CameraComponent_SetPrimary(UUID entityID, bool* primary) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		entity.getComponent<CameraComponent>().primary = *primary;
+	}
+
+	static void CameraComponent_GetType(UUID entityID, CameraComponent::Type* type) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		*type = entity.getComponent<CameraComponent>().type;
+	}
+
+	static void CameraComponent_SetType(UUID entityID, CameraComponent::Type* type) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		entity.getComponent<CameraComponent>().setType(*type);
+	}
+
+	static void CameraComponent_SetViewport(UUID entityID, uint32_t width, uint32_t height) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		entity.getComponent<CameraComponent>().setViewportSize(width, height);
+	}
+
+
+	/**
 	* Input
 	*/
 	static bool Input_IsKeyDown(KeyCode keycode)
@@ -427,7 +595,7 @@ namespace Shado {
 			path = Project::GetProjectDirectory() / path;
 
 		// Load textre
-		Texture2D* texture = new Texture2D(path.string());
+		Texture2D* texture = Texture2D::create(path.string()).get(); //new Texture2D(path.string());
 
 		// Create the C# Texture2D object instance
 		ScriptClass klass = ScriptClass("Shado", "Texture2D", true);
@@ -448,6 +616,42 @@ namespace Shado {
 		//delete ptr;
 	}
 
+	static void Texture2D_Reset(Texture2D* ptr, MonoString* filepath, Texture2D** newHandle) {
+		delete ptr;
+		*newHandle = Texture2D::create(mono_string_to_utf8(filepath)).get();
+	}
+
+	/**
+	 * Log
+	 */
+	enum class Log_Type {
+		Info = 0, Warn, Error, Critical, Trace
+	};
+	static void Log_Log(MonoString* message, Log_Type type) {
+		std::string msg = mono_string_to_utf8(message);
+
+		switch (type)
+		{
+		case Shado::Log_Type::Info:
+			SHADO_INFO(msg);
+			break;
+		case Shado::Log_Type::Warn:
+			SHADO_WARN(msg);
+			break;
+		case Shado::Log_Type::Error:
+			SHADO_ERROR(msg);
+			break;
+		case Shado::Log_Type::Critical:
+			SHADO_CRITICAL(msg);
+			break;
+		case Shado::Log_Type::Trace:
+			SHADO_TRACE(msg);
+			break;
+		default:
+			SHADO_CORE_ERROR("Unknown log type {0} for message {1}", (int)type, msg);
+			break;
+		}
+	}
 
 	/**
 	 * UI
@@ -571,10 +775,24 @@ namespace Shado {
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetType);
 		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetType);
 
+		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetVec2);
+		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetVec2);
+		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetFloat);
+		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetFloat);
+
+		SHADO_ADD_INTERNAL_CALL(CameraComponent_GetPrimary);
+		SHADO_ADD_INTERNAL_CALL(CameraComponent_SetPrimary);
+		SHADO_ADD_INTERNAL_CALL(CameraComponent_GetType);
+		SHADO_ADD_INTERNAL_CALL(CameraComponent_SetType);
+		SHADO_ADD_INTERNAL_CALL(CameraComponent_SetViewport);
+
 		SHADO_ADD_INTERNAL_CALL(Input_IsKeyDown);
 
 		SHADO_ADD_INTERNAL_CALL(Texture2D_Create);
 		SHADO_ADD_INTERNAL_CALL(Texture2D_Destroy);
+		SHADO_ADD_INTERNAL_CALL(Texture2D_Reset);
+
+		SHADO_ADD_INTERNAL_CALL(Log_Log);
 
 		SHADO_ADD_UI_INTERNAL_CALL(Text);
 		SHADO_ADD_UI_INTERNAL_CALL(Image_Native);

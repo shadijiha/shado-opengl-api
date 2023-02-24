@@ -89,6 +89,31 @@ namespace Shado
 		internal extern static void Rigidbody2DComponent_ApplyLinearImpulseToCenter(ulong entityID, ref Vector2 impulse, bool wake);
 
 		/**
+		 * BoxCollider2D
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void BoxCollider2DComponent_GetVec2(ulong entityId, BoxCollider2DComponent.FieldToQuery field, out Vector2 offset, BoxCollider2DComponent.FieldToQuery componentType);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void BoxCollider2DComponent_SetVec2(ulong entityId, BoxCollider2DComponent.FieldToQuery field, ref Vector2 offset, BoxCollider2DComponent.FieldToQuery componentType);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void BoxCollider2DComponent_GetFloat(ulong entityId, BoxCollider2DComponent.FieldToQuery field, out float offset, BoxCollider2DComponent.FieldToQuery componentType);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void BoxCollider2DComponent_SetFloat(ulong entityId, BoxCollider2DComponent.FieldToQuery field, ref float offset, BoxCollider2DComponent.FieldToQuery componentType);
+
+		/**
+		 *  CameraComponent
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void CameraComponent_GetPrimary(ulong entityId, out bool primary);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void CameraComponent_SetPrimary(ulong entityId, ref bool primary);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void CameraComponent_GetType(ulong entityId, out CameraComponent.Type type);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void CameraComponent_SetType(ulong entityId, ref CameraComponent.Type type);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void CameraComponent_SetViewport(ulong entityID, uint width, uint height);
+		/**
 		 * Input
 		 **/
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -102,5 +127,14 @@ namespace Shado
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Texture2D_Destroy(IntPtr native);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Texture2D_Reset(IntPtr ptr, string filepath, out IntPtr newHandle);
+
+		/**
+		 * Log
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Log_Log(string message, Log.Type type);
 	}
 }
