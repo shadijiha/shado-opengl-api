@@ -76,6 +76,7 @@ namespace Shado {
 	public:
 		ScriptClass() = default;
 		ScriptClass(const std::string& classNamespace, const std::string& className, bool isCore = false);
+		ScriptClass(MonoClass* klass);
 
 		MonoObject* Instantiate(MonoMethod* ctor = nullptr, void** args = nullptr);
 		MonoMethod* GetMethod(const std::string& name, int parameterCount);

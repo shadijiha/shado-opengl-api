@@ -37,20 +37,26 @@ namespace Sandbox
     public class Vector3Editor : Editor {
         protected override void OnEditorDraw()
         {
-            Vector3 vec = (Vector3)target;
-            Console.WriteLine("Drawing " + vec);
+            //Vector3 vec = (Vector3)target;
+            try
+            {
+                Console.WriteLine("Target: " + target.ToString());
+            }
+            catch (Exception e) { 
+                Console.WriteLine(e.ToString());
+            }
         }
     }
 
-    [EditorTargetType(typeof(Texture2D))]
-    public class Texture2DEditor : Editor
-    {
-        protected override void OnEditorDraw()
-        {
-            Texture2D vec = (Texture2D)target;
-            Console.WriteLine("Drawing " + vec);
-        }
-    }
+    //[EditorTargetType(typeof(Texture2D))]
+    //public class Texture2DEditor : Editor
+    //{
+    //    protected void OnEditorDraw()
+    //    {
+    //        Texture2D vec = (Texture2D)target;
+    //        Console.WriteLine("Drawing " + vec);
+    //    }
+    //}
 
     //public class Grid : Entity
     //{
