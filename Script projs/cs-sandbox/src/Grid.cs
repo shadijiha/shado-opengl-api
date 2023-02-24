@@ -12,7 +12,8 @@ namespace Sandbox
         private float dir = 1;
 
         public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
-        private Vector3 test;
+        public Colour colourTest;
+        public Vector3 test;
 
         void OnCreate() {
             transform = GetComponent<TransformComponent>();
@@ -20,6 +21,7 @@ namespace Sandbox
         }
 
         void OnUpdate(float dt) {
+            GetComponent<SpriteRendererComponent>().colour = colourTest;
             //Vector3 pos = transform.position;
             //pos.x += moveRate * dt * dir;
             //transform.position = pos;
@@ -31,7 +33,6 @@ namespace Sandbox
             //GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
         }
     }
-
 
 
     //public class Grid : Entity

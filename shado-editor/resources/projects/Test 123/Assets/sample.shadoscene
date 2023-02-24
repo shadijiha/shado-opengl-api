@@ -60,6 +60,9 @@ Entities:
     ScriptComponent:
       ClassName: Sandbox.Test
       ScriptFields:
+        - Name: colourTest
+          Type: Colour
+          Data: [0.360784322, 0.4627451, 0.709803939, 1]
         - Name: maxDelta
           Type: Float
           Data: 5

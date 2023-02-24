@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UI = Shado.Editor.UI;
 
 namespace Shado
@@ -43,7 +40,6 @@ namespace Shado
         {
             if (target is null)
             {
-                Console.WriteLine("Target is null!!!");
                 return;
             }
 

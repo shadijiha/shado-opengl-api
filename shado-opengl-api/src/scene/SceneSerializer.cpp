@@ -177,7 +177,7 @@ namespace Shado {
 		try
 		{
 			data = YAML::LoadFile(filepath);
-		} catch (YAML::ParserException e)
+		} catch (YAML::Exception e)
 		{
 			return false;
 		}
@@ -353,6 +353,7 @@ namespace Shado {
 									READ_SCRIPT_FIELD(Vector2, glm::vec2);
 									READ_SCRIPT_FIELD(Vector3, glm::vec3);
 									READ_SCRIPT_FIELD(Vector4, glm::vec4);
+									READ_SCRIPT_FIELD(Colour, glm::vec4);
 									READ_SCRIPT_FIELD(Entity, UUID);
 								}
 							}
@@ -555,6 +556,7 @@ namespace Shado {
 						WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
 						WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
 						WRITE_SCRIPT_FIELD(Vector4, glm::vec4);
+						WRITE_SCRIPT_FIELD(Colour, glm::vec4);
 						WRITE_SCRIPT_FIELD(Entity, UUID);
 					}
 					out << YAML::EndMap; // ScriptFields

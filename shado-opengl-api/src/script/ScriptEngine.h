@@ -213,6 +213,7 @@ namespace Shado {
 			case ScriptFieldType::Vector2: return "Vector2";
 			case ScriptFieldType::Vector3: return "Vector3";
 			case ScriptFieldType::Vector4: return "Vector4";
+			case ScriptFieldType::Colour:  return "Colour";
 			case ScriptFieldType::Entity:  return "Entity";
 			}
 			SHADO_CORE_ASSERT(false, "Unknown ScriptFieldType");
@@ -238,6 +239,7 @@ namespace Shado {
 			if (fieldType == "Vector3") return ScriptFieldType::Vector3;
 			if (fieldType == "Vector4") return ScriptFieldType::Vector4;
 			if (fieldType == "Entity")  return ScriptFieldType::Entity;
+			if (fieldType == "Colour")	return ScriptFieldType::Colour;
 
 			SHADO_CORE_ASSERT(false, "Unknown ScriptFieldType");
 			return ScriptFieldType::None;

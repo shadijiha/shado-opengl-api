@@ -1,22 +1,24 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Shado
 {
+    [StructLayout(LayoutKind.Sequential)]
     public struct Colour
     {
-        int r, g, b, a;
+        public float r, g, b, a;
 
         // TODO: make aggressive inline
         public static readonly Colour Black = new Colour(0, 0, 0);
-        public static readonly Colour White = new Colour(255, 255, 255);
-        public static readonly Colour Red = new Colour(255, 0, 0);
-        public static readonly Colour Green = new Colour(0, 255, 0);
-        public static readonly Colour Blue = new Colour(0, 0, 255);
-        public static readonly Colour Yellow = new Colour(255, 255, 0);
-        public static readonly Colour Maganta = new Colour(255, 0, 255);
-        public static readonly Colour Cyan = new Colour(0, 255, 255);
+        public static readonly Colour White = new Colour(1.0f, 1.0f, 1.0f);
+        public static readonly Colour Red = new Colour(1.0f, 0, 0);
+        public static readonly Colour Green = new Colour(0, 1.0f, 0);
+        public static readonly Colour Blue = new Colour(0, 0, 1.0f);
+        public static readonly Colour Yellow = new Colour(1.0f, 1.0f, 0);
+        public static readonly Colour Maganta = new Colour(1.0f, 0, 1.0f);
+        public static readonly Colour Cyan = new Colour(0, 1.0f, 1.0f);
 
-        public Colour(int r, int g, int b, int a)
+        public Colour(float r, float g, float b, float a)
         {
             this.r = r;
             this.g = g;
@@ -24,12 +26,12 @@ namespace Shado
             this.a = a;
         }
 
-        public Colour(int r, int g, int b)
+        public Colour(float r, float g, float b)
             : this(r, g, b, 255) { }
 
-        public Colour(int rgb) : this(rgb, rgb, rgb) { }
+        public Colour(float rgb) : this(rgb, rgb, rgb) { }
 
-        public Colour(int rgb, int a) : this(rgb, rgb, rgb, a) { }
+        public Colour(float rgb, float a) : this(rgb, rgb, rgb, a) { }
 
         /**
          * @param hue from 0 to 360
@@ -47,20 +49,25 @@ namespace Shado
             var m = lightness - (C / 2.0f);
 
             return new Colour(
-                (int)((r1 + m) * 255),
-                (int)((g1 + m) * 255),
-                (int)((b1 + m) * 255)
+                (float)(r1 + m),
+                (float)(g1 + m),
+                (float)(b1 + m)
             );
         }
 
         public static explicit operator Vector3(Colour c)
         {
-            return new Vector3(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f);
+            return new Vector3(c.r, c.g, c.b);
         }
 
         public static implicit operator Vector4(Colour c)
         {
-            return new Vector4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+            return new Vector4(c.r, c.g, c.b, c.a);
+        }
+
+        public override string ToString()
+        {
+            return $"Colour({r}, {g}, {b}, {a})";
         }
     }
 }

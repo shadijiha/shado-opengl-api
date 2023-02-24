@@ -284,6 +284,22 @@ namespace Shado {
 									scriptInstance->SetFieldValue(name, data);
 								}
 							}
+							else if (field.Type == ScriptFieldType::Vector3)
+							{
+								glm::vec3 data = scriptInstance->GetFieldValue<glm::vec3>(name);
+								if (UI::Vec3Control(name, data))
+								{
+									scriptInstance->SetFieldValue(name, data);
+								}
+							}
+							else if (field.Type == ScriptFieldType::Colour)
+							{
+								glm::vec4 data = scriptInstance->GetFieldValue<glm::vec4>(name);
+								if (UI::ColorControl(name, data))
+								{
+									scriptInstance->SetFieldValue(name, data);
+								}
+							}
 							else {
 								ScriptEngine::DrawCustomEditorForFieldRunning(field, scriptInstance, name);
 							}
@@ -311,6 +327,19 @@ namespace Shado {
 									if (ImGui::DragFloat(name.c_str(), &data))
 										scriptField.SetValue(data);
 								}
+								else if (field.Type == ScriptFieldType::Vector3)
+								{
+									glm::vec3 data = scriptField.GetValue<glm::vec3>();
+									if (UI::Vec3Control(name, data))
+										scriptField.SetValue(data);
+								}
+								else if (field.Type == ScriptFieldType::Colour)
+								{
+									glm::vec4 data = scriptField.GetValue<glm::vec4>();
+									if (UI::ColorControl(name, data))
+										scriptField.SetValue(data);
+								}
+
 							} else
 							{
 								// Display control to set it maybe
@@ -319,6 +348,24 @@ namespace Shado {
 									float data = 0.0f;
 									if (ImGui::DragFloat(name.c_str(), &data))
 									{
+										ScriptFieldInstance& fieldInstance = entityFields[name];
+										fieldInstance.Field = field;
+										fieldInstance.SetValue(data);
+									}
+								}
+								else if (field.Type == ScriptFieldType::Vector3)
+								{
+									glm::vec3 data = {0, 0, 0};
+									if (UI::Vec3Control(name, data)) {
+										ScriptFieldInstance& fieldInstance = entityFields[name];
+										fieldInstance.Field = field;
+										fieldInstance.SetValue(data);
+									}
+								}
+								else if (field.Type == ScriptFieldType::Colour)
+								{
+									glm::vec4 data = {0, 0, 0, 1.0f};
+									if (UI::ColorControl(name, data)) {
 										ScriptFieldInstance& fieldInstance = entityFields[name];
 										fieldInstance.Field = field;
 										fieldInstance.SetValue(data);
@@ -449,71 +496,7 @@ namespace Shado {
 
 		ImGui::PopID();
 	}
-
-	// TODOOOOO: THis should be deleted and replaced with UI.InputText...
-	static void drawInputTextWithChooseFile(
-		const std::string label, const std::string& text, const std::vector<std::string>& dragAndDropExtensions, int id,
-		std::function<void(std::string)> onChange
-	) {
-		bool textureChanged = false;
-		ImGui::InputText(label.c_str(), (char*)text.c_str(), text.length(), ImGuiInputTextFlags_ReadOnly);
-		std::string texturePath;
-
-		// For drag and drop
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-			{
-				const wchar_t* path = (const wchar_t*)payload->Data;
-				std::filesystem::path dataPath = std::filesystem::path(g_AssetsPath) / path;
-
-				bool acceptable = dragAndDropExtensions.empty();
-				for (const auto& ext : dragAndDropExtensions) {
-					if (ext == dataPath.extension()) {
-						acceptable = true;
-						break;
-					}
-				}
-
-				if (acceptable)
-					onChange(dataPath.string());
-				else
-					SHADO_CORE_WARN("Invalid drag and drop file extension {0}", dataPath.filename());
-			}
-
-			ImGui::EndDragDropTarget();
-		}
-
-		// File choose
-		ImGui::PushID(id);
-		ImGui::SameLine();
-		if (ImGui::Button("...", { 24, 24 })) {
-
-			std::string buffer = "";
-			int count = 0;
-			for (const auto& ext : dragAndDropExtensions) {
-				buffer += "*" + ext;
-
-				if (count != dragAndDropExtensions.size() - 1)
-					buffer += ";";
-				count++;
-			}
-
-			// Need to do this because we have \0 in string body
-			std::string filter = "Files (";
-			filter += std::string((buffer + ")\0").c_str(), buffer.length() + 2);
-			filter += std::string((buffer + "\0").c_str(), buffer.length() + 1);
-
-			texturePath = FileDialogs::openFile(filter.c_str());
-			textureChanged = true;
-		}
-		ImGui::PopID();
-
-
-		if (textureChanged && !texturePath.empty())
-			onChange(texturePath);
-	}
-
+	
 	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight) {
 		ImGui::SameLine();
 		ImGui::PushItemWidth(-1);
@@ -567,13 +550,14 @@ namespace Shado {
 		ImGui::PopItemWidth();
 	}
 
+	// TODOOOOO: THis should be deleted and replaced with UI.InputText...
 	static void drawTextureControl(void* spriteData, const std::string& type ) {
 		SpriteRendererComponent& sprite = *(SpriteRendererComponent*)spriteData;
 
 		// =========== Texture
 		std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
 
-		drawInputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(sprite.texture).hash_code(),
+		UI::InputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(sprite.texture).hash_code(),
 			[&](std::string path) {
 				Ref<Texture2D> texture = CreateRef<Texture2D>(path);
 				if (texture->isLoaded())
@@ -601,7 +585,7 @@ namespace Shado {
 			return;
 
 		std::string shaderPath = sprite.shader ? sprite.shader->getName().c_str() : "Default Shader";
-		drawInputTextWithChooseFile("Shader", shaderPath, { ".glsl", ".shader" }, typeid(sprite.shader).hash_code(),
+		UI::InputTextWithChooseFile("Shader", shaderPath, { ".glsl", ".shader" }, typeid(sprite.shader).hash_code(),
 			[&](std::string path) {
 				sprite.shader = CreateRef<Shader>(path);
 			}
