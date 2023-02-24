@@ -7,8 +7,8 @@ namespace Shado
 	{
 		public float x, y;
 
-		public static Vector3 zero { [MethodImpl(MethodImplOptions.AggressiveInlining)] get { return new Vector3(0f); } }
-		public static Vector3 one { [MethodImpl(MethodImplOptions.AggressiveInlining)] get { return new Vector3(1f); } }
+		public static Vector2 zero { [MethodImpl(MethodImplOptions.AggressiveInlining)] get { return new Vector2(0f); } }
+		public static Vector2 one { [MethodImpl(MethodImplOptions.AggressiveInlining)] get { return new Vector2(1f); } }
 
 		public Vector2(float scalar)
 		{

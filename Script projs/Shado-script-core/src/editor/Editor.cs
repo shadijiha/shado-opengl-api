@@ -5,6 +5,7 @@ namespace Shado.Editor
     public abstract class Editor
     {
         protected object target;
+        protected string fieldName;
 
         protected abstract void OnEditorDraw();
 

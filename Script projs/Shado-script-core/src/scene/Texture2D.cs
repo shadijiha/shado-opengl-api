@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using UI = Shado.Editor.UI;
 
 namespace Shado
 {
@@ -29,6 +29,30 @@ namespace Shado
         public override string ToString()
         {
             return $"Texture2D({filepath}, {native})";
+        }
+    }
+
+    [Editor.EditorTargetType(typeof(Texture2D))]
+    public class Texture2DEditor : Editor.Editor
+    {
+        static string[] textureExtension = {
+            ".jpg", ".png"
+        };
+
+        protected override void OnEditorDraw()
+        {
+            if (target is null)
+            {
+                Console.WriteLine("Target is null!!!");
+                return;
+            }
+
+            Texture2D texture = (Texture2D)target;
+            UI.Text(texture.filepath);
+            UI.Image(texture, new Vector2(60, 60));
+            UI.InputTextFileChoose(fieldName, texture.filepath, textureExtension, path => {
+                Console.WriteLine(path);
+            });
         }
     }
 }

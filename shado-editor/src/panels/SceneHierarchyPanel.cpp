@@ -284,6 +284,9 @@ namespace Shado {
 									scriptInstance->SetFieldValue(name, data);
 								}
 							}
+							else {
+								ScriptEngine::DrawCustomEditorForFieldRunning(field, scriptInstance, name);
+							}
 						}
 					}
 				} else
@@ -320,11 +323,6 @@ namespace Shado {
 										fieldInstance.Field = field;
 										fieldInstance.SetValue(data);
 									}
-								}
-								else {
-									ScriptFieldInstance& fieldInstance = entityFields[name];
-									fieldInstance.Field = field;
-									ScriptEngine::InvokeCustomEditorForField(field, fieldInstance);
 								}
 							}
 						}
@@ -452,6 +450,7 @@ namespace Shado {
 		ImGui::PopID();
 	}
 
+	// TODOOOOO: THis should be deleted and replaced with UI.InputText...
 	static void drawInputTextWithChooseFile(
 		const std::string label, const std::string& text, const std::vector<std::string>& dragAndDropExtensions, int id,
 		std::function<void(std::string)> onChange

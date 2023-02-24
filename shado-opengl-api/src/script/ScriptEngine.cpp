@@ -109,7 +109,6 @@ namespace Shado {
 
 			return it->second;
 		}
-
 	}
 
 	struct ScriptEngineData
@@ -127,6 +126,7 @@ namespace Shado {
 		std::filesystem::path AppAssemblyFilepath;
 
 		ScriptClass EntityClass;
+		ScriptClass EditorClass;
 
 		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
 		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
@@ -192,6 +192,7 @@ namespace Shado {
 
 		// Retrieve and instantiate class
 		s_Data->EntityClass = ScriptClass("Shado", "Entity", true);
+		s_Data->EditorClass = ScriptClass("Shado.Editor", "Editor", true);
 	}
 
 	void ScriptEngine::Shutdown()
@@ -281,6 +282,7 @@ namespace Shado {
 
 		// Retrieve and instantiate class
 		s_Data->EntityClass = ScriptClass("Shado", "Entity", true);
+		s_Data->EditorClass = ScriptClass("Shado.Editor", "Editor", true);
 	}
 
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
@@ -372,109 +374,120 @@ namespace Shado {
 		return s_Data->EntityScriptFields[entityID];
 	}
 
+	
+	void ScriptEngine::Helper_ProcessFields(MonoClass* monoClass, const char* className, Ref<ScriptClass> scriptClass) {
+		int fieldCount = mono_class_num_fields(monoClass);
+
+		SHADO_CORE_WARN("{} has {} fields:", className, fieldCount);
+		void* iterator = nullptr;
+		while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
+		{
+			const char* fieldName = mono_field_get_name(field);
+			uint32_t flags = mono_field_get_flags(field);
+			if (flags & FIELD_ATTRIBUTE_PUBLIC)
+			{
+				MonoType* type = mono_field_get_type(field);
+				ScriptFieldType fieldType = Utils::MonoTypeToScriptFieldType(type);
+				SHADO_CORE_WARN("  {} ({})", fieldName, Utils::ScriptFieldTypeToString(fieldType));
+
+				scriptClass->m_Fields[fieldName] = { fieldType, fieldName, field };
+			}
+		}
+	}
+
+	void ScriptEngine::Helper_ProcessClass(const MonoTableInfo* typeDefinitionsTable, int32_t i, MonoClass* entityClass, MonoClass* editorClass, MonoImage* image) {
+
+		uint32_t cols[MONO_TYPEDEF_SIZE];
+		mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
+
+		const char* nameSpace = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
+		const char* className = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
+		std::string fullName;
+		if (strlen(nameSpace) != 0)
+			fullName = fmt::format("{}.{}", nameSpace, className);
+		else
+			fullName = className;
+
+		MonoClass* monoClass = mono_class_from_name(image, nameSpace, className);
+
+		if (monoClass == nullptr)
+			return;
+
+		if (monoClass == entityClass)
+			return;
+
+		if (monoClass == editorClass)
+			return;
+
+		bool isEntity = mono_class_is_subclass_of(monoClass, entityClass, false);
+		if (isEntity) {
+
+			Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className);
+			s_Data->EntityClasses[fullName] = scriptClass;
+
+
+			// This routine is an iterator routine for retrieving the fields in a class.
+			// You must pass a gpointer that points to zero and is treated as an opaque handle
+			// to iterate over all of the elements. When no more values are available, the return value is NULL.
+			Helper_ProcessFields(monoClass, className, scriptClass);
+		}
+
+		bool isEditor = mono_class_is_subclass_of(monoClass, editorClass, false);
+		if (isEditor) {
+			bool isCore = image == s_Data->CoreAssemblyImage;
+			SHADO_CORE_INFO("{0}, {1}", fullName, isCore);
+
+			Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className, isCore);
+
+			Helper_ProcessFields(monoClass, className, scriptClass);
+
+			// Get an instance of the class
+			Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(scriptClass);
+
+			// Call GetTargetType to get the type for
+			MonoString* typeFor = (MonoString*)scriptClass->InvokeMethod(
+				scriptInstance->GetManagedObject(),
+				//scriptClass->GetMethod("GetTargetType", 0)
+				mono_class_get_method_from_name(editorClass, "GetTargetType", 0)
+			);
+
+			if (typeFor != nullptr) {
+				std::string typeForStr = mono_string_to_utf8(typeFor);
+				s_Data->EditorClasses[typeForStr] = scriptClass;
+				s_Data->EditorInstances[typeForStr] = scriptInstance;
+			}
+		}
+	}
+
 	void ScriptEngine::LoadAssemblyClasses()
 	{
+		// Process AppAssembly
 		s_Data->EntityClasses.clear();
 
-		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(s_Data->AppAssemblyImage, MONO_TABLE_TYPEDEF);
-		int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
 		MonoClass* entityClass = mono_class_from_name(s_Data->CoreAssemblyImage, "Shado", "Entity");
 		MonoClass* editorClass = mono_class_from_name(s_Data->CoreAssemblyImage, "Shado.Editor", "Editor");
-
-		for (int32_t i = 0; i < numTypes; i++)
+		
 		{
-			uint32_t cols[MONO_TYPEDEF_SIZE];
-			mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
-
-			const char* nameSpace = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAMESPACE]);
-			const char* className = mono_metadata_string_heap(s_Data->AppAssemblyImage, cols[MONO_TYPEDEF_NAME]);
-			std::string fullName;
-			if (strlen(nameSpace) != 0)
-				fullName = fmt::format("{}.{}", nameSpace, className);
-			else
-				fullName = className;
-
-			MonoClass* monoClass = mono_class_from_name(s_Data->AppAssemblyImage, nameSpace, className);
-
-			if (monoClass == entityClass)
-				continue;
-
-			if (monoClass == editorClass)
-				continue;
-
-			bool isEntity = mono_class_is_subclass_of(monoClass, entityClass, false);
-			if (isEntity) {
-
-				Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className);
-				s_Data->EntityClasses[fullName] = scriptClass;
-
-
-				// This routine is an iterator routine for retrieving the fields in a class.
-				// You must pass a gpointer that points to zero and is treated as an opaque handle
-				// to iterate over all of the elements. When no more values are available, the return value is NULL.
-
-				int fieldCount = mono_class_num_fields(monoClass);
-				SHADO_CORE_WARN("{} has {} fields:", className, fieldCount);
-				void* iterator = nullptr;
-				while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
-				{
-					const char* fieldName = mono_field_get_name(field);
-					uint32_t flags = mono_field_get_flags(field);
-					if (flags & FIELD_ATTRIBUTE_PUBLIC)
-					{
-						MonoType* type = mono_field_get_type(field);
-						ScriptFieldType fieldType = Utils::MonoTypeToScriptFieldType(type);
-						SHADO_CORE_WARN("  {} ({})", fieldName, Utils::ScriptFieldTypeToString(fieldType));
-
-						scriptClass->m_Fields[fieldName] = { fieldType, fieldName, field };
-					}
-				}
-			}
-
-
-			bool isEditor = mono_class_is_subclass_of(monoClass, editorClass, false);
-			if (isEditor) {
-				Ref<ScriptClass> scriptClass = CreateRef<ScriptClass>(nameSpace, className);
-
-				int fieldCount = mono_class_num_fields(monoClass);
-				SHADO_CORE_WARN("{} has {} fields:", className, fieldCount);
-				void* iterator = nullptr;
-				while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
-				{
-					const char* fieldName = mono_field_get_name(field);
-					uint32_t flags = mono_field_get_flags(field);
-					if (flags & FIELD_ATTRIBUTE_PUBLIC)
-					{
-						MonoType* type = mono_field_get_type(field);
-						ScriptFieldType fieldType = Utils::MonoTypeToScriptFieldType(type);
-						SHADO_CORE_WARN("  {} ({})", fieldName, Utils::ScriptFieldTypeToString(fieldType));
-
-						scriptClass->m_Fields[fieldName] = { fieldType, fieldName, field };
-					}
-				}
-
-				// Get an instance of the class
-				Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(scriptClass);
-
-				// Call GetTargetType to get the type for
-				MonoString* typeFor = (MonoString*)scriptClass->InvokeMethod(
-					scriptInstance->GetManagedObject(),
-					//scriptClass->GetMethod("GetTargetType", 0)
-					mono_class_get_method_from_name(editorClass, "GetTargetType", 0)
-				);
-
-				if (typeFor != nullptr) {
-					std::string typeForStr = mono_string_to_utf8(typeFor);
-					s_Data->EditorClasses[typeForStr] = scriptClass;
-					s_Data->EditorInstances[typeForStr] = scriptInstance;
-				}
+			const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(s_Data->AppAssemblyImage, MONO_TABLE_TYPEDEF);
+			int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
+			for (int32_t i = 0; i < numTypes; i++)
+			{
+				Helper_ProcessClass(typeDefinitionsTable, i, entityClass, editorClass, s_Data->AppAssemblyImage);
 			}
 		}
 
-		auto& entityClasses = s_Data->EntityClasses;
+		// Process Core Assembly
+		{
+			const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(s_Data->CoreAssemblyImage, MONO_TABLE_TYPEDEF);
+			int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
+			for (int32_t i = 0; i < numTypes; i++)
+			{
+				Helper_ProcessClass(typeDefinitionsTable, i, entityClass, editorClass, s_Data->CoreAssemblyImage);
+			}
+		}
 
+		//auto& entityClasses = s_Data->EntityClasses;
 		//mono_field_get_value()
-
 	}
 
 	MonoString* ScriptEngine::NewString(const char* str)
@@ -488,13 +501,29 @@ namespace Shado {
 	}
 
 
-	void ScriptEngine::InvokeCustomEditorForField(const ScriptField& field, ScriptFieldInstance& instanceField)
+	void ScriptEngine::DrawCustomEditorForFieldRunning(const ScriptField& field, Ref<ScriptInstance> scriptInstance, const std::string& name)
 	{
 		for (auto [typeFor, editorInstance] : s_Data->EditorInstances) {
 			// If we find custom editor, then invoke the OnEditorDraw func
 			std::string temp = mono_type_get_name(mono_field_get_type(field.ClassField));
 			if (typeFor == temp) {
-				editorInstance->SetFieldValue("target", instanceField.GetValue<MonoObject*>());
+
+				// Set the target
+				MonoObject* target = scriptInstance->GetFieldValue<MonoObject*>(name);
+				mono_field_set_value(editorInstance->GetManagedObject(),
+					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "target"),
+					target
+				);
+
+				// Set the fieldName
+				mono_field_set_value(editorInstance->GetManagedObject(),
+					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "fieldName"),
+					ScriptEngine::NewString(name.c_str())
+				);
+
+				if (target == nullptr)
+					continue;
+
 				editorInstance->GetScriptClass()->InvokeMethod(
 					editorInstance->GetManagedObject(),
 					editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0)

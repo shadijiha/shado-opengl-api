@@ -8,6 +8,7 @@
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 #include "project/Project.h"
+#include "ui/UI.h"
 
 #include "physics/Physics2D.h"
 
@@ -28,6 +29,7 @@ namespace Shado {
 	static std::unordered_map<MonoType*, std::function<void(Entity)>> s_EntityAddComponentFuncs;
 
 #define SHADO_ADD_INTERNAL_CALL(Name) mono_add_internal_call("Shado.InternalCalls::" #Name, Name)
+#define SHADO_ADD_UI_INTERNAL_CALL(Name) mono_add_internal_call("Shado.Editor.UI::" #Name, Name)
 
 	static void NativeLog(MonoString* string, int parameter)
 	{
@@ -446,6 +448,56 @@ namespace Shado {
 		//delete ptr;
 	}
 
+
+	/**
+	 * UI
+	 */
+	static void Text(MonoString* str) {
+		ImGui::Text(mono_string_to_utf8(str));
+	}
+
+	static void Image_Native(Texture2D* ptr, glm::vec2 dim, glm::vec2 uv0, glm::vec2 uv1) {
+		ImGui::Image((ImTextureID)ptr->getRendererID(), { dim.x, dim.y }, { uv0.x, uv0.y }, { uv1.x, uv1.y});
+	}
+
+	static bool Button_Native(MonoString* str, glm::vec2 size) {
+		return ImGui::Button(mono_string_to_utf8(str), {size.x, size.y});
+	}
+
+	static void Seperator(MonoString* str) {
+		ImGui::Text(mono_string_to_utf8(str));
+	}
+
+	static bool InputTextFileChoose_Native(MonoString* labelStr, MonoString* textStr, MonoArray* extension, MonoString** outPath) {
+	
+		std::string label = mono_string_to_utf8(labelStr);
+		std::string text = mono_string_to_utf8(textStr);
+		std::vector<std::string> extensionCpp;
+
+		for (int i = 0; i < mono_array_length(extension); i++) {
+			MonoString* ext = mono_array_get(extension, MonoString*, i);
+			extensionCpp.push_back(mono_string_to_utf8(ext));
+		}
+		
+		// TODO: If UI doesn't work propery maybe issue with the ID? typeid()
+		bool hasChanged = false;
+		std::string pathChanged = "";
+		UI::InputTextWithChooseFile(label, text, extensionCpp,
+			typeid(labelStr).hash_code(),
+			[&hasChanged, &pathChanged](std::string path) {
+				hasChanged = true;
+				pathChanged = path;
+			}
+		);
+
+		if (hasChanged)
+			*outPath = ScriptEngine::NewString(pathChanged.c_str());
+		else
+			*outPath = nullptr;
+
+		return hasChanged;
+	}
+
 	template<typename... Component>
 	static void RegisterComponent()
 	{
@@ -523,6 +575,12 @@ namespace Shado {
 
 		SHADO_ADD_INTERNAL_CALL(Texture2D_Create);
 		SHADO_ADD_INTERNAL_CALL(Texture2D_Destroy);
+
+		SHADO_ADD_UI_INTERNAL_CALL(Text);
+		SHADO_ADD_UI_INTERNAL_CALL(Image_Native);
+		SHADO_ADD_UI_INTERNAL_CALL(Seperator);
+		SHADO_ADD_UI_INTERNAL_CALL(Button_Native);
+		SHADO_ADD_UI_INTERNAL_CALL(InputTextFileChoose_Native);
 	}
 
 }

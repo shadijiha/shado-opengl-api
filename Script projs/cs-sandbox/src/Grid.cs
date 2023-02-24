@@ -11,12 +11,11 @@ namespace Sandbox
         private TransformComponent transform;
         private float dir = 1;
 
-        private Texture2D texture;
-        public Vector3 test;
+        public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
+        private Vector3 test;
 
         void OnCreate() {
             transform = GetComponent<TransformComponent>();
-            texture = Texture2D.Create("Assets/riven2.jpg");
             GetComponent<SpriteRendererComponent>().texture = texture;
         }
 
@@ -33,30 +32,7 @@ namespace Sandbox
         }
     }
 
-    [EditorTargetType(typeof(Vector3))]
-    public class Vector3Editor : Editor {
-        protected override void OnEditorDraw()
-        {
-            //Vector3 vec = (Vector3)target;
-            try
-            {
-                Console.WriteLine("Target: " + target.ToString());
-            }
-            catch (Exception e) { 
-                Console.WriteLine(e.ToString());
-            }
-        }
-    }
 
-    //[EditorTargetType(typeof(Texture2D))]
-    //public class Texture2DEditor : Editor
-    //{
-    //    protected void OnEditorDraw()
-    //    {
-    //        Texture2D vec = (Texture2D)target;
-    //        Console.WriteLine("Drawing " + vec);
-    //    }
-    //}
 
     //public class Grid : Entity
     //{
@@ -120,7 +96,7 @@ namespace Sandbox
     //        var sprite = AddComponent<SpriteRendererComponent>();
     //        sprite.Color = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
     //        sprite.Texture = texture[random.Next(texture.Length)];
- 
+
     //        var rb = AddComponent<RigidBody2DComponent>();
     //        rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
 

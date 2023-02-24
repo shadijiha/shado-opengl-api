@@ -17,6 +17,7 @@ extern "C" {
 	typedef struct _MonoImage MonoImage;
 	typedef struct _MonoClassField MonoClassField;
 	typedef struct _MonoString MonoString;
+	typedef struct _MonoTableInfo MonoTableInfo;
 }
 
 namespace Shado {
@@ -169,7 +170,7 @@ namespace Shado {
 		static std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
 		static ScriptFieldMap& GetScriptFieldMap(Entity entity);
 
-		static void InvokeCustomEditorForField(const ScriptField& field, ScriptFieldInstance& instanceField);
+		static void DrawCustomEditorForFieldRunning(const ScriptField& field, Ref<ScriptInstance> scriptInstance, const std::string& name);
 
 		static MonoImage* GetCoreAssemblyImage();
 
@@ -182,6 +183,9 @@ namespace Shado {
 
 		static MonoObject* InstantiateClass(MonoClass* monoClass, MonoMethod* ctor = nullptr, void** args = nullptr);
 		static void LoadAssemblyClasses();
+
+		static void Helper_ProcessFields(MonoClass* monoClass, const char* className, Ref<ScriptClass> scriptClass);
+		static void Helper_ProcessClass(const MonoTableInfo* typeDefinitionsTable, int32_t i, MonoClass* entityClass, MonoClass* editorClass, MonoImage* image);
 
 		friend class ScriptClass;
 		friend class ScriptGlue;

@@ -109,7 +109,7 @@ namespace Shado {
 		const std::vector<std::string>& dragAndDropExtensions, int id, std::function<void(std::string)> onChange) {
 		bool textureChanged = false;
 
-		std::string texturePath;
+		std::string texturePath = text;
 		if (InputTextControl(label, texturePath) && Shado::Input::isKeyPressed(Shado::KeyCode::Enter)) {
 			textureChanged = true;
 		}
