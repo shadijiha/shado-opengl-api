@@ -57,5 +57,11 @@ namespace Shado
         public static int Ceil(float value) { 
             return (int)Math.Ceiling(value);
         }
+
+        private static Random random = new Random();
+        public static float Random(float min, float max)
+        {
+            return (float)((max - min) * random.NextDouble()) + min;
+        }
     }
 }

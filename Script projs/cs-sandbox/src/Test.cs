@@ -15,39 +15,36 @@ namespace Sandbox
 
         public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
         public Colour colourTest;
-        public Vector3 test;
+        public Vector3 debug_size = Vector3.one;
         public float angle = 0.0f;
-
+        public Shader shader = Shader.Create("Assets/empty.glsl");
+        public float totalDt = 0.0f;
         void OnCreate()
         {
             transform = GetComponent<TransformComponent>();
             GetComponent<SpriteRendererComponent>().texture = texture;
-            //GetComponent<CircleCollider2DComponent>().restitution = 0.9f;
-
-            Log.Info(transform);
+            GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
         }
 
         void OnUpdate(float dt)
         {
+            totalDt += dt;
             GetComponent<SpriteRendererComponent>().colour = colourTest;
             //GetComponent<SpriteRendererComponent>().texture = texture;
-            //Vector3 pos = transform.position;
-            //pos.x += moveRate * dt * dir;
-            //transform.position = pos;
+            Vector3 pos = transform.position;
+            pos.x += moveRate * dt * dir;
+            transform.position = pos;
 
-            //if (pos.x > maxDelta || pos.x < -maxDelta) {
-            //    dir = -dir;
-            //}
-
-            //GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
-
+            if (pos.x > maxDelta || pos.x < -maxDelta) {
+                dir = -dir;
+            }
         }
 
         void OnDraw() {
-            Renderer.DrawQuad(new Vector3(-1, 1, 0), Vector3.one, Colour.Blue);
-            Renderer.DrawRotatedQuad(new Vector3(2, 1, 0), Vector3.one, new Vector3(angle, angle, angle), Colour.Green);
-            Renderer.DrawLine(new Vector3(-1, 1, 0), new Vector3(2, 1, 0), Colour.Red);
-            angle += 0.05f;
+            //Renderer.DrawQuad(new Vector3(-1, 1, 0), debug_size, Colour.Blue, shader);
+            //Renderer.DrawRotatedQuad(new Vector3(2, 1, 0), Vector3.one, new Vector3(angle, angle, angle), Colour.Green);
+            //Renderer.DrawLine(new Vector3(-1, 1, 0), new Vector3(2, 1, 0), Colour.Red);
+            //angle += 0.01f;
         }
     }
 

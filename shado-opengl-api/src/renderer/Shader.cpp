@@ -226,15 +226,11 @@ namespace Shado {
 
 	void Shader::setFloat4(const std::string& name, const glm::vec4& value)
 	{
-
-
 		uploadUniformFloat4(name, value);
 	}
 
 	void Shader::setMat4(const std::string& name, const glm::mat4& value)
 	{
-
-
 		uploadUniformMat4(name, value);
 	}
 

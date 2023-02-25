@@ -24,5 +24,10 @@ namespace Shado
             Vector4 temp = (Vector4)colour;
             InternalCalls.Renderer_DrawLine(ref p0, ref p1, ref temp);
         }
+
+        public static void DrawQuad(Vector3 pos, Vector3 scale, Colour colour, Shader shader) {
+            Vector4 temp = colour;
+            InternalCalls.Renderer_DrawQuadShader(ref pos, ref scale, ref temp, shader.native);
+        }
     }
 }

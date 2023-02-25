@@ -622,6 +622,50 @@ namespace Shado {
 	}
 
 	/**
+	 * Shader
+	 */
+	static void Shader_CreateShader(MonoString* filepath, Shader** native) {
+		std::filesystem::path path = std::string(mono_string_to_utf8(filepath));
+
+		if (!path.is_absolute())
+			path = Project::GetProjectDirectory() / path;
+
+		// Generate shader
+		*native = new Shader(path.string());
+	}
+	static void Shader_SetInt(Shader* native, MonoString* name, int* value) {
+		if (native)
+			native->setInt(mono_string_to_utf8(name), *value);
+	}
+	static void Shader_SetIntArray(Shader* native, MonoString* name, MonoArray* value) {
+		if (native) {
+			native->setIntArray(mono_string_to_utf8(name),
+				mono_array_addr(value, int, 0),
+				mono_array_length(value)
+			);
+		}
+	}
+	static void Shader_SetFloat(Shader* native, MonoString* name, float* value) {
+		if (native)
+			native->setFloat(mono_string_to_utf8(name), *value);
+	}
+	static void Shader_SetFloat3(Shader* native, MonoString* name, glm::vec3* value) {
+		if (native)
+			native->setFloat3(mono_string_to_utf8(name), *value);
+	}
+	static void Shader_SetFloat4(Shader* native, MonoString* name, glm::vec4* value) {
+		if (native)
+			native->setFloat4(mono_string_to_utf8(name), *value);
+	}
+	static void Shader_Reset(Shader* oldNative, MonoString* filepath, Shader** newNative) {
+		delete oldNative;
+		Shader_CreateShader(filepath, newNative);
+	}
+	static void Shader_Destroy(Shader* oldNative) {
+		delete oldNative;
+	}
+
+	/**
 	 * Log
 	 */
 	enum class Log_Type {
@@ -668,6 +712,12 @@ namespace Shado {
 		Renderer2D::DrawLine(*p0, *p1, *colour);
 	}
 
+	static void Renderer_DrawQuadShader(glm::vec3* pos, glm::vec3* scale, glm::vec4* colour, Shader* shader) {
+		glm::mat4 transform = glm::translate(glm::mat4(1.0f), *pos)
+			* glm::scale(glm::mat4(1.0f), *scale);
+
+		Renderer2D::DrawQuad(transform, *shader, *colour);
+	}
 
 	/**
 	 * UI
@@ -684,11 +734,11 @@ namespace Shado {
 		return ImGui::Button(mono_string_to_utf8(str), {size.x, size.y});
 	}
 
-	static void Seperator(MonoString* str) {
-		ImGui::Text(mono_string_to_utf8(str));
+	static void Separator() {
+		ImGui::Separator();
 	}
 
-	static bool InputTextFileChoose_Native(MonoString* labelStr, MonoString* textStr, MonoArray* extension, MonoString** outPath) {
+	static bool InputTextFileChoose_Native(MonoString* labelStr, MonoString* textStr, MonoArray* extension, MonoString** outPath, UI::FileChooserType type) {
 	
 		std::string label = mono_string_to_utf8(labelStr);
 		std::string text = mono_string_to_utf8(textStr);
@@ -707,7 +757,7 @@ namespace Shado {
 			[&hasChanged, &pathChanged](std::string path) {
 				hasChanged = true;
 				pathChanged = path;
-			}
+			}, type
 		);
 
 		if (hasChanged)
@@ -717,7 +767,6 @@ namespace Shado {
 
 		return hasChanged;
 	}
-
 
 
 	template<typename... Component>
@@ -810,15 +859,25 @@ namespace Shado {
 		SHADO_ADD_INTERNAL_CALL(Texture2D_Destroy);
 		SHADO_ADD_INTERNAL_CALL(Texture2D_Reset);
 
+		SHADO_ADD_INTERNAL_CALL(Shader_CreateShader);
+		SHADO_ADD_INTERNAL_CALL(Shader_SetInt);
+		SHADO_ADD_INTERNAL_CALL(Shader_SetIntArray);
+		SHADO_ADD_INTERNAL_CALL(Shader_SetFloat);
+		SHADO_ADD_INTERNAL_CALL(Shader_SetFloat3);
+		SHADO_ADD_INTERNAL_CALL(Shader_SetFloat4);
+		SHADO_ADD_INTERNAL_CALL(Shader_Reset);
+		SHADO_ADD_INTERNAL_CALL(Shader_Destroy);
+
 		SHADO_ADD_INTERNAL_CALL(Log_Log);
 
 		SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuad);
 		SHADO_ADD_INTERNAL_CALL(Renderer_DrawRotatedQuad);
 		SHADO_ADD_INTERNAL_CALL(Renderer_DrawLine);
+		SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuadShader);
 
 		SHADO_ADD_UI_INTERNAL_CALL(Text);
 		SHADO_ADD_UI_INTERNAL_CALL(Image_Native);
-		SHADO_ADD_UI_INTERNAL_CALL(Seperator);
+		SHADO_ADD_UI_INTERNAL_CALL(Separator);
 		SHADO_ADD_UI_INTERNAL_CALL(Button_Native);
 		SHADO_ADD_UI_INTERNAL_CALL(InputTextFileChoose_Native);
 	}

@@ -106,7 +106,7 @@ namespace Shado {
 	}
 
 	void UI::InputTextWithChooseFile(const std::string& label, const std::string& text,
-		const std::vector<std::string>& dragAndDropExtensions, int id, std::function<void(std::string)> onChange) {
+		const std::vector<std::string>& dragAndDropExtensions, int id, std::function<void(std::string)> onChange, UI::FileChooserType chooseType) {
 		bool textureChanged = false;
 
 		std::string texturePath = text;
@@ -161,7 +161,22 @@ namespace Shado {
 			filter += std::string((buffer + ")\0").c_str(), buffer.length() + 2);
 			filter += std::string((buffer + "\0").c_str(), buffer.length() + 1);
 
-			texturePath = Shado::FileDialogs::openFile(filter.c_str());
+			switch (chooseType)
+			{
+				case UI::FileChooserType::Open:
+					texturePath = Shado::FileDialogs::openFile(filter.c_str());
+					break;
+				case UI::FileChooserType::Save:
+					texturePath = Shado::FileDialogs::saveFile(filter.c_str());
+					break;
+				case UI::FileChooserType::Folder:
+					texturePath = Shado::FileDialogs::chooseFolder();
+					break;
+				default:
+					SHADO_CORE_ERROR("Unknown File dialog type ", (int)chooseType);
+					break;
+			}
+
 			textureChanged = true;
 		}
 		ImGui::PopID();

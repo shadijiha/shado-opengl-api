@@ -451,10 +451,10 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Shader> shader, const glm::vec4& color, int entityID) {
+	void Renderer2D::DrawQuad(const glm::mat4& transform, Shader& shader, const glm::vec4& color, int entityID) {
 
 		SHADO_PROFILE_FUNCTION();
-		shader->bind();
+		shader.bind();
 
 		uint32_t quadIndices[6];
 		quadIndices[0] = 0;
@@ -481,7 +481,7 @@ namespace Shado {
 		constexpr size_t quadVertexCount = 4;
 		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
-		shader->bind();
+		shader.bind();
 
 		QuadVertex vertex[4];
 		for (size_t i = 0; i < quadVertexCount; i++)

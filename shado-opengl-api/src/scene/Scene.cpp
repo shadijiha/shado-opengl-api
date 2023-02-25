@@ -368,7 +368,7 @@ namespace Shado {
 				if (!sprite.shader)
 					Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 				else
-					Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, sprite.color, (int)entity);
+					Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.get(), sprite.color, (int)entity);
 			}
 
 			// Draw circles
@@ -413,7 +413,7 @@ namespace Shado {
 			if (!sprite.shader)
 				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 			else
-				Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, sprite.color, (int)entity);
+				Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.get(), sprite.color, (int)entity);
 		}
 
 		// Draw circles

@@ -9,7 +9,8 @@ namespace Shado
 		internal extern static bool Entity_HasComponent(ulong entityID, Type componentType);
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Entity_RemoveComponent(ulong entityID, Type componentType);
-		[MethodImpl(MethodImplOptions.InternalCall)]
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Entity_AddComponent(ulong entityID, Type componentType);
 
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -132,6 +133,28 @@ namespace Shado
 		internal extern static void Texture2D_Reset(IntPtr ptr, string filepath, out IntPtr newHandle);
 
 		/**
+		 * Shader
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_CreateShader(string filepath, out IntPtr native);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_Destroy(IntPtr native);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_SetInt(IntPtr natiive, string name, ref int value);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_SetIntArray(IntPtr natiive, string name, int[] value);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_SetFloat(IntPtr natiive, string name, ref float value);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_SetFloat3(IntPtr natiive, string name, ref Vector3 value);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_SetFloat4(IntPtr natiive, string name, ref Vector4 value);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Shader_Reset(IntPtr native, string filepath, out IntPtr value);
+
+		/**
 		 * Log
 		 */
 		[MethodImpl(MethodImplOptions.InternalCall)]
@@ -142,6 +165,8 @@ namespace Shado
 		 */
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Renderer_DrawQuad(ref Vector3 position, ref Vector3 scale, ref Vector4 colour);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Renderer_DrawQuadShader(ref Vector3 position, ref Vector3 scale, ref Vector4 colour, IntPtr shader);
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Renderer_DrawRotatedQuad(ref Vector3 position, ref Vector3 scale, ref Vector3 rotation, ref Vector4 colour);
 		[MethodImpl(MethodImplOptions.InternalCall)]

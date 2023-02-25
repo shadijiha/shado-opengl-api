@@ -10,6 +10,10 @@
 namespace Shado {
 	class UI {
 	public:
+		enum class FileChooserType {
+			Open = 0, Save, Folder
+		};
+
 		template<typename T>
 		static void TreeNode(const std::string& label, std::function<void()> ui);
 
@@ -24,7 +28,8 @@ namespace Shado {
 
 		static void InputTextWithChooseFile(
 			const std::string& label, const std::string& text, const std::vector<std::string>& dragAndDropExtensions, int id,
-			std::function<void(std::string)> onChange
+			std::function<void(std::string)> onChange,
+			FileChooserType type = FileChooserType::Open
 		);
 
 		static void TextureControl(Ref<Shado::Texture2D>& texture);
@@ -32,6 +37,7 @@ namespace Shado {
 		static bool InputTextControl(const std::string& tag, std::string& value);
 
 		static bool ButtonControl(const std::string& value, const glm::vec2& size = { 0, 0 });
+
 	};
 
 	template <typename T>

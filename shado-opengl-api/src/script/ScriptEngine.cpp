@@ -7,6 +7,7 @@
 #include "mono/metadata/tabledefs.h"
 #include "mono/metadata/mono-debug.h"
 #include "mono/metadata/threads.h"
+#include "mono/metadata/exception.h"
 
 #include "FileWatch.h"
 
@@ -287,6 +288,10 @@ namespace Shado {
 
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
 	{
+		if (!s_Data) {
+			SHADO_CORE_WARN("No C# DLL was provided");
+			return;
+		}
 		s_Data->SceneContext = scene;
 	}
 
@@ -370,8 +375,10 @@ namespace Shado {
 
 	void ScriptEngine::OnRuntimeStop()
 	{
-		s_Data->SceneContext = nullptr;
+		if (!s_Data)
+			return;
 
+		s_Data->SceneContext = nullptr;
 		s_Data->EntityInstances.clear();
 	}
 
@@ -388,7 +395,6 @@ namespace Shado {
 		return s_Data->EntityScriptFields[entityID];
 	}
 
-	
 	void ScriptEngine::Helper_ProcessFields(MonoClass* monoClass, const char* className, Ref<ScriptClass> scriptClass) {
 		int fieldCount = mono_class_num_fields(monoClass);
 
@@ -589,8 +595,25 @@ namespace Shado {
 
 	MonoObject* ScriptClass::InvokeMethod(MonoObject* instance, MonoMethod* method, void** params)
 	{
-		MonoObject* exception = nullptr;
-		return mono_runtime_invoke(method, instance, params, &exception);
+		MonoObject* exception = NULL;
+		MonoObject* result = mono_runtime_invoke(method, instance, params, &exception);
+
+		if (exception) {
+			bool info = true;
+			void* params[] = {
+				&info
+			};
+
+			MonoString* str = (MonoString*)mono_runtime_invoke(
+				mono_class_get_method_from_name(mono_get_exception_class(),
+					"ToString", 0),
+				exception, nullptr, nullptr
+			);
+			std::string message = mono_string_to_utf8(str);
+			SHADO_CORE_ERROR("C# Threw and Exception: {0}", message);
+		}
+
+		return result;
 	}
 
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity)
