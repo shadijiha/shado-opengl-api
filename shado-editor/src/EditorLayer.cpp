@@ -411,7 +411,11 @@ namespace Shado {
 		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
 		SceneSerializer serializer(scene);
-		serializer.deserialize(path.string());
+		std::string errorMsg;
+		if (!serializer.deserialize(path.string(), errorMsg)) {
+			Dialog::alert("Unable to load file " + path.string() + ". " + errorMsg, "Error loading scene", Dialog::DialogIcon::ERROR_ICON);
+			return;
+		}
 
 		m_EditorScene = scene;
 		m_ActiveScene = m_EditorScene;
