@@ -16,6 +16,7 @@ namespace Sandbox
         public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
         public Colour colourTest;
         public Vector3 test;
+        public float angle = 0.0f;
 
         void OnCreate()
         {
@@ -39,6 +40,14 @@ namespace Sandbox
             //}
 
             //GetComponent<CircleRendererComponent>().tilingFactor = tilingFactor;
+
+        }
+
+        void OnDraw() {
+            Renderer.DrawQuad(new Vector3(-1, 1, 0), Vector3.one, Colour.Blue);
+            Renderer.DrawRotatedQuad(new Vector3(2, 1, 0), Vector3.one, new Vector3(angle, angle, angle), Colour.Green);
+            Renderer.DrawLine(new Vector3(-1, 1, 0), new Vector3(2, 1, 0), Colour.Red);
+            angle += 0.05f;
         }
     }
 

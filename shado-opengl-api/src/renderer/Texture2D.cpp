@@ -28,18 +28,17 @@ namespace Shado {
 	{
 		// If texture is in cache,
 		// Then just copy it
-		if (cache.find(m_FilePath) != cache.end()) {
-			auto& data = cache[path];
-			data.refCount++;
-
-			m_RendererID = data.texture->m_RendererID;
-			m_Width = data.texture->m_Width;
-			m_Height = data.texture->m_Height;
-			m_DataFormat = data.texture->m_DataFormat;
-			m_InternalFormat = data.texture->m_InternalFormat;
-			m_IsLoaded = true;
-			return;
-		}
+		//if (cache.find(m_FilePath) != cache.end()) {
+		//	auto& data = cache[path];
+		//	data.refCount++;
+		//	m_RendererID = data.texture->m_RendererID;
+		//	m_Width = data.texture->m_Width;
+		//	m_Height = data.texture->m_Height;
+		//	m_DataFormat = data.texture->m_DataFormat;
+		//	m_InternalFormat = data.texture->m_InternalFormat;
+		//	m_IsLoaded = true;
+		//	return;
+		//}
 
 		SHADO_PROFILE_FUNCTION();
 
@@ -89,31 +88,31 @@ namespace Shado {
 
 	Texture2D::~Texture2D() {
 		// Check if texture is referenced
-		if (cache.find(m_FilePath) != cache.end()) {
-			auto& data = cache[m_FilePath];
+		//if (cache.find(m_FilePath) != cache.end()) {
+		//	auto& data = cache[m_FilePath];
 
-			// If the texture is no longer referenced
-			// Then deleted from GL and from cache
-			if (data.refCount - 1 <= 0) {
-				glDeleteTextures(1, &m_RendererID);
-				cache.erase(m_FilePath);
-			} else
-				// Otherwise just decrement the ref count
-				data.refCount -= 1;
-		}
-		else {
+		//	// If the texture is no longer referenced
+		//	// Then deleted from GL and from cache
+		//	if (data.refCount - 1 <= 0) {
+		//		glDeleteTextures(1, &m_RendererID);
+		//		cache.erase(m_FilePath);
+		//	} else
+		//		// Otherwise just decrement the ref count
+		//		data.refCount -= 1;
+		//}
+		//else {
 			glDeleteTextures(1, &m_RendererID);
-		}		
+		//}		
 	}
 
 	Ref<Texture2D> Texture2D::create(const std::string& path) {
 
-		if (cache.find(path) != cache.end())
-			return cache[path].texture;
+		//if (cache.find(path) != cache.end())
+		//	return cache[path].texture;
 
 		// Add to cache
 		Ref<Texture2D> text = CreateRef<Texture2D>(path);
-		cache[path] = { text, 1 };
+		//cache[path] = { text, 1 };
 
 		return text;
 	}

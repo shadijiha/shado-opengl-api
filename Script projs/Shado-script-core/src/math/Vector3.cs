@@ -72,6 +72,10 @@ namespace Shado
 			return !(a == b);
 		}
 
+		public static Vector3 operator -(Vector3 a) { 
+			return new Vector3(-a.x, -a.y, -a.z);
+		}
+
 		public Vector3 normalized
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]

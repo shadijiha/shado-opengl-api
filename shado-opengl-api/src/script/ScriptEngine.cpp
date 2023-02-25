@@ -331,6 +331,20 @@ namespace Shado {
 		}
 	}
 
+	// Called with the scene.OnDrawRuntime
+	void ScriptEngine::OnDrawEntity(Entity entity)
+	{
+		UUID entityUUID = entity.getUUID();
+		if (s_Data->EntityInstances.find(entityUUID) != s_Data->EntityInstances.end())
+		{
+			Ref<ScriptInstance> instance = s_Data->EntityInstances[entityUUID];
+			instance->InvokeOnDraw();
+		} else
+		{
+			SHADO_CORE_ERROR("Could not find ScriptInstance for entity {}", entityUUID);
+		}
+	}
+
 	Scene* ScriptEngine::GetSceneContext()
 	{
 		return s_Data->SceneContext;
@@ -587,6 +601,7 @@ namespace Shado {
 		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 1);
 		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
 		m_OnUpdateMethod = scriptClass->GetMethod("OnUpdate", 1);
+		m_OnDrawMethod = scriptClass->GetMethod("OnDraw", 0);
 		m_OnDestroyedMethod = scriptClass->GetMethod("OnDestroy", 0);
 
 		// Call Entity constructor
@@ -615,6 +630,13 @@ namespace Shado {
 		{
 			void* param = &ts;
 			m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, &param);
+		}
+	}
+
+	void ScriptInstance::InvokeOnDraw() {
+		if (m_OnDrawMethod)
+		{
+			m_ScriptClass->InvokeMethod(m_Instance, m_OnDrawMethod);
 		}
 	}
 

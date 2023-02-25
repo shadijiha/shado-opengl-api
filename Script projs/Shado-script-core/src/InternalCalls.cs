@@ -23,7 +23,7 @@ namespace Shado
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void TagComponent_GetTag(ulong entityID, out string tag);
 
-		[MethodImpl(MethodImplOptions.InternalCall)]
+        [MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void TagComponent_SetTag(ulong entityID, ref string tag);
 
 		/**
@@ -136,5 +136,15 @@ namespace Shado
 		 */
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Log_Log(string message, Log.Type type);
+
+		/**
+		 * Renderer (for debugging)
+		 */
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Renderer_DrawQuad(ref Vector3 position, ref Vector3 scale, ref Vector4 colour);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Renderer_DrawRotatedQuad(ref Vector3 position, ref Vector3 scale, ref Vector3 rotation, ref Vector4 colour);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Renderer_DrawLine(ref Vector3 p0, ref Vector3 p1, ref Vector4 colour);
 	}
 }

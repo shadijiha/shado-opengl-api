@@ -595,7 +595,7 @@ namespace Shado {
 			path = Project::GetProjectDirectory() / path;
 
 		// Load textre
-		Texture2D* texture = Texture2D::create(path.string()).get(); //new Texture2D(path.string());
+		Texture2D* texture = new Texture2D(path.string()); //new Texture2D(path.string());
 
 		// Create the C# Texture2D object instance
 		ScriptClass klass = ScriptClass("Shado", "Texture2D", true);
@@ -613,12 +613,12 @@ namespace Shado {
 
 	static void Texture2D_Destroy(Texture2D* ptr) {
 		// TODO? maybe need a flag in the class that checks if the object was constructed by C# or not
-		//delete ptr;
+		delete ptr;
 	}
 
 	static void Texture2D_Reset(Texture2D* ptr, MonoString* filepath, Texture2D** newHandle) {
 		delete ptr;
-		*newHandle = Texture2D::create(mono_string_to_utf8(filepath)).get();
+		*newHandle = new Texture2D(mono_string_to_utf8(filepath));
 	}
 
 	/**
@@ -652,6 +652,22 @@ namespace Shado {
 			break;
 		}
 	}
+
+	/**
+	 * Renderer Glue
+	 */
+	static void Renderer_DrawQuad(glm::vec3* pos, glm::vec3* scale, glm::vec4* colour) {
+		Renderer2D::DrawQuad(*pos, *scale, *colour);
+	}
+
+	static void Renderer_DrawRotatedQuad(glm::vec3* pos, glm::vec3* scale, glm::vec3* rotation, glm::vec4* colour) {
+		Renderer2D::DrawRotatedQuad(*pos, *scale, *rotation, *colour);
+	}
+
+	static void Renderer_DrawLine(glm::vec3* p0, glm::vec3* p1, glm::vec4* colour) {
+		Renderer2D::DrawLine(*p0, *p1, *colour);
+	}
+
 
 	/**
 	 * UI
@@ -701,6 +717,8 @@ namespace Shado {
 
 		return hasChanged;
 	}
+
+
 
 	template<typename... Component>
 	static void RegisterComponent()
@@ -793,6 +811,10 @@ namespace Shado {
 		SHADO_ADD_INTERNAL_CALL(Texture2D_Reset);
 
 		SHADO_ADD_INTERNAL_CALL(Log_Log);
+
+		SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuad);
+		SHADO_ADD_INTERNAL_CALL(Renderer_DrawRotatedQuad);
+		SHADO_ADD_INTERNAL_CALL(Renderer_DrawLine);
 
 		SHADO_ADD_UI_INTERNAL_CALL(Text);
 		SHADO_ADD_UI_INTERNAL_CALL(Image_Native);

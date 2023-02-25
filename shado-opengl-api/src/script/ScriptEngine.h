@@ -103,6 +103,7 @@ namespace Shado {
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
+		void InvokeOnDraw();
 
 		Ref<ScriptClass> GetScriptClass() { return m_ScriptClass; }
 
@@ -137,6 +138,7 @@ namespace Shado {
 		MonoMethod* m_Constructor = nullptr;
 		MonoMethod* m_OnCreateMethod = nullptr;
 		MonoMethod* m_OnUpdateMethod = nullptr;
+		MonoMethod* m_OnDrawMethod = nullptr;
 		MonoMethod* m_OnDestroyedMethod = nullptr;
 
 		inline static char s_FieldValueBuffer[16];
@@ -160,8 +162,10 @@ namespace Shado {
 		static void OnRuntimeStop();
 
 		static bool EntityClassExists(const std::string& fullClassName);
+		static void OnAwakeEntity(Entity entity);
 		static void OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, TimeStep ts);
+		static void OnDrawEntity(Entity entity);
 
 		static Scene* GetSceneContext();
 		static Ref<ScriptInstance> GetEntityScriptInstance(UUID entityID);

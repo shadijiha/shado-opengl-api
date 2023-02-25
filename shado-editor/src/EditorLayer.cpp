@@ -188,7 +188,7 @@ namespace Shado {
 					if (ImGui::MenuItem("Open Project...", "Ctrl+P+O")) {
 						std::string path = FileDialogs::openFile("Shado Project (*.sproj)\0*.sproj\0");
 
-						if (Project::Load(path))
+						if (!path.empty() && Project::Load(path))
 						{
 							ScriptEngine::Init();
 
