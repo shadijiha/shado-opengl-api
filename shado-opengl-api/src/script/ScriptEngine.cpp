@@ -552,6 +552,75 @@ namespace Shado {
 		}
 	}
 
+	void ScriptEngine::InvokeCustomEditorEvents(Event& event)
+	{
+		static struct CSEvent {
+			/* General event */
+			int32_t categoryFlags;
+			int32_t type;
+			bool handled;
+
+			/* Window event */
+			uint32_t width;
+			uint32_t height;
+
+			/* Mouse events */
+			float x = 0;
+			float y = 0;
+			int button = 0;
+
+			/* Key events */
+			KeyCode keycode = (KeyCode)-1;
+			int32_t repeatCount = 0;
+		};
+
+		for (auto [typeFor, editorInstance] : s_Data->EditorInstances) {
+			// If we find custom editor, then invoke the OnEditorDraw func
+			MonoMethod* onEventMethod = editorInstance->GetScriptClass()->GetMethod("OnEvent", 1);
+
+			if (onEventMethod)
+			{
+				// Helper function
+				static auto is = [&event](const std::initializer_list<EventType>& types) {
+					if (!&event)
+						return false;
+
+					for (const auto& type : types)
+						if (type == event.getEventType())
+							return true;
+					return false;
+				};
+
+				CSEvent e = {
+					/* Event */
+					event.getCategoryFlags(),
+					(int32_t)event.getEventType(),
+					event.isHandled(),
+
+					/* Window event*/
+					is({EventType::WindowResize}) ? ((WindowResizeEvent&)event).getWidth() : 0,
+					is({EventType::WindowResize}) ? ((WindowResizeEvent&)event).getHeight() : 0,
+
+					/* mouse events*/
+					is({EventType::MouseMoved}) ? ((MouseMovedEvent&)event).getX() : 0,
+					is({EventType::MouseMoved}) ? ((MouseMovedEvent&)event).getY() : 0,
+					is({EventType::MouseButtonPressed, EventType::MouseButtonReleased }) ? ((MouseButtonEvent&)event).getMouseButton() : 0,
+
+					/* Key events */
+					is({EventType::KeyPressed, EventType::KeyReleased, EventType::KeyTyped}) ? ((KeyEvent&)event).getKeyCode() : (KeyCode)-1,
+					is({EventType::KeyPressed}) ? ((KeyPressedEvent&)event).getRepeatCount() : 0
+				};
+				void* params[] = { &e };
+
+				editorInstance->GetScriptClass()->InvokeMethod(
+					editorInstance->GetManagedObject(),
+					onEventMethod,
+					params
+				);
+				event.setHandled(e.handled);
+			}			
+		}
+	}
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)
 	{

@@ -58,6 +58,13 @@ namespace Shado {
 		ImGui::End();
 	}
 
+	void SceneHierarchyPanel::onEvent(Event& e)
+	{
+		if (m_Context->isRunning()) {
+			ScriptEngine::InvokeCustomEditorEvents(e);
+		}
+	}
+
 	void SceneHierarchyPanel::resetSelection() {
 		m_Selected = {};
 	}

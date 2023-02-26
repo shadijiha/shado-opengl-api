@@ -306,10 +306,11 @@ namespace Shado {
 
 	void EditorLayer::onEvent(Event& event) {
         m_EditorCamera.OnEvent(event);
+		m_sceneHierarchyPanel.onEvent(event);
 
 		EventDispatcher dispatcher(event);
 		dispatcher.dispatch<KeyPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onKeyPressed));
-		dispatcher.dispatch<MouseButtonPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));
+		dispatcher.dispatch<MouseButtonPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));	
 	}
 
 	// Helpers

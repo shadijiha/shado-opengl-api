@@ -162,7 +162,6 @@ namespace Shado {
 		static void OnRuntimeStop();
 
 		static bool EntityClassExists(const std::string& fullClassName);
-		static void OnAwakeEntity(Entity entity);
 		static void OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, TimeStep ts);
 		static void OnDrawEntity(Entity entity);
@@ -175,6 +174,7 @@ namespace Shado {
 		static ScriptFieldMap& GetScriptFieldMap(Entity entity);
 
 		static void DrawCustomEditorForFieldRunning(const ScriptField& field, Ref<ScriptInstance> scriptInstance, const std::string& name);
+		static void InvokeCustomEditorEvents(Event& e);
 
 		static MonoImage* GetCoreAssemblyImage();
 

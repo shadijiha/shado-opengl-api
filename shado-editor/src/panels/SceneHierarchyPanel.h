@@ -16,6 +16,7 @@ namespace Shado {
 		void setContext(const Ref<Scene>& scene);
 
 		void onImGuiRender();
+		void onEvent(Event& e);
 
 		Entity getSelected() const { return m_Selected; }
 		void resetSelection();
