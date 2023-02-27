@@ -41,6 +41,7 @@ project "Shado-script-core"
 	location "Script projs/Shado-script-core"
 	kind "SharedLib"
 	language "C#"
+	clr "Unsafe"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")

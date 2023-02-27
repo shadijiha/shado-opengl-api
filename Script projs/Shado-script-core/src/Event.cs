@@ -7,6 +7,15 @@ namespace Shado
     public interface IEvent {
     }
     
+    /**
+     * This struct and All similar Event structs should be passed BY REFERENCE ONLY
+     * DO NOT COPY IT OR ELSE IT WILL GIVE UNDEFINED BEHAVIOUR
+     * 
+     * The reason being that these 4 structs are TYPE PUNNED. And when C# tries to copy the struct,
+     * since it doesn't know which is the correct type, C# will copy only the first 3 fields and ignore the rest
+     * 
+     * TODO: User unions instead of this trash to avoid that problem
+     */
     [StructLayout(LayoutKind.Sequential)]
     public struct Event : IEvent
     {
@@ -46,16 +55,17 @@ namespace Shado
 
         public override string ToString()
         {
-            return Event.FormatString(this);
+            return $"{type.ToString("G")}[Handeled: {handled}]";
         }
 
-        internal static string FormatString(IEvent e) {
-            StringBuilder builder = new StringBuilder(e.GetType().Name + "[");
-            foreach (var field in e.GetType().GetFields()) { 
-                if (field.IsPublic)
-                    builder.Append(field.Name).Append(": ").Append(field.GetValue(e).ToString()).Append(", ");
-            }
-            return builder.Append("]").ToString();
+        internal static string ToString(ref Event e) {
+             if (e.type >= Type.MouseButtonPressed && e.type <= Type.MouseScrolled)
+                 return e.As<MouseEvent>().ToString();
+             if (e.type >= Type.KeyPressed && e.type <= Type.KeyTyped)
+                 return e.As<KeyEvent>().ToString();
+             if (e.type >= Type.WindowClose && e.type <= Type.WindowMoved)
+                 return e.As<WindowEvent>().ToString();
+            return e.ToString();
         }
     }
 
@@ -71,7 +81,7 @@ namespace Shado
 
         public override string ToString()
         {
-            return Event.FormatString(this);
+            return $"{type.ToString("G")}[Width: {width}, Height: {height}]";
         }
     }
 
@@ -91,7 +101,7 @@ namespace Shado
 
         public override string ToString()
         {
-            return Event.FormatString(this);
+            return $"{type.ToString("G")}[Handeled: {handeled}, X: {x}, Y: {y}, Button: {button}]";
         }
     }
 
@@ -114,7 +124,7 @@ namespace Shado
 
         public override string ToString()
         {
-            return Event.FormatString(this);
+            return $"{type.ToString("G")}[Handeled: {handeled}, KeyCode: {keyCode}, RepeatCount: {repeatCount}]";
         }
     }
 }

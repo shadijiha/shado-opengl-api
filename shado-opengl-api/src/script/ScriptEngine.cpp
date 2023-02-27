@@ -581,35 +581,35 @@ namespace Shado {
 			if (onEventMethod)
 			{
 				// Helper function
-				static auto is = [&event](const std::initializer_list<EventType>& types) {
+				auto is = [&event](std::initializer_list<EventType> types) {
 					if (!&event)
 						return false;
 
-					for (const auto& type : types)
+					for (auto type : types)
 						if (type == event.getEventType())
 							return true;
 					return false;
 				};
 
-				CSEvent e = {
-					/* Event */
-					event.getCategoryFlags(),
-					(int32_t)event.getEventType(),
-					event.isHandled(),
+				CSEvent e; 
+				/* Event */
+				e.categoryFlags = event.getCategoryFlags();
+				e.type = (int32_t)event.getEventType();
+				e.handled = event.isHandled();
+			
+				/* Window event*/
+				e.width = is({ EventType::WindowResize }) ? ((WindowResizeEvent&)event).getWidth() : 0;
+				e.height = is({ EventType::WindowResize }) ? ((WindowResizeEvent&)event).getHeight() : 0;
+				
+				/* mouse events*/
+				e.x = is({ EventType::MouseMoved }) ? ((MouseMovedEvent&)event).getX() : 0;
+				e.y = is({ EventType::MouseMoved }) ? ((MouseMovedEvent&)event).getY() : 0;
+				e.button = is({ EventType::MouseButtonPressed, EventType::MouseButtonReleased }) ? ((MouseButtonEvent&)event).getMouseButton() : 0;
 
-					/* Window event*/
-					is({EventType::WindowResize}) ? ((WindowResizeEvent&)event).getWidth() : 0,
-					is({EventType::WindowResize}) ? ((WindowResizeEvent&)event).getHeight() : 0,
-
-					/* mouse events*/
-					is({EventType::MouseMoved}) ? ((MouseMovedEvent&)event).getX() : 0,
-					is({EventType::MouseMoved}) ? ((MouseMovedEvent&)event).getY() : 0,
-					is({EventType::MouseButtonPressed, EventType::MouseButtonReleased }) ? ((MouseButtonEvent&)event).getMouseButton() : 0,
-
-					/* Key events */
-					is({EventType::KeyPressed, EventType::KeyReleased, EventType::KeyTyped}) ? ((KeyEvent&)event).getKeyCode() : (KeyCode)-1,
-					is({EventType::KeyPressed}) ? ((KeyPressedEvent&)event).getRepeatCount() : 0
-				};
+				/* Key events */
+				e.keycode = is({ EventType::KeyPressed, EventType::KeyReleased, EventType::KeyTyped }) ? ((KeyEvent&)event).getKeyCode() : (KeyCode)-1;
+				e.repeatCount = is({ EventType::KeyPressed }) ? ((KeyPressedEvent&)event).getRepeatCount() : 0;
+				
 				void* params[] = { &e };
 
 				editorInstance->GetScriptClass()->InvokeMethod(
@@ -617,7 +617,7 @@ namespace Shado {
 					onEventMethod,
 					params
 				);
-				event.setHandled(e.handled);
+				//event.setHandled(e.handled);
 			}			
 		}
 	}

@@ -60,8 +60,6 @@ namespace Shado
         }
 
         private void OnEvent(ref Event e) {
-            Log.Info(e);
-            e.handled = true;
         }
     }
 }
