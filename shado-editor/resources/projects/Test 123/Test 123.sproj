@@ -1,5 +1,5 @@
 Project:
-  Name: Test 123
+  Name: Test123
   StartScene: sample.shadoscene
   AssetDirectory: D:\Code\Projects\shado-opengl-api\shado-editor\resources\projects\Test 123/Assets
-  ScriptModulePath: cs-sandbox.dll
+  ScriptModulePath: bin/Release-windows-x86_64/Test123/Test123.dll

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Shado.Editor
 {
@@ -33,6 +34,21 @@ namespace Shado.Editor
             }
         }
 
+        public static string OpenFileDialog(string[] extensions, FileChooserType type) {
+            StringBuilder buffer = new StringBuilder();
+
+            // TODO: Fix this
+            int count = 0;
+            foreach (var ext in extensions) {
+                buffer.Append("*" + ext);
+
+                if (count != extensions.Length - 1)
+                    buffer.Append(";");
+                count++;
+            }
+            return OpenFileDialog_Native(buffer.ToString(), type);
+        }
+
         /**
          * Native functions
          */
@@ -44,5 +60,8 @@ namespace Shado.Editor
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal static extern bool InputTextFileChoose_Native(string label, string text, string[] extensions, out string newPath, FileChooserType type);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern string OpenFileDialog_Native(string filters, FileChooserType type);
     }
 }

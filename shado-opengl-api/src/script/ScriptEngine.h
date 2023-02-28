@@ -181,6 +181,7 @@ namespace Shado {
 		static MonoObject* GetManagedInstance(UUID uuid);
 
 		static MonoString* NewString(const char* str);
+		static std::string MonoStrToUT8(MonoString* str);
 	private:
 		static void InitMono();
 		static void ShutdownMono();

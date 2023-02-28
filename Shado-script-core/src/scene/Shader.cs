@@ -61,8 +61,9 @@ namespace Shado
             });
 
             if (UI.Button("+")) {
-                string debug = @"D:\Code\Projects\shado-opengl-api\shado-editor\resources\projects\Test 123\";
-                GenerateFile(debug + "Assets/shader" + Mathf.Random(0, 100) + ".glsl");
+                string path = UI.OpenFileDialog(shaderExtension, UI.FileChooserType.Save);
+                if (path != null)
+                    GenerateFile(path);                
             }
             if (UI.Button("Recompile"))
                 shader.Reset(shader.filepath);

@@ -181,7 +181,7 @@ namespace Shado {
 
 					if (ImGui::MenuItem("New Project", "Ctrl+P+N")) {
 						Ref<Project> project = Project::New();
-						project->GetConfig().Name = "Test 123";
+						project->GetConfig().Name = "Test123";
 						project->GetConfig().StartScene = "sample.shadoscene";
 					}
 
@@ -202,9 +202,9 @@ namespace Shado {
 					if (Project::GetActive() && ImGui::MenuItem("Save Project...", "Ctrl+P+S")) {
 						//std::string path = FileDialogs::chooseFolder();
 						std::string path = std::filesystem::absolute("resources/projects/Test 123").string();
-						Ref<Project> active = Project::GetActive();
-						active->GetConfig().AssetDirectory = path + "/Assets";
-						active->GetConfig().ScriptModulePath = "cs-sandbox.dll";
+						auto& config = Project::GetActive()->GetConfig();
+						config.AssetDirectory = path + "/Assets";
+						config.ScriptModulePath = "bin/Release-windows-x86_64/" + config.Name + "/" + config.Name + ".dll";
 
 						Project::SaveActive(path + "/Test 123.sproj");
 					}

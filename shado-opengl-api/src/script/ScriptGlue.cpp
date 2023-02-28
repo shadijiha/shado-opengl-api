@@ -7,6 +7,7 @@
 
 #include "scene/Scene.h"
 #include "scene/Entity.h"
+#include "scene/utils/SceneUtils.h"
 #include "project/Project.h"
 #include "ui/UI.h"
 
@@ -126,7 +127,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		entity.getComponent<TagComponent>().tag = mono_string_to_utf8(*refName);
+		entity.getComponent<TagComponent>().tag = ScriptEngine::MonoStrToUT8(*refName);
 	}
 
 	/**
@@ -202,7 +203,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		std::string klassName = mono_string_to_utf8(klass);
+		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent")
 			*refColour = entity.getComponent<SpriteRendererComponent>().color;
 		else if (klassName == "CircleRendererComponent")
@@ -218,7 +219,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		std::string klassName = mono_string_to_utf8(klass);
+		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent")
 			entity.getComponent<SpriteRendererComponent>().color = *refColour;
 		else if (klassName == "CircleRendererComponent")
@@ -235,7 +236,7 @@ namespace Shado {
 		SHADO_CORE_ASSERT(entity, "");
 
 		Texture2D* ptr = nullptr;
-		std::string klassName = mono_string_to_utf8(klass);
+		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
 			Ref<Texture2D> ref = entity.getComponent<SpriteRendererComponent>().texture;
 			ptr = ref == nullptr ? nullptr : ref.get();
@@ -269,7 +270,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		std::string klassName = mono_string_to_utf8(klass);
+		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
 			entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texturePtr);
 		} else if (klassName == "CircleRendererComponent") {
@@ -285,7 +286,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		std::string klassName = mono_string_to_utf8(klass);
+		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent")
 			*outTiling = entity.getComponent<SpriteRendererComponent>().tilingFactor;
 		else if (klassName == "CircleRendererComponent")
@@ -301,7 +302,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		std::string klassName = mono_string_to_utf8(klass);
+		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent")
 			entity.getComponent<SpriteRendererComponent>().tilingFactor = *refTiling;
 		else if (klassName == "CircleRendererComponent")
@@ -320,7 +321,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		std::string field = mono_string_to_utf8(fieldName);
+		std::string field = ScriptEngine::MonoStrToUT8(fieldName);
 		if (field == "fade")
 			*value = entity.getComponent<CircleRendererComponent>().fade;
 		else if (field == "thickness")
@@ -336,7 +337,7 @@ namespace Shado {
 		Entity entity = scene->getEntityById(entityID);
 		SHADO_CORE_ASSERT(entity, "");
 
-		std::string field = mono_string_to_utf8(fieldName);
+		std::string field = ScriptEngine::MonoStrToUT8(fieldName);
 		if (field == "fade")
 			entity.getComponent<CircleRendererComponent>().fade = *value;
 		else if (field == "thickness")
@@ -589,7 +590,7 @@ namespace Shado {
 	* Texture2D
 	*/
 	static MonoObject* Texture2D_Create(MonoString* filepath) {
-		std::filesystem::path path = std::string(mono_string_to_utf8(filepath));
+		std::filesystem::path path = ScriptEngine::MonoStrToUT8(filepath);
 
 		if (!path.is_absolute())
 			path = Project::GetProjectDirectory() / path;
@@ -613,19 +614,19 @@ namespace Shado {
 
 	static void Texture2D_Destroy(Texture2D* ptr) {
 		// TODO? maybe need a flag in the class that checks if the object was constructed by C# or not
-		delete ptr;
+		//delete ptr;
 	}
 
 	static void Texture2D_Reset(Texture2D* ptr, MonoString* filepath, Texture2D** newHandle) {
 		delete ptr;
-		*newHandle = new Texture2D(mono_string_to_utf8(filepath));
+		*newHandle = new Texture2D(ScriptEngine::MonoStrToUT8(filepath));
 	}
 
 	/**
 	 * Shader
 	 */
 	static void Shader_CreateShader(MonoString* filepath, Shader** native) {
-		std::filesystem::path path = std::string(mono_string_to_utf8(filepath));
+		std::filesystem::path path = ScriptEngine::MonoStrToUT8(filepath);
 
 		if (!path.is_absolute())
 			path = Project::GetProjectDirectory() / path;
@@ -635,7 +636,7 @@ namespace Shado {
 	}
 	static void Shader_SetInt(Shader* native, MonoString* name, int* value) {
 		if (native)
-			native->setInt(mono_string_to_utf8(name), *value);
+			native->setInt(ScriptEngine::MonoStrToUT8(name), *value);
 	}
 	static void Shader_SetIntArray(Shader* native, MonoString* name, MonoArray* value) {
 		if (native) {
@@ -655,7 +656,7 @@ namespace Shado {
 	}
 	static void Shader_SetFloat4(Shader* native, MonoString* name, glm::vec4* value) {
 		if (native)
-			native->setFloat4(mono_string_to_utf8(name), *value);
+			native->setFloat4(ScriptEngine::MonoStrToUT8(name), *value);
 	}
 	static void Shader_Reset(Shader* oldNative, MonoString* filepath, Shader** newNative) {
 		delete oldNative;
@@ -672,7 +673,7 @@ namespace Shado {
 		Info = 0, Warn, Error, Critical, Trace
 	};
 	static void Log_Log(MonoString* message, Log_Type type) {
-		std::string msg = mono_string_to_utf8(message);
+		std::string msg = ScriptEngine::MonoStrToUT8(message);
 
 		switch (type)
 		{
@@ -723,7 +724,7 @@ namespace Shado {
 	 * UI
 	 */
 	static void Text(MonoString* str) {
-		ImGui::Text(mono_string_to_utf8(str));
+		ImGui::Text(ScriptEngine::MonoStrToUT8(str).c_str());
 	}
 
 	static void Image_Native(Texture2D* ptr, glm::vec2 dim, glm::vec2 uv0, glm::vec2 uv1) {
@@ -731,7 +732,7 @@ namespace Shado {
 	}
 
 	static bool Button_Native(MonoString* str, glm::vec2 size) {
-		return ImGui::Button(mono_string_to_utf8(str), {size.x, size.y});
+		return ImGui::Button(ScriptEngine::MonoStrToUT8(str).c_str(), {size.x, size.y});
 	}
 
 	static void Separator() {
@@ -740,13 +741,13 @@ namespace Shado {
 
 	static bool InputTextFileChoose_Native(MonoString* labelStr, MonoString* textStr, MonoArray* extension, MonoString** outPath, UI::FileChooserType type) {
 	
-		std::string label = mono_string_to_utf8(labelStr);
-		std::string text = mono_string_to_utf8(textStr);
+		std::string label = ScriptEngine::MonoStrToUT8(labelStr);
+		std::string text = ScriptEngine::MonoStrToUT8(textStr);
 		std::vector<std::string> extensionCpp;
 
 		for (int i = 0; i < mono_array_length(extension); i++) {
 			MonoString* ext = mono_array_get(extension, MonoString*, i);
-			extensionCpp.push_back(mono_string_to_utf8(ext));
+			extensionCpp.push_back(ScriptEngine::MonoStrToUT8(ext));
 		}
 		
 		// TODO: If UI doesn't work propery maybe issue with the ID? typeid()
@@ -768,7 +769,33 @@ namespace Shado {
 		return hasChanged;
 	}
 
+	static MonoString* OpenFileDialog_Native(MonoString* filter, UI::FileChooserType type) {
+		std::string result;
+		const char* filterStr = ScriptEngine::MonoStrToUT8(filter).c_str();
 
+		// Build filter
+		switch (type)
+		{
+		case Shado::UI::FileChooserType::Open:
+			result = FileDialogs::openFile(filterStr);
+			break;
+		case Shado::UI::FileChooserType::Save:
+			result = FileDialogs::saveFile(filterStr);
+			break;
+		case Shado::UI::FileChooserType::Folder:
+			result = FileDialogs::chooseFolder();
+			break;
+		default:
+			SHADO_CORE_ERROR("Invalid file chooser dialog type {0}", (int)type);
+			break;
+		}
+
+		return result.empty() ? nullptr : ScriptEngine::NewString(result.c_str());
+	}
+
+	/**
+	 *
+	 */
 	template<typename... Component>
 	static void RegisterComponent()
 	{
@@ -880,6 +907,7 @@ namespace Shado {
 		SHADO_ADD_UI_INTERNAL_CALL(Separator);
 		SHADO_ADD_UI_INTERNAL_CALL(Button_Native);
 		SHADO_ADD_UI_INTERNAL_CALL(InputTextFileChoose_Native);
+		SHADO_ADD_UI_INTERNAL_CALL(OpenFileDialog_Native);
 	}
 
 }

@@ -30,8 +30,6 @@ project "shado-editor"
     links
     {
         "shado-opengl-api",
-        "Shado-script-core",
-        "cs-sandbox",
     }
 
     filter "system:windows"

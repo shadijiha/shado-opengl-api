@@ -13,7 +13,7 @@ namespace Shado.Editor
             return GetType().GetCustomAttributes(true);
         }
 
-        public string GetTargetType() {
+        protected string GetTargetType() {
             foreach (var attibute in GetAttibutes())
             {
                 if (attibute.GetType() == typeof(EditorTargetType)) {

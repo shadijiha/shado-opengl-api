@@ -172,14 +172,18 @@ namespace Shado {
 		InitMono();
 		ScriptGlue::RegisterFunctions();
 
-		bool status = LoadAssembly("resources/Scripts/Shado-script-core.dll");
+		auto& projConfig = Project::GetActive()->GetConfig();
+
+		// TODO: These aseembly pathes are terrible and need to re-evaludate them
+		bool status = LoadAssembly(Project::GetProjectDirectory() / "bin/Release-windows-x86_64" / projConfig.Name / "Shado-script-core.dll");
 		if (!status)
 		{
 			SHADO_CORE_ERROR("[ScriptEngine] Could not load Shado-ScriptCore assembly.");
 			return;
 		}
 
-		auto scriptModulePath = Project::GetAssetDirectory() / Project::GetActive()->GetConfig().ScriptModulePath;
+		auto scriptModulePath = Project::GetProjectDirectory() / projConfig.ScriptModulePath;
+
 		status = LoadAppAssembly(scriptModulePath);
 		if (!status)
 		{
@@ -513,6 +517,14 @@ namespace Shado {
 	MonoString* ScriptEngine::NewString(const char* str)
 	{
 		return mono_string_new(s_Data->AppDomain, str);
+	}
+
+	std::string ScriptEngine::MonoStrToUT8(MonoString* str)
+	{
+		char* ptr = mono_string_to_utf8(str);
+		std::string result(ptr);
+		mono_free(ptr);
+		return result;
 	}
 
 	MonoImage* ScriptEngine::GetCoreAssemblyImage()

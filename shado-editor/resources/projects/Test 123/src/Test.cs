@@ -19,11 +19,12 @@ namespace Sandbox
         public float angle = 0.0f;
         public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
+
         void OnCreate()
         {
             transform = GetComponent<TransformComponent>();
             GetComponent<SpriteRendererComponent>().texture = texture;
-            GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
+            //GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
         }
 
         void OnUpdate(float dt)
@@ -32,7 +33,7 @@ namespace Sandbox
             GetComponent<SpriteRendererComponent>().colour = colourTest;
             //GetComponent<SpriteRendererComponent>().texture = texture;
             Vector3 pos = transform.position;
-            pos.x += moveRate * dt * dir;
+            pos.x += moveRate * 2 * dt * dir;
             transform.position = pos;
 
             if (pos.x > maxDelta || pos.x < -maxDelta) {

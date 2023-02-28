@@ -54,12 +54,13 @@ namespace Shado
             UI.Text(texture.filepath);
             UI.Image(texture, new Vector2(60, 60));
             UI.InputTextFileChoose(fieldName, texture.filepath, textureExtension, path => {
-                Console.WriteLine(path);
+                Log.Info(path);
                 texture.Reset(path);
             });
         }
 
-        private void OnEvent(ref Event e) {
-        }
+        //void OnEvent(ref Event e) {
+        //  Log.Info(ref e);
+        //}
     }
 }

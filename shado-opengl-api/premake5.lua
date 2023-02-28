@@ -45,8 +45,6 @@ project "shado-opengl-api"
         "shcore.lib",
         "%{wks.location}/mono/mono-2.0-sgen.lib",
         --"mono/mono-2.0-sgen.dll",
-        "Shado-script-core",
-        "cs-sandbox"
     }
 
     filter "system:windows"

@@ -69,6 +69,10 @@ namespace Shado
 			return new Entity(entityID);
 		}
 
+		public static T FindEntityByName<T>(string name) where T : Entity, new() {
+			return FindEntityByName(name).As<T>();
+		}
+
 		public T As<T>() where T : Entity, new()
 		{
 			object instance = InternalCalls.GetScriptInstance(ID);
