@@ -14,6 +14,17 @@ namespace Shado {
 
 	static bool isImage(const std::filesystem::path& path);
 
+	static Ref<Texture2D> getTextureCached(std::unordered_map<std::string, Ref<Texture2D>>& cache, std::filesystem::path path) {
+		std::string str = path.string();
+		if (cache.find(str) != cache.end()) {
+			return cache[str];
+		}
+
+		Ref<Texture2D> texture = CreateRef<Texture2D>(path.string());
+		cache[str] = texture;
+		return texture;
+	}
+
 	ContentBrowserPanel::ContentBrowserPanel()
 		: ContentBrowserPanel(g_AssetsPath)
 	{
@@ -91,7 +102,7 @@ namespace Shado {
 
 				// Drag and drop preview
 				if (isImage(path)) {
-					Ref<Texture2D> text = Texture2D::create(path.string());
+					Ref<Texture2D> text = getTextureCached(imagesThumbnails, path);
 					ImGui::Image((void*)text->getRendererID(), { thumbnailSize / 2, thumbnailSize / 2 }, { 0, 1 }, { 1, 0 });
 				}
 				else {
@@ -152,11 +163,7 @@ namespace Shado {
 		// If it is an image
 		const auto path = directoryEntry.path();
 		if (isImage(path)) {
-			if (imagesThumbnails.find(path.string()) == imagesThumbnails.end()) {
-				imagesThumbnails[path.string()] = CreateRef<Texture2D>(path.string());
-			}
-			icon = imagesThumbnails[path.string()];
-
+			icon = getTextureCached(imagesThumbnails, path);
 		} else if (path.extension() == ".shadoscene") {
 			icon = m_SceneIcon;
 		}

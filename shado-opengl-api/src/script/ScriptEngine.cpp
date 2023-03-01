@@ -139,7 +139,7 @@ namespace Shado {
 		Ref<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
 		bool AssemblyReloadPending = false;
 
-#ifdef SHADO_DEBUG
+#if SHADO_DEBUG || SHADO_RELEASE
 		bool EnableDebugging = true;
 #else
 		bool EnableDebugging = false;
