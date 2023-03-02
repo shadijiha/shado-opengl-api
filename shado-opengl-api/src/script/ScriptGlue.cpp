@@ -754,7 +754,7 @@ namespace Shado {
 		bool hasChanged = false;
 		std::string pathChanged = "";
 		UI::InputTextWithChooseFile(label, text, extensionCpp,
-			typeid(labelStr).hash_code(),
+			(int)&label[0],
 			[&hasChanged, &pathChanged](std::string path) {
 				hasChanged = true;
 				pathChanged = path;
