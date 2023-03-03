@@ -614,7 +614,7 @@ namespace Shado {
 
 	static void Texture2D_Destroy(Texture2D* ptr) {
 		// TODO? maybe need a flag in the class that checks if the object was constructed by C# or not
-		//delete ptr;
+		delete ptr;
 	}
 
 	static void Texture2D_Reset(Texture2D* ptr, MonoString* filepath, Texture2D** newHandle) {
