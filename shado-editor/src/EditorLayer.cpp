@@ -216,7 +216,7 @@ namespace Shado {
 					ImGui::EndMenu();
 				}
 
-	            if (ImGui::BeginMenu("Scene"))
+	            if (Project::GetActive() && ImGui::BeginMenu("Scene"))
 	            {
 					// New scene
 					if (ImGui::MenuItem("New", "Ctrl+N")) {
@@ -239,27 +239,6 @@ namespace Shado {
 
 	                ImGui::EndMenu();
 	            }
-
-				if (ImGui::BeginMenu("Script"))
-				{
-					//if (ImGui::MenuItem("Set Script DLL")) {
-					//	std::string path = FileDialogs::openFile("Dynamic linked library (*.dll)\0*.dll");
-					//	if (!path.empty()) {
-					//		ScriptManager::reload(path);
-
-					//		auto classes = ScriptManager::getAssemblyClassList();
-					//		for (auto& klass : classes) {
-					//			//std::cout << klass.toString()  << std::endl;
-					//		}
-					//	}
-					//}
-
-					//// Reload project if valid
-					//if (ScriptManager::hasValidDefautDLL() && ImGui::MenuItem("Reload Script DLL")) {
-					//	ScriptManager::reload();
-					//}					
-					ImGui::EndMenu();
-				}
 
 				if (ImGui::BeginMenu("Gizmos")) {
 

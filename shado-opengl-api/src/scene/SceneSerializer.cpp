@@ -270,7 +270,11 @@ namespace Shado {
 						src.fade = circleRendererComponent["Fade"].as<float>();
 
 						auto texturePath = circleRendererComponent["Texture"].as<std::string>();
-						src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
+						src.texture = texturePath == "NULL" || texturePath == "null" ?
+							nullptr : CreateRef<Texture2D>(
+															Project::GetActive() ?
+															(Project::GetProjectDirectory() / texturePath).string() : texturePath
+														);
 						src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
 					}
 
@@ -453,11 +457,17 @@ namespace Shado {
 
 			auto& spriteRendererComponent = entity.getComponent<SpriteRendererComponent>();
 			std::string texturePath = spriteRendererComponent.texture ? spriteRendererComponent.texture->getFilePath() : "NULL";
+			std::string newPath = getPathAndCopyFileToAssets(texturePath);
 			out << YAML::Key << "Color" << YAML::Value << spriteRendererComponent.color;
-			out << YAML::Key << "Texture" << YAML::Value << getPathAndCopyFileToAssets(texturePath);
+			out << YAML::Key << "Texture" << YAML::Value << newPath;
 			out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
 
 			out << YAML::EndMap; // SpriteRendererComponent
+
+			// if Texture path has changed, then update the component
+			if (newPath != texturePath) {
+				spriteRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
+			}
 		}
 
 		if (entity.hasComponent<CircleRendererComponent>())
@@ -467,14 +477,21 @@ namespace Shado {
 
 			auto& circleRendererComponent = entity.getComponent<CircleRendererComponent>();
 			std::string texturePath = circleRendererComponent.texture ? circleRendererComponent.texture->getFilePath() : "NULL";
+			std::string newPath = getPathAndCopyFileToAssets(texturePath);
+
 			out << YAML::Key << "Color" << YAML::Value << circleRendererComponent.color;
-			out << YAML::Key << "Texture" << YAML::Value << texturePath;
+			out << YAML::Key << "Texture" << YAML::Value << getPathAndCopyFileToAssets(texturePath);
 			out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
 
 			out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
 			out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
 
 			out << YAML::EndMap; // CircleRendererComponent
+
+			// if Texture path has changed, then update the component
+			if (newPath != texturePath) {
+				circleRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
+			}
 		}
 
 		if (entity.hasComponent<RigidBody2DComponent>())
