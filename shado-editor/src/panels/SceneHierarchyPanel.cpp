@@ -7,6 +7,7 @@
 #include <fstream>
 #include "script/ScriptEngine.h"
 #include "ui/UI.h"
+#include "ui/imnodes.h"
 
 namespace Shado {
 	extern const std::filesystem::path g_AssetsPath;
@@ -610,6 +611,38 @@ namespace Shado {
 			if (sprite.shader) {
 				sprite.shader = CreateRef<Shader>(sprite.shader->getFilepath());
 			}
+		}
+
+		{
+			static bool init = false;
+			if (!init) {
+				ImNodes::SetCurrentContext(ImNodes::CreateContext());
+				ImNodes::SetNodeGridSpacePos(1, ImVec2(200.0f, 200.0f));
+				init = true;
+			}
+
+			ImGui::Begin("simple node editor");
+
+			ImNodes::BeginNodeEditor();
+			ImNodes::BeginNode(1);
+
+			ImNodes::BeginNodeTitleBar();
+			ImGui::TextUnformatted("simple node :)");
+			ImNodes::EndNodeTitleBar();
+
+			ImNodes::BeginInputAttribute(2);
+			ImGui::Text("input");
+			ImNodes::EndInputAttribute();
+
+			ImNodes::BeginOutputAttribute(3);
+			ImGui::Indent(40);
+			ImGui::Text("output");
+			ImNodes::EndOutputAttribute();
+
+			ImNodes::EndNode();
+			ImNodes::EndNodeEditor();
+
+			ImGui::End();
 		}
 	}
 

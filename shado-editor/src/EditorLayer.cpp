@@ -371,6 +371,11 @@ namespace Shado {
 	}
 
 	void EditorLayer::saveScene() {
+		if (m_SceneState == SceneState::Play) {
+			Dialog::alert("Cannot save a scene while playing", "Save Error");
+			return;
+		}
+
 		auto filepath = m_ScenePath.empty() ? FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0") : m_ScenePath;
 		
 		if (!filepath.empty()) {
