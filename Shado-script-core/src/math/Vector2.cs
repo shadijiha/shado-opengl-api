@@ -61,5 +61,10 @@ namespace Shado
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return x * x + y * y; }
 		}
-	}
+
+        public override string ToString()
+        {
+            return $"Vec2[{x},{y}]";
+        }
+    }
 }

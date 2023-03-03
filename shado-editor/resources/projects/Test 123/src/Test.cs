@@ -29,16 +29,16 @@ namespace Sandbox
 
         void OnUpdate(float dt)
         {
-            totalDt += dt;
-            GetComponent<SpriteRendererComponent>().colour = colourTest;
-            //GetComponent<SpriteRendererComponent>().texture = texture;
-            Vector3 pos = transform.position;
-            pos.x += moveRate * 2 * dt * dir;
-            transform.position = pos;
-
-            if (pos.x > maxDelta || pos.x < -maxDelta) {
-                dir = -dir;
-            }
+            //totalDt += dt;
+            //GetComponent<SpriteRendererComponent>().colour = colourTest;
+            ////GetComponent<SpriteRendererComponent>().texture = texture;
+            //Vector3 pos = transform.position;
+            //pos.x += moveRate * 2 * dt * dir;
+            //transform.position = pos;
+            //
+            //if (pos.x > maxDelta || pos.x < -maxDelta) {
+            //    dir = -dir;
+            //}
         }
 
         void OnDraw() {
@@ -46,6 +46,14 @@ namespace Sandbox
             //Renderer.DrawRotatedQuad(new Vector3(2, 1, 0), Vector3.one, new Vector3(angle, angle, angle), Colour.Green);
             //Renderer.DrawLine(new Vector3(-1, 1, 0), new Vector3(2, 1, 0), Colour.Red);
             //angle += 0.01f;
+        }
+
+        void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
+            Log.Info("Collision enter {0} with {1}", info, other.tag);
+        }
+
+        void OnCollision2DLeave(Collision2DInfo info, Entity other) {
+            Log.Info("Collision leave {0} with {1}", info, other.tag);
         }
     }
 

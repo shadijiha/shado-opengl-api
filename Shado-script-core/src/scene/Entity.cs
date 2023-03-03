@@ -27,6 +27,11 @@ namespace Shado
 			}
 		}
 
+		public string tag {
+			get { InternalCalls.TagComponent_GetTag(ID, out var tag); return tag; }
+			set { InternalCalls.TagComponent_SetTag(ID, ref value); }
+		}
+
 		public bool HasComponent<T>() where T : Component, new()
 		{
 			Type componentType = typeof(T);
