@@ -13,8 +13,6 @@
 #include "script/ScriptEngine.h"
 
 namespace Shado {
-	extern const std::filesystem::path g_AssetsPath;
-
 	static TimeStep lastDt = 1 / 60.0f;
 
 	EditorLayer::EditorLayer()
@@ -498,7 +496,7 @@ namespace Shado {
 
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 				const wchar_t* pathStr = (const wchar_t*)payload->Data;
-				auto path = g_AssetsPath / pathStr;
+				auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
 				auto extension = path.extension();
 
 				if (extension == ".jpg" || extension == ".png") {
