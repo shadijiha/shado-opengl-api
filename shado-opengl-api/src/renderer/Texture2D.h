@@ -16,6 +16,9 @@ namespace Shado {
 		~Texture2D();
 
 		static Ref<Texture2D> create(const std::string& path);
+		static inline Ref<Texture2D> create(const std::filesystem::path& path) {
+			return create(path.string());
+		}
 
 		void setData(void* data, uint32_t size);
 

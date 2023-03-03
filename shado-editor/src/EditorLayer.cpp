@@ -13,8 +13,6 @@
 #include "script/ScriptEngine.h"
 
 namespace Shado {
-	extern const std::filesystem::path g_AssetsPath;
-
 	static TimeStep lastDt = 1 / 60.0f;
 
 	EditorLayer::EditorLayer()
@@ -218,7 +216,7 @@ namespace Shado {
 					ImGui::EndMenu();
 				}
 
-	            if (ImGui::BeginMenu("Scene"))
+	            if (Project::GetActive() && ImGui::BeginMenu("Scene"))
 	            {
 					// New scene
 					if (ImGui::MenuItem("New", "Ctrl+N")) {
@@ -241,27 +239,6 @@ namespace Shado {
 
 	                ImGui::EndMenu();
 	            }
-
-				if (ImGui::BeginMenu("Script"))
-				{
-					//if (ImGui::MenuItem("Set Script DLL")) {
-					//	std::string path = FileDialogs::openFile("Dynamic linked library (*.dll)\0*.dll");
-					//	if (!path.empty()) {
-					//		ScriptManager::reload(path);
-
-					//		auto classes = ScriptManager::getAssemblyClassList();
-					//		for (auto& klass : classes) {
-					//			//std::cout << klass.toString()  << std::endl;
-					//		}
-					//	}
-					//}
-
-					//// Reload project if valid
-					//if (ScriptManager::hasValidDefautDLL() && ImGui::MenuItem("Reload Script DLL")) {
-					//	ScriptManager::reload();
-					//}					
-					ImGui::EndMenu();
-				}
 
 				if (ImGui::BeginMenu("Gizmos")) {
 
@@ -503,7 +480,7 @@ namespace Shado {
 
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 				const wchar_t* pathStr = (const wchar_t*)payload->Data;
-				auto path = g_AssetsPath / pathStr;
+				auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
 				auto extension = path.extension();
 
 				if (extension == ".jpg" || extension == ".png") {

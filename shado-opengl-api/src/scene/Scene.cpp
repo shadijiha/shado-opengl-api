@@ -23,10 +23,16 @@ namespace Shado {
 	 // This is here to avoid havning to include box2d in header files
 	class Physics2DCallback : public b2ContactListener {
 	private:
+		struct Points {
+			glm::vec2 p1, p2;
+		};
+		struct Separations{
+			float s1, s2;
+		};
 		struct Collision2DInfo {
 			glm::vec2 normal;
-			MonoArray* points;
-			MonoArray* separations;
+			Points points;
+			Separations separations;
 		};
 	public:
 		Physics2DCallback(Scene* scene): scene(scene) {}
@@ -41,84 +47,90 @@ namespace Shado {
 	private:
 		Collision2DInfo buildContactInfoObject(b2Contact* contact) {
 
-			//b2WorldManifold manifold;
-			//contact->GetWorldManifold(&manifold);
+			b2WorldManifold manifold;
+			contact->GetWorldManifold(&manifold);
 
-			//// Create C# object
-			//glm::vec2 normal = { manifold.normal.x, manifold.normal.y};
+			// Create C# object
+			glm::vec2 normal = { manifold.normal.x, manifold.normal.y};
+		
+			Points points = {
+				glm::vec2{ manifold.points[0].x, manifold.points[0].y },
+				glm::vec2{ manifold.points[1].x, manifold.points[1].y }
+			};
 
-			//// Create points array
-			//static auto vector2f = ScriptManager::getClassByName("Vector2");
-			//auto* pointsCS = ScriptManager::createArray(vector2f, 2);
+			Separations separations = {
+				manifold.separations[0],
+				manifold.separations[1]
+			};
 
-			//ScriptClassDesc desc;		// Avoid creating and populating the whole object
-			//desc.klass = mono_get_single_class();
-			//auto* separationsCS = ScriptManager::createArray(desc, 2);
-
-			//for(int i = 0; i < 2; i++) {
-			//	glm::vec2 points = { manifold.points[i].x, manifold.points[i].y };
-			//	mono_array_set(pointsCS, glm::vec2, i, points);
-			//}
-
-			//for (int i = 0; i < 2; i++) {
-			//	mono_array_set(separationsCS, float, i, manifold.separations[i]);
-			//}
-
-			//Collision2DInfo result = {
-			//	normal,
-			//	pointsCS,
-			//	separationsCS
-			//};
-
-			//return result;
-			return {};
+			return  {
+				normal,
+				points,
+				separations
+			};
 		}
 
 		void invokeCollisionFunction(b2Contact* contact, const std::string& functionName) {
-			//// Entity A
-			//uint64_t idA = contact->GetFixtureA()->GetBody()->GetUserData().pointer;
-			//uint64_t idB = contact->GetFixtureB()->GetBody()->GetUserData().pointer;
+			// Entity A
+			uint64_t idA = contact->GetFixtureA()->GetBody()->GetUserData().pointer;
+			uint64_t idB = contact->GetFixtureB()->GetBody()->GetUserData().pointer;
 
-			//Entity entityA = scene->getEntityById(idA);
-			//Entity entityB = scene->getEntityById(idB);
+			Entity entityA = scene->getEntityById(idA);
+			Entity entityB = scene->getEntityById(idB);
 
-			//// Call the Entity::OnCollision2D in C#
-			//if (!ScriptManager::hasInit())
-			//	return;
+			// Call the Entity::OnCollision2D in C#
+			if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
+				Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idA);
+				Ref<ScriptClass> klass = instance->GetScriptClass();
 
-			//const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
-			//if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
-			//	auto& script = entityA.getComponent<ScriptComponent>();
-			//	auto* OnFunc = script.object.getMethod(functionName);
+				auto* method = klass->GetMethod(functionName, 2);
+				if (method) {
+					auto collisionInfo = buildContactInfoObject(contact);
+					MonoObject* entityBInstance = ScriptEngine::GetManagedInstance(idB);
 
-			//	if (OnFunc) 
-			//	{
-			//		auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
-			//		auto collisionInfo = buildContactInfoObject(contact);
-			//		void* args[] = {
-			//			&collisionInfo,
-			//			entityBCSharp.getNative()
-			//		};
-			//		script.object.invokeMethod(OnFunc, args);
-			//	}
-			//		
-			//}
+					// If No instance was found, then create on with from the default entity class
+					if (entityBInstance == nullptr) {
+						ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityB);
+						entityBInstance = instance.GetManagedObject();
+					}
 
-			//if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
-			//	auto& script = entityB.getComponent<ScriptComponent>();
-			//	auto* OnFunc = script.object.getMethod(functionName);
+					void* args[] = {
+						&collisionInfo,
+						entityBInstance
+					};
 
-			//	if (OnFunc) {
+					klass->InvokeMethod(instance->GetManagedObject(),
+						method,
+						args
+					);
+				}					
+			}
 
-			//		auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
-			//		auto collisionInfo = buildContactInfoObject(contact);
-			//		void* args[] = {
-			//			&collisionInfo,
-			//			entityACSharp.getNative()
-			//		};
-			//		script.object.invokeMethod(OnFunc, args);
-			//	}
-			//}
+			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
+				Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idB);
+				Ref<ScriptClass> klass = instance->GetScriptClass();
+				auto* method = klass->GetMethod(functionName, 2);
+
+				if (method) {
+					auto collisionInfo = buildContactInfoObject(contact);
+					MonoObject* entityAInstance = ScriptEngine::GetManagedInstance(idA);
+
+					// If No instance was found, then create on with from the default entity class
+					if (entityAInstance == nullptr) {
+						ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityA);
+						entityAInstance = instance.GetManagedObject();
+					}
+
+					void* args[] = {
+						&collisionInfo,
+						entityAInstance
+					};
+					klass->InvokeMethod(instance->GetManagedObject(),
+						method,
+						args
+					);
+				}
+			}
 		}
 	private:
 		Scene* scene;

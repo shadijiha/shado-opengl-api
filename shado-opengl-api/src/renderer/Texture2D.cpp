@@ -80,6 +80,13 @@ namespace Shado {
 			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+			// IF the width, height are not divisible by 4
+			// Then use glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			if (m_Width % 4 != 0 || m_Height % 4 != 0)
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			else
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 4);	// TODO: IF crash remove this line
+
 			glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
 
 			stbi_image_free(data);

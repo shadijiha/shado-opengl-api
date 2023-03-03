@@ -137,6 +137,7 @@ namespace Shado {
 	}
 
 	static void SerializeEntity(YAML::Emitter& out, Entity entity);
+	static std::string getPathAndCopyFileToAssets(const std::string& path);
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene)
 		: m_Scene(scene)
@@ -251,7 +252,11 @@ namespace Shado {
 						auto& src = deserializedEntity.addComponent<SpriteRendererComponent>();
 						auto texturePath = spriteRendererComponent["Texture"].as<std::string>();
 						src.color = spriteRendererComponent["Color"].as<glm::vec4>();
-						src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
+						src.texture = texturePath == "NULL" || texturePath == "null" ?
+							nullptr : CreateRef<Texture2D>(
+															Project::GetActive() ?
+														   (Project::GetProjectDirectory() / texturePath).string() : texturePath
+														  );
 						src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
 					}
 
@@ -265,7 +270,11 @@ namespace Shado {
 						src.fade = circleRendererComponent["Fade"].as<float>();
 
 						auto texturePath = circleRendererComponent["Texture"].as<std::string>();
-						src.texture = texturePath == "NULL" || texturePath == "null" ? nullptr : CreateRef<Texture2D>(texturePath);
+						src.texture = texturePath == "NULL" || texturePath == "null" ?
+							nullptr : CreateRef<Texture2D>(
+															Project::GetActive() ?
+															(Project::GetProjectDirectory() / texturePath).string() : texturePath
+														);
 						src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
 					}
 
@@ -448,11 +457,17 @@ namespace Shado {
 
 			auto& spriteRendererComponent = entity.getComponent<SpriteRendererComponent>();
 			std::string texturePath = spriteRendererComponent.texture ? spriteRendererComponent.texture->getFilePath() : "NULL";
+			std::string newPath = getPathAndCopyFileToAssets(texturePath);
 			out << YAML::Key << "Color" << YAML::Value << spriteRendererComponent.color;
-			out << YAML::Key << "Texture" << YAML::Value << texturePath;
+			out << YAML::Key << "Texture" << YAML::Value << newPath;
 			out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
 
 			out << YAML::EndMap; // SpriteRendererComponent
+
+			// if Texture path has changed, then update the component
+			if (newPath != texturePath) {
+				spriteRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
+			}
 		}
 
 		if (entity.hasComponent<CircleRendererComponent>())
@@ -462,14 +477,21 @@ namespace Shado {
 
 			auto& circleRendererComponent = entity.getComponent<CircleRendererComponent>();
 			std::string texturePath = circleRendererComponent.texture ? circleRendererComponent.texture->getFilePath() : "NULL";
+			std::string newPath = getPathAndCopyFileToAssets(texturePath);
+
 			out << YAML::Key << "Color" << YAML::Value << circleRendererComponent.color;
-			out << YAML::Key << "Texture" << YAML::Value << texturePath;
+			out << YAML::Key << "Texture" << YAML::Value << getPathAndCopyFileToAssets(texturePath);
 			out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
 
 			out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
 			out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
 
 			out << YAML::EndMap; // CircleRendererComponent
+
+			// if Texture path has changed, then update the component
+			if (newPath != texturePath) {
+				circleRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
+			}
 		}
 
 		if (entity.hasComponent<RigidBody2DComponent>())
@@ -573,5 +595,34 @@ namespace Shado {
 		}
 
 		out << YAML::EndMap; // Entity
+	}
+
+	static std::string getPathAndCopyFileToAssets(const std::string& path) {
+		// Convert absolute path to a relative path to Project::GetAtive()->GetProjectPath()
+		if (!Project::GetActive() || path == "NULL")
+			return path;
+
+		// If file is abolute path
+		auto absoluePath = std::filesystem::absolute(path);
+		auto projectPath = Project::GetActive()->GetProjectDirectory();
+		
+		// Check if file is already in project dir
+		if (absoluePath.string().rfind(projectPath.string()) == 0) {
+			return absoluePath.string().substr(projectPath.string().length() + 1);
+		}
+
+		// Otherwise, copy it to Assets and return the new path
+		std::error_code ec;
+		auto filename = absoluePath.filename();
+		auto newFilePath = Project::GetAssetDirectory() / filename;
+
+		// Check if new file already exists
+		if (std::filesystem::exists(newFilePath)) {
+			newFilePath = Project::GetAssetDirectory() / (filename.stem().string() + "_" + std::to_string(std::time(nullptr)) + filename.extension().string());
+		}
+		std::filesystem::copy_file(absoluePath, newFilePath, std::filesystem::copy_options::overwrite_existing, ec);	
+
+		// Return newFilePath relative to the projectPath
+		return newFilePath.string().substr(projectPath.string().length() + 1);
 	}
 }

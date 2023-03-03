@@ -10,13 +10,11 @@
 #include "Texture2D.h"
 
 namespace Shado {
-	extern const std::filesystem::path g_AssetsPath;
-
 	struct SpriteRendererComponent;
 
-	inline const std::filesystem::path QUAD_SHADER = g_AssetsPath / "shaders/Renderer2D_Quad.glsl";
-	inline const std::filesystem::path CIRCLE_SHADER = g_AssetsPath / "shaders/Renderer2D_Circle.glsl";
-	inline const std::filesystem::path LINES_SHADER = g_AssetsPath / "shaders/Renderer2D_Line.glsl";
+	inline const std::filesystem::path QUAD_SHADER = "assets/shaders/Renderer2D_Quad.glsl";
+	inline const std::filesystem::path CIRCLE_SHADER = "assets/shaders/Renderer2D_Circle.glsl";
+	inline const std::filesystem::path LINES_SHADER = "assets/shaders/Renderer2D_Line.glsl";
 
 	class Renderer2D
 	{

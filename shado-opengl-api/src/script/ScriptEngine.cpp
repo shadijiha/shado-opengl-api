@@ -636,8 +636,11 @@ namespace Shado {
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)
 	{
-		SHADO_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end(), "");
-		return s_Data->EntityInstances.at(uuid)->GetManagedObject();
+		if (s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end())
+			return s_Data->EntityInstances.at(uuid)->GetManagedObject();
+
+		return nullptr;
+		//SHADO_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end(), "");
 	}
 
 	MonoObject* ScriptEngine::InstantiateClass(MonoClass* monoClass, MonoMethod* ctor, void** args)

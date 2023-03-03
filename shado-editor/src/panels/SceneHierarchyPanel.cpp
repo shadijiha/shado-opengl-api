@@ -10,8 +10,6 @@
 #include "ui/imnodes.h"
 
 namespace Shado {
-	extern const std::filesystem::path g_AssetsPath;
-
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
 		setContext(scene);
 	}
