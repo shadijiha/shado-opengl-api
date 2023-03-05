@@ -10,6 +10,7 @@
 #include "scene/utils/SceneUtils.h"
 #include "project/Project.h"
 #include "ui/UI.h"
+#include "ui/imnodes.h"
 
 #include "physics/Physics2D.h"
 
@@ -31,7 +32,9 @@ namespace Shado {
 
 #define SHADO_ADD_INTERNAL_CALL(Name) mono_add_internal_call("Shado.InternalCalls::" #Name, Name)
 #define SHADO_ADD_UI_INTERNAL_CALL(Name) mono_add_internal_call("Shado.Editor.UI::" #Name, Name)
+#define SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(Name) mono_add_internal_call("Shado.Editor.NodeEditor::" #Name, Name)
 
+#pragma region  NativeLog
 	static void NativeLog(MonoString* string, int parameter)
 	{
 		char* cStr = mono_string_to_utf8(string);
@@ -57,7 +60,9 @@ namespace Shado {
 	{
 		return ScriptEngine::GetManagedInstance(entityID);
 	}
+#pragma endregion
 
+#pragma region  Entity
 	static bool Entity_HasComponent(UUID entityID, MonoReflectionType* componentType)
 	{
 		Scene* scene = ScriptEngine::GetSceneContext();
@@ -108,7 +113,9 @@ namespace Shado {
 
 		return entity.getUUID();
 	}
+#pragma endregion
 
+#pragma region TagComponent
 	/**
 	* Tag
 	*/
@@ -129,7 +136,9 @@ namespace Shado {
 
 		entity.getComponent<TagComponent>().tag = ScriptEngine::MonoStrToUT8(*refName);
 	}
+#pragma endregion
 
+#pragma region TransformComponent
 	/**
 	* Transform
 	*/
@@ -192,7 +201,9 @@ namespace Shado {
 
 		entity.getComponent<TransformComponent>().scale = *scale;
 	}
+#pragma endregion
 
+#pragma region SpriteRendererComponent
 	/**
 	* Sprite Renderer
 	*/
@@ -310,7 +321,9 @@ namespace Shado {
 		else
 			SHADO_ERROR("Unknown Sprite class {0}", klassName);
 	}
+#pragma endregion
 
+#pragma region CircleRendererComponent
 	/**
 	* Cricle Renderer
 	*/
@@ -345,7 +358,9 @@ namespace Shado {
 		else
 			SHADO_ERROR("Unknown field name {0}", field);
 	}
+#pragma endregion
 
+#pragma region RigidBody2DComponent
 	/**
 	* Rigidbody2D
 	*/
@@ -528,7 +543,9 @@ namespace Shado {
 			break;
 		}
 	}
+#pragma endregion
 
+#pragma region CameraComponent
 	/**
 	 * Camera component
 	 */
@@ -576,8 +593,9 @@ namespace Shado {
 
 		entity.getComponent<CameraComponent>().setViewportSize(width, height);
 	}
+#pragma endregion
 
-
+#pragma region Input
 	/**
 	* Input
 	*/
@@ -585,7 +603,9 @@ namespace Shado {
 	{
 		return Input::isKeyPressed(keycode);
 	}
+#pragma endregion
 
+#pragma region Texture2D
 	/**
 	* Texture2D
 	*/
@@ -621,7 +641,9 @@ namespace Shado {
 		delete ptr;
 		*newHandle = new Texture2D(ScriptEngine::MonoStrToUT8(filepath));
 	}
+#pragma endregion
 
+#pragma region Shader
 	/**
 	 * Shader
 	 */
@@ -665,7 +687,9 @@ namespace Shado {
 	static void Shader_Destroy(Shader* oldNative) {
 		delete oldNative;
 	}
-
+#pragma endregion
+	
+#pragma region Log
 	/**
 	 * Log
 	 */
@@ -697,7 +721,9 @@ namespace Shado {
 			break;
 		}
 	}
+#pragma endregion
 
+#pragma region Renderer
 	/**
 	 * Renderer Glue
 	 */
@@ -719,10 +745,20 @@ namespace Shado {
 
 		Renderer2D::DrawQuad(transform, *shader, *colour);
 	}
+#pragma endregion
 
+#pragma region UI
 	/**
 	 * UI
 	 */
+	static void Begin(MonoString* label) {
+		ImGui::Begin(ScriptEngine::MonoStrToUT8(label).c_str());
+	}
+
+	static void End() {
+		ImGui::End();
+	}
+	
 	static void Text(MonoString* str) {
 		ImGui::Text(ScriptEngine::MonoStrToUT8(str).c_str());
 	}
@@ -793,6 +829,64 @@ namespace Shado {
 		return result.empty() ? nullptr : ScriptEngine::NewString(result.c_str());
 	}
 
+	static void Indent(float x) {
+		ImGui::Indent(x);
+	}
+#pragma endregion
+
+#pragma region NodeEditor
+	//static void BeginNodeEditor() {
+	//	static bool init = false;
+	//	if (!init) {
+	//		ImNodes::SetCurrentContext(ImNodes::CreateContext());
+	//		ImNodes::SetNodeGridSpacePos(1, ImVec2(200.0f, 200.0f));
+	//		init = true;
+	//	}
+	//	ImNodes::BeginNodeEditor();
+	//}
+
+	//static void EndNodeEditor() {
+	//	ImNodes::EndNodeEditor();
+	//}
+
+	//static void BeginNode(int id) {
+	//	ImNodes::BeginNode(id);
+	//}
+
+	//static void EndNode() {
+	//	ImNodes::EndNode();
+	//}
+
+	//static void BeginNodeTitleBar() {
+	//	ImNodes::BeginNodeTitleBar();
+	//}
+
+	//static void EndNodeTitleBar() {
+	//	ImNodes::EndNodeTitleBar();
+	//}
+
+	//static void BeginInputAttribute(int id) {
+	//	ImNodes::BeginInputAttribute(id);
+	//}
+
+	//static void EndInputAttribute() {
+	//	ImNodes::EndInputAttribute();
+	//}
+
+	//static void BeginOutputAttribute(int id) {
+	//	ImNodes::BeginOutputAttribute(id);
+	//}
+
+	//static void EndOutputAttribute() {
+	//	ImNodes::EndOutputAttribute();
+	//}
+
+	static bool IsLinkCreated(int* startAttr, int* endAttr)
+	{
+		return ImNodes::IsLinkCreated(startAttr, endAttr);
+	}
+#pragma endregion
+
 	/**
 	 *
 	 */
@@ -832,82 +926,133 @@ namespace Shado {
 
 	void ScriptGlue::RegisterFunctions()
 	{
-		SHADO_ADD_INTERNAL_CALL(NativeLog);
-		SHADO_ADD_INTERNAL_CALL(NativeLog_Vector);
-		SHADO_ADD_INTERNAL_CALL(NativeLog_VectorDot);
+		{
+			SHADO_ADD_INTERNAL_CALL(NativeLog);
+			SHADO_ADD_INTERNAL_CALL(NativeLog_Vector);
+			SHADO_ADD_INTERNAL_CALL(NativeLog_VectorDot);
 
-		SHADO_ADD_INTERNAL_CALL(GetScriptInstance);
+			SHADO_ADD_INTERNAL_CALL(GetScriptInstance);
+		}
+		
+		{
+			SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
+			SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
+			SHADO_ADD_INTERNAL_CALL(Entity_AddComponent);
+			SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
+		}
+			
+		{
+			SHADO_ADD_INTERNAL_CALL(TagComponent_GetTag);
+			SHADO_ADD_INTERNAL_CALL(TagComponent_SetTag);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
-		SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
-		SHADO_ADD_INTERNAL_CALL(Entity_AddComponent);
-		SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
+		{
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetTranslation);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetRotation);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_GetScale);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetScale);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(TagComponent_GetTag);
-		SHADO_ADD_INTERNAL_CALL(TagComponent_SetTag);
+		{
+			SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetColour);
+			SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetColour);
+			SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
+			SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
+			SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTilingFactor);
+			SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTilingFactor);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(TransformComponent_GetTranslation);
-		SHADO_ADD_INTERNAL_CALL(TransformComponent_SetTranslation);
-		SHADO_ADD_INTERNAL_CALL(TransformComponent_GetRotation);
-		SHADO_ADD_INTERNAL_CALL(TransformComponent_SetRotation);
-		SHADO_ADD_INTERNAL_CALL(TransformComponent_GetScale);
-		SHADO_ADD_INTERNAL_CALL(TransformComponent_SetScale);
+		{
+			SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_GetFloatValue);
+			SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_SetFloatValue);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetColour);
-		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetColour);
-		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
-		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
-		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTilingFactor);
-		SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTilingFactor);
+		{
+			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulse);
+			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);
+			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetLinearVelocity);
+			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetType);
+			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetType);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_GetFloatValue);
-		SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_SetFloatValue);
+		{
+			SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetVec2);
+			SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetVec2);
+			SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetFloat);
+			SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetFloat);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulse);
-		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);
-		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetLinearVelocity);
-		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetType);
-		SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_SetType);
+		{
+			SHADO_ADD_INTERNAL_CALL(CameraComponent_GetPrimary);
+			SHADO_ADD_INTERNAL_CALL(CameraComponent_SetPrimary);
+			SHADO_ADD_INTERNAL_CALL(CameraComponent_GetType);
+			SHADO_ADD_INTERNAL_CALL(CameraComponent_SetType);
+			SHADO_ADD_INTERNAL_CALL(CameraComponent_SetViewport);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetVec2);
-		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetVec2);
-		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetFloat);
-		SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetFloat);
+		{
+			SHADO_ADD_INTERNAL_CALL(Input_IsKeyDown);
+		}
+		{
+			SHADO_ADD_INTERNAL_CALL(Texture2D_Create);
+			SHADO_ADD_INTERNAL_CALL(Texture2D_Destroy);
+			SHADO_ADD_INTERNAL_CALL(Texture2D_Reset);
+		}
+		{
+			SHADO_ADD_INTERNAL_CALL(Shader_CreateShader);
+			SHADO_ADD_INTERNAL_CALL(Shader_SetInt);
+			SHADO_ADD_INTERNAL_CALL(Shader_SetIntArray);
+			SHADO_ADD_INTERNAL_CALL(Shader_SetFloat);
+			SHADO_ADD_INTERNAL_CALL(Shader_SetFloat3);
+			SHADO_ADD_INTERNAL_CALL(Shader_SetFloat4);
+			SHADO_ADD_INTERNAL_CALL(Shader_Reset);
+			SHADO_ADD_INTERNAL_CALL(Shader_Destroy);
+		}
+		{
+			SHADO_ADD_INTERNAL_CALL(Log_Log);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(CameraComponent_GetPrimary);
-		SHADO_ADD_INTERNAL_CALL(CameraComponent_SetPrimary);
-		SHADO_ADD_INTERNAL_CALL(CameraComponent_GetType);
-		SHADO_ADD_INTERNAL_CALL(CameraComponent_SetType);
-		SHADO_ADD_INTERNAL_CALL(CameraComponent_SetViewport);
+		{
+			SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuad);
+			SHADO_ADD_INTERNAL_CALL(Renderer_DrawRotatedQuad);
+			SHADO_ADD_INTERNAL_CALL(Renderer_DrawLine);
+			SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuadShader);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(Input_IsKeyDown);
+		{
+			SHADO_ADD_UI_INTERNAL_CALL(Begin);
+			SHADO_ADD_UI_INTERNAL_CALL(End);
+			SHADO_ADD_UI_INTERNAL_CALL(Text);
+			SHADO_ADD_UI_INTERNAL_CALL(Image_Native);
+			SHADO_ADD_UI_INTERNAL_CALL(Separator);
+			SHADO_ADD_UI_INTERNAL_CALL(Button_Native);
+			SHADO_ADD_UI_INTERNAL_CALL(InputTextFileChoose_Native);
+			SHADO_ADD_UI_INTERNAL_CALL(OpenFileDialog_Native);
+			SHADO_ADD_UI_INTERNAL_CALL(Indent);
+		}
 
-		SHADO_ADD_INTERNAL_CALL(Texture2D_Create);
-		SHADO_ADD_INTERNAL_CALL(Texture2D_Destroy);
-		SHADO_ADD_INTERNAL_CALL(Texture2D_Reset);
-
-		SHADO_ADD_INTERNAL_CALL(Shader_CreateShader);
-		SHADO_ADD_INTERNAL_CALL(Shader_SetInt);
-		SHADO_ADD_INTERNAL_CALL(Shader_SetIntArray);
-		SHADO_ADD_INTERNAL_CALL(Shader_SetFloat);
-		SHADO_ADD_INTERNAL_CALL(Shader_SetFloat3);
-		SHADO_ADD_INTERNAL_CALL(Shader_SetFloat4);
-		SHADO_ADD_INTERNAL_CALL(Shader_Reset);
-		SHADO_ADD_INTERNAL_CALL(Shader_Destroy);
-
-		SHADO_ADD_INTERNAL_CALL(Log_Log);
-
-		SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuad);
-		SHADO_ADD_INTERNAL_CALL(Renderer_DrawRotatedQuad);
-		SHADO_ADD_INTERNAL_CALL(Renderer_DrawLine);
-		SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuadShader);
-
-		SHADO_ADD_UI_INTERNAL_CALL(Text);
-		SHADO_ADD_UI_INTERNAL_CALL(Image_Native);
-		SHADO_ADD_UI_INTERNAL_CALL(Separator);
-		SHADO_ADD_UI_INTERNAL_CALL(Button_Native);
-		SHADO_ADD_UI_INTERNAL_CALL(InputTextFileChoose_Native);
-		SHADO_ADD_UI_INTERNAL_CALL(OpenFileDialog_Native);
+		{
+			{
+				using namespace ImNodes;
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(BeginNodeEditor);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(EndNodeEditor);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(BeginNode);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(EndNode);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(BeginNodeTitleBar);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(EndNodeTitleBar);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(BeginInputAttribute);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(EndInputAttribute);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(BeginOutputAttribute);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(EndOutputAttribute);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(Link);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsNodeHovered);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsLinkHovered);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsPinHovered);
+				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsLinkDestroyed);
+			}
+			SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsLinkCreated);			
+		}
 	}
-
 }

@@ -10,7 +10,14 @@ namespace Shado.Editor
         {
             Open = 0, Save, Folder
         };
+
         public delegate void OnInputFileChooserChanged(string path);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Begin(string label);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void End();
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void Text(string text);
@@ -49,6 +56,9 @@ namespace Shado.Editor
             return OpenFileDialog_Native(buffer.ToString(), type);
         }
 
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Indent(float x);
+
         /**
          * Native functions
          */
@@ -63,5 +73,55 @@ namespace Shado.Editor
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal static extern string OpenFileDialog_Native(string filters, FileChooserType type);
+    }
+
+    public static class NodeEditor {
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void BeginNodeEditor();
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void EndNodeEditor();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void BeginNode(int id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void EndNode();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void BeginNodeTitleBar();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void EndNodeTitleBar();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void BeginInputAttribute(int id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void EndInputAttribute();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void BeginOutputAttribute(int id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void EndOutputAttribute();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Link(int id, int start_attrib_id, int end_attrib_id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool IsNodeHovered(ref int id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool IsLinkHovered(ref int id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool IsPinHovered(ref int id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool IsLinkCreated(ref int atrrib_start, ref int atrrib_end);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void IsLinkDestroyed(ref int id);
     }
 }
