@@ -84,6 +84,8 @@ namespace Shado {
 		MonoObject* InvokeMethod(MonoObject* instance, MonoMethod* method, void** params = nullptr);
 
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
+
+		const std::string& GetClassFullName() const { return m_ClassNamespace + "." + m_ClassName; }
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;
@@ -168,6 +170,7 @@ namespace Shado {
 
 		static Scene* GetSceneContext();
 		static Ref<ScriptInstance> GetEntityScriptInstance(UUID entityID);
+		static Ref<ScriptInstance> CreateEntityScriptInstance(Ref<ScriptClass> klass, Entity e);
 
 		static Ref<ScriptClass> GetEntityClass(const std::string& name);
 		static std::unordered_map<std::string, Ref<ScriptClass>> GetEntityClasses();
@@ -175,6 +178,9 @@ namespace Shado {
 
 		static void DrawCustomEditorForFieldRunning(const ScriptField& field, Ref<ScriptInstance> scriptInstance, const std::string& name);
 		static void InvokeCustomEditorEvents(Event& e);
+
+		// Editor Scene not running, Field not set or set in editor
+		static void DrawCustomEditorForFieldStopped(const std::string& fieldName, const ScriptField& field, Entity entity, Ref<ScriptClass> klass, bool wasSet);
 
 		static MonoImage* GetCoreAssemblyImage();
 

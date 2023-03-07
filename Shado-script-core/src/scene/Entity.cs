@@ -12,7 +12,7 @@ namespace Shado
 			ID = id;
 		}
 
-		public readonly ulong ID;
+		public ulong ID { get; private set; }	// TODO: IF we have weird error. revert this to be --> public readonly ulong ID
 
 		public Vector3 translation
 		{
@@ -63,6 +63,29 @@ namespace Shado
 
 			T component = new T() { Entity = this };
 			return component;
+		}
+
+
+		public void Destroy(Entity entity) {
+			InternalCalls.Entity_Destroy(entity.ID);
+		}
+
+		/// <summary>
+		/// Creates a new entity. If you provide an object as pramater. An new entity will be created and the script 
+		/// That is attached to it will be deplicated and attached to the new Entity.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="obj"></param>
+		/// <returns></returns>
+		public T Create<T>(Entity obj = null) where T : Entity, new() {
+			bool ignoreId = obj == null;
+
+            ulong id = InternalCalls.Entity_Create(obj == null ? 0 : obj.ID, ref ignoreId);
+            T e = new T
+            {
+                ID = id
+            };
+            return e;
 		}
 
 		public static Entity FindEntityByName(string name)

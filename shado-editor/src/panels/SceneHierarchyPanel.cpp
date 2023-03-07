@@ -345,6 +345,10 @@ namespace Shado {
 									if (UI::ColorControl(name, data))
 										scriptField.SetValue(data);
 								}
+								else {
+									// TODO: How should we deal with complex types when seralizing?
+									ScriptEngine::DrawCustomEditorForFieldStopped(name, field, entity, entityClass, true);
+								}
 
 							} else
 							{
@@ -376,6 +380,9 @@ namespace Shado {
 										fieldInstance.Field = field;
 										fieldInstance.SetValue(data);
 									}
+								}
+								else {
+									ScriptEngine::DrawCustomEditorForFieldStopped(name, field, entity, entityClass, false);
 								}
 							}
 						}
@@ -609,38 +616,6 @@ namespace Shado {
 			if (sprite.shader) {
 				sprite.shader = CreateRef<Shader>(sprite.shader->getFilepath());
 			}
-		}
-
-		{
-			static bool init = false;
-			if (!init) {
-				ImNodes::SetCurrentContext(ImNodes::CreateContext());
-				ImNodes::SetNodeGridSpacePos(1, ImVec2(200.0f, 200.0f));
-				init = true;
-			}
-
-			ImGui::Begin("simple node editor");
-
-			ImNodes::BeginNodeEditor();
-			ImNodes::BeginNode(1);
-
-			ImNodes::BeginNodeTitleBar();
-			ImGui::TextUnformatted("simple node :)");
-			ImNodes::EndNodeTitleBar();
-
-			ImNodes::BeginInputAttribute(2);
-			ImGui::Text("input");
-			ImNodes::EndInputAttribute();
-
-			ImNodes::BeginOutputAttribute(3);
-			ImGui::Indent(40);
-			ImGui::Text("output");
-			ImNodes::EndOutputAttribute();
-
-			ImNodes::EndNode();
-			ImNodes::EndNodeEditor();
-
-			ImGui::End();
 		}
 	}
 

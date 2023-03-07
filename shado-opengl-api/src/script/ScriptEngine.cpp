@@ -368,6 +368,12 @@ namespace Shado {
 		return it->second;
 	}
 
+	Ref<ScriptInstance> ScriptEngine::CreateEntityScriptInstance(Ref<ScriptClass> klass, Entity e)
+	{
+		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, e);
+		s_Data->EntityInstances[e.getUUID()] = instance;
+		return instance;
+	}
 
 	Ref<ScriptClass> ScriptEngine::GetEntityClass(const std::string& name)
 	{
@@ -516,7 +522,14 @@ namespace Shado {
 
 	MonoString* ScriptEngine::NewString(const char* str)
 	{
-		return mono_string_new(s_Data->AppDomain, str);
+		// Cache string
+		static std::unordered_map<const char*, MonoString*> s_StringCache;
+		if (s_StringCache.find(str) != s_StringCache.end())
+			return s_StringCache[str];
+
+		auto* csStr = mono_string_new(s_Data->AppDomain, str);
+		s_StringCache[str] = csStr;
+		return csStr;
 	}
 
 	std::string ScriptEngine::MonoStrToUT8(MonoString* str)
@@ -632,6 +645,50 @@ namespace Shado {
 				//event.setHandled(e.handled);
 			}			
 		}
+	}
+
+	void ScriptEngine::DrawCustomEditorForFieldStopped(const std::string& fieldName, const ScriptField& field, Entity entity, Ref<ScriptClass> klass, bool wasSet) {
+		for (auto [typeFor, editorInstance] : s_Data->EditorInstances) {
+			// If we find custom editor, then invoke the OnEditorDraw func
+			std::string temp = mono_type_get_name(mono_field_get_type(field.ClassField));
+			if (typeFor == temp) {
+
+				// Get the script instance
+				Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.getUUID());
+				if (!scriptInstance) {
+					// If script instance is not found, create one
+					scriptInstance = CreateRef<ScriptInstance>(klass, entity);
+					s_Data->EntityInstances[entity.getUUID()] = scriptInstance;
+				}
+
+				// Set the target
+				MonoObject* target = scriptInstance->GetFieldValue<MonoObject*>(fieldName);
+				mono_field_set_value(editorInstance->GetManagedObject(),
+					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "target"),
+					target
+				);
+
+				// Set the fieldName
+				mono_field_set_value(editorInstance->GetManagedObject(),
+					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "fieldName"),
+					ScriptEngine::NewString(fieldName.c_str())
+				);
+
+				if (target == nullptr)
+					continue;
+
+				editorInstance->GetScriptClass()->InvokeMethod(
+					editorInstance->GetManagedObject(),
+					editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0)
+				);
+
+				if (!wasSet) {
+					//ScriptFieldInstance& fieldInstance = ScriptEngine::GetScriptFieldMap(entity)[fieldName];
+					//fieldInstance.Field = field;
+					//fieldInstance.SetValue(target);
+				}
+			}
+		}		
 	}
 
 	MonoObject* ScriptEngine::GetManagedInstance(UUID uuid)

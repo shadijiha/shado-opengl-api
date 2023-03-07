@@ -16,8 +16,15 @@ namespace Shado
 
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
 		internal extern static ulong Entity_FindEntityByName(string name);
-		[MethodImplAttribute(MethodImplOptions.InternalCall)]
-		internal extern static object GetScriptInstance(ulong entityID);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Entity_Destroy(ulong entityID);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static ulong Entity_Create(ulong id, ref bool ignoreId);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static object GetScriptInstance(ulong entityID);
         #endregion
 
         /**

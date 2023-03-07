@@ -113,6 +113,44 @@ namespace Shado {
 
 		return entity.getUUID();
 	}
+
+	static void Entity_Destroy(UUID entityID) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		scene->destroyEntity(entity);
+	}
+
+	static UUID Entity_Create(UUID idToCopyScript, bool* ignoreId) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		
+		if (*ignoreId) {
+			Entity entity = scene->createEntity();
+			return entity.getUUID();
+		}
+		else {
+			Entity entity = scene->createEntity();
+
+			// Get any scripts related to idToCopyScript
+			Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idToCopyScript);
+			if (!instance)
+				return entity.getUUID();
+
+			ScriptComponent& script = entity.addComponent<ScriptComponent>();
+
+			// Copy the scripts to the new entity
+			Ref<ScriptInstance> newScriptInstance = ScriptEngine::CreateEntityScriptInstance(instance->GetScriptClass(), entity);
+			newScriptInstance->InvokeOnCreate();
+
+			script.ClassName = newScriptInstance->GetScriptClass()->GetClassFullName();
+
+			return entity.getUUID();
+		}
+	}
+
 #pragma endregion
 
 #pragma region TagComponent
@@ -939,6 +977,8 @@ namespace Shado {
 			SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
 			SHADO_ADD_INTERNAL_CALL(Entity_AddComponent);
 			SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
+			SHADO_ADD_INTERNAL_CALL(Entity_Destroy);
+			SHADO_ADD_INTERNAL_CALL(Entity_Create);
 		}
 			
 		{

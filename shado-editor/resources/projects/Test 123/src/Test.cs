@@ -20,6 +20,8 @@ namespace Sandbox
         public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
 
+        private Test other;
+
         void OnCreate()
         {
             transform = GetComponent<TransformComponent>();
@@ -29,16 +31,20 @@ namespace Sandbox
 
         void OnUpdate(float dt)
         {
-            //totalDt += dt;
-            //GetComponent<SpriteRendererComponent>().colour = colourTest;
+            totalDt += dt;
+            GetComponent<SpriteRendererComponent>().colour = colourTest;
             ////GetComponent<SpriteRendererComponent>().texture = texture;
-            //Vector3 pos = transform.position;
-            //pos.x += moveRate * 2 * dt * dir;
-            //transform.position = pos;
-            //
-            //if (pos.x > maxDelta || pos.x < -maxDelta) {
-            //    dir = -dir;
-            //}
+            Vector3 pos = transform.position;
+            pos.x += moveRate * 2 * dt * dir;
+            transform.position = pos;
+            
+            if (pos.x > maxDelta || pos.x < -maxDelta) {
+                dir = -dir;
+            }
+
+            if (Input.IsKeyDown(KeyCode.K)) {
+                other = Create<Test>(this);
+            }
         }
 
         void OnDraw() {
@@ -48,13 +54,13 @@ namespace Sandbox
             //angle += 0.01f;
         }
 
-        void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
+        /*void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
             Log.Info("Collision enter {0} with {1}", info, other.tag);
         }
 
         void OnCollision2DLeave(Collision2DInfo info, Entity other) {
             Log.Info("Collision leave {0} with {1}", info, other.tag);
-        }
+        }*/
     }
 
     public class TestCamera : Entity {
