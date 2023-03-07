@@ -722,6 +722,8 @@ namespace Shado {
 	ScriptClass::ScriptClass(MonoClass* klass)
 		: m_MonoClass(klass)
 	{
+		m_ClassNamespace = mono_class_get_namespace(klass);
+		m_ClassName = mono_class_get_name(klass);
 	}
 		
 	MonoObject* ScriptClass::Instantiate(MonoMethod* ctor, void** args)

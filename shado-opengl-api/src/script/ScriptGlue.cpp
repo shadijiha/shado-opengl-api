@@ -123,7 +123,7 @@ namespace Shado {
 		scene->destroyEntity(entity);
 	}
 
-	static UUID Entity_Create(UUID idToCopyScript, bool* ignoreId) {
+	static uint64_t Entity_Create(UUID idToCopyScript, bool* ignoreId) {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		
@@ -132,7 +132,8 @@ namespace Shado {
 			return entity.getUUID();
 		}
 		else {
-			Entity entity = scene->createEntity();
+			// Copy given entity
+			Entity entity = scene->duplicateEntity(scene->getEntityById(idToCopyScript));			
 
 			// Get any scripts related to idToCopyScript
 			Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idToCopyScript);
@@ -142,10 +143,8 @@ namespace Shado {
 			ScriptComponent& script = entity.addComponent<ScriptComponent>();
 
 			// Copy the scripts to the new entity
-			Ref<ScriptInstance> newScriptInstance = ScriptEngine::CreateEntityScriptInstance(instance->GetScriptClass(), entity);
-			newScriptInstance->InvokeOnCreate();
-
-			script.ClassName = newScriptInstance->GetScriptClass()->GetClassFullName();
+			script.ClassName = instance->GetScriptClass()->GetClassFullName();
+			ScriptEngine::OnCreateEntity(entity);
 
 			return entity.getUUID();
 		}
@@ -672,7 +671,7 @@ namespace Shado {
 
 	static void Texture2D_Destroy(Texture2D* ptr) {
 		// TODO? maybe need a flag in the class that checks if the object was constructed by C# or not
-		delete ptr;
+		//delete ptr;
 	}
 
 	static void Texture2D_Reset(Texture2D* ptr, MonoString* filepath, Texture2D** newHandle) {

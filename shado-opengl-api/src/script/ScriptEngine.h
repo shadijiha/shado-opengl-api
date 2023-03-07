@@ -85,7 +85,7 @@ namespace Shado {
 
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
 
-		const std::string& GetClassFullName() const { return m_ClassNamespace + "." + m_ClassName; }
+		std::string GetClassFullName() const { return m_ClassNamespace + "." + m_ClassName; }
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;

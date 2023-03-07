@@ -70,14 +70,16 @@ namespace Shado
 			InternalCalls.Entity_Destroy(entity.ID);
 		}
 
-		/// <summary>
-		/// Creates a new entity. If you provide an object as pramater. An new entity will be created and the script 
-		/// That is attached to it will be deplicated and attached to the new Entity.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="obj"></param>
-		/// <returns></returns>
-		public T Create<T>(Entity obj = null) where T : Entity, new() {
+        /// <summary>
+        /// Creates a new entity. If you provide an object as pramater. An new entity will be created and the script 
+        /// That is attached to it will be deplicated and attached to the new Entity.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj">The source entity to copy. If null then a new entity 
+        ///  without any components is created
+        /// </param>
+        /// <returns></returns>
+        public T Create<T>(Entity obj = null) where T : Entity, new() {
 			bool ignoreId = obj == null;
 
             ulong id = InternalCalls.Entity_Create(obj == null ? 0 : obj.ID, ref ignoreId);

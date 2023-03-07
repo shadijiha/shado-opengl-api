@@ -120,7 +120,7 @@ namespace Shado {
 
 			// Display ID
 			auto id = entity.getComponent<IDComponent>().id;
-			ImGui::Text("ID: %lu", id);
+			ImGui::Text("ID: %llu", id);
 
 			char buffer[512];
 			memset(buffer, 0, sizeof(buffer));

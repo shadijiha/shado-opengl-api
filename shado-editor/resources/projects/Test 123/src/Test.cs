@@ -31,6 +31,9 @@ namespace Sandbox
 
         void OnUpdate(float dt)
         {
+            if (this.tag == "Square (2)") {
+                float x = 10;
+            }
             totalDt += dt;
             GetComponent<SpriteRendererComponent>().colour = colourTest;
             ////GetComponent<SpriteRendererComponent>().texture = texture;
@@ -42,7 +45,7 @@ namespace Sandbox
                 dir = -dir;
             }
 
-            if (Input.IsKeyDown(KeyCode.K)) {
+            if (Input.IsKeyDown(KeyCode.K) && other is null) {
                 other = Create<Test>(this);
             }
         }
@@ -54,10 +57,12 @@ namespace Sandbox
             //angle += 0.01f;
         }
 
-        /*void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
+        void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
             Log.Info("Collision enter {0} with {1}", info, other.tag);
+            Destroy(this);
         }
 
+        /*
         void OnCollision2DLeave(Collision2DInfo info, Entity other) {
             Log.Info("Collision leave {0} with {1}", info, other.tag);
         }*/
