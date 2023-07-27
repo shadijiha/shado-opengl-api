@@ -22,11 +22,25 @@ namespace Sandbox
 
         private Test other;
 
-        void OnCreate()
-        {
+        void OnCreate() {
             transform = GetComponent<TransformComponent>();
             GetComponent<SpriteRendererComponent>().texture = texture;
+            var t = this.Create<Test>();
+            t.AddComponent<SpriteRendererComponent>().colour = Colour.Blue;
             //GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
+            
+            const float max = 5.0f;
+            for (float y = -5.0f; y < max; y += 0.5f)
+            {
+                for (float x = -5.0f; x < max; x += 0.5f)
+                {
+                    GridCell gridCell = Create<GridCell>();
+                    gridCell.x = x;
+                    gridCell.y = y;
+                    gridCell.parent = this;
+                    gridCell.OnCreate();
+                }
+            }
         }
 
         void OnUpdate(float dt)
@@ -111,115 +125,49 @@ namespace Sandbox
             translation = pos;
         }
     }
+    
+    class GridCell : Entity {
+        static readonly Texture2D[] texture = {
+            Texture2D.Create(@"Assets\riven.png"),
+            Texture2D.Create(@"Assets\riven2.jpg"),
+            Texture2D.Create(@"Assets\riven3.png")
+        };
+        static Random random = new Random();
+        static uint collisions = 0;
 
-    //public class Test : Entity
-    //{
-    //    private SpriteRendererComponent sprite; 
-    //    private Entity camera;
-    //    private List<Entity> entities = new List<Entity>();
-    //    private bool flag = false;
+        internal float x, y;
+        internal Entity parent;
 
-    //    protected override void OnCreate() {
-    //        camera = Scene.GetPrimaryCameraEntity();
+        public GridCell() { }
 
-    //        Debug.Warn("Transform {0}", Transform.Position);
+        public GridCell(Entity parent, float x, float y) { 
+            this.x = x;
+            this.y = y;
+            this.parent = parent;
+        }
+        internal void OnCreate() {
+            transform.position = parent.transform.position + new Vector3(x, y, 0);
+            transform.scale = new Vector3(0.45f, 0.45f, 0);
+            tag = $"Grid cell {x}, {y}";
 
-    //        AddComponent<SpriteRendererComponent>();
-    //        AddComponent<RigidBody2DComponent>().Type = RigidBody2DComponent.BodyType.DYNAMIC;
-    //        var bcparent = AddComponent<BoxCollider2DComponent>();
-    //        bcparent.Restitution = 0.7f;
-    //        bcparent.RestitutionThreshold = 0.6f;
+            var sprite = AddComponent<SpriteRendererComponent>();
+            sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
+            //sprite.texture = texture[random.Next(texture.Length)];
+ 
+            var rb = AddComponent<RigidBody2DComponent>();
+            AddComponent<BoxCollider2DComponent>();
+            rb.type = RigidBody2DComponent.BodyType.Dynamic;
+        }
 
-    //        sprite = GetComponent<SpriteRendererComponent>();
-    //        sprite.Color = new Vector4(0.3f, 1.0f, 0.7f, 1.0f);
-
-    //        Texture2D texture = new Texture2D(@"assets\riven.png");
-    //        for (int i = 1; i < 4; i++) { 
-    //            Entity entity = Entity.Create();
-    //            entity.Transform.Position = Transform.Position + new Vector3(i * 2, 0.0f, 0.0f);
-    //            entity.Transform.Rotation = Transform.Rotation;
-    //            entity.Tag = "hehexd " + i;
-
-    //            var sprite = entity.AddComponent<CircleRendererComponent>();
-    //            sprite.Texture = texture;
-
-
-    //            var rb = entity.AddComponent<RigidBody2DComponent>();
-    //            rb.Type = RigidBody2DComponent.BodyType.DYNAMIC;
-
-    //            var bc = entity.AddComponent<CircleCollider2DComponent>();
-    //            bc.Restitution = 0.7f;
-
-    //            entities.Add(entity);
-    //        }
-
-    //        //DestroyAfter(3);
-    //    }
-
-    //    protected override void OnUpdate(float dt)
-    //    {
-    //        if (!flag && Input.IsKeyPressed(KeyCode.Space)) {
-    //            Debug.Info("hehexd");
-    //            entities[0].Destroy();
-    //            entities.RemoveAt(0);
-    //            flag = true;
-    //        }
-
-    //        if (camera != null)
-    //        {
-    //            if (Input.IsKeyPressed(KeyCode.D))
-    //            {
-    //                camera.Transform.Position += new Vector3(0.05f, 0.0f, 0.0f);
-    //            }
-    //            else if (Input.IsKeyPressed(KeyCode.A))
-    //            {
-    //                camera.Transform.Position -= new Vector3(0.05f, 0.0f, 0.0f);
-    //            }
-
-    //            if (Input.IsKeyPressed(KeyCode.W))
-    //            {
-    //                camera.Transform.Position += new Vector3(0.0f, 0.05f, 0.0f);
-    //            }
-    //            else if (Input.IsKeyPressed(KeyCode.S))
-    //            {
-    //                camera.Transform.Position -= new Vector3(0.0f, 0.05f, 0.0f);
-    //            }
-    //        }
-
-    //        var pos = Transform.Position;
-    //        pos.Normalize();
-    //        sprite.Color = new Vector4(
-    //            Math.Abs(pos.x), Math.Abs(pos.y), Math.Abs(pos.z), 1.0f
-    //        );
-
-    //    }
-
-    //    protected override void OnDestroyed()
-    //    {
-    //        Debug.Info("{0} destroyed!", Id);
-    //    }
-
-    //    protected override void OnCollision2DEnter(Collision2DInfo info, Entity other)
-    //    {
-    //        // var sprite = GetComponent<SpriteRendererComponent>();
-    //        //sprite.Color = Color.White;
-    //        //Destroy();
-    //    }
-
-    //    protected override void OnCollision2DLeave(Collision2DInfo info, Entity other)
-    //    {
-    //        //var sprite = GetComponent<SpriteRendererComponent>();
-    //        //sprite.Color = Vector4.One;
-    //    }
-
-
-    //    private void DestroyAfter(int seconds) {
-
-    //        ThreadManager.Create(() => { 
-    //            Thread.Sleep(seconds * 1000);
-    //            this.Destroy();
-    //        }).Start();
-    //    }
-
-    //}
+        void OnCollision2DEnter(Collision2DInfo info, Entity other)
+        {
+            collisions++;
+            if (collisions % 1000 == 0)
+            {
+                Log.Info("Collisions {0}", collisions);
+            }
+            //if (other.Tag.ToLower() == "ground")
+            //    Destroy();
+        }
+    }
 }

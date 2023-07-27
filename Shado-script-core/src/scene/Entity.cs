@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Shado
@@ -26,6 +28,8 @@ namespace Shado
 				InternalCalls.TransformComponent_SetTranslation(ID, ref value);
 			}
 		}
+
+		public TransformComponent transform => GetComponent<TransformComponent>();
 
 		public string tag {
 			get { InternalCalls.TagComponent_GetTag(ID, out var tag); return tag; }
@@ -90,6 +94,16 @@ namespace Shado
             return e;
 		}
 
+        public IEnumerable<Component> GetAllComponents() {
+	        return Component.GetAllComponentsTypes().Where(type => InternalCalls.Entity_HasComponent(ID, type))
+		        .Select(component => Activator.CreateInstance(component))
+		        .Cast<Component>()
+		        .Select(component => {
+			        component.Entity = this;
+			        return component;
+		        });
+        }
+        
 		public static Entity FindEntityByName(string name)
 		{
 			ulong entityID = InternalCalls.Entity_FindEntityByName(name);

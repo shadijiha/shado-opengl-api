@@ -8,6 +8,7 @@
 #include "script/ScriptEngine.h"
 #include "ui/UI.h"
 #include "ui/imnodes.h"
+#include <box2d/b2_body.h>
 
 namespace Shado {
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
@@ -221,8 +222,12 @@ namespace Shado {
 					if (ImGui::Selectable(bodyTypes[i], isSelected)) {
 						currentBodyType = bodyTypes[i];
 
-						// Change camera type
+						// Change body type
 						rb.type = (RigidBody2DComponent::BodyType)i;
+
+						// Check if runtime body exists, if so, change it
+						if (rb.runtimeBody)
+							reinterpret_cast<b2Body*>(rb.runtimeBody)->SetType((b2BodyType)i);
 					}
 
 					if (isSelected)
