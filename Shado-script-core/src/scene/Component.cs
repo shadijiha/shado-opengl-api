@@ -1,14 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 
 namespace Shado
 {
+	/// <summary>
+	/// Base class for all components
+	/// </summary>
 	public abstract class Component
 	{
 		public Entity Entity { get; internal set; }
+
+		internal static IEnumerable<Type> GetAllComponentsTypes() {
+			return Assembly.GetExecutingAssembly().GetTypes()
+				.Where(type => type.IsSubclassOf(typeof(Component)) && !type.IsAbstract);
+		}
 	}
 
 	public class TagComponent : Component
@@ -144,7 +151,7 @@ namespace Shado
 
 	public class RigidBody2DComponent : Component
 	{
-		public enum BodyType { Static = 0, Dynamic, Kinematic }
+		public enum BodyType { Static = 0, Dynamic = 2, Kinematic = 1 }
 
 		public Vector2 linearVelocity
 		{

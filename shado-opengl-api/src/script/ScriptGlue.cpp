@@ -458,8 +458,12 @@ namespace Shado {
 		SHADO_CORE_ASSERT(entity, "");
 
 		auto& rb2d = entity.getComponent<RigidBody2DComponent>();
+		rb2d.type = bodyType;
 		b2Body* body = (b2Body*)rb2d.runtimeBody;
-		body->SetType(Utils::Rigidbody2DTypeToBox2DBody(bodyType));
+		
+		if (body != nullptr) {
+			body->SetType(Utils::Rigidbody2DTypeToBox2DBody(bodyType));
+		}
 	}
 
 	/**
