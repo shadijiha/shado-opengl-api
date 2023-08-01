@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Shado
 {
 	[StructLayout(LayoutKind.Sequential)]
-	public struct Vector3
+	public struct Vector3 : IEquatable<Vector3>, IComparable<Vector3>, IFormattable
 	{
 		public float x, y, z;
 
@@ -44,59 +45,135 @@ namespace Shado
 			}
 		}
 
-		public static Vector3 operator +(Vector3 a, Vector3 b)
+        public Vector3 normalized
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return new Vector3(x / magnitude, y / magnitude, z / magnitude); }
+        }
+
+        public float magnitude
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return (float)Math.Sqrt(magnitudeSquared); }
+        }
+
+        public float magnitudeSquared
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return x * x + y * y + z * z; }
+        }
+
+        #region Operators
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator +(Vector3 a, Vector3 b)
 		{
 			return new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
 		}
 
-		public static Vector3 operator -(Vector3 a, Vector3 b)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator -(Vector3 a, Vector3 b)
 		{
 			return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
 		}
 
-		public static Vector3 operator *(Vector3 vector, float scalar)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator *(Vector3 vector, float scalar)
 		{
 			return new Vector3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
 		}
 
-		public static Vector3 operator /(Vector3 vector, float scalar)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator /(Vector3 vector, float scalar)
 		{
 			return new Vector3(vector.x / scalar, vector.y / scalar, vector.z / scalar);
 		}
 
-		public static bool operator ==(Vector3 a, Vector3 b) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(Vector3 a, Vector3 b) {
 			return Mathf.Approx(a.magnitudeSquared - b.magnitudeSquared, 0f);
 		}
 
-		public static bool operator !=(Vector3 a, Vector3 b) { 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(Vector3 a, Vector3 b) { 
 			return !(a == b);
 		}
 
-		public static Vector3 operator -(Vector3 a) { 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator -(Vector3 a) { 
 			return new Vector3(-a.x, -a.y, -a.z);
 		}
 
-		public Vector3 normalized
-		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get { return new Vector3(x / magnitude, y / magnitude, z / magnitude); }
-		}
+        public static bool operator >(Vector3 a, Vector3 b)
+        {
+            return a.magnitude > b.magnitude;
+        }
 
-		public float magnitude
-		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get { return (float)Math.Sqrt(magnitudeSquared); }
-		}
+        public static bool operator <(Vector3 a, Vector3 b)
+        {
+            return a.magnitude < b.magnitude;
+        }
 
-		public float magnitudeSquared
+        public static bool operator >=(Vector3 a, Vector3 b)
+        {
+            return a.magnitude >= b.magnitude;
+        }
+
+        public static bool operator <=(Vector3 a, Vector3 b)
+        {
+            return a.magnitude <= b.magnitude;
+        }
+		#endregion
+        
+		public static explicit operator Vector2(Vector3 vector)
 		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get { return x * x + y * y + z * z; }
-		}
+            return vector.xy;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = 17;
+                hashCode = hashCode * 23 + x.GetHashCode();
+                hashCode = hashCode * 23 + y.GetHashCode();
+                hashCode = hashCode * 23 + z.GetHashCode();
+                return hashCode;
+            }
+        }
+
+        public bool Equals(Vector3 other)
+        {
+			return this == other;
+        }
+
+        public int CompareTo(Vector3 other)
+        {
+            float magnitudeDiff = magnitude - other.magnitude;
+
+            if (magnitudeDiff > 0)
+                return 1;
+            else if (magnitudeDiff < 0)
+                return -1;
+            else
+                return 0;
+        }
+
+        public string ToString(string format, IFormatProvider formatProvider)
+        {
+            if (formatProvider == null)
+                formatProvider = CultureInfo.CurrentCulture;
+
+            string formattedX = x.ToString(format, formatProvider);
+            string formattedY = y.ToString(format, formatProvider);
+            string formattedZ = z.ToString(format, formatProvider);
+
+            return $"Vec3({formattedX}, {formattedY}, {formattedZ})";
+        }
 
         public override string ToString()
         {
             return $"Vec3({x}, {y}, {z})";
         }
+
     }
 }

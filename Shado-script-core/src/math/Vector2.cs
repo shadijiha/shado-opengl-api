@@ -22,26 +22,31 @@ namespace Shado
 			this.y = y;
 		}
 
-		public static Vector2 operator +(Vector2 a, Vector2 b)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator +(Vector2 a, Vector2 b)
 		{
 			return new Vector2(a.x + b.x, a.y + b.y);
 		}
 
-		public static Vector2 operator -(Vector2 a, Vector2 b) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator -(Vector2 a, Vector2 b) {
 			return new Vector2(a.x - b.x, a.y - b.y);
 		}
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(Vector2 vector, float scalar)
 		{
 			return new Vector2(vector.x * scalar, vector.x * scalar);
 		}
 
-		public static Vector2 operator /(Vector2 vector, float scalar)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(Vector2 vector, float scalar)
 		{
 			return new Vector2(vector.x / scalar, vector.x / scalar);
 		}
 
-		public static implicit operator Vector3(Vector2 a) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Vector3(Vector2 a) {
 			return new Vector3(a.x, a.y, 0f);
 		}
 
