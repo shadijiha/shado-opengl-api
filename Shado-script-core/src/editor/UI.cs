@@ -57,6 +57,15 @@ namespace Shado.Editor
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool InputText(string label, ref string value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern uint GetId(string label);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void SetFocus(uint id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void Indent(float x);
 
         /**

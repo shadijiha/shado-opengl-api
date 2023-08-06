@@ -55,7 +55,7 @@ namespace Shado {
 			uint32_t refCount = 0;
 		};
 
-		inline static std::unordered_map<std::string, TextureInfo> cache;
+		inline static std::unordered_map<std::string, TextureInfo> s_cache;
 	};
 
 }

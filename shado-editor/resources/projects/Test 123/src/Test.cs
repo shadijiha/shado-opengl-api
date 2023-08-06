@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Shado;
+using Shado.Editor;
 
 namespace Sandbox
-{
+{ 
     public class Test : Entity
     {
         public float maxDelta;
@@ -21,6 +23,7 @@ namespace Sandbox
         public float totalDt = 0.0f;
 
         private Test other;
+        private ParticuleSystem particuleSystem;
 
         void OnCreate() {
             transform = GetComponent<TransformComponent>();
@@ -28,7 +31,7 @@ namespace Sandbox
             var t = this.Create<Test>();
             t.AddComponent<SpriteRendererComponent>().colour = Colour.Blue;
             //GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
-            
+
             const float max = 5.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
@@ -41,16 +44,20 @@ namespace Sandbox
                     gridCell.OnCreate();
                 }
             }
+
+            particuleSystem = Create<ParticuleSystem>();
+            particuleSystem.OnCreate();
         }
 
         void OnUpdate(float dt)
         {
+            particuleSystem.OnUpdate(dt);   
             if (this.tag == "Square (2)") {
                 float x = 10;
             }
             totalDt += dt;
             GetComponent<SpriteRendererComponent>().colour = colourTest;
-            ////GetComponent<SpriteRendererComponent>().texture = texture;
+            GetComponent<SpriteRendererComponent>().texture = texture;
             Vector3 pos = transform.position;
             pos.x += moveRate * 2 * dt * dir;
             transform.position = pos;

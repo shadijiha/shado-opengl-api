@@ -2,7 +2,6 @@
 
 #include <filesystem>
 
-#include "imgui_internal.h"
 #include "debug/Debug.h"
 #include "Events/input.h"
 #include "scene/utils/SceneUtils.h"
@@ -212,7 +211,6 @@ namespace Shado {
 	}
 
 	bool UI::InputTextControl(const std::string& tag, std::string& value) {
-
 		char buffer[512];
 		memset(buffer, 0, sizeof(buffer));
 		strcpy_s(buffer, sizeof(buffer), value.c_str());

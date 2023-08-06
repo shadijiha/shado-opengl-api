@@ -1,58 +1,63 @@
-﻿using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-using System;
+﻿using System;
+using Shado;
 
-namespace Shado
+namespace Sandbox
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct ParticuleProps {
-       public Vector3 position;
-       public Vector3 velocity;
-       public Vector4 colorBegin;
-       public Vector4 colorEnd;
-       public float sizeBegin;
-       public float sizeEnd;
-       public float sizeVariation;
-       public float lifeTime;
+    public class ParticuleSystem : Entity
+    {
+        public int numberOfParticles = 10;
+        public float minSpeed = 2f;
+        public float maxSpeed = 5f;
+        public Colour[] particleColors = new Colour[0];
+        static Random random = new Random();
+        bool hasinit = false;
+        Entity particle;
+        internal void OnCreate()
+        {
+            // Emit particles when the scene starts
+            EmitParticles();
+        }
+
+        internal void OnUpdate(float dt) {
+            if (!hasinit) {
+                Vector3 randomDirection = new Vector3(
+                    (float)random.NextDouble() * 2f - 1f,
+                    (float)random.NextDouble() * 2f - 1f,
+                    (float)random.NextDouble() * 2f - 1f
+                ).normalized;
+                float randomSpeed = (float)random.NextDouble() * (maxSpeed - minSpeed) + minSpeed;
+                var rb = particle.GetComponent<RigidBody2DComponent>();
+                rb.type = RigidBody2DComponent.BodyType.Dynamic;
+                rb.ApplyLinearImpulse((randomDirection * randomSpeed).xy, new Vector2(2, 2), false);
+                hasinit = true;
+            }
+        }
+
+        private void EmitParticles()
+        {
+            for (int i = 0; i < numberOfParticles; i++)
+            {
+                Vector3 spawnPosition = transform.position;
+                transform.scale = new Vector3(0.1f, 0.10f, 0.10f);
+
+                Colour randomColor = GetRandomColor();
+
+                particle = this.Create<ParticuleSystem>();
+                particle.AddComponent<SpriteRendererComponent>().colour = randomColor;
+                particle.transform.position = spawnPosition;
+                particle.AddComponent<RigidBody2DComponent>().type = RigidBody2DComponent.BodyType.Dynamic;
+            }
+        }
+
+        private Colour GetRandomColor()
+        {
+            if (particleColors.Length == 0)
+            {
+                return Colour.White;
+            }
+
+            int randomIndex = random.Next(particleColors.Length);
+            return particleColors[randomIndex];
+        }
     }
-
-    //public class ParticuleSystem
-    //{
-    //    private IntPtr native;
-
-    //    public ParticuleSystem() {
-    //        native = Constrcut_Native();
-    //    }
-
-    //    ~ParticuleSystem() {
-    //        Destroy_Native(native);
-    //    }
-
-    //    public void Emit(ParticuleProps props) {
-    //        Emit_Native(native, ref props);
-    //    }
-
-    //    public void OnUpdate(float dt) {
-    //        OnUpdate_Native(native, dt);
-    //    }
-    //    public uint Count()
-    //    {
-    //        return Count_Native(native);
-    //    }
-
-    //    [MethodImpl(MethodImplOptions.InternalCall)]
-    //    private static extern IntPtr Constrcut_Native();
-
-    //    [MethodImpl(MethodImplOptions.InternalCall)]
-    //    private static extern void Destroy_Native(IntPtr ptr);
-
-    //    [MethodImpl(MethodImplOptions.InternalCall)]
-    //    private static extern void OnUpdate_Native(IntPtr ptr, float dt);
-
-    //    [MethodImpl(MethodImplOptions.InternalCall)]
-    //    private static extern void Emit_Native(IntPtr ptr, ref ParticuleProps dt);
-
-    //    [MethodImpl(MethodImplOptions.InternalCall)]
-    //    private static extern uint Count_Native(IntPtr ptr);
-    //}
 }

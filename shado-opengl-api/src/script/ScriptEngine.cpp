@@ -167,6 +167,10 @@ namespace Shado {
 
 	void ScriptEngine::Init()
 	{
+		if (s_Data != nullptr) {
+			Shutdown();
+		}
+
 		s_Data = new ScriptEngineData();
 
 		InitMono();
@@ -235,6 +239,8 @@ namespace Shado {
 
 	void ScriptEngine::ShutdownMono()
 	{
+		mono_debug_cleanup();
+
 		mono_domain_set(mono_get_root_domain(), false);
 
 		mono_domain_unload(s_Data->AppDomain);
@@ -569,10 +575,14 @@ namespace Shado {
 				if (target == nullptr)
 					continue;
 
-				editorInstance->GetScriptClass()->InvokeMethod(
-					editorInstance->GetManagedObject(),
-					editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0)
-				);
+				MonoMethod* method = editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0);
+				MonoObject* object = editorInstance->GetManagedObject();
+				if (method && object) {
+					editorInstance->GetScriptClass()->InvokeMethod(
+						object,
+						method
+					);
+				}
 			}
 		}
 	}
@@ -677,10 +687,13 @@ namespace Shado {
 				if (target == nullptr)
 					continue;
 
-				editorInstance->GetScriptClass()->InvokeMethod(
-					editorInstance->GetManagedObject(),
-					editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0)
-				);
+				MonoMethod* method = editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0);
+				if (method) {
+					editorInstance->GetScriptClass()->InvokeMethod(
+						editorInstance->GetManagedObject(),
+						method
+					);
+				}
 
 				if (!wasSet) {
 					//ScriptFieldInstance& fieldInstance = ScriptEngine::GetScriptFieldMap(entity)[fieldName];
@@ -703,7 +716,6 @@ namespace Shado {
 	MonoObject* ScriptEngine::InstantiateClass(MonoClass* monoClass, MonoMethod* ctor, void** args)
 	{
 		MonoObject* instance = mono_object_new(s_Data->AppDomain, monoClass);
-
 		if (ctor == nullptr && args == nullptr)
 			mono_runtime_object_init(instance);
 		else
@@ -740,7 +752,7 @@ namespace Shado {
 	{
 		MonoObject* exception = NULL;
 		MonoObject* result = mono_runtime_invoke(method, instance, params, &exception);
-
+	
 		if (exception) {
 			bool info = true;
 			void* params[] = {

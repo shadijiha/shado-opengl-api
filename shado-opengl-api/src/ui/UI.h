@@ -6,6 +6,7 @@
 #include <glm/vec4.hpp>
 
 #include "Application.h"
+#include "imgui_internal.h"
 
 namespace Shado {
 	class UI {

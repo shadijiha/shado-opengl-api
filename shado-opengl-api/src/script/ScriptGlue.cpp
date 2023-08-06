@@ -816,6 +816,25 @@ namespace Shado {
 		ImGui::Separator();
 	}
 
+	static bool InputText(MonoString* label, MonoString** value) {
+		const std::string labelStr = ScriptEngine::MonoStrToUT8(label);
+		std::string valueStr = ScriptEngine::MonoStrToUT8(*value);
+		const std::string oldValue = valueStr;
+
+		bool isUsed = UI::InputTextControl(labelStr, valueStr);
+		if (oldValue != valueStr)
+			*value = ScriptEngine::NewString(valueStr.c_str());
+		return isUsed;
+	}
+
+	static unsigned int GetId(MonoString* label) {
+		return ImGui::GetID(ScriptEngine::MonoStrToUT8(label).c_str());
+	}
+
+	static void SetFocus(unsigned int id) {
+		ImGui::SetActiveID(id, ImGui::GetCurrentWindow());
+	}
+
 	static bool InputTextFileChoose_Native(MonoString* labelStr, MonoString* textStr, MonoArray* extension, MonoString** outPath, UI::FileChooserType type) {
 	
 		std::string label = ScriptEngine::MonoStrToUT8(labelStr);
@@ -1068,12 +1087,15 @@ namespace Shado {
 			SHADO_ADD_UI_INTERNAL_CALL(Begin);
 			SHADO_ADD_UI_INTERNAL_CALL(End);
 			SHADO_ADD_UI_INTERNAL_CALL(Text);
+			SHADO_ADD_UI_INTERNAL_CALL(InputText);
 			SHADO_ADD_UI_INTERNAL_CALL(Image_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(Separator);
 			SHADO_ADD_UI_INTERNAL_CALL(Button_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(InputTextFileChoose_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(OpenFileDialog_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(Indent);
+			SHADO_ADD_UI_INTERNAL_CALL(GetId);
+			SHADO_ADD_UI_INTERNAL_CALL(SetFocus);
 		}
 
 		{

@@ -334,9 +334,11 @@ namespace Shado {
 				auto& rb2D = entity.getComponent<RigidBody2DComponent>();
 
 				b2Body* body = (b2Body*)rb2D.runtimeBody;
-				transform.position.x = body->GetPosition().x;
-				transform.position.y = body->GetPosition().y;
-				transform.rotation.z = body->GetAngle();
+				if (body) {
+					transform.position.x = body->GetPosition().x;
+					transform.position.y = body->GetPosition().y;
+					transform.rotation.z = body->GetAngle();
+				}
 			}
 		}
 
