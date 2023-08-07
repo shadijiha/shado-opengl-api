@@ -72,12 +72,13 @@ namespace Shado {
 
 	using ScriptFieldMap = std::unordered_map<std::string, ScriptFieldInstance>;
 
-	class ScriptClass
+	class ScriptClass : public RefCounted
 	{
 	public:
 		ScriptClass() = default;
 		ScriptClass(const std::string& classNamespace, const std::string& className, bool isCore = false);
 		ScriptClass(MonoClass* klass);
+		ScriptClass(const ScriptClass&) = default;
 
 		MonoObject* Instantiate(MonoMethod* ctor = nullptr, void** args = nullptr);
 		MonoMethod* GetMethod(const std::string& name, int parameterCount);
@@ -97,7 +98,7 @@ namespace Shado {
 		friend class ScriptEngine;
 	};
 
-	class ScriptInstance
+	class ScriptInstance : public RefCounted
 	{
 	public:
 		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);

@@ -40,7 +40,7 @@ namespace Shado {
 	
 	struct SpriteRendererComponent {
 		glm::vec4 color= {1, 1, 1, 1};
-		Ref<Texture2D> texture = nullptr;
+		Texture2D* texture = nullptr;
 		float tilingFactor = 1.0f;
 		Ref<Shader> shader = nullptr;
 
@@ -48,17 +48,19 @@ namespace Shado {
 		SpriteRendererComponent() = default;
 		SpriteRendererComponent(const SpriteRendererComponent&) = default;
 		SpriteRendererComponent(const glm::vec4& color) : color(color) {}
+		//~SpriteRendererComponent() { delete texture; }
 	};
 
 	struct CircleRendererComponent {
 		glm::vec4 color = { 1, 1, 1, 1 };
-		Ref<Texture2D> texture = nullptr;
+		Texture2D* texture = nullptr;
 		float tilingFactor = 1.0f;
 		Ref<Shader> shader = nullptr;
 		float thickness = 1.0f;
 		float fade = 0.005f;
 
 		CircleRendererComponent() = default;
+		//~CircleRendererComponent() { delete texture; }
 	};
 
 	struct CameraComponent {
@@ -86,7 +88,7 @@ namespace Shado {
 
 		void setViewportSize(uint32_t width, uint32_t height) {
 			if (type == Type::Orthographic) {
-				auto* cam = (OrthoCamera*)camera.get();
+				auto* cam = (OrthoCamera*)camera.Raw();
 				float aspectRatio = (float)width / (float)height;
 				float left = -size * aspectRatio * 0.5f;
 				float right = size * aspectRatio * 0.5f;
@@ -94,7 +96,7 @@ namespace Shado {
 				float top = size * 0.5f;
 				cam->setProjection(left, right, bottom, top);
 			} else {
-				auto* cam = (OrbitCamera*)camera.get();
+				auto* cam = (OrbitCamera*)camera.Raw();
 				cam->setAspectRatio((float)width / (float)height);
 			}
 
@@ -116,7 +118,7 @@ namespace Shado {
 		}
 
 		void setType(Type type) {
-			camera.reset();
+			camera.Reset();
 			this->type = type;
 			init(cachedWidth, cachedHeight);
 		}

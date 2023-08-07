@@ -107,7 +107,7 @@ namespace Shado {
 		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
 		{
 			int pixelData = buffer->readPixel(1, mouseX, mouseY);
-			m_HoveredEntity = pixelData == -1 ? Entity() : Entity{ (entt::entity)(uint32_t)pixelData, m_ActiveScene.get()};
+			m_HoveredEntity = pixelData == -1 ? Entity() : Entity{ (entt::entity)(uint32_t)pixelData, m_ActiveScene.Raw()};
 		}
 		
         buffer->unbind();
@@ -410,10 +410,9 @@ namespace Shado {
 	// ============================== For runtime
 	void EditorLayer::onScenePlay() {
 		m_SceneState = SceneState::Play;
-		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.get());
+		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.Raw());
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 		Scene::ActiveScene = m_ActiveScene;
-		//m_sceneHierarchyPanel.setContext(m_ActiveScene); // TODO maybe uncomment this
 		m_ActiveScene->onRuntimeStart();
 	}
 
@@ -485,10 +484,10 @@ namespace Shado {
 
 				if (extension == ".jpg" || extension == ".png") {
 					if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>())
-						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
+						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = new Texture2D(path.string());
 
 					else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>())
-						m_HoveredEntity.getComponent<CircleRendererComponent>().texture = CreateRef<Texture2D>(path.string());
+						m_HoveredEntity.getComponent<CircleRendererComponent>().texture = new Texture2D(path.string());
 				} else
 					openScene(path);
 			}

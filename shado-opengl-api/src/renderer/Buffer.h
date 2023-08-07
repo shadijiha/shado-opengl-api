@@ -104,7 +104,7 @@ namespace Shado {
 		uint32_t m_Stride = 0;
 	};
 
-	class VertexBuffer {
+	class VertexBuffer : public RefCounted {
 	public:
 		VertexBuffer(uint32_t size);
 		VertexBuffer(float* vertices, uint32_t size);
@@ -118,15 +118,15 @@ namespace Shado {
 
 		virtual void setData(const void* data, size_t size);
 
-		static std::shared_ptr<VertexBuffer> create(uint32_t size);
-		static std::shared_ptr<VertexBuffer> create(float* vertices, uint32_t size);
+		static Ref<VertexBuffer> create(uint32_t size);
+		static Ref<VertexBuffer> create(float* vertices, uint32_t size);
 
 	private:
 		uint32_t m_RendererID;
 		BufferLayout m_Layout;
 	};
 
-	class IndexBuffer {
+	class IndexBuffer : public RefCounted {
 	public:
 		IndexBuffer(uint32_t* indices, uint32_t count);
 		virtual ~IndexBuffer();
@@ -138,7 +138,7 @@ namespace Shado {
 			return m_Count;
 		}
 
-		static std::shared_ptr<IndexBuffer> create(uint32_t* indices, uint32_t size);
+		static Ref<IndexBuffer> create(uint32_t* indices, uint32_t size);
 
 	private:
 		uint32_t m_RendererID;

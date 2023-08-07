@@ -23,7 +23,7 @@ namespace Sandbox
         public float totalDt = 0.0f;
 
         private Test other;
-        private ParticuleSystem particuleSystem;
+        //private ParticuleSystem particuleSystem;
 
         void OnCreate() {
             transform = GetComponent<TransformComponent>();
@@ -45,13 +45,13 @@ namespace Sandbox
                 }
             }
 
-            particuleSystem = Create<ParticuleSystem>();
-            particuleSystem.OnCreate();
+            //particuleSystem = Create<ParticuleSystem>();
+            //particuleSystem.OnCreate();
         }
 
         void OnUpdate(float dt)
         {
-            particuleSystem.OnUpdate(dt);   
+            //particuleSystem.OnUpdate(dt);   
             if (this.tag == "Square (2)") {
                 float x = 10;
             }
@@ -80,7 +80,7 @@ namespace Sandbox
 
         void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
             Log.Info("Collision enter {0} with {1}", info, other.tag);
-            Destroy(this);
+            //Destroy(this);
         }
 
         /*
@@ -159,7 +159,7 @@ namespace Sandbox
 
             var sprite = AddComponent<SpriteRendererComponent>();
             sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
-            //sprite.texture = texture[random.Next(texture.Length)];
+            sprite.texture = texture[random.Next(texture.Length)];
  
             var rb = AddComponent<RigidBody2DComponent>();
             AddComponent<BoxCollider2DComponent>();

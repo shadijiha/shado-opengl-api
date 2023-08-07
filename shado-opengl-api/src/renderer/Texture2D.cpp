@@ -28,8 +28,8 @@ namespace Shado {
 	{
 		// If texture is in cache,
 		// Then just copy it
-		//if (cache.find(m_FilePath) != cache.end()) {
-		//	auto& data = cache[path];
+		//if (s_cache.find(m_FilePath) != s_cache.end()) {
+		//	auto& data = s_cache[path];
 		//	data.refCount++;
 		//	m_RendererID = data.texture->m_RendererID;
 		//	m_Width = data.texture->m_Width;
@@ -95,30 +95,32 @@ namespace Shado {
 
 	Texture2D::~Texture2D() {
 		// Check if texture is referenced
-		//if (cache.find(m_FilePath) != cache.end()) {
-		//	auto& data = cache[m_FilePath];
+		//if (s_cache.find(m_FilePath) != s_cache.end()) {
+		//	auto& data = s_cache[m_FilePath];
 
 		//	// If the texture is no longer referenced
 		//	// Then deleted from GL and from cache
 		//	if (data.refCount - 1 <= 0) {
 		//		glDeleteTextures(1, &m_RendererID);
-		//		cache.erase(m_FilePath);
-		//	} else
+		//		s_cache.erase(m_FilePath);
+		//	} else {
 		//		// Otherwise just decrement the ref count
 		//		data.refCount -= 1;
+		//		return;
+		//	}
 		//}
 		//else {
 			glDeleteTextures(1, &m_RendererID);
 		//}		
 	}
 
-	Ref<Texture2D> Texture2D::create(const std::string& path) {
+	Texture2D* Texture2D::create(const std::string& path) {
 
 		//if (cache.find(path) != cache.end())
 		//	return cache[path].texture;
 
 		// Add to cache
-		Ref<Texture2D> text = CreateRef<Texture2D>(path);
+		Texture2D* text = new Texture2D(path);
 		//cache[path] = { text, 1 };
 
 		return text;

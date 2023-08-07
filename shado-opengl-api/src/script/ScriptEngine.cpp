@@ -159,7 +159,7 @@ namespace Shado {
 
 			Application::get().SubmitToMainThread([]()
 				{
-					s_Data->AppAssemblyFileWatcher.reset();
+					s_Data->AppAssemblyFileWatcher.Reset();
 					ScriptEngine::ReloadAssembly();
 				});
 		}

@@ -10,7 +10,7 @@ class b2World;
 namespace Shado {
 	class Entity;
 
-	class Scene {
+	class Scene : public RefCounted  {
 	public:
 		Scene();
 		Scene(Scene& other);

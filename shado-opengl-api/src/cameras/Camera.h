@@ -8,7 +8,7 @@
 
 namespace Shado {
 
-	class Camera {
+	class Camera : public RefCounted {
 	public:
 		Camera() {}
 		virtual ~Camera() {}

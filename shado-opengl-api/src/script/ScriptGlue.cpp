@@ -286,11 +286,11 @@ namespace Shado {
 		Texture2D* ptr = nullptr;
 		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
-			Ref<Texture2D> ref = entity.getComponent<SpriteRendererComponent>().texture;
-			ptr = ref == nullptr ? nullptr : ref.get();
+			Texture2D* ref = entity.getComponent<SpriteRendererComponent>().texture;
+			ptr = ref == nullptr ? nullptr : ref;
 		} else if (klassName == "CircleRendererComponent") {
-			Ref<Texture2D> ref = entity.getComponent<CircleRendererComponent>().texture;
-			ptr = ref == nullptr ? nullptr : ref.get();
+			Texture2D* ref = entity.getComponent<CircleRendererComponent>().texture;
+			ptr = ref == nullptr ? nullptr : ref;
 		} else
 			SHADO_ERROR("Unknown Sprite class {0}", klassName);
 
@@ -320,9 +320,9 @@ namespace Shado {
 
 		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
-			entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texturePtr);
+			entity.getComponent<SpriteRendererComponent>().texture = texturePtr;
 		} else if (klassName == "CircleRendererComponent") {
-			entity.getComponent<CircleRendererComponent>().texture = Ref<Texture2D>(texturePtr);
+			entity.getComponent<CircleRendererComponent>().texture = texturePtr;
 		} else
 			SHADO_ERROR("Unknown Sprite class {0}", klassName);
 	}
@@ -650,27 +650,15 @@ namespace Shado {
 	/**
 	* Texture2D
 	*/
-	static MonoObject* Texture2D_Create(MonoString* filepath) {
+	static void Texture2D_Create(MonoString* filepath, Texture2D** ptr) {
 		std::filesystem::path path = ScriptEngine::MonoStrToUT8(filepath);
 
 		if (!path.is_absolute())
 			path = Project::GetProjectDirectory() / path;
 
 		// Load textre
-		Texture2D* texture = new Texture2D(path.string()); //new Texture2D(path.string());
-
-		// Create the C# Texture2D object instance
-		ScriptClass klass = ScriptClass("Shado", "Texture2D", true);
-		MonoMethod* ctor = klass.GetMethod(".ctor", 2);
-		void* param[] = {
-			&texture,
-			filepath
-		};
-		MonoObject* instance = klass.Instantiate(ctor, param);
-		
-		klass.InvokeMethod(instance, ctor, param);
-
-		return instance;
+		Texture2D* texture = new Texture2D(path.string());
+		*ptr = texture;
 	}
 
 	static void Texture2D_Destroy(Texture2D* ptr) {

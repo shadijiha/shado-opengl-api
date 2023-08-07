@@ -28,9 +28,9 @@ namespace Shado {
 	void VertexBuffer::unBind() const {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-
-	std::shared_ptr<VertexBuffer> VertexBuffer::create(float* vertices, uint32_t size) {
-		return std::make_shared<VertexBuffer>(vertices, size);
+	
+	Ref<VertexBuffer> VertexBuffer::create(float* vertices, uint32_t size) {
+		return CreateRef<VertexBuffer>(vertices, size);
 	}
 
 	void VertexBuffer::setData(const void* data, size_t size) {
@@ -38,13 +38,13 @@ namespace Shado {
 		glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 	}
 
-	std::shared_ptr<VertexBuffer> VertexBuffer::create(uint32_t size) {
-		return std::make_shared<VertexBuffer>(size);
+	Ref<VertexBuffer> VertexBuffer::create(uint32_t size) {
+		return CreateRef<VertexBuffer>(size);
 	}
 
 	// ========================================
-	std::shared_ptr<IndexBuffer> IndexBuffer::create(uint32_t* indices, uint32_t count) {
-		return std::make_shared<IndexBuffer>(indices, count);
+	Ref<IndexBuffer> IndexBuffer::create(uint32_t* indices, uint32_t count) {
+		return CreateRef<IndexBuffer>(indices, count);
 	}
 
 	IndexBuffer::IndexBuffer(uint32_t* indices, uint32_t count)

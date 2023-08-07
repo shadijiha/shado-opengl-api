@@ -6,7 +6,7 @@
 
 namespace Shado {
 	
-	class Texture2D {
+	class Texture2D : public RefCounted {
 	public:
 		/**
 		 * Use the create function instead of Texture2D for caching
@@ -15,8 +15,8 @@ namespace Shado {
 		Texture2D(const std::string& path);
 		~Texture2D();
 
-		static Ref<Texture2D> create(const std::string& path);
-		static inline Ref<Texture2D> create(const std::filesystem::path& path) {
+		static Texture2D* create(const std::string& path);
+		static inline Texture2D* create(const std::filesystem::path& path) {
 			return create(path.string());
 		}
 

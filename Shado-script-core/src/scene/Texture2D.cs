@@ -8,9 +8,9 @@ namespace Shado
         public readonly string filepath;
         internal IntPtr native;
 
-        internal Texture2D(IntPtr native, string filepath) { 
+        internal Texture2D(string filepath) { 
             this.filepath = filepath;
-            this.native = native;
+            InternalCalls.Texture2D_Create(filepath, out this.native);
         }
 
         ~Texture2D() {
@@ -20,7 +20,7 @@ namespace Shado
         public static Texture2D Create(string filepath) {
             if (string.IsNullOrEmpty(filepath))
                 return null;
-            return InternalCalls.Texture2D_Create(filepath);
+            return new Texture2D(filepath);
         }
 
         internal void Reset(string filepath)

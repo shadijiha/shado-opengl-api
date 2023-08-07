@@ -363,7 +363,7 @@ namespace Shado {
 				auto [transform, camera] = group.get<TransformComponent, CameraComponent>(entity);
 
 				if (camera.primary) {
-					primaryCamera = camera.camera.get();
+					primaryCamera = camera.camera.Raw();
 					cameraTransform = transform.getTransform();
 					break;
 				}
@@ -382,7 +382,7 @@ namespace Shado {
 				if (!sprite.shader)
 					Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 				else
-					Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.get(), sprite.color, (int)entity);
+					Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
 			}
 
 			// Draw circles
@@ -427,7 +427,7 @@ namespace Shado {
 			if (!sprite.shader)
 				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 			else
-				Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.get(), sprite.color, (int)entity);
+				Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
 		}
 
 		// Draw circles
