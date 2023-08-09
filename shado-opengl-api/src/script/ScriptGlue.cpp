@@ -286,11 +286,11 @@ namespace Shado {
 		Texture2D* ptr = nullptr;
 		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
-			Texture2D* ref = entity.getComponent<SpriteRendererComponent>().texture;
-			ptr = ref == nullptr ? nullptr : ref;
+			Ref<Texture2D> ref = entity.getComponent<SpriteRendererComponent>().texture;
+			ptr = ref ? nullptr : ref.Raw();
 		} else if (klassName == "CircleRendererComponent") {
-			Texture2D* ref = entity.getComponent<CircleRendererComponent>().texture;
-			ptr = ref == nullptr ? nullptr : ref;
+			Ref<Texture2D> ref = entity.getComponent<CircleRendererComponent>().texture;
+			ptr = ref ? nullptr : ref.Raw();
 		} else
 			SHADO_ERROR("Unknown Sprite class {0}", klassName);
 
@@ -320,9 +320,13 @@ namespace Shado {
 
 		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
-			entity.getComponent<SpriteRendererComponent>().texture = texturePtr;
+			Ref<Texture2D> texture(texturePtr);
+			texture.Leak();
+			entity.getComponent<SpriteRendererComponent>().texture = texture;
 		} else if (klassName == "CircleRendererComponent") {
-			entity.getComponent<CircleRendererComponent>().texture = texturePtr;
+			Ref<Texture2D> texture(texturePtr);
+			texture.Leak();
+			entity.getComponent<CircleRendererComponent>().texture = texture;
 		} else
 			SHADO_ERROR("Unknown Sprite class {0}", klassName);
 	}

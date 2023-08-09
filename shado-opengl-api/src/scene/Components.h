@@ -40,7 +40,7 @@ namespace Shado {
 	
 	struct SpriteRendererComponent {
 		glm::vec4 color= {1, 1, 1, 1};
-		Texture2D* texture = nullptr;
+		Ref<Texture2D> texture = nullptr;
 		float tilingFactor = 1.0f;
 		Ref<Shader> shader = nullptr;
 
@@ -53,7 +53,7 @@ namespace Shado {
 
 	struct CircleRendererComponent {
 		glm::vec4 color = { 1, 1, 1, 1 };
-		Texture2D* texture = nullptr;
+		Ref<Texture2D> texture = nullptr;
 		float tilingFactor = 1.0f;
 		Ref<Shader> shader = nullptr;
 		float thickness = 1.0f;

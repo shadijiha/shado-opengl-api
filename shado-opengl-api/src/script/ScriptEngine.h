@@ -78,7 +78,6 @@ namespace Shado {
 		ScriptClass() = default;
 		ScriptClass(const std::string& classNamespace, const std::string& className, bool isCore = false);
 		ScriptClass(MonoClass* klass);
-		ScriptClass(const ScriptClass&) = default;
 
 		MonoObject* Instantiate(MonoMethod* ctor = nullptr, void** args = nullptr);
 		MonoMethod* GetMethod(const std::string& name, int parameterCount);
@@ -87,6 +86,11 @@ namespace Shado {
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
 
 		std::string GetClassFullName() const { return m_ClassNamespace + "." + m_ClassName; }
+
+		ScriptClass& operator=(const ScriptClass& other) {
+			std::memcpy(this, &other, sizeof(ScriptClass));
+			return *this;
+		}
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;

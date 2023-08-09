@@ -152,7 +152,7 @@ namespace Shado
 		 */
         #region Texture2D
         [MethodImpl(MethodImplOptions.InternalCall)]
-		internal extern static IntPtr Texture2D_Create(string filepath, out IntPtr handle);
+		internal extern static void Texture2D_Create(string filepath, out IntPtr handle);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Texture2D_Destroy(IntPtr native);

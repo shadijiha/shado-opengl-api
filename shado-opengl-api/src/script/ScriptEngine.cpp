@@ -136,7 +136,7 @@ namespace Shado {
 		std::unordered_map<std::string, Ref<ScriptClass>> EditorClasses;
 		std::unordered_map<std::string, Ref<ScriptInstance>> EditorInstances;
 
-		Ref<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
+		std::shared_ptr<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
 		bool AssemblyReloadPending = false;
 
 #if SHADO_DEBUG || SHADO_RELEASE
@@ -159,7 +159,7 @@ namespace Shado {
 
 			Application::get().SubmitToMainThread([]()
 				{
-					s_Data->AppAssemblyFileWatcher.Reset();
+					s_Data->AppAssemblyFileWatcher.reset();
 					ScriptEngine::ReloadAssembly();
 				});
 		}
@@ -274,7 +274,7 @@ namespace Shado {
 
 		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
-		s_Data->AppAssemblyFileWatcher = CreateRef<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileSystemEvent);
+		s_Data->AppAssemblyFileWatcher = std::make_shared<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileSystemEvent);
 		s_Data->AssemblyReloadPending = false;
 		return true;
 	}

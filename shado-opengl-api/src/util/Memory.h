@@ -17,6 +17,7 @@ namespace Shado {
 		}
 
 		uint32_t GetRefCount() const { return m_RefCount.load(); }
+
 	private:
 		mutable std::atomic<uint32_t> m_RefCount = 0;
 	};
@@ -133,6 +134,9 @@ namespace Shado {
 		{
 			DecRef();
 			m_Instance = instance;
+		}
+		void Leak() {
+			m_Instance->IncRefCount();
 		}
 
 		template<typename T2>
