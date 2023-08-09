@@ -1,8 +1,83 @@
 #pragma once
 #include <cstdint>
 #include <atomic>
+#include <unordered_map>
+
+#define snew(Type) new(Shado::Memory::Heap<Type>())
+#define sdelete(ptr) Shado::Memory::Free(ptr)
+
+extern "C" {
+	double glfwGetTime();
+}
 
 namespace Shado {
+
+	class Memory {
+	public:
+		template<typename T>
+		inline static T* Heap() {
+			total_allocated += sizeof(T);
+			total_alive += sizeof(T);
+			memory_history.emplace_back(glfwGetTime(), total_alive);
+			return (T*)malloc(sizeof(T));
+		}
+
+		template<typename T>
+		inline static T* Heap(uint32_t count) {
+			total_allocated += sizeof(T) * count;
+			total_alive += sizeof(T) * count;
+			T* ptr = (T*)malloc(sizeof(T) * count);
+			live_array_refs[ptr] = count;
+			return ptr;
+		}
+
+		inline static void* HeapRaw(size_t size, const char* label = "Engine") {
+			total_allocated += size;
+			total_alive += size;
+			void* ptr = malloc(size);
+			live_array_refs[ptr] = size;
+			memory_history.emplace_back(glfwGetTime(), total_alive);
+			return ptr;
+		}
+
+		template<typename T>
+		inline static void Free(T* ptr, bool array = false) {
+			if (array) {
+				uint32_t count =
+					live_array_refs.find(ptr) != live_array_refs.end() ? live_array_refs[ptr] : 1;
+				live_array_refs.erase(ptr);
+				total_alive -= sizeof(T) * count;
+				delete[] ptr;
+			}
+			else {
+				total_alive -= sizeof(T);
+				delete ptr;
+			}
+			memory_history.emplace_back(glfwGetTime(), total_alive);
+		}
+
+		inline static void FreeRaw(void* ptr, const char* label = "Engine") {
+			size_t size = live_array_refs.find(ptr) != live_array_refs.end() ? live_array_refs[ptr] : 0;
+			live_array_refs.erase(ptr);
+			total_alive -= size;
+			free(ptr);
+			memory_history.emplace_back(glfwGetTime(), total_alive);
+		}
+
+		template<typename T>
+		inline static T* Stack() {
+			return (T*)alloca(sizeof(T));
+		}
+
+		inline static size_t GetTotalAllocated() { return total_allocated; }
+		inline static size_t GetTotalAlive() { return total_alive; }
+		inline static const std::vector<std::pair<float, size_t>>& GetMemoryHistory() { return memory_history; }
+	private:
+		inline static size_t total_allocated = 0;
+		inline static size_t total_alive = 0;
+		inline static std::unordered_map<void*, uint32_t> live_array_refs;
+		inline static std::vector<std::pair<float, size_t>> memory_history;
+	};
 
 	class RefCounted
 	{
@@ -152,6 +227,7 @@ namespace Shado {
 			return Ref<T>(new(typeid(T).name()) T(std::forward<Args>(args)...));
 #else
 			return Ref<T>(new T(std::forward<Args>(args)...));
+			return Ref<T>(snew(T) T(std::forward<Args>(args)...));
 #endif
 		}
 
@@ -189,7 +265,7 @@ namespace Shado {
 				m_Instance->DecRefCount();
 				if (m_Instance->GetRefCount() == 0)
 				{
-					delete m_Instance;
+					sdelete(m_Instance);
 					RefUtils::RemoveFromLiveReferences((void*)m_Instance);
 					m_Instance = nullptr;
 				}

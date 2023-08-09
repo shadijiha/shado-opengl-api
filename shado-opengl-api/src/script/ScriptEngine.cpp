@@ -171,7 +171,7 @@ namespace Shado {
 			Shutdown();
 		}
 
-		s_Data = new ScriptEngineData();
+		s_Data = snew(ScriptEngineData) ScriptEngineData();
 
 		InitMono();
 		ScriptGlue::RegisterFunctions();
@@ -212,6 +212,11 @@ namespace Shado {
 
 	void ScriptEngine::InitMono()
 	{
+		// set allocator
+		auto* allocator = snew(MonoAllocatorVTable) MonoAllocatorVTable();
+		allocator->malloc = [](size_t size) { return Memory::HeapRaw(size, "C#"); };
+		allocator->free = [](void* ptr) { Memory::FreeRaw(ptr, "C#"); };
+		mono_set_allocator_vtable(allocator);
 		mono_set_assemblies_path("../mono/lib");
 
 		if (s_Data->EnableDebugging)

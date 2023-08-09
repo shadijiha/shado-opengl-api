@@ -577,7 +577,7 @@ namespace Shado {
 
 		UI::InputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(sprite.texture).hash_code(),
 			[&](std::string path) {
-				Texture2D* texture = new Texture2D(path);
+				Ref<Texture2D> texture = CreateRef<Texture2D>(path);
 				if (texture->isLoaded())
 					sprite.texture = texture;
 				else

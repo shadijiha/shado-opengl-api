@@ -274,6 +274,7 @@ namespace Shado {
 		m_sceneHierarchyPanel.onImGuiRender();
 		m_ContentPanel.onImGuiRender();
 		m_ConsolPanel.onImGuiRender();
+		m_MemoryPanel.onImGuiRender();
 
         ImGui::End();
 	}
@@ -484,10 +485,10 @@ namespace Shado {
 
 				if (extension == ".jpg" || extension == ".png") {
 					if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>())
-						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = new Texture2D(path.string());
+						m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(path.string());
 
 					else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>())
-						m_HoveredEntity.getComponent<CircleRendererComponent>().texture = new Texture2D(path.string());
+						m_HoveredEntity.getComponent<CircleRendererComponent>().texture = CreateRef<Texture2D>(path.string());
 				} else
 					openScene(path);
 			}

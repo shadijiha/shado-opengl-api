@@ -51,7 +51,7 @@ namespace Shado {
 	class CameraController {
 	public:
 		CameraController() {}	// Zoom level: 1.0, X: aspect ratio * units of space in Y (default = 2 units in Y)
-		virtual ~CameraController() { delete m_Camera; }
+		virtual ~CameraController() { sdelete(m_Camera); }
 
 		virtual void onUpdate(TimeStep dt) = 0;
 		virtual void onEvent(Event& e) = 0;

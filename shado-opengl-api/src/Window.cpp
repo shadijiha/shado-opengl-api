@@ -8,6 +8,10 @@
 #include "Events/MouseEvent.h"
 #include "GL/glew.h"
 #include <shellscalingapi.h>
+#include <GLFW/glfw3.h>
+#if SHADO_PLATFORM_WINDOWS
+	#include <shellscalingapi.h>
+#endif
 
 #define BIND_EVENT_FN(x) std::bind(&Window::x, this, std::placeholders::_1)
 
@@ -16,6 +20,12 @@ namespace Shado {
 	Window::Window(uint32_t width, uint32_t height, const std::string& title, WindowMode mode)
 		: m_Mode(mode)
 	{
+		GLFWallocator allocator;
+		allocator.allocate = [](size_t size, void* user) { return Memory::HeapRaw(size, "GLFW"); };
+		allocator.deallocate = [](void* block, void* user) { Memory::FreeRaw(block, "GLFW"); };
+		allocator.user = NULL;
+		glfwInitAllocator(&allocator);
+
 		/* Initialize the library */
 		if (!glfwInit())
 			SHADO_CORE_ASSERT(false, "Failed to initialize GLFW!");

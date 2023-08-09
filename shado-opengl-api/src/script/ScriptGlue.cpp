@@ -661,7 +661,7 @@ namespace Shado {
 			path = Project::GetProjectDirectory() / path;
 
 		// Load textre
-		Texture2D* texture = new Texture2D(path.string());
+		Texture2D* texture = snew(Texture2D) Texture2D(path.string());
 		*ptr = texture;
 	}
 
@@ -671,8 +671,8 @@ namespace Shado {
 	}
 
 	static void Texture2D_Reset(Texture2D* ptr, MonoString* filepath, Texture2D** newHandle) {
-		delete ptr;
-		*newHandle = new Texture2D(ScriptEngine::MonoStrToUT8(filepath));
+		sdelete(ptr);
+		*newHandle = snew(Texture2D) Texture2D(ScriptEngine::MonoStrToUT8(filepath));
 	}
 #pragma endregion
 
@@ -687,7 +687,7 @@ namespace Shado {
 			path = Project::GetProjectDirectory() / path;
 
 		// Generate shader
-		*native = new Shader(path.string());
+		*native = snew(Shader) Shader(path.string());
 	}
 	static void Shader_SetInt(Shader* native, MonoString* name, int* value) {
 		if (native)
@@ -714,11 +714,11 @@ namespace Shado {
 			native->setFloat4(ScriptEngine::MonoStrToUT8(name), *value);
 	}
 	static void Shader_Reset(Shader* oldNative, MonoString* filepath, Shader** newNative) {
-		delete oldNative;
+		sdelete( oldNative);
 		Shader_CreateShader(filepath, newNative);
 	}
 	static void Shader_Destroy(Shader* oldNative) {
-		delete oldNative;
+		sdelete( oldNative);
 	}
 #pragma endregion
 	

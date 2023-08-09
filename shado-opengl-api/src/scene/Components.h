@@ -145,8 +145,8 @@ namespace Shado {
 
 		template<typename T>
 		void bind() {
-			instantiateScript = []() {return (ScriptableEntity*)new T(); };
-			destroyScript = [](NativeScriptComponent* nsc) {delete nsc->script; nsc->script = nullptr; };
+			instantiateScript = []() {return (ScriptableEntity*) snew(T) T(); };
+			destroyScript = [](NativeScriptComponent* nsc) {sdelete( nsc->script); nsc->script = nullptr; };
 		}
 	};
 
