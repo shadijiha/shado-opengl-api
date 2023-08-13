@@ -32,7 +32,7 @@ namespace Shado {
 		if (m_Context) {
 
 			m_Context->m_Registry.each([this](auto entityID) {
-				Entity entity = { entityID, m_Context.get() };
+				Entity entity = { entityID, m_Context.Raw() };
 				drawEntityNode(entity);
 			});
 
@@ -188,7 +188,7 @@ namespace Shado {
 			}
 
 			if (camera.type == CameraComponent::Type::Orbit) {
-				OrbitCamera* cam = (OrbitCamera*)camera.camera.get();
+				OrbitCamera* cam = (OrbitCamera*)camera.camera.Raw();
 
 				float fov = cam->getFOV();
 				if (ImGui::DragFloat("FOV", &fov)) {

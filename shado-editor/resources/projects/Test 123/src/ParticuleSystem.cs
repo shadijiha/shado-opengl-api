@@ -42,7 +42,7 @@ namespace Sandbox
 
                 Colour randomColor = GetRandomColor();
 
-                particle = this.Create<ParticuleSystem>();
+                particle = this.Create<ParticuleSystem>(() => new ParticuleSystem());
                 particle.AddComponent<SpriteRendererComponent>().colour = randomColor;
                 particle.transform.position = spawnPosition;
                 particle.AddComponent<RigidBody2DComponent>().type = RigidBody2DComponent.BodyType.Dynamic;

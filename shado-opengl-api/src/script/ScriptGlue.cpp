@@ -123,31 +123,21 @@ namespace Shado {
 		scene->destroyEntity(entity);
 	}
 
-	static uint64_t Entity_Create(UUID idToCopyScript, bool* ignoreId) {
+	static void Entity_Create(MonoObject* obj, uint64_t* obj_id) {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		
-		if (*ignoreId) {
-			Entity entity = scene->createEntity();
-			return entity.getUUID();
-		}
-		else {
-			// Copy given entity
-			Entity entity = scene->duplicateEntity(scene->getEntityById(idToCopyScript));			
+		// Copy given entity
+		Entity entity = scene->createEntity();
+		ScriptComponent& script = entity.addComponent<ScriptComponent>();
+		
+		SHADO_CORE_ASSERT(obj, "");
 
-			// Get any scripts related to idToCopyScript
-			Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idToCopyScript);
-			if (!instance)
-				return entity.getUUID();
-
-			ScriptComponent& script = entity.addComponent<ScriptComponent>();
-
-			// Copy the scripts to the new entity
-			script.ClassName = instance->GetScriptClass()->GetClassFullName();
-			ScriptEngine::OnCreateEntity(entity);
-
-			return entity.getUUID();
-		}
+		Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(obj));
+		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, obj);
+		script.ClassName = instance->GetScriptClass()->GetClassFullName();
+		*obj_id = (uint64_t)entity.getUUID();
+		ScriptEngine::OnCreateEntity(entity, instance);
 	}
 
 #pragma endregion
@@ -287,10 +277,10 @@ namespace Shado {
 		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
 			Ref<Texture2D> ref = entity.getComponent<SpriteRendererComponent>().texture;
-			ptr = ref == nullptr ? nullptr : ref.get();
+			ptr = ref ? nullptr : ref.Raw();
 		} else if (klassName == "CircleRendererComponent") {
 			Ref<Texture2D> ref = entity.getComponent<CircleRendererComponent>().texture;
-			ptr = ref == nullptr ? nullptr : ref.get();
+			ptr = ref ? nullptr : ref.Raw();
 		} else
 			SHADO_ERROR("Unknown Sprite class {0}", klassName);
 
@@ -320,9 +310,13 @@ namespace Shado {
 
 		std::string klassName = ScriptEngine::MonoStrToUT8(klass);
 		if (klassName == "SpriteRendererComponent") {
-			entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texturePtr);
+			Ref<Texture2D> texture(texturePtr);
+			texture.Leak();
+			entity.getComponent<SpriteRendererComponent>().texture = texture;
 		} else if (klassName == "CircleRendererComponent") {
-			entity.getComponent<CircleRendererComponent>().texture = Ref<Texture2D>(texturePtr);
+			Ref<Texture2D> texture(texturePtr);
+			texture.Leak();
+			entity.getComponent<CircleRendererComponent>().texture = texture;
 		} else
 			SHADO_ERROR("Unknown Sprite class {0}", klassName);
 	}
@@ -650,27 +644,15 @@ namespace Shado {
 	/**
 	* Texture2D
 	*/
-	static MonoObject* Texture2D_Create(MonoString* filepath) {
+	static void Texture2D_Create(MonoString* filepath, Texture2D** ptr) {
 		std::filesystem::path path = ScriptEngine::MonoStrToUT8(filepath);
 
 		if (!path.is_absolute())
 			path = Project::GetProjectDirectory() / path;
 
 		// Load textre
-		Texture2D* texture = new Texture2D(path.string()); //new Texture2D(path.string());
-
-		// Create the C# Texture2D object instance
-		ScriptClass klass = ScriptClass("Shado", "Texture2D", true);
-		MonoMethod* ctor = klass.GetMethod(".ctor", 2);
-		void* param[] = {
-			&texture,
-			filepath
-		};
-		MonoObject* instance = klass.Instantiate(ctor, param);
-		
-		klass.InvokeMethod(instance, ctor, param);
-
-		return instance;
+		Texture2D* texture = snew(Texture2D) Texture2D(path.string());
+		*ptr = texture;
 	}
 
 	static void Texture2D_Destroy(Texture2D* ptr) {
@@ -679,8 +661,8 @@ namespace Shado {
 	}
 
 	static void Texture2D_Reset(Texture2D* ptr, MonoString* filepath, Texture2D** newHandle) {
-		delete ptr;
-		*newHandle = new Texture2D(ScriptEngine::MonoStrToUT8(filepath));
+		sdelete(ptr);
+		*newHandle = snew(Texture2D) Texture2D(ScriptEngine::MonoStrToUT8(filepath));
 	}
 #pragma endregion
 
@@ -695,7 +677,7 @@ namespace Shado {
 			path = Project::GetProjectDirectory() / path;
 
 		// Generate shader
-		*native = new Shader(path.string());
+		*native = snew(Shader) Shader(path.string());
 	}
 	static void Shader_SetInt(Shader* native, MonoString* name, int* value) {
 		if (native)
@@ -722,11 +704,11 @@ namespace Shado {
 			native->setFloat4(ScriptEngine::MonoStrToUT8(name), *value);
 	}
 	static void Shader_Reset(Shader* oldNative, MonoString* filepath, Shader** newNative) {
-		delete oldNative;
+		sdelete( oldNative);
 		Shader_CreateShader(filepath, newNative);
 	}
 	static void Shader_Destroy(Shader* oldNative) {
-		delete oldNative;
+		sdelete( oldNative);
 	}
 #pragma endregion
 	

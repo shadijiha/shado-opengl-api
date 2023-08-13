@@ -154,7 +154,7 @@ namespace Shado {
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		m_Scene->m_Registry.each([&](auto entityID)
 			{
-				Entity entity = { entityID, m_Scene.get() };
+				Entity entity = { entityID, m_Scene.Raw() };
 				if (!entity)
 					return;
 
@@ -237,7 +237,7 @@ namespace Shado {
 								cc.setSize(cameraProps["OrthographicSize"].as<float>());
 								break;
 							case CameraComponent::Type::Orbit:
-								OrbitCamera* orbitCam = (OrbitCamera*)cc.camera.get();
+								OrbitCamera* orbitCam = (OrbitCamera*)cc.camera.Raw();
 								orbitCam->setFOV(cameraProps["PerspectiveFOV"].as<float>());
 								break;
 						}
@@ -253,7 +253,7 @@ namespace Shado {
 						auto texturePath = spriteRendererComponent["Texture"].as<std::string>();
 						src.color = spriteRendererComponent["Color"].as<glm::vec4>();
 						src.texture = texturePath == "NULL" || texturePath == "null" ?
-							nullptr : CreateRef<Texture2D>(
+							nullptr : new Texture2D(
 															Project::GetActive() ?
 														   (Project::GetProjectDirectory() / texturePath).string() : texturePath
 														  );
@@ -271,7 +271,7 @@ namespace Shado {
 
 						auto texturePath = circleRendererComponent["Texture"].as<std::string>();
 						src.texture = texturePath == "NULL" || texturePath == "null" ?
-							nullptr : CreateRef<Texture2D>(
+							nullptr : new Texture2D(
 															Project::GetActive() ?
 															(Project::GetProjectDirectory() / texturePath).string() : texturePath
 														);
@@ -435,7 +435,7 @@ namespace Shado {
 					break;
 				case CameraComponent::Type::Orbit:
 
-					OrbitCamera* orbitCam = (OrbitCamera*)camera.get();
+					OrbitCamera* orbitCam = (OrbitCamera*)camera.Raw();
 					out << YAML::Key << "PerspectiveFOV" << YAML::Value << orbitCam->getFOV();
 					break;
 

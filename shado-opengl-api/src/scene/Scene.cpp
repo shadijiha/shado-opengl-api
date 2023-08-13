@@ -363,7 +363,7 @@ namespace Shado {
 				auto [transform, camera] = group.get<TransformComponent, CameraComponent>(entity);
 
 				if (camera.primary) {
-					primaryCamera = camera.camera.get();
+					primaryCamera = camera.camera.Raw();
 					cameraTransform = transform.getTransform();
 					break;
 				}
@@ -382,7 +382,7 @@ namespace Shado {
 				if (!sprite.shader)
 					Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 				else
-					Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.get(), sprite.color, (int)entity);
+					Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
 			}
 
 			// Draw circles
@@ -427,7 +427,7 @@ namespace Shado {
 			if (!sprite.shader)
 				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 			else
-				Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.get(), sprite.color, (int)entity);
+				Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
 		}
 
 		// Draw circles
@@ -504,8 +504,8 @@ namespace Shado {
 		}
 
 		// TODO make the physics adjustable
-		s_physics2DCallback = new Physics2DCallback(this);
-		m_World = new b2World({ 0.0f, -9.8f });
+		s_physics2DCallback = snew(Physics2DCallback) Physics2DCallback(this);
+		m_World = snew(b2World) b2World({ 0.0f, -9.8f });
 		m_World->SetContactListener(s_physics2DCallback);
 
 		auto view = m_Registry.view<RigidBody2DComponent>();

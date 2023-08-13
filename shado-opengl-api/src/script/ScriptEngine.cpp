@@ -136,7 +136,7 @@ namespace Shado {
 		std::unordered_map<std::string, Ref<ScriptClass>> EditorClasses;
 		std::unordered_map<std::string, Ref<ScriptInstance>> EditorInstances;
 
-		Ref<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
+		std::shared_ptr<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
 		bool AssemblyReloadPending = false;
 
 #if SHADO_DEBUG || SHADO_RELEASE
@@ -171,7 +171,7 @@ namespace Shado {
 			Shutdown();
 		}
 
-		s_Data = new ScriptEngineData();
+		s_Data = snew(ScriptEngineData) ScriptEngineData();
 
 		InitMono();
 		ScriptGlue::RegisterFunctions();
@@ -212,6 +212,12 @@ namespace Shado {
 
 	void ScriptEngine::InitMono()
 	{
+		// set allocator
+		auto* allocator = snew(MonoAllocatorVTable) MonoAllocatorVTable();
+		allocator->malloc =		[](size_t size)				{ return Memory::HeapRaw(size, "C#"); };
+		allocator->realloc =	[](void* ptr, size_t size)	{ return Memory::ReallocRaw(ptr, size, "C#"); };
+		allocator->free =		[](void* ptr)				{ Memory::FreeRaw(ptr, "C#"); };
+		mono_set_allocator_vtable(allocator);
 		mono_set_assemblies_path("../mono/lib");
 
 		if (s_Data->EnableDebugging)
@@ -274,7 +280,7 @@ namespace Shado {
 
 		s_Data->AppAssemblyImage = mono_assembly_get_image(s_Data->AppAssembly);
 
-		s_Data->AppAssemblyFileWatcher = CreateRef<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileSystemEvent);
+		s_Data->AppAssemblyFileWatcher = std::make_shared<filewatch::FileWatch<std::string>>(filepath.string(), OnAppAssemblyFileSystemEvent);
 		s_Data->AssemblyReloadPending = false;
 		return true;
 	}
@@ -330,6 +336,25 @@ namespace Shado {
 
 			instance->InvokeOnCreate();
 		}
+	}
+
+	void ScriptEngine::OnCreateEntity(Entity entity, Ref<ScriptInstance> managed)
+	{
+		const auto& sc = entity.getComponent<ScriptComponent>();
+		SHADO_CORE_ASSERT(ScriptEngine::EntityClassExists(sc.ClassName), "");
+
+		UUID entityID = entity.getUUID();
+		s_Data->EntityInstances[entityID] = managed;
+
+		// Copy field values
+		if (s_Data->EntityScriptFields.find(entityID) != s_Data->EntityScriptFields.end())
+		{
+			const ScriptFieldMap& fieldMap = s_Data->EntityScriptFields.at(entityID);
+			for (const auto& [name, fieldInstance] : fieldMap)
+				managed->SetFieldValueInternal(name,fieldInstance.m_Buffer);
+		}
+
+		managed->InvokeOnCreate();
 	}
 
 	void ScriptEngine::OnUpdateEntity(Entity entity, TimeStep ts)
@@ -794,6 +819,16 @@ namespace Shado {
 		: m_ScriptClass(scriptClass)
 	{
 		m_Instance = scriptClass->Instantiate();
+	}
+
+	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object)
+		: m_ScriptClass(scriptClass), m_Instance(object)
+	{
+		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 0);
+		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
+		m_OnUpdateMethod = scriptClass->GetMethod("OnUpdate", 1);
+		m_OnDrawMethod = scriptClass->GetMethod("OnDraw", 0);
+		m_OnDestroyedMethod = scriptClass->GetMethod("OnDestroy", 0);
 	}
 
 	void ScriptInstance::InvokeOnCreate()

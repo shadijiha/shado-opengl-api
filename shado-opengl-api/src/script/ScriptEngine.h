@@ -72,7 +72,7 @@ namespace Shado {
 
 	using ScriptFieldMap = std::unordered_map<std::string, ScriptFieldInstance>;
 
-	class ScriptClass
+	class ScriptClass : public RefCounted
 	{
 	public:
 		ScriptClass() = default;
@@ -86,6 +86,11 @@ namespace Shado {
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
 
 		std::string GetClassFullName() const { return m_ClassNamespace + "." + m_ClassName; }
+
+		ScriptClass& operator=(const ScriptClass& other) {
+			std::memcpy(this, &other, sizeof(ScriptClass));
+			return *this;
+		}
 	private:
 		std::string m_ClassNamespace;
 		std::string m_ClassName;
@@ -97,11 +102,12 @@ namespace Shado {
 		friend class ScriptEngine;
 	};
 
-	class ScriptInstance
+	class ScriptInstance : public RefCounted
 	{
 	public:
 		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);
 		ScriptInstance(Ref<ScriptClass> scriptClass);
+		ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object);
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
@@ -165,6 +171,7 @@ namespace Shado {
 
 		static bool EntityClassExists(const std::string& fullClassName);
 		static void OnCreateEntity(Entity entity);
+		static void OnCreateEntity(Entity entity, Ref<ScriptInstance> managed);
 		static void OnUpdateEntity(Entity entity, TimeStep ts);
 		static void OnDrawEntity(Entity entity);
 

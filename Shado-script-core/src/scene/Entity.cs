@@ -7,6 +7,7 @@ namespace Shado
 {
 	public class Entity
 	{
+		private ulong id;
 		protected Entity() { ID = 0; }
 
 		internal Entity(ulong id)
@@ -14,7 +15,7 @@ namespace Shado
 			ID = id;
 		}
 
-		public ulong ID { get; private set; }	// TODO: IF we have weird error. revert this to be --> public readonly ulong ID
+		public ulong ID { get { return id; } private set { id = value; } }	// TODO: IF we have weird error. revert this to be --> public readonly ulong ID
 
 		public Vector3 translation
 		{
@@ -83,14 +84,11 @@ namespace Shado
         ///  without any components is created
         /// </param>
         /// <returns></returns>
-        public T Create<T>(Entity obj = null) where T : Entity, new() {
-			bool ignoreId = obj == null;
-
-            ulong id = InternalCalls.Entity_Create(obj == null ? 0 : obj.ID, ref ignoreId);
-            T e = new T
-            {
-                ID = id
-            };
+        public T Create<T>(Func<T> creator) where T : Entity {
+			T e = creator();
+			if (e == null)
+				return null;
+            InternalCalls.Entity_Create(e, ref e.id);
             return e;
 		}
 

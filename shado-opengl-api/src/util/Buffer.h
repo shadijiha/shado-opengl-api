@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <cstring>
+#include "util/Memory.h"
 
 namespace Shado {
 
@@ -31,13 +32,16 @@ namespace Shado {
 		{
 			Release();
 
-			Data = new uint8_t[size];
+			//Data = new uint8_t[size];
+			Data = Memory::Heap<uint8_t>(size);
+			std::memset(Data, 0, size * sizeof(uint8_t));
 			Size = size;
 		}
 
 		void Release()
 		{
-			delete[] Data;
+			//delete[] Data;
+			Memory::Free(Data, true);
 			Data = nullptr;
 			Size = 0;
 		}

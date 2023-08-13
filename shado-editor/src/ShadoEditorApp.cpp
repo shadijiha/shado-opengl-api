@@ -9,7 +9,7 @@ int main(int argc, const char** argv)
 	SHADO_PROFILE_BEGIN_SESSION("Startup", "ShadoProfile-Startup.json");
 	auto& application = Application::get();
 	application.getWindow().resize(1920, 1080);
-	application.submit(new EditorLayer);
+	application.submit(snew(EditorLayer) EditorLayer);
 	SHADO_PROFILE_END_SESSION();
 
 

@@ -3,7 +3,7 @@
 
 namespace Shado {
 
-	class UniformBuffer
+	class UniformBuffer : public RefCounted
 	{
 	public:
 		UniformBuffer(uint32_t size, uint32_t binding);

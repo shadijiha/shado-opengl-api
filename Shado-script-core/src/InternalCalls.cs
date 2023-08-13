@@ -21,7 +21,7 @@ namespace Shado
 		internal extern static void Entity_Destroy(ulong entityID);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal extern static ulong Entity_Create(ulong id, ref bool ignoreId);
+		internal extern static void Entity_Create(object script, ref ulong object_id);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static object GetScriptInstance(ulong entityID);
@@ -152,7 +152,7 @@ namespace Shado
 		 */
         #region Texture2D
         [MethodImpl(MethodImplOptions.InternalCall)]
-		internal extern static Texture2D Texture2D_Create(string filepath);
+		internal extern static void Texture2D_Create(string filepath, out IntPtr handle);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Texture2D_Destroy(IntPtr native);

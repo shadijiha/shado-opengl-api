@@ -23,35 +23,31 @@ namespace Sandbox
         public float totalDt = 0.0f;
 
         private Test other;
-        private ParticuleSystem particuleSystem;
+        //private ParticuleSystem particuleSystem;
 
         void OnCreate() {
             transform = GetComponent<TransformComponent>();
             GetComponent<SpriteRendererComponent>().texture = texture;
-            var t = this.Create<Test>();
-            t.AddComponent<SpriteRendererComponent>().colour = Colour.Blue;
+            //var t = this.Create<Test>();
+            //t.AddComponent<SpriteRendererComponent>().colour = Colour.Blue;
             //GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
 
-            const float max = 5.0f;
+            const float max = 0.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
                 for (float x = -5.0f; x < max; x += 0.5f)
                 {
-                    GridCell gridCell = Create<GridCell>();
-                    gridCell.x = x;
-                    gridCell.y = y;
-                    gridCell.parent = this;
-                    gridCell.OnCreate();
+                    GridCell gridCell = Create<GridCell>(() => new GridCell(this, x, y));
                 }
             }
 
-            particuleSystem = Create<ParticuleSystem>();
-            particuleSystem.OnCreate();
+            //particuleSystem = Create<ParticuleSystem>();
+            //particuleSystem.OnCreate();
         }
 
         void OnUpdate(float dt)
         {
-            particuleSystem.OnUpdate(dt);   
+            //particuleSystem.OnUpdate(dt);   
             if (this.tag == "Square (2)") {
                 float x = 10;
             }
@@ -60,14 +56,14 @@ namespace Sandbox
             GetComponent<SpriteRendererComponent>().texture = texture;
             Vector3 pos = transform.position;
             pos.x += moveRate * 2 * dt * dir;
-            transform.position = pos;
+            //transform.position = pos;
             
             if (pos.x > maxDelta || pos.x < -maxDelta) {
                 dir = -dir;
             }
 
             if (Input.IsKeyDown(KeyCode.K) && other is null) {
-                other = Create<Test>(this);
+                //other = Create<Test>();
             }
         }
 
@@ -80,7 +76,7 @@ namespace Sandbox
 
         void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
             Log.Info("Collision enter {0} with {1}", info, other.tag);
-            Destroy(this);
+            //Destroy(this);
         }
 
         /*
@@ -144,8 +140,7 @@ namespace Sandbox
 
         internal float x, y;
         internal Entity parent;
-
-        public GridCell() { }
+        float angle = 0.01f;
 
         public GridCell(Entity parent, float x, float y) { 
             this.x = x;
@@ -159,13 +154,21 @@ namespace Sandbox
 
             var sprite = AddComponent<SpriteRendererComponent>();
             sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
-            //sprite.texture = texture[random.Next(texture.Length)];
+            sprite.texture = texture[random.Next(texture.Length)];
  
             var rb = AddComponent<RigidBody2DComponent>();
             AddComponent<BoxCollider2DComponent>();
             rb.type = RigidBody2DComponent.BodyType.Dynamic;
         }
 
+        void OnUpdate(float dt)
+        {
+            
+            GetComponent<SpriteRendererComponent>().colour = Colour.FromHSL(angle % 360, 100, 100);
+            angle += dt;
+        }
+
+        // This is not working because when creating an Entiy the script is not assigned
         void OnCollision2DEnter(Collision2DInfo info, Entity other)
         {
             collisions++;
@@ -173,8 +176,17 @@ namespace Sandbox
             {
                 Log.Info("Collisions {0}", collisions);
             }
-            //if (other.Tag.ToLower() == "ground")
-            //    Destroy();
+            //if (other.tag.ToLower() == "ground")
+                Destroy(this);
+        }
+
+        void OnCollision2DLeave(Collision2DInfo info, Entity other)
+        {
+            collisions++;
+            if (collisions % 1000 == 0)
+            {
+                Log.Info("Collisions LEAVE {0}", collisions);
+            }
         }
     }
 }
