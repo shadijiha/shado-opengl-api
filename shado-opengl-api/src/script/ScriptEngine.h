@@ -107,6 +107,7 @@ namespace Shado {
 	public:
 		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);
 		ScriptInstance(Ref<ScriptClass> scriptClass);
+		ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object);
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
@@ -170,6 +171,7 @@ namespace Shado {
 
 		static bool EntityClassExists(const std::string& fullClassName);
 		static void OnCreateEntity(Entity entity);
+		static void OnCreateEntity(Entity entity, Ref<ScriptInstance> managed);
 		static void OnUpdateEntity(Entity entity, TimeStep ts);
 		static void OnDrawEntity(Entity entity);
 

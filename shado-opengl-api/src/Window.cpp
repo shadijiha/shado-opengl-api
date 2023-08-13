@@ -21,8 +21,9 @@ namespace Shado {
 		: m_Mode(mode)
 	{
 		GLFWallocator allocator;
-		allocator.allocate = [](size_t size, void* user) { return Memory::HeapRaw(size, "GLFW"); };
-		allocator.deallocate = [](void* block, void* user) { Memory::FreeRaw(block, "GLFW"); };
+		allocator.allocate =	[](size_t size, void* user)					{ return Memory::HeapRaw(size, "GLFW"); };
+		allocator.reallocate =	[](void* block, size_t size, void* user)	{ return Memory::ReallocRaw(block, size, "GLFW"); };
+		allocator.deallocate =	[](void* block, void* user)					{ Memory::FreeRaw(block, "GLFW"); };
 		allocator.user = NULL;
 		glfwInitAllocator(&allocator);
 

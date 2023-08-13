@@ -14,11 +14,11 @@ namespace Shado {
 	void ImguiLayer::onInit() {
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
-		ImGui::SetAllocatorFunctions(
-			[](size_t sz, void* data) { return Memory::HeapRaw(sz); },
-			[](void* ptr, void* data) { return Memory::FreeRaw(ptr); }
-		);
 		ImGui::CreateContext();
+		ImGui::SetAllocatorFunctions(
+			[](size_t sz, void* data) { return Memory::HeapRaw(sz, "ImGui"); },
+			[](void* ptr, void* data) { return Memory::FreeRaw(ptr, "ImGui"); }
+		);
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls

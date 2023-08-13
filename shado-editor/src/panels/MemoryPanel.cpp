@@ -33,7 +33,7 @@ namespace Shado {
 		//ImGui::Text("Total alive: %d", Memory::GetTotalAlive());
 		// Inside the ImGui window
 		if (!Memory::GetMemoryHistory().empty()) {
-			ImGui::Text("Memory Usage Over Time");
+			ImGui::Text("Heap Memory Usage Over Time");
 
 			// Convert memory history data to ImGui-compatible arrays
 			std::vector<float> timeData, memoryData;
@@ -43,9 +43,32 @@ namespace Shado {
 			}
 
 			// Display a graph using ImGui's PlotLines function
-			ImGui::PlotLines("Memory Usage", timeData.data(), timeData.size(),
+			ImGui::PlotHistogram("Heap Memory Usage", timeData.data(), timeData.size(),
 				0, NULL, 0.0f, FLT_MAX, ImVec2(0, 200));
 		}
+		
+		if (ImGui::BeginTable("Memory Breakdown", 2))
+		{
+
+			// Header
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("sector");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::Text("total allocated");
+			
+			auto& temp = Memory::GetMemoryLabels();
+			for (const auto& entry : temp)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("%s", entry.first);
+				ImGui::TableSetColumnIndex(1);
+				ImGui::Text("%zu", entry.second);
+			}
+			ImGui::EndTable();
+		}
+		
 		ImGui::End();
 	}
 }

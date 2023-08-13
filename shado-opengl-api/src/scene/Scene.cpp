@@ -504,8 +504,8 @@ namespace Shado {
 		}
 
 		// TODO make the physics adjustable
-		s_physics2DCallback = new Physics2DCallback(this);
-		m_World = new b2World({ 0.0f, -9.8f });
+		s_physics2DCallback = snew(Physics2DCallback) Physics2DCallback(this);
+		m_World = snew(b2World) b2World({ 0.0f, -9.8f });
 		m_World->SetContactListener(s_physics2DCallback);
 
 		auto view = m_Registry.view<RigidBody2DComponent>();

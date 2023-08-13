@@ -4,7 +4,8 @@
 #include "Memory.h"
 namespace Shado {
 
-	static std::unordered_set<void*> s_LiveReferences;
+	static std::unordered_set<void*>& s_LiveReferences = 
+		*(snew(std::unordered_set<void*>) std::unordered_set<void*>());	// TODO: Fix memory leak
 	static std::mutex s_LiveReferenceMutex;
 
 	namespace RefUtils {
@@ -30,6 +31,4 @@ namespace Shado {
 			return s_LiveReferences.find(instance) != s_LiveReferences.end();
 		}
 	}
-
-
 }

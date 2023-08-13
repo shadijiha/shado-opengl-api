@@ -123,31 +123,21 @@ namespace Shado {
 		scene->destroyEntity(entity);
 	}
 
-	static uint64_t Entity_Create(UUID idToCopyScript, bool* ignoreId) {
+	static void Entity_Create(MonoObject* obj, uint64_t* obj_id) {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		
-		if (*ignoreId) {
-			Entity entity = scene->createEntity();
-			return entity.getUUID();
-		}
-		else {
-			// Copy given entity
-			Entity entity = scene->duplicateEntity(scene->getEntityById(idToCopyScript));			
+		// Copy given entity
+		Entity entity = scene->createEntity();
+		ScriptComponent& script = entity.addComponent<ScriptComponent>();
+		
+		SHADO_CORE_ASSERT(obj, "");
 
-			// Get any scripts related to idToCopyScript
-			Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idToCopyScript);
-			if (!instance)
-				return entity.getUUID();
-
-			ScriptComponent& script = entity.addComponent<ScriptComponent>();
-
-			// Copy the scripts to the new entity
-			script.ClassName = instance->GetScriptClass()->GetClassFullName();
-			ScriptEngine::OnCreateEntity(entity);
-
-			return entity.getUUID();
-		}
+		Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(obj));
+		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, obj);
+		script.ClassName = instance->GetScriptClass()->GetClassFullName();
+		*obj_id = (uint64_t)entity.getUUID();
+		ScriptEngine::OnCreateEntity(entity, instance);
 	}
 
 #pragma endregion

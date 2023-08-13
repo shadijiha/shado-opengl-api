@@ -15,28 +15,43 @@ namespace Shado {
 	class Memory {
 	public:
 		template<typename T>
-		inline static T* Heap() {
+		inline static T* Heap(const char* label = "Engine") {
 			total_allocated += sizeof(T);
 			total_alive += sizeof(T);
 			memory_history.emplace_back(glfwGetTime(), total_alive);
+			memory_labels[label] += sizeof(T);
 			return (T*)malloc(sizeof(T));
 		}
 
 		template<typename T>
-		inline static T* Heap(uint32_t count) {
+		inline static T* Heap(uint32_t count, const char* label = "Engine") {
 			total_allocated += sizeof(T) * count;
 			total_alive += sizeof(T) * count;
-			T* ptr = (T*)malloc(sizeof(T) * count);
+			T* ptr = (T*)std::malloc(sizeof(T) * count);
 			live_array_refs[ptr] = count;
+			memory_labels[label] += sizeof(T) * count;
 			return ptr;
 		}
 
 		inline static void* HeapRaw(size_t size, const char* label = "Engine") {
 			total_allocated += size;
 			total_alive += size;
-			void* ptr = malloc(size);
+			void* ptr = std::malloc(size);
 			live_array_refs[ptr] = size;
 			memory_history.emplace_back(glfwGetTime(), total_alive);
+			memory_labels[label] += size;
+			return ptr;
+		}
+
+		inline static void* ReallocRaw(void* block, size_t size, const char* label = "Engine") {
+			uint32_t old_block_size = live_array_refs.find(block) != live_array_refs.end() ? live_array_refs[block] : 0;
+			total_allocated += size;
+			total_alive += size - old_block_size;
+			memory_history.emplace_back(glfwGetTime(), total_alive);
+			void* ptr = std::realloc(block, size);
+			live_array_refs.erase(block);
+			live_array_refs[ptr] = size;
+			memory_labels[label] += size - old_block_size;
 			return ptr;
 		}
 
@@ -71,12 +86,19 @@ namespace Shado {
 
 		inline static size_t GetTotalAllocated() { return total_allocated; }
 		inline static size_t GetTotalAlive() { return total_alive; }
-		inline static const std::vector<std::pair<float, size_t>>& GetMemoryHistory() { return memory_history; }
+		inline static const std::vector<std::pair<float, size_t>>& GetMemoryHistory() {
+			// If more than 50 entries, remove until 50
+			if (memory_history.size() > 50)
+				memory_history.erase(memory_history.begin(), memory_history.begin() + (memory_history.size() - 50));
+			return memory_history;
+		}
+		inline static const std::unordered_map<const char*, size_t>& GetMemoryLabels() { return memory_labels; }
 	private:
 		inline static size_t total_allocated = 0;
 		inline static size_t total_alive = 0;
 		inline static std::unordered_map<void*, uint32_t> live_array_refs;
 		inline static std::vector<std::pair<float, size_t>> memory_history;
+		inline static std::unordered_map<const char*, size_t> memory_labels;
 	};
 
 	class RefCounted
