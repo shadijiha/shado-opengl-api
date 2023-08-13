@@ -76,14 +76,11 @@ namespace Shado
 		}
 
         /// <summary>
-        /// Creates a new entity. If you provide an object as pramater. An new entity will be created and the script 
-        /// That is attached to it will be deplicated and attached to the new Entity.
+        /// Creates a new entity
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="obj">The source entity to copy. If null then a new entity 
-        ///  without any components is created
-        /// </param>
-        /// <returns></returns>
+        /// <param name="creator">The function that creates the entity</param>
+        /// <returns>The created Entity</returns>
         public T Create<T>(Func<T> creator) where T : Entity {
 			T e = creator();
 			if (e == null)
