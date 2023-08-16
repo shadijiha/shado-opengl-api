@@ -130,9 +130,9 @@ namespace Shado {
 			});
 		s_Data.QuadVertexArray->addVertexBuffer(s_Data.QuadVertexBuffer);
 
-		s_Data.QuadVertexBufferBase = new QuadVertex[s_Data.MaxVertices];
+		s_Data.QuadVertexBufferBase = Memory::Heap<QuadVertex>(s_Data.MaxVertices, "Renderer2D");
 
-		uint32_t* quadIndices = new uint32_t[s_Data.MaxIndices];
+		uint32_t* quadIndices = Memory::Heap<uint32_t>(s_Data.MaxIndices, "Renderer2D");
 
 		uint32_t offset = 0;
 		for (uint32_t i = 0; i < s_Data.MaxIndices; i += 6)
@@ -150,7 +150,7 @@ namespace Shado {
 
 		Ref<IndexBuffer> quadIB = IndexBuffer::create(quadIndices, s_Data.MaxIndices);
 		s_Data.QuadVertexArray->setIndexBuffer(quadIB);
-		delete[] quadIndices;
+		Memory::Free(quadIndices, true);
 
 		// Circles
 		s_Data.CircleVertexArray = VertexArray::create();
@@ -169,7 +169,7 @@ namespace Shado {
 			});
 		s_Data.CircleVertexArray->addVertexBuffer(s_Data.CircleVertexBuffer);
 		s_Data.CircleVertexArray->setIndexBuffer(quadIB); // Use quad IB
-		s_Data.CircleVertexBufferBase = new CircleVertex[s_Data.MaxVertices];
+		s_Data.CircleVertexBufferBase = Memory::Heap<CircleVertex>(s_Data.MaxVertices);
 
 		// Lines
 		s_Data.LineVertexArray = VertexArray::create();
@@ -181,9 +181,9 @@ namespace Shado {
 			{ ShaderDataType::Int,    "a_EntityID" }
 			});
 		s_Data.LineVertexArray->addVertexBuffer(s_Data.LineVertexBuffer);
-		s_Data.LineVertexBufferBase = new LineVertex[s_Data.MaxVertices];
+		s_Data.LineVertexBufferBase = Memory::Heap<LineVertex>(s_Data.MaxVertices, "Renderer2D");
 
-		s_Data.WhiteTexture = new Texture2D(1, 1);
+		s_Data.WhiteTexture = snew(Texture2D) Texture2D(1, 1);
 		uint32_t whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->setData(&whiteTextureData, sizeof(uint32_t));
 
@@ -216,7 +216,7 @@ namespace Shado {
 	{
 		SHADO_PROFILE_FUNCTION();
 
-		delete[] s_Data.QuadVertexBufferBase;
+		Memory::Free(s_Data.QuadVertexBufferBase, true);
 	}
 
 	void Renderer2D::BeginScene(const Camera& camera)
