@@ -59,6 +59,9 @@ namespace Shado {
 		MemoryPanel m_MemoryPanel;
 		Entity m_HoveredEntity;
 
+		// This is needed because on fresh install when no Imgui.ini, we need to be able to move the play button to its location
+		bool m_UiToolbarMovable = false;	
+
 		// Scene runtime / editing
 		enum class SceneState
 		{

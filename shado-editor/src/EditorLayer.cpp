@@ -261,6 +261,13 @@ namespace Shado {
 					ImGui::EndMenu();
 				}
 
+	        	if (ImGui::BeginMenu("Window")) {
+	        		if (ImGui::MenuItemEx("Toggle UI bar movable", "", nullptr, m_UiToolbarMovable)) {
+	        			m_UiToolbarMovable = !m_UiToolbarMovable;
+	        		}
+	        		ImGui::EndMenu();
+	        	}
+
 	            ImGui::EndMenuBar();
 	        }
 		}
@@ -438,7 +445,9 @@ namespace Shado {
 		const auto& buttonActive = colors[ImGuiCol_ButtonActive];
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
 
-		ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		ImGuiWindowFlags toolbarFlags = m_UiToolbarMovable ? ImGuiWindowFlags_None :
+							(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin("toolbar", nullptr, toolbarFlags);
 
 		float size = ImGui::GetWindowHeight() - 4.0f;
 		Ref<Texture2D> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
