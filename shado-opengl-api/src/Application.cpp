@@ -13,10 +13,10 @@ namespace Shado {
 
 	// =========================== APPLICATION CLASS ===========================
 
-	Application* Application::singleton = new Application();
+	Application* Application::singleton = snew(Application) Application();
 
 	Application::Application(unsigned width, unsigned height, const std::string& title)
-		: window(new Window(width, height, title)), uiScene(new ImguiLayer)
+		: window(snew(Window) Window(width, height, title)), uiScene(snew(ImguiLayer) ImguiLayer)
 	{
 		Log::init();
 		Random::init();
@@ -39,7 +39,7 @@ namespace Shado {
 			if (layer == nullptr)
 				continue;
 			layer->onDestroy();
-			delete layer;
+			sdelete(layer);
 		}
 
 		glfwTerminate();
@@ -60,6 +60,16 @@ namespace Shado {
 			float time = (float)glfwGetTime();	// TODO: put it in platform specific
 			float timestep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
+
+			// Execute main thread Queue
+			{
+				std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+				for (auto& func : m_MainThreadQueue)
+					func();
+
+				m_MainThreadQueue.clear();
+			}
 
 			if (!m_minimized) {
 				/* Render here */
@@ -145,13 +155,20 @@ namespace Shado {
 			}			
 		}
 	}
+
+	void Application::SubmitToMainThread(const std::function<void()>& function)
+	{
+		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+		m_MainThreadQueue.emplace_back(function);
+	}
 	
 	void Application::destroy() {
 		SHADO_PROFILE_FUNCTION();
 
 		for (Layer*& layer : singleton->layers) {
 			layer->onDestroy();
-			delete layer;
+			sdelete(layer);
 			layer = nullptr;
 		}
 		singleton->uiScene->onDestroy();
@@ -159,7 +176,7 @@ namespace Shado {
 		singleton->m_Running = false;
 
 		Renderer2D::Shutdown();
-		delete singleton;
+		sdelete( singleton);
 	}
 
 	void Application::close() {

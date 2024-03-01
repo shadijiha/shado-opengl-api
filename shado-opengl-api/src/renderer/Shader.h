@@ -2,9 +2,10 @@
 #include <string>
 #include <unordered_map>
 #include "glm/glm.hpp"
+#include "util/Memory.h"
 
 namespace Shado {
-	class Shader
+	class Shader : public RefCounted
 	{
 	public:
 		Shader(const std::string& filepath);

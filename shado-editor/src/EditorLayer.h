@@ -2,9 +2,9 @@
 #include "panels/ConsolePanel.h"
 #include "panels/ContentBrowserPanel.h"
 #include "panels/SceneHierarchyPanel.h"
+#include "panels/MemoryPanel.h"
 
 namespace Shado {
-
 
 	class EditorLayer : public Layer {
 	public:
@@ -56,7 +56,11 @@ namespace Shado {
 		SceneHierarchyPanel m_sceneHierarchyPanel;
 		ContentBrowserPanel m_ContentPanel;
 		ConsolePanel m_ConsolPanel;
+		MemoryPanel m_MemoryPanel;
 		Entity m_HoveredEntity;
+
+		// This is needed because on fresh install when no Imgui.ini, we need to be able to move the play button to its location
+		bool m_UiToolbarMovable = false;	
 
 		// Scene runtime / editing
 		enum class SceneState

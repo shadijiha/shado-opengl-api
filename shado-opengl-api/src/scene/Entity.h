@@ -46,6 +46,8 @@ namespace Shado {
 			return m_EntityHandle != entt::null && m_Scene->m_Registry.valid(m_EntityHandle);
 		}
 
+		UUID getUUID();
+
 		operator bool()		const { return isValid(); }
 		operator uint32_t() const { return (uint32_t)m_EntityHandle; }
 		operator entt::entity() const { return m_EntityHandle; }

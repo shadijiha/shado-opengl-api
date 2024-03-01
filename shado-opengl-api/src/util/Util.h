@@ -10,6 +10,7 @@
 #include "glm/vec4.hpp"
 #include <locale>
 #include <filesystem>
+#include "Memory.h"
 
 #define FILE_PATH std::filesystem::current_path().u8string()
 
@@ -111,12 +112,12 @@ namespace Shado {
 template<typename T>
 using ScopedPtr = std::unique_ptr<T>;
 
-template<typename T>
-using Ref = std::shared_ptr<T>;
-
+//template<typename T>
+//using Ref = std::shared_ptr<T>;
+//
 template<typename T, typename... Args>
-Ref<T> CreateRef(Args&&... args) {
-	return std::make_shared<T>(std::forward<Args>(args)...);
+inline Shado::Ref<T> CreateRef(Args&&... args) {
+	return Shado::Ref(new T(std::forward<Args>(args)...));
 }
 
 #endif

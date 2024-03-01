@@ -40,9 +40,5 @@
 #include "util/Util.h"
 #include "util/random.h"
 #include "util/ParticuleSystem.h"
-#include "Objects3D/Object3D.h"
-#include "Objects3D/Sphere.h"
-#include "Objects3D/Cube.h"
-
 
 #endif

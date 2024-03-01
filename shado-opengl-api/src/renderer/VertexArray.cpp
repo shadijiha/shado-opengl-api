@@ -5,8 +5,8 @@
 #include <GL/glew.h>
 
 namespace Shado {
-	std::shared_ptr<VertexArray> VertexArray::create() {
-		return std::make_shared<VertexArray>();
+	Ref<VertexArray> VertexArray::create() {
+		return CreateRef<VertexArray>();
 	}
 
 	static GLenum toOpenGLType(ShaderDataType type) {
@@ -44,7 +44,7 @@ namespace Shado {
 		glBindVertexArray(0);
 	}
 
-	void VertexArray::addVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) {
+	void VertexArray::addVertexBuffer(const Ref<VertexBuffer>& vertexBuffer) {
 
 		SHADO_CORE_ASSERT(vertexBuffer->getLayout().getElements().size(), "Vertex buffer has no layout!");
 
@@ -111,7 +111,7 @@ namespace Shado {
 		m_VertexBuffers.push_back(vertexBuffer);
 	}
 
-	void VertexArray::setIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer) {
+	void VertexArray::setIndexBuffer(const Ref<IndexBuffer>& indexBuffer) {
 		glBindVertexArray(m_RendererID);
 		indexBuffer->bind();
 

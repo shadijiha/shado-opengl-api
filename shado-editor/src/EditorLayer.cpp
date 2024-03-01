@@ -8,13 +8,11 @@
 #include "scene/utils/SceneUtils.h"
 #include "ImGuizmo/ImGuizmo.h"
 #include "math/Math.h"
-#include "script/ScriptManager.h"
-#include "scriptUtils/ScriptGeneration.h"
 #include "ui/UI.h"
+#include "project/Project.h"
+#include "script/ScriptEngine.h"
 
 namespace Shado {
-	extern const std::filesystem::path g_AssetsPath;
-
 	static TimeStep lastDt = 1 / 60.0f;
 
 	EditorLayer::EditorLayer()
@@ -109,7 +107,7 @@ namespace Shado {
 		if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
 		{
 			int pixelData = buffer->readPixel(1, mouseX, mouseY);
-			m_HoveredEntity = pixelData == -1 ? Entity() : Entity{ (entt::entity)(uint32_t)pixelData, m_ActiveScene.get()};
+			m_HoveredEntity = pixelData == -1 ? Entity() : Entity{ (entt::entity)(uint32_t)pixelData, m_ActiveScene.Raw()};
 		}
 		
         buffer->unbind();
@@ -177,7 +175,48 @@ namespace Shado {
 			// MENU BAR
 	        if (ImGui::BeginMenuBar())
 	        {
-	            if (ImGui::BeginMenu("File"))
+				if (ImGui::BeginMenu("File")) {
+
+					if (ImGui::MenuItem("New Project", "Ctrl+P+N")) {
+						Ref<Project> project = Project::New();
+						project->GetConfig().Name = "Test123";
+						project->GetConfig().StartScene = "sample.shadoscene";
+					}
+
+					if (ImGui::MenuItem("Open Project...", "Ctrl+P+O")) {
+						std::string path = FileDialogs::openFile("Shado Project (*.sproj)\0*.sproj\0");
+
+						if (!path.empty() && Project::Load(path))
+						{
+							ScriptEngine::Init();
+
+							auto startScenePath = Project::GetAssetFileSystemPath(Project::GetActive()->GetConfig().StartScene);
+							openScene(startScenePath);
+							m_ContentPanel = ContentBrowserPanel();
+
+						}
+					}
+
+					if (Project::GetActive() && ImGui::MenuItem("Save Project...", "Ctrl+P+S")) {
+						//std::string path = FileDialogs::chooseFolder();
+						std::string path = std::filesystem::absolute("resources/projects/Test 123").string();
+						auto& config = Project::GetActive()->GetConfig();
+						config.AssetDirectory = path + "/Assets";
+						config.ScriptModulePath = "bin/Release-windows-x86_64/" + config.Name + "/" + config.Name + ".dll";
+
+						Project::SaveActive(path + "/Test 123.sproj");
+					}
+
+					// Disabling fullscreen would allow the window to be moved to the front of other windows,
+					// which we can't undo at the moment without finer window depth/z control.
+					if (ImGui::MenuItem("Exit")) {
+						Application::close();
+					}
+
+					ImGui::EndMenu();
+				}
+
+	            if (Project::GetActive() && ImGui::BeginMenu("Scene"))
 	            {
 					// New scene
 					if (ImGui::MenuItem("New", "Ctrl+N")) {
@@ -185,7 +224,7 @@ namespace Shado {
 					}
 
 					// Open Scene file
-					if (ImGui::MenuItem("Open", "Ctrl+O")) {
+					if (ImGui::MenuItem("Open...", "Ctrl+O")) {
 						openScene();
 					}
 
@@ -198,52 +237,8 @@ namespace Shado {
 						saveScene();
 					}
 
-	                // Disabling fullscreen would allow the window to be moved to the front of other windows,
-	                // which we can't undo at the moment without finer window depth/z control.
-	                if (ImGui::MenuItem("Exit")) {
-	                    Application::close();
-	                }
-
 	                ImGui::EndMenu();
 	            }
-
-				if (ImGui::BeginMenu("Script"))
-				{
-					if (ImGui::MenuItem("Set Script DLL")) {
-						std::string path = FileDialogs::openFile("Dynamic linked library (*.dll)\0*.dll");
-						if (!path.empty()) {
-							ScriptManager::reload(path);
-
-							auto classes = ScriptManager::getAssemblyClassList();
-							for (auto& klass : classes) {
-								//std::cout << klass.toString()  << std::endl;
-							}
-						}
-					}
-
-					// Reload project if valid
-					if (ScriptManager::hasValidDefautDLL() && ImGui::MenuItem("Reload Script DLL")) {
-						ScriptManager::reload();
-					}					
-
-					ImGui::Separator();
-
-					// New project
-					if (ImGui::MenuItem("Generate C# script project")) {
-						std::string projectPath = FileDialogs::chooseFolder();
-
-						if (!projectPath.empty()) {
-							// TODO: Prompt user for script project
-							Script::generateProject(projectPath, "Test Project");
-							Dialog::openPathInExplorer(projectPath);
-						}
-						else {
-							SHADO_CORE_ASSERT(false, "Invalid project path (maybe empty?)");
-						}
-					}
-
-					ImGui::EndMenu();
-				}
 
 				if (ImGui::BeginMenu("Gizmos")) {
 
@@ -266,6 +261,13 @@ namespace Shado {
 					ImGui::EndMenu();
 				}
 
+	        	if (ImGui::BeginMenu("Window")) {
+	        		if (ImGui::MenuItemEx("Toggle UI bar movable", "", nullptr, m_UiToolbarMovable)) {
+	        			m_UiToolbarMovable = !m_UiToolbarMovable;
+	        		}
+	        		ImGui::EndMenu();
+	        	}
+
 	            ImGui::EndMenuBar();
 	        }
 		}
@@ -279,6 +281,7 @@ namespace Shado {
 		m_sceneHierarchyPanel.onImGuiRender();
 		m_ContentPanel.onImGuiRender();
 		m_ConsolPanel.onImGuiRender();
+		m_MemoryPanel.onImGuiRender();
 
         ImGui::End();
 	}
@@ -288,10 +291,11 @@ namespace Shado {
 
 	void EditorLayer::onEvent(Event& event) {
         m_EditorCamera.OnEvent(event);
+		m_sceneHierarchyPanel.onEvent(event);
 
 		EventDispatcher dispatcher(event);
 		dispatcher.dispatch<KeyPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onKeyPressed));
-		dispatcher.dispatch<MouseButtonPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));
+		dispatcher.dispatch<MouseButtonPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));	
 	}
 
 	// Helpers
@@ -352,6 +356,11 @@ namespace Shado {
 	}
 
 	void EditorLayer::saveScene() {
+		if (m_SceneState == SceneState::Play) {
+			Dialog::alert("Cannot save a scene while playing", "Save Error");
+			return;
+		}
+
 		auto filepath = m_ScenePath.empty() ? FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0") : m_ScenePath;
 		
 		if (!filepath.empty()) {
@@ -393,7 +402,11 @@ namespace Shado {
 		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
 		SceneSerializer serializer(scene);
-		serializer.deserialize(path.string());
+		std::string errorMsg;
+		if (!serializer.deserialize(path.string(), errorMsg)) {
+			Dialog::alert("Unable to load file " + path.string() + ". " + errorMsg, "Error loading scene", Dialog::DialogIcon::ERROR_ICON);
+			return;
+		}
 
 		m_EditorScene = scene;
 		m_ActiveScene = m_EditorScene;
@@ -405,10 +418,9 @@ namespace Shado {
 	// ============================== For runtime
 	void EditorLayer::onScenePlay() {
 		m_SceneState = SceneState::Play;
-		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.get());
+		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.Raw());
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 		Scene::ActiveScene = m_ActiveScene;
-		//m_sceneHierarchyPanel.setContext(m_ActiveScene); // TODO maybe uncomment this
 		m_ActiveScene->onRuntimeStart();
 	}
 
@@ -433,7 +445,9 @@ namespace Shado {
 		const auto& buttonActive = colors[ImGuiCol_ButtonActive];
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
 
-		ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		ImGuiWindowFlags toolbarFlags = m_UiToolbarMovable ? ImGuiWindowFlags_None :
+							(ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin("toolbar", nullptr, toolbarFlags);
 
 		float size = ImGui::GetWindowHeight() - 4.0f;
 		Ref<Texture2D> icon = m_SceneState == SceneState::Edit ? m_IconPlay : m_IconStop;
@@ -475,7 +489,7 @@ namespace Shado {
 
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 				const wchar_t* pathStr = (const wchar_t*)payload->Data;
-				auto path = g_AssetsPath / pathStr;
+				auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
 				auto extension = path.extension();
 
 				if (extension == ".jpg" || extension == ".png") {

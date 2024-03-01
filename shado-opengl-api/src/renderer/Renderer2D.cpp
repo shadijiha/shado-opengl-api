@@ -130,9 +130,9 @@ namespace Shado {
 			});
 		s_Data.QuadVertexArray->addVertexBuffer(s_Data.QuadVertexBuffer);
 
-		s_Data.QuadVertexBufferBase = new QuadVertex[s_Data.MaxVertices];
+		s_Data.QuadVertexBufferBase = Memory::Heap<QuadVertex>(s_Data.MaxVertices, "Renderer2D");
 
-		uint32_t* quadIndices = new uint32_t[s_Data.MaxIndices];
+		uint32_t* quadIndices = Memory::Heap<uint32_t>(s_Data.MaxIndices, "Renderer2D");
 
 		uint32_t offset = 0;
 		for (uint32_t i = 0; i < s_Data.MaxIndices; i += 6)
@@ -150,7 +150,7 @@ namespace Shado {
 
 		Ref<IndexBuffer> quadIB = IndexBuffer::create(quadIndices, s_Data.MaxIndices);
 		s_Data.QuadVertexArray->setIndexBuffer(quadIB);
-		delete[] quadIndices;
+		Memory::Free(quadIndices, true);
 
 		// Circles
 		s_Data.CircleVertexArray = VertexArray::create();
@@ -169,7 +169,7 @@ namespace Shado {
 			});
 		s_Data.CircleVertexArray->addVertexBuffer(s_Data.CircleVertexBuffer);
 		s_Data.CircleVertexArray->setIndexBuffer(quadIB); // Use quad IB
-		s_Data.CircleVertexBufferBase = new CircleVertex[s_Data.MaxVertices];
+		s_Data.CircleVertexBufferBase = Memory::Heap<CircleVertex>(s_Data.MaxVertices);
 
 		// Lines
 		s_Data.LineVertexArray = VertexArray::create();
@@ -181,9 +181,9 @@ namespace Shado {
 			{ ShaderDataType::Int,    "a_EntityID" }
 			});
 		s_Data.LineVertexArray->addVertexBuffer(s_Data.LineVertexBuffer);
-		s_Data.LineVertexBufferBase = new LineVertex[s_Data.MaxVertices];
+		s_Data.LineVertexBufferBase = Memory::Heap<LineVertex>(s_Data.MaxVertices, "Renderer2D");
 
-		s_Data.WhiteTexture = CreateRef<Texture2D>(1, 1);
+		s_Data.WhiteTexture = snew(Texture2D) Texture2D(1, 1);
 		uint32_t whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->setData(&whiteTextureData, sizeof(uint32_t));
 
@@ -216,7 +216,7 @@ namespace Shado {
 	{
 		SHADO_PROFILE_FUNCTION();
 
-		delete[] s_Data.QuadVertexBufferBase;
+		Memory::Free(s_Data.QuadVertexBufferBase, true);
 	}
 
 	void Renderer2D::BeginScene(const Camera& camera)
@@ -344,12 +344,12 @@ namespace Shado {
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor)
 	{
 		DrawQuad({ position.x, position.y, 0.0f }, size, texture, tilingFactor, tintColor);
 	}
 
-	void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+	void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor)
 	{
 		
 
@@ -405,7 +405,7 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor, int entityID)
+	void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor, int entityID)
 	{
 		SHADO_PROFILE_FUNCTION();
 
@@ -451,10 +451,10 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Shader> shader, const glm::vec4& color, int entityID) {
+	void Renderer2D::DrawQuad(const glm::mat4& transform, Shader& shader, const glm::vec4& color, int entityID) {
 
 		SHADO_PROFILE_FUNCTION();
-		shader->bind();
+		shader.bind();
 
 		uint32_t quadIndices[6];
 		quadIndices[0] = 0;
@@ -481,7 +481,7 @@ namespace Shado {
 		constexpr size_t quadVertexCount = 4;
 		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
 
-		shader->bind();
+		shader.bind();
 
 		QuadVertex vertex[4];
 		for (size_t i = 0; i < quadVertexCount; i++)
@@ -518,12 +518,12 @@ namespace Shado {
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+	void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation, Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.0f }, size, rotation, texture, tilingFactor, tintColor);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor)
+	void Renderer2D::DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation, Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor)
 	{
 		SHADO_PROFILE_FUNCTION();
 
@@ -562,7 +562,7 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawCircle(const glm::mat4& transform, const Ref<Texture2D>& texture, float tilingFactor, const glm::vec4& tintColor, float thickness, float fade, int entityID)
+	void Renderer2D::DrawCircle(const glm::mat4& transform, Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor, float thickness, float fade, int entityID)
 	{
 		SHADO_PROFILE_FUNCTION();
 
@@ -608,7 +608,7 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 	
-	void Renderer2D::DrawLine(const glm::vec3& p0, glm::vec3& p1, const glm::vec4& color, int entityID)
+	void Renderer2D::DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, int entityID)
 	{
 		SHADO_PROFILE_FUNCTION();
 

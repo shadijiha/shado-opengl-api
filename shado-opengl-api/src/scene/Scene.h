@@ -10,7 +10,7 @@ class b2World;
 namespace Shado {
 	class Entity;
 
-	class Scene {
+	class Scene : public RefCounted  {
 	public:
 		Scene();
 		Scene(Scene& other);
@@ -34,11 +34,12 @@ namespace Shado {
 
 		Entity getPrimaryCameraEntity();
 		Entity getEntityById(uint64_t id);
+		Entity findEntityByName(std::string_view name);
 
 		void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
 		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
 
-
+		bool isRunning() const { return m_IsRunning; }
 	public:
 		inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
 
@@ -52,6 +53,8 @@ namespace Shado {
 
 		b2World* m_World = nullptr;
 		bool m_PhysicsEnabled = true;
+
+		bool m_IsRunning = false;
 
 		friend class Entity;
 		friend class SceneSerializer;

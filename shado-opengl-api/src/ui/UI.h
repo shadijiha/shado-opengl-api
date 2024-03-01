@@ -6,10 +6,15 @@
 #include <glm/vec4.hpp>
 
 #include "Application.h"
+#include "imgui_internal.h"
 
 namespace Shado {
 	class UI {
 	public:
+		enum class FileChooserType {
+			Open = 0, Save, Folder
+		};
+
 		template<typename T>
 		static void TreeNode(const std::string& label, std::function<void()> ui);
 
@@ -24,7 +29,8 @@ namespace Shado {
 
 		static void InputTextWithChooseFile(
 			const std::string& label, const std::string& text, const std::vector<std::string>& dragAndDropExtensions, int id,
-			std::function<void(std::string)> onChange
+			std::function<void(std::string)> onChange,
+			FileChooserType type = FileChooserType::Open
 		);
 
 		static void TextureControl(Ref<Shado::Texture2D>& texture);
@@ -32,6 +38,7 @@ namespace Shado {
 		static bool InputTextControl(const std::string& tag, std::string& value);
 
 		static bool ButtonControl(const std::string& value, const glm::vec2& size = { 0, 0 });
+
 	};
 
 	template <typename T>
@@ -96,5 +103,32 @@ namespace Shado {
 
 		return result;
 	}
+
+	struct ScopedStyleColor
+	{
+		ScopedStyleColor() = default;
+
+		ScopedStyleColor(ImGuiCol idx, ImVec4 color, bool predicate = true)
+			: m_Set(predicate)
+		{
+			if (predicate)
+				ImGui::PushStyleColor(idx, color);
+		}
+
+		ScopedStyleColor(ImGuiCol idx, ImU32 color, bool predicate = true)
+			: m_Set(predicate)
+		{
+			if (predicate)
+				ImGui::PushStyleColor(idx, color);
+		}
+
+		~ScopedStyleColor()
+		{
+			if (m_Set)
+				ImGui::PopStyleColor();
+		}
+	private:
+		bool m_Set = false;
+	};
 
 }

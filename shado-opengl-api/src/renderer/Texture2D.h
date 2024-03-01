@@ -6,7 +6,7 @@
 
 namespace Shado {
 	
-	class Texture2D {
+	class Texture2D : public RefCounted {
 	public:
 		/**
 		 * Use the create function instead of Texture2D for caching
@@ -15,7 +15,10 @@ namespace Shado {
 		Texture2D(const std::string& path);
 		~Texture2D();
 
-		static Ref<Texture2D> create(const std::string& path);
+		static Texture2D* create(const std::string& path);
+		static inline Texture2D* create(const std::filesystem::path& path) {
+			return create(path.string());
+		}
 
 		void setData(void* data, uint32_t size);
 
@@ -52,7 +55,7 @@ namespace Shado {
 			uint32_t refCount = 0;
 		};
 
-		inline static std::unordered_map<std::string, TextureInfo> cache;
+		inline static std::unordered_map<std::string, TextureInfo> s_cache;
 	};
 
 }

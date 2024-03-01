@@ -12,6 +12,8 @@
 #include "box2d/b2_circle_shape.h"
 #include "box2d/b2_contact.h"
 
+#include "script/ScriptEngine.h"
+
 namespace Shado {
 	/**
 	 * **********************************
@@ -21,10 +23,16 @@ namespace Shado {
 	 // This is here to avoid havning to include box2d in header files
 	class Physics2DCallback : public b2ContactListener {
 	private:
+		struct Points {
+			glm::vec2 p1, p2;
+		};
+		struct Separations{
+			float s1, s2;
+		};
 		struct Collision2DInfo {
 			glm::vec2 normal;
-			MonoArray* points;
-			MonoArray* separations;
+			Points points;
+			Separations separations;
 		};
 	public:
 		Physics2DCallback(Scene* scene): scene(scene) {}
@@ -44,31 +52,22 @@ namespace Shado {
 
 			// Create C# object
 			glm::vec2 normal = { manifold.normal.x, manifold.normal.y};
-
-			// Create points array
-			static auto vector2f = ScriptManager::getClassByName("Vector2");
-			auto* pointsCS = ScriptManager::createArray(vector2f, 2);
-
-			ScriptClassDesc desc;		// Avoid creating and populating the whole object
-			desc.klass = mono_get_single_class();
-			auto* separationsCS = ScriptManager::createArray(desc, 2);
-
-			for(int i = 0; i < 2; i++) {
-				glm::vec2 points = { manifold.points[i].x, manifold.points[i].y };
-				mono_array_set(pointsCS, glm::vec2, i, points);
-			}
-
-			for (int i = 0; i < 2; i++) {
-				mono_array_set(separationsCS, float, i, manifold.separations[i]);
-			}
-
-			Collision2DInfo result = {
-				normal,
-				pointsCS,
-				separationsCS
+		
+			Points points = {
+				glm::vec2{ manifold.points[0].x, manifold.points[0].y },
+				glm::vec2{ manifold.points[1].x, manifold.points[1].y }
 			};
 
-			return result;
+			Separations separations = {
+				manifold.separations[0],
+				manifold.separations[1]
+			};
+
+			return  {
+				normal,
+				points,
+				separations
+			};
 		}
 
 		void invokeCollisionFunction(b2Contact* contact, const std::string& functionName) {
@@ -80,40 +79,56 @@ namespace Shado {
 			Entity entityB = scene->getEntityById(idB);
 
 			// Call the Entity::OnCollision2D in C#
-			if (!ScriptManager::hasInit())
-				return;
-
-			const auto entityClassCSharp = ScriptManager::getClassByName("Entity");
 			if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
-				auto& script = entityA.getComponent<ScriptComponent>();
-				auto* OnFunc = script.object.getMethod(functionName);
+				Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idA);
+				Ref<ScriptClass> klass = instance->GetScriptClass();
 
-				if (OnFunc) 
-				{
-					auto entityBCSharp = ScriptManager::createEntity(entityClassCSharp, idB, scene);
+				auto* method = klass->GetMethod(functionName, 2);
+				if (method) {
 					auto collisionInfo = buildContactInfoObject(contact);
+					MonoObject* entityBInstance = ScriptEngine::GetManagedInstance(idB);
+
+					// If No instance was found, then create on with from the default entity class
+					if (entityBInstance == nullptr) {
+						ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityB);
+						entityBInstance = instance.GetManagedObject();
+					}
+
 					void* args[] = {
 						&collisionInfo,
-						entityBCSharp.getNative()
+						entityBInstance
 					};
-					script.object.invokeMethod(OnFunc, args);
-				}
-					
+
+					klass->InvokeMethod(instance->GetManagedObject(),
+						method,
+						args
+					);
+				}					
 			}
 
 			if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
-				auto& script = entityB.getComponent<ScriptComponent>();
-				auto* OnFunc = script.object.getMethod(functionName);
+				Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idB);
+				Ref<ScriptClass> klass = instance->GetScriptClass();
+				auto* method = klass->GetMethod(functionName, 2);
 
-				if (OnFunc) {
-
-					auto entityACSharp = ScriptManager::createEntity(entityClassCSharp, idA, scene);
+				if (method) {
 					auto collisionInfo = buildContactInfoObject(contact);
+					MonoObject* entityAInstance = ScriptEngine::GetManagedInstance(idA);
+
+					// If No instance was found, then create on with from the default entity class
+					if (entityAInstance == nullptr) {
+						ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityA);
+						entityAInstance = instance.GetManagedObject();
+					}
+
 					void* args[] = {
 						&collisionInfo,
-						entityACSharp.getNative()
+						entityAInstance
 					};
-					script.object.invokeMethod(OnFunc, args);
+					klass->InvokeMethod(instance->GetManagedObject(),
+						method,
+						args
+					);
 				}
 			}
 		}
@@ -240,24 +255,25 @@ namespace Shado {
 	}
 
 	void Scene::onRuntimeStart() {
+		m_IsRunning = true;
 		// Init all Script classes attached to entities
 		// for (auto& temp : ScriptManager::getAssemblyClassList()) {
 		// 	SHADO_CORE_INFO("{0}", temp.toString());
 		// }
 
-		auto view = m_Registry.view<ScriptComponent>();
-		for (auto e : view) {
-			Entity entity = { e, this };
+		// Scripting
+		{
+			ScriptEngine::OnRuntimeStart(this);
 
-			UUID id = entity.getComponent<IDComponent>().id;
-			auto& script = entity.getComponent<ScriptComponent>();
+			// TODO: Add Awake function like Unity
 
-			// Create object based on class
-			script.object = ScriptManager::createEntity(script.klass, id, this);			
-			auto* create = script.object.getMethod("OnCreate");
-
-			if (create != nullptr)
-				script.object.invokeMethod(create);
+			// Instantiate all script entities
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto e : view)
+			{
+				Entity entity = { e, this };
+				ScriptEngine::OnCreateEntity(entity);
+			}
 		}
 
 		// TODO make the physics adjustable
@@ -265,18 +281,9 @@ namespace Shado {
 	}
 
 	void Scene::onRuntimeStop() {
-		auto view = m_Registry.view<ScriptComponent>();
-		for (auto e : view) {
-			Entity entity = { e, this };
+		m_IsRunning = false;
 
-			auto& script = entity.getComponent<ScriptComponent>();
-
-			auto* destroy = script.object.getMethod("OnDestroyed");
-			if (destroy != nullptr)
-				script.object.invokeMethod(destroy);
-		}
-
-		ScriptManager::requestThreadsDump();
+		ScriptEngine::OnRuntimeStop();
 		
 		delete m_World;
 		m_World = nullptr;
@@ -301,6 +308,17 @@ namespace Shado {
 			});
 		}
 
+		// Update scripts
+		{
+			// C# Entity OnUpdate
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto e : view)
+			{
+				Entity entity = { e, this };
+				ScriptEngine::OnUpdateEntity(entity, ts);
+			}
+		}
+
 		// Update physics
 		if (m_PhysicsEnabled) {
 			const int32_t velocityIterations = 6;
@@ -316,9 +334,11 @@ namespace Shado {
 				auto& rb2D = entity.getComponent<RigidBody2DComponent>();
 
 				b2Body* body = (b2Body*)rb2D.runtimeBody;
-				transform.position.x = body->GetPosition().x;
-				transform.position.y = body->GetPosition().y;
-				transform.rotation.z = body->GetAngle();
+				if (body) {
+					transform.position.x = body->GetPosition().x;
+					transform.position.y = body->GetPosition().y;
+					transform.rotation.z = body->GetAngle();
+				}
 			}
 		}
 
@@ -328,22 +348,6 @@ namespace Shado {
 				destroyEntity(to_delete);
 			}
 			toDestroy.clear();
-		}
-
-
-		// Update C# script
-		auto scriptView = m_Registry.view<ScriptComponent>();
-		for (auto e : scriptView) {
-			Entity entity = { e, this };
-
-			auto& script = entity.getComponent<ScriptComponent>();
-			void* args[] = {
-				&ts
-			};
-
-			auto* update = script.object.getMethod("OnUpdate");
-			if (update != nullptr)
-				script.object.invokeMethod(update, args);
 		}
 	}
 
@@ -359,7 +363,7 @@ namespace Shado {
 				auto [transform, camera] = group.get<TransformComponent, CameraComponent>(entity);
 
 				if (camera.primary) {
-					primaryCamera = camera.camera.get();
+					primaryCamera = camera.camera.Raw();
 					cameraTransform = transform.getTransform();
 					break;
 				}
@@ -378,7 +382,7 @@ namespace Shado {
 				if (!sprite.shader)
 					Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 				else
-					Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, sprite.color, (int)entity);
+					Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
 			}
 
 			// Draw circles
@@ -393,6 +397,15 @@ namespace Shado {
 					else
 						Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
 				}
+			}
+
+
+			// C# Entity OnDraw
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto e : view)
+			{
+				Entity entity = { e, this };
+				ScriptEngine::OnDrawEntity(entity);
 			}
 
 			Renderer2D::EndScene();
@@ -414,7 +427,7 @@ namespace Shado {
 			if (!sprite.shader)
 				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
 			else
-				Renderer2D::DrawQuad(transform.getTransform(), sprite.shader, sprite.color, (int)entity);
+				Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
 		}
 
 		// Draw circles
@@ -472,6 +485,18 @@ namespace Shado {
 		return {};
 	}
 
+	Entity Scene::findEntityByName(std::string_view name)
+	{
+		auto view = m_Registry.view<TagComponent>();
+		for (auto entity : view)
+		{
+			const TagComponent& tc = view.get<TagComponent>(entity);
+			if (tc.tag == name)
+				return Entity{ entity, this };
+		}
+		return {};
+	}
+
 	void Scene::softResetPhysics() {
 		if (m_World) {
 			delete m_World;
@@ -479,8 +504,8 @@ namespace Shado {
 		}
 
 		// TODO make the physics adjustable
-		s_physics2DCallback = new Physics2DCallback(this);
-		m_World = new b2World({ 0.0f, -9.8f });
+		s_physics2DCallback = snew(Physics2DCallback) Physics2DCallback(this);
+		m_World = snew(b2World) b2World({ 0.0f, -9.8f });
 		m_World->SetContactListener(s_physics2DCallback);
 
 		auto view = m_Registry.view<RigidBody2DComponent>();

@@ -49,7 +49,7 @@ namespace Shado {
 		bool SwapChainTarget = false;
 	};
 
-	class Framebuffer {
+	class Framebuffer : public RefCounted {
 	public:
 		Framebuffer(const FramebufferSpecification& spec);
 		virtual ~Framebuffer();

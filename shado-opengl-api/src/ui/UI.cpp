@@ -2,7 +2,6 @@
 
 #include <filesystem>
 
-#include "imgui_internal.h"
 #include "debug/Debug.h"
 #include "Events/input.h"
 #include "scene/utils/SceneUtils.h"
@@ -106,10 +105,10 @@ namespace Shado {
 	}
 
 	void UI::InputTextWithChooseFile(const std::string& label, const std::string& text,
-		const std::vector<std::string>& dragAndDropExtensions, int id, std::function<void(std::string)> onChange) {
+		const std::vector<std::string>& dragAndDropExtensions, int id, std::function<void(std::string)> onChange, UI::FileChooserType chooseType) {
 		bool textureChanged = false;
 
-		std::string texturePath;
+		std::string texturePath = text;
 		if (InputTextControl(label, texturePath) && Shado::Input::isKeyPressed(Shado::KeyCode::Enter)) {
 			textureChanged = true;
 		}
@@ -161,7 +160,22 @@ namespace Shado {
 			filter += std::string((buffer + ")\0").c_str(), buffer.length() + 2);
 			filter += std::string((buffer + "\0").c_str(), buffer.length() + 1);
 
-			texturePath = Shado::FileDialogs::openFile(filter.c_str());
+			switch (chooseType)
+			{
+				case UI::FileChooserType::Open:
+					texturePath = Shado::FileDialogs::openFile(filter.c_str());
+					break;
+				case UI::FileChooserType::Save:
+					texturePath = Shado::FileDialogs::saveFile(filter.c_str());
+					break;
+				case UI::FileChooserType::Folder:
+					texturePath = Shado::FileDialogs::chooseFolder();
+					break;
+				default:
+					SHADO_CORE_ERROR("Unknown File dialog type ", (int)chooseType);
+					break;
+			}
+
 			textureChanged = true;
 		}
 		ImGui::PopID();
@@ -197,7 +211,6 @@ namespace Shado {
 	}
 
 	bool UI::InputTextControl(const std::string& tag, std::string& value) {
-
 		char buffer[512];
 		memset(buffer, 0, sizeof(buffer));
 		strcpy_s(buffer, sizeof(buffer), value.c_str());
