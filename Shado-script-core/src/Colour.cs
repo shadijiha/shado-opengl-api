@@ -27,7 +27,7 @@ namespace Shado
         }
 
         public Colour(float r, float g, float b)
-            : this(r, g, b, 255) { }
+            : this(r, g, b, 1.0f) { }
 
         public Colour(float rgb) : this(rgb, rgb, rgb) { }
 
@@ -53,6 +53,22 @@ namespace Shado
                 (float)(g1 + m),
                 (float)(b1 + m)
             );
+        }
+
+        public static Colour Lerp(Colour a, Colour b, float t)
+        {
+            return new Colour(
+                a.r + (b.r - a.r) * t,
+                a.g + (b.g - a.g) * t,
+                a.b + (b.b - a.b) * t,
+                a.a + (b.a - a.a) * t
+            );
+        }
+
+        private readonly static Random random = new Random();
+        public static Colour Random()
+        {
+            return new Colour((float)random.NextDouble(), (float)random.NextDouble(), (float)random.NextDouble());
         }
 
         public static explicit operator Vector3(Colour c)

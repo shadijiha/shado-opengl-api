@@ -21,7 +21,10 @@ namespace Shado
 		internal extern static void Entity_Destroy(ulong entityID);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal extern static void Entity_Create(object script, ref ulong object_id);
+		internal extern static ulong Entity_CreateEntityId();
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Entity_InvokeScriptEngineCreate(object monoObject, ulong entityId);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static object GetScriptInstance(ulong entityID);
@@ -137,7 +140,17 @@ namespace Shado
 		internal extern static void CameraComponent_SetType(ulong entityId, ref CameraComponent.Type type);
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void CameraComponent_SetViewport(ulong entityID, uint width, uint height);
-        #endregion
+		#endregion
+
+		/**
+		 * Script component
+		 */
+		#region ScriptComponent
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static string ScriptComponent_GetClassName(ulong entityID);
+		
+		#endregion
 
         /**
 		 * Input

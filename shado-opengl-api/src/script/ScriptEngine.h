@@ -86,6 +86,7 @@ namespace Shado {
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
 
 		std::string GetClassFullName() const { return m_ClassNamespace + "." + m_ClassName; }
+		MonoClass* GetMonoClass() const { return m_MonoClass; }
 
 		ScriptClass& operator=(const ScriptClass& other) {
 			std::memcpy(this, &other, sizeof(ScriptClass));

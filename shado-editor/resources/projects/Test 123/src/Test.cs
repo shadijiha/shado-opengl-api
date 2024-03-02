@@ -37,7 +37,11 @@ namespace Sandbox
             {
                 for (float x = -5.0f; x < max; x += 0.5f)
                 {
-                    GridCell gridCell = Create<GridCell>(() => new GridCell(this, x, y));
+                    // TODO: Change the Entity.Create to following signature
+                    // Create<T>(param object[] ctorArgs)
+                    // The reason for that is because right now it is not possible to invode 
+                    // internal methods such as AddComponent in the .ctor
+                    GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
                 }
             }
 
@@ -147,13 +151,17 @@ namespace Sandbox
             this.y = y;
             this.parent = parent;
         }
+
         internal void OnCreate() {
+            var script = GetComponent<ScriptComponent>();
+            Log.Info("Class: {0}, ID: {1}", script.ClassName, this.ID);
             transform.position = parent.transform.position + new Vector3(x, y, 0);
             transform.scale = new Vector3(0.45f, 0.45f, 0);
             tag = $"Grid cell {x}, {y}";
 
             var sprite = AddComponent<SpriteRendererComponent>();
-            sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
+            //sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
+            sprite.colour = Colour.Random();
             sprite.texture = texture[random.Next(texture.Length)];
  
             var rb = AddComponent<RigidBody2DComponent>();
@@ -164,7 +172,7 @@ namespace Sandbox
         void OnUpdate(float dt)
         {
             
-            GetComponent<SpriteRendererComponent>().colour = Colour.FromHSL(angle % 360, 100, 100);
+            //GetComponent<SpriteRendererComponent>().colour = Colour.FromHSL(angle % 360, 100, 100);
             angle += dt;
         }
 
@@ -177,7 +185,7 @@ namespace Sandbox
                 Log.Info("Collisions {0}", collisions);
             }
             //if (other.tag.ToLower() == "ground")
-                Destroy(this);
+            //   Destroy(this);
         }
 
         void OnCollision2DLeave(Collision2DInfo info, Entity other)

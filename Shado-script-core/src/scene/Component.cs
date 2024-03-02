@@ -311,4 +311,13 @@ namespace Shado
 			Orthographic = 0, Orbit = 1
 		}
 	}
+	
+	public class ScriptComponent : Component
+	{
+		public string ClassName { 
+			get { 
+				return InternalCalls.ScriptComponent_GetClassName(Entity.ID);
+            }
+		}
+	}
 }

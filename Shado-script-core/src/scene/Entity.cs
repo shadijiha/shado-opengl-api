@@ -82,11 +82,11 @@ namespace Shado
         /// <param name="creator">The function that creates the entity</param>
         /// <returns>The created Entity</returns>
         public T Create<T>(Func<T> creator) where T : Entity {
-			T e = creator();
-			if (e == null)
-				return null;
-            InternalCalls.Entity_Create(e, ref e.id);
-            return e;
+			T entity = creator();
+            ulong id = InternalCalls.Entity_CreateEntityId();
+			entity.ID = id;
+            InternalCalls.Entity_InvokeScriptEngineCreate(entity, id);
+            return entity;
 		}
 
         public IEnumerable<Component> GetAllComponents() {

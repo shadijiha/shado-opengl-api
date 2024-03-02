@@ -68,7 +68,7 @@ namespace Shado {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, "");
+		SHADO_CORE_ASSERT(entity, std::string("Entity ID ") + std::to_string(entityID) + " is invalid");
 
 		MonoType* managedType = mono_reflection_type_get_type(componentType);
 		SHADO_CORE_ASSERT(s_EntityHasComponentFuncs.find(managedType) != s_EntityHasComponentFuncs.end(), "");
@@ -80,7 +80,7 @@ namespace Shado {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, "");
+		SHADO_CORE_ASSERT(entity, std::string("Entity ID ") + std::to_string(entityID) + " is invalid");
 
 		MonoType* managedType = mono_reflection_type_get_type(componentType);
 		SHADO_CORE_ASSERT(s_EntityRemoveComponentFuncs.find(managedType) != s_EntityRemoveComponentFuncs.end(), "");
@@ -123,20 +123,35 @@ namespace Shado {
 		scene->destroyEntity(entity);
 	}
 
-	static void Entity_Create(MonoObject* obj, uint64_t* obj_id) {
+	static uint64_t Entity_CreateEntityId() {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		
 		// Copy given entity
 		Entity entity = scene->createEntity();
-		ScriptComponent& script = entity.addComponent<ScriptComponent>();
-		
-		SHADO_CORE_ASSERT(obj, "");
+		return entity.getUUID();
+		//ScriptComponent& script = entity.addComponent<ScriptComponent>();
+		//
+		//SHADO_CORE_ASSERT(obj, "");
 
-		Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(obj));
-		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, obj);
+		//Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(obj));
+		//Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, obj);
+		//script.ClassName = instance->GetScriptClass()->GetClassFullName();
+		//*obj_id = (uint64_t)entity.getUUID();
+		//ScriptEngine::OnCreateEntity(entity, instance);
+	}
+
+	static void Entity_InvokeScriptEngineCreate(MonoObject* monoObject, uint64_t entityId) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityId);
+		SHADO_CORE_ASSERT(entity, "");
+
+		ScriptComponent& script = entity.addComponent<ScriptComponent>();
+		Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(monoObject));
+		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, monoObject);
 		script.ClassName = instance->GetScriptClass()->GetClassFullName();
-		*obj_id = (uint64_t)entity.getUUID();
+
 		ScriptEngine::OnCreateEntity(entity, instance);
 	}
 
@@ -630,6 +645,20 @@ namespace Shado {
 	}
 #pragma endregion
 
+#pragma region ScriptComponent 
+
+	static MonoString* ScriptComponent_GetClassName(uint64_t entityID) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		ScriptComponent& scriptComponent = entity.getComponent<ScriptComponent>();
+		return ScriptEngine::NewString(scriptComponent.ClassName.c_str());
+	}
+
+#pragma endregion
+
 #pragma region Input
 	/**
 	* Input
@@ -982,7 +1011,8 @@ namespace Shado {
 			SHADO_ADD_INTERNAL_CALL(Entity_AddComponent);
 			SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
 			SHADO_ADD_INTERNAL_CALL(Entity_Destroy);
-			SHADO_ADD_INTERNAL_CALL(Entity_Create);
+			SHADO_ADD_INTERNAL_CALL(Entity_CreateEntityId);
+			SHADO_ADD_INTERNAL_CALL(Entity_InvokeScriptEngineCreate);
 		}
 			
 		{
@@ -1034,6 +1064,10 @@ namespace Shado {
 			SHADO_ADD_INTERNAL_CALL(CameraComponent_GetType);
 			SHADO_ADD_INTERNAL_CALL(CameraComponent_SetType);
 			SHADO_ADD_INTERNAL_CALL(CameraComponent_SetViewport);
+		}
+
+		{
+			SHADO_ADD_INTERNAL_CALL(ScriptComponent_GetClassName);
 		}
 
 		{
