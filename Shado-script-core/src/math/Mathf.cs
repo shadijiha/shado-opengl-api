@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Shado
 {
-    public struct Mathf
+    public readonly struct Mathf
     {
-        internal const float epsilon = 0.0001f;
+        public const double PI = Math.PI;
+        internal const float epsilon = 0.0000001f;
 
         public static bool Approx(float a, float b) {
             return a - b <= epsilon;
@@ -62,6 +64,36 @@ namespace Shado
         public static float Random(float min, float max)
         {
             return (float)((max - min) * random.NextDouble()) + min;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Abs(float value) {
+            return value < 0 ? -value : value;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Sqrt(float value) {
+            return (float)Math.Sqrt(value);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Sin(float value) {
+            return (float)Math.Sin(value);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Cos(float value) {
+            return (float)Math.Cos(value);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Tan(float value) {
+            return (float)Math.Tan(value);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float DegToRad(float degrees) {
+            return degrees * (float)Mathf.PI / 180.0f;
         }
     }
 }

@@ -6,7 +6,7 @@
 
 namespace Shado {
 
-	enum class FramebufferTextureFormat
+	enum class FramebufferTextureFormat : int
 	{
 		None = 0,
 

@@ -8,7 +8,12 @@ namespace Shado
 	public class Entity
 	{
 		private ulong id;
-		protected Entity() { ID = 0; }
+
+        // IMPORTANT:
+        // This constructor is used by the script engine to create entities
+        // Do not remove it or modify it
+        // NEVER modify otherwise bugs will be cause when invoking Entity.Create()
+        protected Entity() { ID = 0; }
 
 		internal Entity(ulong id)
 		{
@@ -21,20 +26,45 @@ namespace Shado
 		{
 			get
 			{
-				InternalCalls.TransformComponent_GetTranslation(ID, out Vector3 result);
-				return result;
+				return transform.position;
 			}
 			set
 			{
-				InternalCalls.TransformComponent_SetTranslation(ID, ref value);
+				transform.position = value;
 			}
 		}
 
-		public TransformComponent transform => GetComponent<TransformComponent>();
+		/// <summary>
+		/// Transform component of the entity (and its caching)
+		/// </summary>
+		private TransformComponent cachedTransform = null;
+		public TransformComponent transform {
+			get {
+				if (cachedTransform is null)
+                    cachedTransform = GetComponent<TransformComponent>();
+                return cachedTransform;
+			}
+		}
 
+		/// <summary>
+		/// Tag component of the entity (and its caching)
+		/// </summary>
+		private TagComponent cachedTagComp = null;
+		private string cachedTag = null;
 		public string tag {
-			get { InternalCalls.TagComponent_GetTag(ID, out var tag); return tag; }
-			set { InternalCalls.TagComponent_SetTag(ID, ref value); }
+			get { 
+				if (cachedTagComp is null)
+                    cachedTagComp = GetComponent<TagComponent>();
+				if (cachedTag is null)
+					cachedTag = cachedTagComp.tag;
+                return cachedTag;
+			}
+			set { 
+				if (cachedTagComp is null)
+                    cachedTagComp = GetComponent<TagComponent>();
+				cachedTagComp.tag = value;
+				cachedTag = null;	// Invalidate the cache
+			}
 		}
 
 		public bool HasComponent<T>() where T : Component, new()
@@ -45,11 +75,24 @@ namespace Shado
 
 		public T GetComponent<T>() where T : Component, new()
 		{
-			if (!HasComponent<T>())
-				return null;
+			// TODO: Check if T is an entity
+			// TODO: test this
+			if (typeof(T).IsSubclassOf(typeof(Entity)))
+			{
+				var script = GetComponent<ScriptComponent>();
+				if (script is null)
+					return null;
 
-			T component = new T() { Entity = this };
-			return component;
+				return InternalCalls.GetScriptInstance(ID) as T;
+			}
+			else
+			{
+				if (!HasComponent<T>())
+					return null;
+
+				T component = new T() { Entity = this };
+				return component;
+			}
 		}
 
 		public void RemoveComponent<T>() where T : Component, new() {

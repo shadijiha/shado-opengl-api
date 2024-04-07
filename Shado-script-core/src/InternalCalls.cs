@@ -95,6 +95,23 @@ namespace Shado
 		internal extern static void CircleRendererComponent_SetFloatValue(ulong entityId, string fieldName, ref float val);
         #endregion
 
+        
+        /**
+         * LineRenderer
+         */
+        #region LineRenderer
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void LineRendererComponent_GetTarget(ulong entityId, out Vector3 val);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void LineRendererComponent_SetTarget(ulong entityId, ref Vector3 val);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void LineRendererComponent_GetColour(ulong entityId, out Vector4 val);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void LineRendererComponent_SetColour(ulong entityId, ref Vector4 val);
+        #endregion
 
         /**
 		 * Rigidbody2D
@@ -156,8 +173,11 @@ namespace Shado
 		 * Input
 		 **/
         #region Input
-        [MethodImplAttribute(MethodImplOptions.InternalCall)]
+        [MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static bool Input_IsKeyDown(KeyCode keycode);
+        
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Input_GetMousePos(ref Vector2 pos);
         #endregion
 
         /**
@@ -219,5 +239,82 @@ namespace Shado
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void Renderer_DrawLine(ref Vector3 p0, ref Vector3 p1, ref Vector4 colour);
         #endregion
-    }
+
+        #region Application
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Application_Close();
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Application_GetImGuiWindowSize(string windowName, out Vector2 size);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static bool Application_IsImGuiWindowHovered(string windowName);
+        #endregion
+
+        #region Window
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Window_GetSize(out Vector2 size);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Window_SetSize(Vector2 size);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static int Window_GetMode();
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Window_SetMode(int mode);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static string Window_GetTitle();
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Window_SetTitle(string title);
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static bool Window_GetVsync();
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Window_SetVsync(bool vsync);
+        
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static Vector2 Window_GetPosition(out Vector2 result);
+		
+		[MethodImpl]
+		internal extern static void Window_SetOpacity(float opacity);
+        
+        #endregion
+
+        #region Framebuffer
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static uint Framebuffer_GetColorAttachmentRendererID(IntPtr nativePtr, uint index);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static IntPtr Framebuffer_Create(uint width, uint height, uint samples, FramebufferTextureFormat[] attachments, bool swapChainTarget);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Framebuffer_Invalidate(IntPtr nativePtr);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Framebuffer_Bind(IntPtr nativePtr);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Framebuffer_Unbind(IntPtr nativePtr);
+        
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Framebuffer_Resize(IntPtr nativePtr, uint width, uint height);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Framebuffer_ClearAttachment(IntPtr nativePtr, uint attachmentIndex, int value);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void Framebuffer_Destroy(IntPtr nativePtr);
+        #endregion
+
+        #region Scene
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static Entity[] Scene_GetAllEntities();
+        
+
+        #endregion
+	}
 }

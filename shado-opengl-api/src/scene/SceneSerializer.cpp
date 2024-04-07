@@ -278,6 +278,14 @@ namespace Shado {
 						src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
 					}
 
+					auto lineRendererComponent = entity["LineRendererComponent"];
+					if (lineRendererComponent)
+					{
+						auto& src = deserializedEntity.addComponent<LineRendererComponent>();
+						src.color = lineRendererComponent["Color"].as<glm::vec4>();
+						src.target = lineRendererComponent["Target"].as<glm::vec3>();
+					}
+					
 					auto rigidBodyComponent = entity["RigidBody2DComponent"];
 					if (rigidBodyComponent)
 					{
@@ -494,6 +502,17 @@ namespace Shado {
 			}
 		}
 
+		if (entity.hasComponent<LineRendererComponent>()) {
+			out << YAML::Key << "LineRendererComponent";
+			out << YAML::BeginMap; // LineRendererComponent
+
+			auto& lineRendererComponent = entity.getComponent<LineRendererComponent>();
+			out << YAML::Key << "Color" << YAML::Value << lineRendererComponent.color;
+			out << YAML::Key << "Target" << YAML::Value << lineRendererComponent.target;
+
+			out << YAML::EndMap; // LineRendererComponent
+		}
+		
 		if (entity.hasComponent<RigidBody2DComponent>())
 		{
 			out << YAML::Key << "RigidBody2DComponent";
@@ -548,49 +567,50 @@ namespace Shado {
 
 			// Fields
 			Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(scriptComponent.ClassName);
-			const auto& fields = entityClass->GetFields();
-			if (fields.size() > 0)
-			{
-				out << YAML::Key << "ScriptFields" << YAML::Value;
-				auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
-				out << YAML::BeginSeq;
-				for (const auto& [name, field] : fields)
+			if (entityClass) {
+				const auto& fields = entityClass->GetFields();
+				if (!fields.empty())
 				{
-					if (entityFields.find(name) == entityFields.end())
-						continue;
-
-					out << YAML::BeginMap; // ScriptField
-					out << YAML::Key << "Name" << YAML::Value << name;
-					out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
-
-					out << YAML::Key << "Data" << YAML::Value;
-					ScriptFieldInstance& scriptField = entityFields.at(name);
-
-					switch (field.Type)
+					out << YAML::Key << "ScriptFields" << YAML::Value;
+					auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
+					out << YAML::BeginSeq;
+					for (const auto& [name, field] : fields)
 					{
-						WRITE_SCRIPT_FIELD(Float, float);
-						WRITE_SCRIPT_FIELD(Double, double);
-						WRITE_SCRIPT_FIELD(Bool, bool);
-						WRITE_SCRIPT_FIELD(Char, char);
-						WRITE_SCRIPT_FIELD(Byte, int8_t);
-						WRITE_SCRIPT_FIELD(Short, int16_t);
-						WRITE_SCRIPT_FIELD(Int, int32_t);
-						WRITE_SCRIPT_FIELD(Long, int64_t);
-						WRITE_SCRIPT_FIELD(UByte, uint8_t);
-						WRITE_SCRIPT_FIELD(UShort, uint16_t);
-						WRITE_SCRIPT_FIELD(UInt, uint32_t);
-						WRITE_SCRIPT_FIELD(ULong, uint64_t);
-						WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
-						WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
-						WRITE_SCRIPT_FIELD(Vector4, glm::vec4);
-						WRITE_SCRIPT_FIELD(Colour, glm::vec4);
-						WRITE_SCRIPT_FIELD(Entity, UUID);
-					}
-					out << YAML::EndMap; // ScriptFields
-				}
-				out << YAML::EndSeq;
-			}
+						if (entityFields.find(name) == entityFields.end())
+							continue;
 
+						out << YAML::BeginMap; // ScriptField
+						out << YAML::Key << "Name" << YAML::Value << name;
+						out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
+
+						out << YAML::Key << "Data" << YAML::Value;
+						ScriptFieldInstance& scriptField = entityFields.at(name);
+
+						switch (field.Type)
+						{
+							WRITE_SCRIPT_FIELD(Float, float);
+							WRITE_SCRIPT_FIELD(Double, double);
+							WRITE_SCRIPT_FIELD(Bool, bool);
+							WRITE_SCRIPT_FIELD(Char, char);
+							WRITE_SCRIPT_FIELD(Byte, int8_t);
+							WRITE_SCRIPT_FIELD(Short, int16_t);
+							WRITE_SCRIPT_FIELD(Int, int32_t);
+							WRITE_SCRIPT_FIELD(Long, int64_t);
+							WRITE_SCRIPT_FIELD(UByte, uint8_t);
+							WRITE_SCRIPT_FIELD(UShort, uint16_t);
+							WRITE_SCRIPT_FIELD(UInt, uint32_t);
+							WRITE_SCRIPT_FIELD(ULong, uint64_t);
+							WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
+							WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
+							WRITE_SCRIPT_FIELD(Vector4, glm::vec4);
+							WRITE_SCRIPT_FIELD(Colour, glm::vec4);
+							WRITE_SCRIPT_FIELD(Entity, UUID);
+						}
+						out << YAML::EndMap; // ScriptFields
+					}
+					out << YAML::EndSeq;
+				}
+			}
 			out << YAML::EndMap; // ScriptComponent
 		}
 

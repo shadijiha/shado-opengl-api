@@ -21,7 +21,6 @@ namespace Sandbox
         public float angle = 0.0f;
         public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
-
         private Test other;
         //private ParticuleSystem particuleSystem;
 

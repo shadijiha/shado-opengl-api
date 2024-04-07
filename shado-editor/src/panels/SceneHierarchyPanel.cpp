@@ -157,6 +157,11 @@ namespace Shado {
 			drawTextureControl(&circle, "Circle");
 		});
 
+		drawComponent<LineRendererComponent>("Line Renderer", entity, [](LineRendererComponent& line) {
+			drawVec3Control("Target", line.target);
+			ImGui::ColorEdit4("Colour", glm::value_ptr(line.color));
+		});
+
 		drawComponent<CameraComponent>("Camera", entity, [](CameraComponent& camera) {
 			// Select menu to change camera type
 			const char* projectionTypesString[] = { "Orthographic", "Orbit (Perspective)" };
@@ -530,6 +535,11 @@ namespace Shado {
 
 			if (!m_Selected.hasComponent<CircleRendererComponent>() && ImGui::MenuItem("Circle renderer")) {
 				m_Selected.addComponent<CircleRendererComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!m_Selected.hasComponent<LineRendererComponent>() && ImGui::MenuItem("Line renderer")) {
+				m_Selected.addComponent<LineRendererComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

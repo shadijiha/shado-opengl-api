@@ -35,6 +35,7 @@ namespace Shado {
 		Entity getPrimaryCameraEntity();
 		Entity getEntityById(uint64_t id);
 		Entity findEntityByName(std::string_view name);
+		const entt::registry& getRegistry() { return m_Registry; }
 
 		void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
 		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
