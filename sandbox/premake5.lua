@@ -22,7 +22,6 @@ project "sandbox"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
-		"%{IncludeDir.mono}",	-- TODO : remove this
 		"%{wks.location}/shado-opengl-api/src",
 		"%{wks.location}/shado-opengl-api/vendor"
 	}

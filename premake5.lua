@@ -23,7 +23,6 @@ IncludeDir["box2d"] = "%{wks.location}/shado-opengl-api/vendor/box2d/include"
 IncludeDir["entt"] = "%{wks.location}/shado-opengl-api/vendor/entt/include"
 IncludeDir["ImGuizmo"] = "%{wks.location}/shado-opengl-api/vendor/ImGuizmo"
 IncludeDir["filewatch"] = "%{wks.location}/shado-opengl-api/vendor/filewatch"
-IncludeDir["mono"] = "%{wks.location}/mono/include/mono-2.0"
 
 group "Dependancies"
 	include "shado-opengl-api/vendor/GLFW"
