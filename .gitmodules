@@ -19,3 +19,6 @@
 [submodule "shado-opengl-api/vendor/spdlog"]
 	path = shado-opengl-api/vendor/spdlog
 	url = https://github.com/shadijiha/spdlog
+[submodule "shado-opengl-api/vendor/Coral"]
+	path = shado-opengl-api/vendor/Coral
+	url = https://github.com/StudioCherno/Coral.git
