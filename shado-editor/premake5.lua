@@ -2,6 +2,7 @@
 project "shado-editor"
     kind "ConsoleApp"
     language "C++"
+    debuggertype "NativeWithManagedCore"
 
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
