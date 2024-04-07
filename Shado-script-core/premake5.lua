@@ -1,17 +1,23 @@
+include "../shado-opengl-api/vendor/Coral/Premake/CSExtensions.lua"
+
 project "Shado-script-core"
-	kind "SharedLib"
-	language "C#"
-	clr "Unsafe"
+	filter "not system:windows"
+		kind "StaticLib"
+	filter "system:windows"
+		kind "SharedLib"
+		language "C#"
+		dotnetframework "net8.0"
+		clr "Unsafe"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+		targetdir ("../shado-editor/ScriptCore")
+		objdir ("../shado-editor/ScriptCore/Intermediates")
 
-	configurations
-	{
-		"Release"
-	}
+		configurations
+		{
+			"Release"
+		}
 
-	files
-	{
-		"src/**.cs",
-	}
+		files
+		{
+			"src/**.cs",
+		}
