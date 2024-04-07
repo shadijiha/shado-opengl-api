@@ -63,6 +63,11 @@ namespace Shado {
 		//~CircleRendererComponent() { delete texture; }
 	};
 
+	struct LineRendererComponent {
+		glm::vec3 target = { 0, 0, 0 };
+		glm::vec4 color = { 1, 1, 1, 1 };
+	};
+
 	struct CameraComponent {
 		enum class Type {
 			Orthographic = 0, Orbit = 1
@@ -212,8 +217,8 @@ namespace Shado {
 	};
 
 	using AllComponents =
-		ComponentGroup<TransformComponent, SpriteRendererComponent,
-		CircleRendererComponent, CameraComponent, ScriptComponent,
+		ComponentGroup<TagComponent, TransformComponent, SpriteRendererComponent,
+		CircleRendererComponent, LineRendererComponent, CameraComponent, ScriptComponent,
 		NativeScriptComponent, RigidBody2DComponent, BoxCollider2DComponent,
 		CircleCollider2DComponent>;
 }

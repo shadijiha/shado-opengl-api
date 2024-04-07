@@ -512,6 +512,7 @@ namespace Shado {
 				mono_class_get_method_from_name(editorClass, "GetTargetType", 0)
 			);
 
+			SHADO_CORE_INFO("{0} is for {1}", fullName, typeFor == nullptr ? "null!" : mono_string_to_utf8(typeFor));
 			if (typeFor != nullptr) {
 				std::string typeForStr = mono_string_to_utf8(typeFor);
 				s_Data->EditorClasses[typeForStr] = scriptClass;
@@ -565,6 +566,9 @@ namespace Shado {
 
 	std::string ScriptEngine::MonoStrToUT8(MonoString* str)
 	{
+		if (!str) {
+			return "null";
+		}
 		char* ptr = mono_string_to_utf8(str);
 		std::string result(ptr);
 		mono_free(ptr);
@@ -738,6 +742,21 @@ namespace Shado {
 		//SHADO_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end(), "");
 	}
 
+	MonoDomain* ScriptEngine::GetAppDomain()
+	{
+		return s_Data->AppDomain;
+	}
+
+	MonoDomain* ScriptEngine::GetRootDomain()
+	{
+		return s_Data->RootDomain;
+	}
+
+	const ScriptClass& ScriptEngine::GetEntityClassType()
+	{
+		return s_Data->EntityClass;
+	}
+
 	MonoObject* ScriptEngine::InstantiateClass(MonoClass* monoClass, MonoMethod* ctor, void** args)
 	{
 		MonoObject* instance = mono_object_new(s_Data->AppDomain, monoClass);
@@ -776,8 +795,15 @@ namespace Shado {
 	MonoObject* ScriptClass::InvokeMethod(MonoObject* instance, MonoMethod* method, void** params)
 	{
 		MonoObject* exception = NULL;
-		MonoObject* result = mono_runtime_invoke(method, instance, params, &exception);
-	
+		MonoObject* result = nullptr;
+		
+		if (method && instance) {
+			result = mono_runtime_invoke(method, instance, params, &exception);
+		} else if (method && !instance) {
+			const char* methodName = mono_method_get_name(method);
+			SHADO_CORE_ERROR("Attempting to call {0} on null object", methodName, m_ClassName);
+		}
+
 		if (exception) {
 			bool info = true;
 			void* params[] = {

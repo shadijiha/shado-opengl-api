@@ -52,7 +52,7 @@ Entities:
       ScriptFields:
         - Name: colourTest
           Type: Colour
-          Data: [0.360784322, 0.4627451, 0.709803939, 1]
+          Data: [0.282106698, 0.6409266, 0.379085064, 1]
         - Name: maxDelta
           Type: Float
           Data: 5
@@ -124,3 +124,13 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
+  - Entity: 17381819378146153245
+    TagComponent:
+      Tag: Line
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    LineRendererComponent:
+      Color: [9.99999997e-07, 0, 0, 1]
+      Target: [4.69999981, 1.70000005, 0]

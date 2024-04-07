@@ -174,6 +174,7 @@ namespace Shado {
 		CopyComponent<TransformComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<SpriteRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<CircleRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<LineRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<CameraComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
 		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
@@ -211,6 +212,7 @@ namespace Shado {
 		CopyComponentIfExists<TransformComponent>(newEntity, source);
 		CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
 		CopyComponentIfExists<CircleRendererComponent>(newEntity, source);
+		CopyComponentIfExists<LineRendererComponent>(newEntity, source);
 		CopyComponentIfExists<CameraComponent>(newEntity, source);
 		CopyComponentIfExists<NativeScriptComponent>(newEntity, source);
 		CopyComponentIfExists<RigidBody2DComponent>(newEntity, source);
@@ -399,15 +401,25 @@ namespace Shado {
 				}
 			}
 
-
-			// C# Entity OnDraw
-			auto view = m_Registry.view<ScriptComponent>();
-			for (auto e : view)
+			// Draw lines
 			{
-				Entity entity = { e, this };
-				ScriptEngine::OnDrawEntity(entity);
+				auto view = m_Registry.view<TransformComponent, LineRendererComponent>();
+				for (auto entity : view)
+				{
+					auto [transform, line] = view.get<TransformComponent, LineRendererComponent>(entity);
+					Renderer2D::DrawLine(transform.position, line.target, line.color, (int)entity);
+				}
 			}
 
+			{
+				// C# Entity OnDraw
+				auto view = m_Registry.view<ScriptComponent>();
+				for (auto e : view)
+				{
+					Entity entity = { e, this };
+					ScriptEngine::OnDrawEntity(entity);
+				}
+			}
 			Renderer2D::EndScene();
 		}	
 	}
@@ -441,6 +453,16 @@ namespace Shado {
 					Renderer2D::DrawCircle(transform.getTransform(), circle.texture, circle.tilingFactor, circle.color, circle.thickness, circle.fade, (int)entity);
 				else
 					Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
+			}
+		}
+
+		// Draw lines
+		{
+			auto view = m_Registry.view<TransformComponent, LineRendererComponent>();
+			for (auto entity : view)
+			{
+				auto [transform, line] = view.get<TransformComponent, LineRendererComponent>(entity);
+				Renderer2D::DrawLine(transform.position, line.target, line.color, (int)entity);
 			}
 		}
 

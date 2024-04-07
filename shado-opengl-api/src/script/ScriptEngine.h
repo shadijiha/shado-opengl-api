@@ -18,6 +18,7 @@ extern "C" {
 	typedef struct _MonoClassField MonoClassField;
 	typedef struct _MonoString MonoString;
 	typedef struct _MonoTableInfo MonoTableInfo;
+	typedef struct _MonoDomain MonoDomain;
 }
 
 namespace Shado {
@@ -86,6 +87,7 @@ namespace Shado {
 		const std::map<std::string, ScriptField>& GetFields() const { return m_Fields; };
 
 		std::string GetClassFullName() const { return m_ClassNamespace + "." + m_ClassName; }
+		MonoClass* GetMonoClass() const { return m_MonoClass; }
 
 		ScriptClass& operator=(const ScriptClass& other) {
 			std::memcpy(this, &other, sizeof(ScriptClass));
@@ -192,6 +194,9 @@ namespace Shado {
 		static MonoImage* GetCoreAssemblyImage();
 
 		static MonoObject* GetManagedInstance(UUID uuid);
+		static MonoDomain* GetAppDomain();
+		static MonoDomain* GetRootDomain();
+		static const ScriptClass& GetEntityClassType();
 
 		static MonoString* NewString(const char* str);
 		static std::string MonoStrToUT8(MonoString* str);

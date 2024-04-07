@@ -24,6 +24,8 @@
 #include <functional>
 #include <iostream>
 
+#include "renderer/Framebuffer.h"
+
 namespace Shado {
 
 	static std::unordered_map<MonoType*, std::function<bool(Entity)>> s_EntityHasComponentFuncs;
@@ -68,7 +70,7 @@ namespace Shado {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, "");
+		SHADO_CORE_ASSERT(entity, std::string("Entity ID ") + std::to_string(entityID) + " is invalid"); // <-- Do no use HasComponent and/or AddComponent in the constructor of a script
 
 		MonoType* managedType = mono_reflection_type_get_type(componentType);
 		SHADO_CORE_ASSERT(s_EntityHasComponentFuncs.find(managedType) != s_EntityHasComponentFuncs.end(), "");
@@ -80,7 +82,7 @@ namespace Shado {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, "");
+		SHADO_CORE_ASSERT(entity, std::string("Entity ID ") + std::to_string(entityID) + " is invalid");
 
 		MonoType* managedType = mono_reflection_type_get_type(componentType);
 		SHADO_CORE_ASSERT(s_EntityRemoveComponentFuncs.find(managedType) != s_EntityRemoveComponentFuncs.end(), "");
@@ -123,20 +125,35 @@ namespace Shado {
 		scene->destroyEntity(entity);
 	}
 
-	static void Entity_Create(MonoObject* obj, uint64_t* obj_id) {
+	static uint64_t Entity_CreateEntityId() {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		
 		// Copy given entity
 		Entity entity = scene->createEntity();
-		ScriptComponent& script = entity.addComponent<ScriptComponent>();
-		
-		SHADO_CORE_ASSERT(obj, "");
+		return entity.getUUID();
+		//ScriptComponent& script = entity.addComponent<ScriptComponent>();
+		//
+		//SHADO_CORE_ASSERT(obj, "");
 
-		Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(obj));
-		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, obj);
+		//Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(obj));
+		//Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, obj);
+		//script.ClassName = instance->GetScriptClass()->GetClassFullName();
+		//*obj_id = (uint64_t)entity.getUUID();
+		//ScriptEngine::OnCreateEntity(entity, instance);
+	}
+
+	static void Entity_InvokeScriptEngineCreate(MonoObject* monoObject, uint64_t entityId) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityId);
+		SHADO_CORE_ASSERT(entity, "");
+
+		ScriptComponent& script = entity.addComponent<ScriptComponent>();
+		Ref<ScriptClass> klass = CreateRef<ScriptClass>(mono_object_get_class(monoObject));
+		Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(klass, monoObject);
 		script.ClassName = instance->GetScriptClass()->GetClassFullName();
-		*obj_id = (uint64_t)entity.getUUID();
+
 		ScriptEngine::OnCreateEntity(entity, instance);
 	}
 
@@ -148,18 +165,18 @@ namespace Shado {
 	*/
 	static void TagComponent_GetTag(UUID entityID, MonoString** outName) {
 		Scene* scene = ScriptEngine::GetSceneContext();
-		SHADO_CORE_ASSERT(scene, "");
+		SHADO_CORE_ASSERT(scene, "Scene is nullptr");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, "");
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
 
 		*outName = ScriptEngine::NewString(entity.getComponent<TagComponent>().tag.c_str());
 	}
 
 	static void TagComponent_SetTag(UUID entityID, MonoString** refName) {
 		Scene* scene = ScriptEngine::GetSceneContext();
-		SHADO_CORE_ASSERT(scene, "");
+		SHADO_CORE_ASSERT(scene, "Scene is nullptr");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, "");
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
 
 		entity.getComponent<TagComponent>().tag = ScriptEngine::MonoStrToUT8(*refName);
 	}
@@ -391,6 +408,49 @@ namespace Shado {
 	}
 #pragma endregion
 
+#pragma region LineRendererComponent
+static void LineRendererComponent_GetTarget(uint64_t entityID, glm::vec3* outTarget)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	SHADO_CORE_ASSERT(scene, "");
+	Entity entity = scene->getEntityById(entityID);
+	SHADO_CORE_ASSERT(entity, "");
+
+	*outTarget = entity.getComponent<LineRendererComponent>().target;
+}
+
+static void LineRendererComponent_SetTarget(uint64_t entityID, glm::vec3* target)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	SHADO_CORE_ASSERT(scene, "");
+	Entity entity = scene->getEntityById(entityID);
+	SHADO_CORE_ASSERT(entity, "");
+
+	entity.getComponent<LineRendererComponent>().target = *target;
+}
+
+static void LineRendererComponent_GetColour(uint64_t entityID, glm::vec4* outColour)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	SHADO_CORE_ASSERT(scene, "");
+	Entity entity = scene->getEntityById(entityID);
+	SHADO_CORE_ASSERT(entity, "");
+
+	*outColour = entity.getComponent<LineRendererComponent>().color;
+}
+
+static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour)
+{
+	Scene* scene = ScriptEngine::GetSceneContext();
+	SHADO_CORE_ASSERT(scene, "");
+	Entity entity = scene->getEntityById(entityID);
+	SHADO_CORE_ASSERT(entity, "");
+
+	entity.getComponent<LineRendererComponent>().color = *colour;
+}
+	
+#pragma endregion 
+	
 #pragma region RigidBody2DComponent
 	/**
 	* Rigidbody2D
@@ -630,6 +690,20 @@ namespace Shado {
 	}
 #pragma endregion
 
+#pragma region ScriptComponent 
+
+	static MonoString* ScriptComponent_GetClassName(uint64_t entityID) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		ScriptComponent& scriptComponent = entity.getComponent<ScriptComponent>();
+		return ScriptEngine::NewString(scriptComponent.ClassName.c_str());
+	}
+
+#pragma endregion
+
 #pragma region Input
 	/**
 	* Input
@@ -637,6 +711,157 @@ namespace Shado {
 	static bool Input_IsKeyDown(KeyCode keycode)
 	{
 		return Input::isKeyPressed(keycode);
+	}
+
+	static void Input_GetMousePos(glm::vec2* result)
+	{
+		auto [x, y] = Input::getMousePosition();
+		result->x = x;
+		result->y = y;
+	}
+#pragma endregion
+
+#pragma region Application
+	static void Application_Close() {
+		Application::get().close();
+	}
+
+	static void Application_GetImGuiWindowSize(MonoString* windowName, glm::vec2* result) {
+		// Small hack to get around ImGui not having a way to get a given window size
+		ImGuiContext* context = ImGui::GetCurrentContext();
+		ImGuiWindow* currentWin = ImGui::GetCurrentWindow();
+		auto* targetWin = ImGui::FindWindowByName(ScriptEngine::MonoStrToUT8(windowName).c_str());
+
+		context->CurrentWindow = targetWin;
+		*result = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
+		
+		context->CurrentWindow = currentWin;
+	}
+
+	// TODO: maybe use a mutex?
+	static bool Application_IsImGuiWindowHovered(MonoString* windowName) {
+		ImGuiContext* context = ImGui::GetCurrentContext();
+		auto* currentWin = ImGui::GetCurrentWindow();
+		auto* targetWin = ImGui::FindWindowByName(ScriptEngine::MonoStrToUT8(windowName).c_str());
+
+		context->CurrentWindow = targetWin;
+		bool result = ImGui::IsWindowHovered();
+		context->CurrentWindow = currentWin;
+
+		return result;		
+	}
+#pragma endregion
+
+#pragma region Window
+	static void Window_GetSize(glm::vec2* result) {
+		*result = { Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight() };
+	}
+
+	static void Window_SetSize(glm::vec2 size) {
+		Application::get().getWindow().resize(size.x, size.y);
+	}
+	
+	static int Window_Mode() {
+		return (int)Application::get().getWindow().getMode();
+	}
+
+	static void Window_SetMode(int mode) {
+		Application::get().getWindow().setMode((WindowMode)mode);
+	}
+
+	static MonoString* Window_GetTitle() {
+		return ScriptEngine::NewString(Application::get().getWindow().getTitle().c_str());
+	}
+	
+	static void Window_SetTitle(MonoString* title) {
+		Application::get().getWindow().setTitle(ScriptEngine::MonoStrToUT8(title));
+	}
+
+	static bool Window_GetVSync() {
+		return Application::get().getWindow().isVSync();
+	}
+	
+	static void Window_SetVSync(bool enabled) {
+		Application::get().getWindow().setVSync(enabled);
+	}
+
+	static void Window_GetPosition(glm::vec2* result) {
+		result->x = Application::get().getWindow().getPosX();
+		result->y = Application::get().getWindow().getPosY();
+	}
+
+	static void Window_SetOpacity(float opacity) {
+		Application::get().getWindow().setOpacity(opacity);
+	}	
+
+#pragma endregion
+
+#pragma region Framebuffer
+	static uint32 Framebuffer_GetColorAttachmentRendererID(Framebuffer* nativePtr, uint32_t index) {
+		return nativePtr->getColorAttachmentRendererID(index);
+	}
+
+	static Framebuffer* Framebuffer_Create(uint32_t width, uint32_t height, uint32_t samples, MonoArray* attachments, bool swapChainTarget) {
+		FramebufferSpecification spec;
+		spec.Width = width;
+		spec.Height = height;
+		spec.Samples = samples;
+		spec.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER,  FramebufferTextureFormat::DEPTH24STENCIL8 };
+		spec.SwapChainTarget = swapChainTarget;
+
+		//uint32_t* attachmentsData = mono_array_addr(attachments, uint32_t, 0);
+		//for (uint32_t i = 0; i < mono_array_length(attachments); i++)
+		//	spec.Attachments.Attachments.push_back((FramebufferTextureFormat)attachmentsData[i]);
+		
+		return snew(Framebuffer) Framebuffer(spec);
+	}
+
+	static void Framebuffer_Invalidate(Framebuffer* nativePtr) {
+		nativePtr->invalidate();
+	}
+
+	static void Framebuffer_Bind(Framebuffer* nativePtr) {
+		nativePtr->bind();
+	}
+
+	static void Framebuffer_Unbind(Framebuffer* nativePtr) {
+		nativePtr->unbind();
+	}
+
+	static void Framebuffer_ClearAttachment(Framebuffer* nativePtr, uint32_t attachmentIndex, int value) {
+		nativePtr->clearAttachment(attachmentIndex, value);
+	}
+
+	static void Framebuffer_Resize(Framebuffer* nativePtr, uint32_t width, uint32_t height) {
+		nativePtr->resize(width, height);
+	}
+
+	static void Framebuffer_Destroy(Framebuffer* nativePtr) {
+		sdelete(nativePtr);
+	}
+#pragma endregion 
+	
+#pragma region Scene
+	static MonoArray* Scene_GetAllEntities() {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		if (!scene) {
+			SHADO_CORE_WARN("Scene is null! ScriptEngine context is not set when editor mode. Consider setting it up in the future?");
+			return nullptr;
+		}
+
+		auto view = scene->getRegistry().view<ScriptComponent>();
+		MonoArray* result = mono_array_new(ScriptEngine::GetAppDomain(), ScriptEngine::GetEntityClassType().GetMonoClass(), view.size());
+
+		int i = 0;
+		for (auto entity : view) {
+			Entity e = { entity, scene };
+			UUID uuid = e.getUUID();
+			MonoObject* obj = ScriptEngine::GetEntityScriptInstance(uuid)->GetManagedObject();
+			mono_array_set(result, MonoObject*, i, obj);
+			i += 1;
+		}
+
+		return result;
 	}
 #pragma endregion
 
@@ -790,6 +1015,10 @@ namespace Shado {
 		ImGui::Image((ImTextureID)ptr->getRendererID(), { dim.x, dim.y }, { uv0.x, uv0.y }, { uv1.x, uv1.y});
 	}
 
+	static void Image_Framebuffer_Native(uint32_t fbColorAttachmentRendererId, uint32_t width, uint32_t height) {
+		ImGui::Image((ImTextureID)fbColorAttachmentRendererId, { (float)width, (float)height }, { 0, 1 }, { 1, 0 });
+	}
+	
 	static bool Button_Native(MonoString* str, glm::vec2 size) {
 		return ImGui::Button(ScriptEngine::MonoStrToUT8(str).c_str(), {size.x, size.y});
 	}
@@ -807,6 +1036,18 @@ namespace Shado {
 		if (oldValue != valueStr)
 			*value = ScriptEngine::NewString(valueStr.c_str());
 		return isUsed;
+	}
+
+	static bool InputInt(MonoString* label, int* value, float speed, int min, int max, MonoString* format) {
+		const std::string labelStr = ScriptEngine::MonoStrToUT8(label);
+		
+		return ImGui::DragInt(labelStr.c_str(), value, speed, min, max, ScriptEngine::MonoStrToUT8(format).c_str());
+	}
+	
+	static bool InputFloat(MonoString* label, float* value, float speed, float min, float max, MonoString* format) {
+		const std::string labelStr = ScriptEngine::MonoStrToUT8(label);
+		
+		return ImGui::DragFloat(labelStr.c_str(), value, speed, min, max, ScriptEngine::MonoStrToUT8(format).c_str());
 	}
 
 	static unsigned int GetId(MonoString* label) {
@@ -873,6 +1114,58 @@ namespace Shado {
 
 	static void Indent(float x) {
 		ImGui::Indent(x);
+	}
+
+	static void Unindent(float x) {
+		ImGui::Unindent(x);
+	}
+
+	static void NewLine() {
+		ImGui::NewLine();
+	}
+
+	static void ShowDemoWindow() {
+		static bool show = true;
+		ImGui::ShowDemoWindow(&show);
+	}
+
+	static void ShowMetricsWindow() {
+		static bool show = true;
+		ImGui::ShowMetricsWindow(&show);
+	}
+
+	static void BeginGroup() {
+		ImGui::BeginGroup();
+	}
+
+	static void EndGroup() {
+		ImGui::EndGroup();
+	}
+
+	static bool BeginChild(MonoString* id, glm::vec2 size, bool border, int flags) {
+		return ImGui::BeginChild(ScriptEngine::MonoStrToUT8(id).c_str(), {size.x, size.y}, border, (ImGuiWindowFlags)flags);
+	}
+
+	static void EndChild() {
+		ImGui::EndChild();
+	}
+
+	static void GetContentRegionAvail_Native(glm::vec2* result) {
+		*result = { ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
+	}
+
+	static bool BeginMenu(MonoString* label, bool enabled) {
+		return ImGui::BeginMenu(ScriptEngine::MonoStrToUT8(label).c_str(), enabled);
+	}
+
+	static void EndMenu() {
+		ImGui::EndMenu();
+	}
+
+	static bool MenuItem(MonoString* label, MonoString* shortcut, bool selected, bool enabled) {
+		return ImGui::MenuItem(
+			ScriptEngine::MonoStrToUT8(label).c_str(),
+			shortcut == nullptr ? nullptr : ScriptEngine::MonoStrToUT8(shortcut).c_str(), selected, enabled);
 	}
 #pragma endregion
 
@@ -982,7 +1275,8 @@ namespace Shado {
 			SHADO_ADD_INTERNAL_CALL(Entity_AddComponent);
 			SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
 			SHADO_ADD_INTERNAL_CALL(Entity_Destroy);
-			SHADO_ADD_INTERNAL_CALL(Entity_Create);
+			SHADO_ADD_INTERNAL_CALL(Entity_CreateEntityId);
+			SHADO_ADD_INTERNAL_CALL(Entity_InvokeScriptEngineCreate);
 		}
 			
 		{
@@ -1014,6 +1308,13 @@ namespace Shado {
 		}
 
 		{
+			SHADO_ADD_INTERNAL_CALL(LineRendererComponent_GetTarget);
+			SHADO_ADD_INTERNAL_CALL(LineRendererComponent_SetTarget);
+			SHADO_ADD_INTERNAL_CALL(LineRendererComponent_GetColour);
+			SHADO_ADD_INTERNAL_CALL(LineRendererComponent_SetColour);
+		}
+		
+		{
 			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulse);
 			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);
 			SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_GetLinearVelocity);
@@ -1037,8 +1338,45 @@ namespace Shado {
 		}
 
 		{
-			SHADO_ADD_INTERNAL_CALL(Input_IsKeyDown);
+			SHADO_ADD_INTERNAL_CALL(ScriptComponent_GetClassName);
 		}
+
+		{
+			SHADO_ADD_INTERNAL_CALL(Input_IsKeyDown);
+			SHADO_ADD_INTERNAL_CALL(Input_GetMousePos);
+		}
+
+		{
+			SHADO_ADD_INTERNAL_CALL(Application_Close);
+			SHADO_ADD_INTERNAL_CALL(Application_GetImGuiWindowSize);
+			SHADO_ADD_INTERNAL_CALL(Application_IsImGuiWindowHovered);
+		}
+
+		{
+			SHADO_ADD_INTERNAL_CALL(Window_GetSize);
+			SHADO_ADD_INTERNAL_CALL(Window_SetSize);
+			SHADO_ADD_INTERNAL_CALL(Window_Mode);
+			SHADO_ADD_INTERNAL_CALL(Window_SetMode);
+			SHADO_ADD_INTERNAL_CALL(Window_GetTitle);
+			SHADO_ADD_INTERNAL_CALL(Window_SetTitle);
+			SHADO_ADD_INTERNAL_CALL(Window_GetVSync);
+			SHADO_ADD_INTERNAL_CALL(Window_SetVSync);
+			SHADO_ADD_INTERNAL_CALL(Window_GetPosition);
+			SHADO_ADD_INTERNAL_CALL(Window_SetOpacity);
+		}
+
+		// Framebuffer
+		{
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_GetColorAttachmentRendererID);
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_Create);
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_Invalidate);
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_Bind);
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_Unbind);
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_ClearAttachment);
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_Resize);
+			SHADO_ADD_INTERNAL_CALL(Framebuffer_Destroy);
+		}
+		
 		{
 			SHADO_ADD_INTERNAL_CALL(Texture2D_Create);
 			SHADO_ADD_INTERNAL_CALL(Texture2D_Destroy);
@@ -1065,19 +1403,40 @@ namespace Shado {
 			SHADO_ADD_INTERNAL_CALL(Renderer_DrawQuadShader);
 		}
 
+		// Scene
+		{
+			SHADO_ADD_INTERNAL_CALL(Scene_GetAllEntities);
+		}
+
+		// UI
 		{
 			SHADO_ADD_UI_INTERNAL_CALL(Begin);
 			SHADO_ADD_UI_INTERNAL_CALL(End);
 			SHADO_ADD_UI_INTERNAL_CALL(Text);
 			SHADO_ADD_UI_INTERNAL_CALL(InputText);
+			SHADO_ADD_UI_INTERNAL_CALL(InputInt);
+			SHADO_ADD_UI_INTERNAL_CALL(InputFloat);
 			SHADO_ADD_UI_INTERNAL_CALL(Image_Native);
+			SHADO_ADD_UI_INTERNAL_CALL(Image_Framebuffer_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(Separator);
 			SHADO_ADD_UI_INTERNAL_CALL(Button_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(InputTextFileChoose_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(OpenFileDialog_Native);
 			SHADO_ADD_UI_INTERNAL_CALL(Indent);
+			SHADO_ADD_UI_INTERNAL_CALL(Unindent);
 			SHADO_ADD_UI_INTERNAL_CALL(GetId);
 			SHADO_ADD_UI_INTERNAL_CALL(SetFocus);
+			SHADO_ADD_UI_INTERNAL_CALL(NewLine);
+			SHADO_ADD_UI_INTERNAL_CALL(ShowDemoWindow);
+			SHADO_ADD_UI_INTERNAL_CALL(ShowMetricsWindow);
+			SHADO_ADD_UI_INTERNAL_CALL(BeginGroup);
+			SHADO_ADD_UI_INTERNAL_CALL(EndGroup);
+			SHADO_ADD_UI_INTERNAL_CALL(BeginChild);
+			SHADO_ADD_UI_INTERNAL_CALL(EndChild);
+			SHADO_ADD_UI_INTERNAL_CALL(GetContentRegionAvail_Native);
+			SHADO_ADD_UI_INTERNAL_CALL(BeginMenu);
+			SHADO_ADD_UI_INTERNAL_CALL(EndMenu);
+			SHADO_ADD_UI_INTERNAL_CALL(MenuItem);
 		}
 
 		{

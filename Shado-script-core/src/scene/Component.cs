@@ -149,6 +149,34 @@ namespace Shado
 		}
 	}
 
+	public class LineRendererComponent : Component
+	{
+		public Vector3 target
+		{
+			get
+			{
+				Vector3 result;
+				InternalCalls.LineRendererComponent_GetTarget(Entity.ID, out result);
+				return result;
+			}
+			set
+			{
+				InternalCalls.LineRendererComponent_SetTarget(Entity.ID, ref value);
+			}
+		}
+
+		public Vector4 colour {
+			get {
+				Vector4 result;
+				InternalCalls.LineRendererComponent_GetColour(Entity.ID, out result);
+				return result;
+			}
+			set {
+				InternalCalls.LineRendererComponent_SetColour(Entity.ID, ref value);
+			}
+		}
+	}
+	
 	public class RigidBody2DComponent : Component
 	{
 		public enum BodyType { Static = 0, Dynamic = 2, Kinematic = 1 }
@@ -310,5 +338,21 @@ namespace Shado
 		public enum Type {
 			Orthographic = 0, Orbit = 1
 		}
+	}
+	
+	public class ScriptComponent : Component
+	{
+		private string cachedName = null;
+		public string ClassName { 
+			get { 
+				if (cachedName is null)
+					cachedName = InternalCalls.ScriptComponent_GetClassName(Entity.ID);
+				return cachedName;
+            }
+		}
+	}
+	
+	public class NativeScriptComponent : Component
+	{
 	}
 }

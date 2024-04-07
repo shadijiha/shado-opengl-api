@@ -313,7 +313,7 @@ namespace Shado {
 			CmdDrawIndexedLine(s_Data.LineVertexArray, s_Data.LineVertexCount);
 			s_Data.Stats.DrawCalls++;
 		}
-		}
+	}
 
 	void Renderer2D::SetClearColor(const glm::vec4& color) {
 		glClearColor(color.r, color.g, color.b, color.a);
