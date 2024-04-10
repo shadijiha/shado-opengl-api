@@ -1,3 +1,6 @@
+include "premake/ordered_pairs.lua"
+include "premake/solution_items.lua"
+
 workspace "shado-opengl-api"
 	architecture "x64"
 	startproject "shado-editor"
@@ -24,6 +27,7 @@ IncludeDir["entt"] = "%{wks.location}/shado-opengl-api/vendor/entt/include"
 IncludeDir["ImGuizmo"] = "%{wks.location}/shado-opengl-api/vendor/ImGuizmo"
 IncludeDir["filewatch"] = "%{wks.location}/shado-opengl-api/vendor/filewatch"
 IncludeDir["Coral"] = "%{wks.location}/shado-opengl-api/vendor/Coral/Coral.Native/include"
+IncludeDir["CoralSrc"] = "%{wks.location}/shado-opengl-api/vendor/Coral/Coral.Native/Source"
 
 group "Dependancies"
 	include "shado-opengl-api/vendor/Coral/Coral.Managed"

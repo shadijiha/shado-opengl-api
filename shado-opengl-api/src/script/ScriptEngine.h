@@ -1,6 +1,5 @@
 #pragma once
 
-#include "scene/Scene.h"
 #include "scene/Entity.h"
 
 #include <filesystem>
@@ -9,20 +8,26 @@
 #include <unordered_map>
 #include <vector>
 
-extern "C" {
-	typedef struct _MonoClass MonoClass;
-	typedef struct _MonoObject MonoObject;
-	typedef struct _MonoMethod MonoMethod;
-	typedef struct _MonoAssembly MonoAssembly;
-	typedef struct _MonoImage MonoImage;
-	typedef struct _MonoClassField MonoClassField;
-	typedef struct _MonoString MonoString;
-	typedef struct _MonoTableInfo MonoTableInfo;
-	typedef struct _MonoDomain MonoDomain;
+#include <CoralPCH.hpp>
+#include <Coral/Assembly.hpp>
+#include <Coral/Type.hpp>
+#include <Coral/StableVector.hpp>
+#include <Coral/Attribute.hpp>
+#include <Coral/Array.hpp>
+
+#include <Coral/CoralManagedFunctions.hpp>
+
+namespace Coral {
+
+	class HostInstance;
+	class ManagedAssembly;
+	class AssemblyLoadContext;
+
 }
 
 namespace Shado {
-
+	class Scene;
+	
 	enum class ScriptFieldType
 	{
 		None = 0,

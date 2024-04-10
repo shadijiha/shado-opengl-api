@@ -31,6 +31,7 @@ project "shado-opengl-api"
         "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.ImGuizmo}",
         "%{IncludeDir.Coral}",
+        "%{IncludeDir.CoralSrc}",
         "%{IncludeDir.filewatch}"
     }
 
