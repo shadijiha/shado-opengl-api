@@ -1,5 +1,19 @@
 Scene: Untitled
 Entities:
+  - Entity: 13730885727472941676
+    TagComponent:
+      Tag: "Child2 "
+    TransformComponent:
+      Translation: [3.0999999, 3.20000005, 0.699999988]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      ParentEntityId: 17381819378146153245
+    CircleRendererComponent:
+      Color: [0.454901963, 0.113725491, 0.290196091, 1]
+      Texture: "NULL"
+      TillingFactor: 1
+      Thickness: 1
+      Fade: 0.00499999989
   - Entity: 1430214029218429227
     TagComponent:
       Tag: camera2
@@ -7,6 +21,7 @@ Entities:
       Translation: [2.70000005, 1.60000002, 1]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     CameraComponent:
       Camera:
         ProjectionType: 0
@@ -22,6 +37,7 @@ Entities:
       Translation: [0, 0, -0.600000024]
       Rotation: [0, 0, 0]
       Scale: [15.1999998, 8.10000038, 1]
+      ParentEntityId: 0
     SpriteRendererComponent:
       Color: [1, 1, 1, 1]
       Texture: Assets\TranscodedWallpaper.jpg
@@ -30,16 +46,14 @@ Entities:
     TagComponent:
       Tag: Square
     TransformComponent:
-      Translation: [0, 2.4303956, 0]
+      Translation: [-0.179572046, 1.52056217, 0]
       Rotation: [0, 0, 0]
       Scale: [2, 2.5, 1]
+      ParentEntityId: 0
     SpriteRendererComponent:
       Color: [0.999996483, 1, 0.999989986, 1]
       Texture: Assets\Riven_HD.jpg
       TillingFactor: 1
-    RigidBody2DComponent:
-      Type: 0
-      FixedRotation: false
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
@@ -66,6 +80,7 @@ Entities:
       Translation: [-0.0200185776, -2.09525609, 0]
       Rotation: [0, 0, 0]
       Scale: [13.3000002, 1, 1]
+      ParentEntityId: 0
     SpriteRendererComponent:
       Color: [1, 1, 1, 1]
       Texture: "NULL"
@@ -87,6 +102,7 @@ Entities:
       Translation: [0, 0, 5]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     CameraComponent:
       Camera:
         ProjectionType: 0
@@ -108,6 +124,7 @@ Entities:
       Translation: [-3.30884361, 0.924530447, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     CircleRendererComponent:
       Color: [0.831372559, 0.23137255, 0.23137255, 0.745098054]
       Texture: "NULL"
@@ -128,9 +145,36 @@ Entities:
     TagComponent:
       Tag: Line
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [-1.79999995, -1.39999998, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     LineRendererComponent:
       Color: [9.99999997e-07, 0, 0, 1]
       Target: [4.69999981, 1.70000005, 0]
+  - Entity: 1320691196595273658
+    TagComponent:
+      Tag: child
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      ParentEntityId: 17381819378146153245
+    SpriteRendererComponent:
+      Color: [0.172805995, 0.431986034, 0.486486495, 1]
+      Texture: "NULL"
+      TillingFactor: 1
+  - Entity: 16758938465264930844
+    TagComponent:
+      Tag: Nate
+    TransformComponent:
+      Translation: [-3.9000001, 3.4000001, 0]
+      Rotation: [0, 0, 0]
+      Scale: [0.200000003, 0.200000003, 1]
+      ParentEntityId: 1320691196595273658
+    CircleRendererComponent:
+      Color: [0.045228906, 0.285714269, 0.266215444, 1]
+      Texture: "NULL"
+      TillingFactor: 1
+      Thickness: 1
+      Fade: 0.00499999989

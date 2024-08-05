@@ -9,10 +9,10 @@ namespace Sandbox
 { 
     public class Test : Entity
     {
-        public float maxDelta;
-        public float moveRate;
+        public float maxDelta = 3.0f;
+        public float moveRate = 1.0f;
         public float tilingFactor = 1.0f;
-        private TransformComponent transform;
+        //private TransformComponent transform;
         private float dir = 1;
 
         public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
@@ -25,7 +25,6 @@ namespace Sandbox
         //private ParticuleSystem particuleSystem;
 
         void OnCreate() {
-            transform = GetComponent<TransformComponent>();
             GetComponent<SpriteRendererComponent>().texture = texture;
             //var t = this.Create<Test>();
             //t.AddComponent<SpriteRendererComponent>().colour = Colour.Blue;
@@ -40,29 +39,33 @@ namespace Sandbox
                     // Create<T>(param object[] ctorArgs)
                     // The reason for that is because right now it is not possible to invode 
                     // internal methods such as AddComponent in the .ctor
-                    GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
+                    //GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
                 }
             }
 
             //particuleSystem = Create<ParticuleSystem>();
             //particuleSystem.OnCreate();
+            
+            foreach(var result in Entity.FindEntityByName("Line").children)
+            {
+                Log.Info(result.tag);
+            }
         }
 
         void OnUpdate(float dt)
         {
             //particuleSystem.OnUpdate(dt);   
-            if (this.tag == "Square (2)") {
-                float x = 10;
-            }
             totalDt += dt;
-            GetComponent<SpriteRendererComponent>().colour = colourTest;
+            GetComponent<SpriteRendererComponent>().colour = Colour.Random(); //colourTest;
             GetComponent<SpriteRendererComponent>().texture = texture;
             Vector3 pos = transform.position;
-            pos.x += moveRate * 2 * dt * dir;
-            //transform.position = pos;
             
-            if (pos.x > maxDelta || pos.x < -maxDelta) {
-                dir = -dir;
+            pos.x += moveRate * 2 * dt * dir;
+            transform.position = pos;
+
+            if (pos.x > maxDelta || pos.x <= -maxDelta)
+            {
+                dir *= -1;
             }
 
             if (Input.IsKeyDown(KeyCode.K) && other is null) {

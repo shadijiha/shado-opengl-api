@@ -11,6 +11,8 @@
 #include "ui/UI.h"
 #include "project/Project.h"
 #include "script/ScriptEngine.h"
+#include "../EditorEvents.h"
+#include "scene/Prefab.h"
 
 namespace Shado {
 	static TimeStep lastDt = 1 / 60.0f;
@@ -296,6 +298,16 @@ namespace Shado {
 		EventDispatcher dispatcher(event);
 		dispatcher.dispatch<KeyPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onKeyPressed));
 		dispatcher.dispatch<MouseButtonPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onMouseButtonPressed));	
+
+		dispatcher.dispatch<EditorGuizmosStartEvent>([this](EditorGuizmosStartEvent& e) {
+			this->pushUndoQueue();
+			return false;
+		});
+
+		dispatcher.dispatch<EditorEntityChanged>([this](EditorEntityChanged& e) {
+			this->pushUndoQueue();
+			return false;
+		});
 	}
 
 	// Helpers
@@ -323,12 +335,30 @@ namespace Shado {
 
 			// Entity
 			case KeyCode::D:
-				if (control)
-					m_ActiveScene->duplicateEntity(m_sceneHierarchyPanel.getSelected());
+				if (control) {
+					Entity selectedEntityDub = m_sceneHierarchyPanel.getSelected();
+					onEvent(EditorEntityChanged(EditorEntityChanged::ChangeType::ENTITY_ADDED, selectedEntityDub));
+					
+					m_ActiveScene->duplicateEntity(selectedEntityDub);
+				}
 				break;
-			case KeyCode::Delete:
-				m_ActiveScene->destroyEntity(m_sceneHierarchyPanel.getSelected());
+			case KeyCode::Delete: {
+				// Save scene for undo
+				Entity selectedEntityDelete = m_sceneHierarchyPanel.getSelected();
+				onEvent(EditorEntityChanged(EditorEntityChanged::ChangeType::ENTITY_REMOVED, selectedEntityDelete));
+
+				m_ActiveScene->destroyEntity(selectedEntityDelete);
 				m_sceneHierarchyPanel.resetSelection();
+				break;
+			}
+			// Undo, Redo
+			case KeyCode::Z:
+				if (control && m_UndoQueue.size() > 0) {
+					Ref<Scene> scene = m_UndoQueue.back();
+					m_EditorScene = scene;
+					setActiveScene(scene);
+					m_UndoQueue.pop_back();
+				}
 				break;
 
 			// Gizmos
@@ -373,11 +403,9 @@ namespace Shado {
 	void EditorLayer::newScene() {
 		Ref<Scene> scene = CreateRef<Scene>();
 		scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
-		m_ActiveScene = scene;
-		m_EditorScene = m_ActiveScene;
-		m_sceneHierarchyPanel.setContext(scene);
+		m_EditorScene = scene;
+		setActiveScene(m_EditorScene);
 		m_ScenePath = "";
-		Scene::ActiveScene = m_ActiveScene;
 	}
 
 	void EditorLayer::openScene() {
@@ -409,25 +437,27 @@ namespace Shado {
 		}
 
 		m_EditorScene = scene;
-		m_ActiveScene = m_EditorScene;
-		m_sceneHierarchyPanel.setContext(scene);
+		setActiveScene(m_EditorScene);
 		m_ScenePath = path.string();
-		Scene::ActiveScene = m_ActiveScene;
 	}
 
 	// ============================== For runtime
 	void EditorLayer::onScenePlay() {
 		m_SceneState = SceneState::Play;
-		m_ActiveScene = CreateRef<Scene>(*m_EditorScene.Raw());
-		m_sceneHierarchyPanel.setContext(m_ActiveScene);
-		Scene::ActiveScene = m_ActiveScene;
+		auto scene = CreateRef<Scene>(*m_EditorScene.Raw());
+		setActiveScene(scene);
 		m_ActiveScene->onRuntimeStart();
 	}
 
 	void EditorLayer::onSceneStop() {
 		m_SceneState = SceneState::Edit;
 		m_ActiveScene->onRuntimeStop();
-		m_ActiveScene = m_EditorScene;
+		setActiveScene(m_EditorScene);
+	}
+
+	void EditorLayer::setActiveScene(Ref<Scene> scene)
+	{
+		m_ActiveScene = scene;
 		Scene::ActiveScene = m_ActiveScene;
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
@@ -498,8 +528,19 @@ namespace Shado {
 
 					else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>())
 						m_HoveredEntity.getComponent<CircleRendererComponent>().texture = CreateRef<Texture2D>(path.string());
-				} else
+
+				} else if (extension == ".prefab") {
+
+					// Dumb prefab to scene
+					UUID prefabId = std::stoull(path.filename().replace_extension());
+					SHADO_CORE_INFO("Loading prefab {0} to scene...", (uint64_t)prefabId);
+
+					Ref<Prefab> prefab = Prefab::GetPrefabById(prefabId);
+					m_ActiveScene->instantiatePrefab(prefab);
+
+				}  else {
 					openScene(path);
+				}
 			}
 
 			ImGui::EndDragDropTarget();
@@ -533,7 +574,7 @@ namespace Shado {
 
 			// Entity transform
 			auto& tc = selected.getComponent<TransformComponent>();
-			auto transform = tc.getTransform();
+			auto transform = tc.getLocalTransform();
 
 			// Snapping
 			bool snap = Input::isKeyPressed(KeyCode::LeftControl);
@@ -549,6 +590,14 @@ namespace Shado {
 				m_ActiveScene->enablePhysics(false);
 				m_ActiveScene->softResetPhysics();
 
+				// If last frame guizmost wasn't used,
+				// then we just start to move the entity. In this case,
+				// Save its current transform for undo
+				if (!m_lastFrameGuizmosIsUsing) {
+					this->onEvent(EditorGuizmosStartEvent(transform));
+				}
+
+				// Decompose transform
 				glm::vec3 position, rotation, scale;
 				Math::decomposeTransform(transform, position, rotation, scale);
 
@@ -556,12 +605,16 @@ namespace Shado {
 				tc.position = transform[3];
 				tc.rotation += deltaRotation;
 				tc.scale = scale;
+
 			}
 			else {
 				// If Gizmos are not in use then resume physics
 				m_ActiveScene->enablePhysics(true);
 			}
 		}
+
+		// Update last frame vars
+		m_lastFrameGuizmosIsUsing = ImGuizmo::IsUsing();
 
 		ImGui::End();
 		ImGui::PopStyleVar();

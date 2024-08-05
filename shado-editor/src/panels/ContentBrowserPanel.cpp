@@ -5,8 +5,11 @@
 #include "debug/Profile.h"
 #include "renderer/Texture2D.h"
 #include "scene/utils/SceneUtils.h"
+#include "scene/SceneSerializer.h"
 #include "util/Util.h"
 #include "project/Project.h"
+#include "SceneHierarchyPanel.h"
+#include "scene/Components.h"
 
 namespace Shado {
 	static bool isImage(const std::filesystem::path& path);
@@ -49,6 +52,26 @@ namespace Shado {
 		SHADO_PROFILE_FUNCTION();
 
 		ImGui::Begin("Content Browser");
+
+		// Converting entities to Prefabs
+		if (ImGui::BeginDragDropTarget()) {
+
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(SceneHierarchyPanel::SceneHeirarchyEntityDragDropId.c_str()))
+			{
+				UUID childID = *(const UUID*)payload->Data;
+				auto childEntity = Scene::ActiveScene->getEntityById(childID);
+
+				SceneSerializer serializer(Scene::ActiveScene);
+				serializer.serializePrefab(childEntity);
+
+				Dialog::alert(
+					std::string("Successfully serialized prefab ") + childEntity.getComponent<TagComponent>().tag, 
+					"Info",
+					Dialog::DialogIcon::INFORMATION
+				);
+			}
+			ImGui::EndDragDropTarget();
+		}
 
 		// If m_CurrentDirectory is not defined then display "Open a project to browse
 		if (!Project::GetActive() || m_CurrentDirectory.empty()) {

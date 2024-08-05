@@ -157,6 +157,22 @@ namespace Shado {
 		ScriptEngine::OnCreateEntity(entity, instance);
 	}
 
+	static void Entity_GetChildren(UUID entityId, MonoArray** childrenIds, MonoReflectionType* arrayType) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityId);
+		SHADO_CORE_ASSERT(entity, "");
+
+		auto children = entity.getChildren();
+
+		 *childrenIds = mono_array_new(
+		 	ScriptEngine::GetAppDomain(),
+		 	mono_class_from_mono_type(mono_reflection_type_get_type(arrayType)),
+		 	children.size());
+		 for (int i = 0; i < children.size(); i++) {
+		 	mono_array_set(*childrenIds, uint64_t, i, children[i].getUUID());
+		 }
+	}
 #pragma endregion
 
 #pragma region TagComponent
@@ -244,6 +260,29 @@ namespace Shado {
 		SHADO_CORE_ASSERT(entity, "");
 
 		entity.getComponent<TransformComponent>().scale = *scale;
+	}
+
+	static uint64_t TransformComponent_GetParentId(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		return entity.getComponent<TransformComponent>().parentId;
+	}
+
+	static void TransformComponent_SetParentId(UUID entityID, uint64_t newParentId)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		Entity parent = scene->getEntityById(newParentId);
+		SHADO_CORE_ASSERT(parent, "");
+
+		entity.getComponent<TransformComponent>().parentId = parent.getUUID();
 	}
 #pragma endregion
 
@@ -1277,6 +1316,7 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 			SHADO_ADD_INTERNAL_CALL(Entity_Destroy);
 			SHADO_ADD_INTERNAL_CALL(Entity_CreateEntityId);
 			SHADO_ADD_INTERNAL_CALL(Entity_InvokeScriptEngineCreate);
+			SHADO_ADD_INTERNAL_CALL(Entity_GetChildren);
 		}
 			
 		{
@@ -1291,6 +1331,8 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetRotation);
 			SHADO_ADD_INTERNAL_CALL(TransformComponent_GetScale);
 			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetScale);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_GetParentId);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetParentId);
 		}
 
 		{

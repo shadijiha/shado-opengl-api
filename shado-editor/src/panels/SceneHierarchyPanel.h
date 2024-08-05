@@ -24,6 +24,9 @@ namespace Shado {
 	private:
 		void drawEntityNode(Entity e);
 		void drawComponents(Entity e);
+
+	public:
+		inline static std::string SceneHeirarchyEntityDragDropId = "Scene_heirarchy_drag_entity";
 	private:
 		Ref<Scene> m_Context;
 		Entity m_Selected;

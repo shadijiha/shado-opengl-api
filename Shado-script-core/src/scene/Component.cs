@@ -74,6 +74,19 @@ namespace Shado
 				InternalCalls.TransformComponent_SetScale(Entity.ID, ref value);
 			}
 		}
+	
+		public Entity parent
+		{
+			get
+			{
+				ulong parentId = InternalCalls.TransformComponent_GetParentId(Entity.ID);
+				return parentId == 0 ? null : new Entity(parentId);
+			}
+			set
+			{
+				InternalCalls.TransformComponent_SetParentId(Entity.ID, value.ID);
+            }
+		}
 	}
 
 	public class SpriteRendererComponent : Component

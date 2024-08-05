@@ -28,6 +28,10 @@ namespace Shado
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static object GetScriptInstance(ulong entityID);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Entity_GetChildren(ulong entityID, ref ulong[] childrenIds, Type arrayType);
+        
         #endregion
 
         /**
@@ -62,6 +66,12 @@ namespace Shado
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void TransformComponent_SetScale(ulong entityID, ref Vector3 scale);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static ulong TransformComponent_GetParentId(ulong entityID);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void TransformComponent_SetParentId(ulong entityID, ulong parentId);
         #endregion
 
         /**

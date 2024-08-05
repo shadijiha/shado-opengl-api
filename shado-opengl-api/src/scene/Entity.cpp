@@ -9,20 +9,48 @@
 namespace Shado {
 
 	Entity::Entity()
-		: m_Scene(nullptr), m_EntityHandle(entt::null)
+		: m_Scene(nullptr), m_EntityHandle(entt::null), m_Registry(nullptr)
 	{
 	}
 
 	Entity::Entity(entt::entity handle, Scene* scene)
-		: m_Scene(scene), m_EntityHandle(handle)
+		: m_Scene(scene), m_EntityHandle(handle), m_Registry(&scene->m_Registry)
 	{
 
+	}
+
+	Entity::Entity(entt::entity handle, entt::registry* registry)
+		: m_Scene(nullptr), m_EntityHandle(handle), m_Registry(registry)
+	{
 	}
 
 	Entity::~Entity() {
 	}
-	UUID Entity::getUUID()
+	UUID Entity::getUUID() const
 	{
 		return getComponent<IDComponent>().id;
+	}
+
+	std::vector<Entity> Entity::getChildren() const {
+		std::vector<Entity> children;
+
+		for (auto e : getRegistry().view<TransformComponent>()) {
+			Entity currentIt;
+			if (m_Scene != nullptr)
+				currentIt = { e, m_Scene };
+			else 
+				currentIt = { e, m_Registry };
+
+			const TransformComponent& tc = currentIt.getComponent<TransformComponent>();
+			if (tc.parentId == this->getUUID()) {
+				children.push_back(currentIt);
+			}
+		}
+
+		return children;
+	}
+
+	bool Entity::isChild() const {
+		return getComponent<TransformComponent>().getParent().isValid();
 	}
 }

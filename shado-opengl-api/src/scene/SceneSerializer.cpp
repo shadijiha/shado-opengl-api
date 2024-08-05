@@ -6,6 +6,7 @@
 #include "Components.h"
 #include "project/Project.h"
 #include "script/ScriptEngine.h"
+#include "Prefab.h"
 
 namespace YAML {
 	template<>
@@ -136,8 +137,13 @@ namespace Shado {
 		return out;
 	}
 
-	static void SerializeEntity(YAML::Emitter& out, Entity entity);
+	static void SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap = true);
 	static std::string getPathAndCopyFileToAssets(const std::string& path);
+	static Entity dererializeEntityHelper(
+		YAML::Node entity,
+		std::function<Entity(std::string, UUID)> entityCreatorFunction,
+		Ref<Scene> scene
+	);
 
 	SceneSerializer::SceneSerializer(const Ref<Scene>& scene)
 		: m_Scene(scene)
@@ -171,6 +177,49 @@ namespace Shado {
 		SHADO_CORE_ASSERT(false, "Not implemented");
 	}
 
+	static void serializePrefabHelper(YAML::Emitter& out, const Entity& e) {
+		SerializeEntity(out, e, false);
+
+		auto children = e.getChildren();
+
+		if (!children.empty()) {
+			out << YAML::Key << "Children" << YAML::Value << YAML::BeginSeq;
+			for (const auto& child : children) {
+				serializePrefabHelper(out, child);
+			}
+			out << YAML::EndSeq;
+		}
+
+		out << YAML::EndMap;
+	}
+	UUID SceneSerializer::serializePrefab(Entity entity)
+	{
+		SHADO_PROFILE_FUNCTION();
+
+		UUID prefabId;
+
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+
+		out << YAML::Key << "PrefabId" << YAML::Value << (uint64_t)prefabId;
+		out << YAML::Key << "Data" << YAML::Value;
+
+		// Recursively serialize children
+		serializePrefabHelper(out, entity);
+
+		out << YAML::EndMap;
+
+		// TODO: Once we have an asset manager, remove the prefab ID from the filename and
+		// make this the duty of the asset manager
+		std::ofstream fout(
+			Project::GetAssetDirectory() / (std::to_string((uint64_t)prefabId) + ".prefab"));
+		fout << out.c_str();
+
+		entity.addComponent<PrefabInstanceComponent>().prefabId = prefabId;
+
+		return prefabId;
+	}
+
 	bool SceneSerializer::deserialize(const std::string& filepath)
 	{
 		std::string ignored;
@@ -200,192 +249,19 @@ namespace Shado {
 			{
 				for (auto entity : entities)
 				{
-					uint64_t uuid = entity["Entity"].as<uint64_t>(); // TODO
-
-					std::string name;
-					auto tagComponent = entity["TagComponent"];
-					if (tagComponent)
-						name = tagComponent["Tag"].as<std::string>();
-
-					SHADO_CORE_TRACE("Deserialized entity with ID = {0}, name = {1}", uuid, name);
-
-					Entity deserializedEntity = m_Scene->createEntityWithUUID(name, uuid);
-
-					auto transformComponent = entity["TransformComponent"];
-					if (transformComponent)
-					{
-						// Entities always have transforms
-						auto& tc = deserializedEntity.getComponent<TransformComponent>();
-						tc.position = transformComponent["Translation"].as<glm::vec3>();
-						tc.rotation = transformComponent["Rotation"].as<glm::vec3>();
-						tc.scale = transformComponent["Scale"].as<glm::vec3>();
-					}
-
-					auto cameraComponent = entity["CameraComponent"];
-					if (cameraComponent)
-					{
-						auto& cameraProps = cameraComponent["Camera"];
-						CameraComponent::Type type = (CameraComponent::Type)cameraProps["ProjectionType"].as<int>();
-
-						auto& cc = deserializedEntity.addComponent<CameraComponent>(type, m_Scene->m_ViewportWidth, m_Scene->m_ViewportHeight);
-						cc.camera->setNearClip(cameraProps["Near"].as<float>());
-						cc.camera->setFarClip(cameraProps["Far"].as<float>());
-					
-
-						switch (type) {
-							case CameraComponent::Type::Orthographic:
-								cc.setSize(cameraProps["OrthographicSize"].as<float>());
-								break;
-							case CameraComponent::Type::Orbit:
-								OrbitCamera* orbitCam = (OrbitCamera*)cc.camera.Raw();
-								orbitCam->setFOV(cameraProps["PerspectiveFOV"].as<float>());
-								break;
-						}
-
-						cc.primary = cameraComponent["Primary"].as<bool>();
-						cc.fixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
-					}
-
-					auto spriteRendererComponent = entity["SpriteRendererComponent"];
-					if (spriteRendererComponent)
-					{
-						auto& src = deserializedEntity.addComponent<SpriteRendererComponent>();
-						auto texturePath = spriteRendererComponent["Texture"].as<std::string>();
-						src.color = spriteRendererComponent["Color"].as<glm::vec4>();
-						src.texture = texturePath == "NULL" || texturePath == "null" ?
-							nullptr : new Texture2D(
-															Project::GetActive() ?
-														   (Project::GetProjectDirectory() / texturePath).string() : texturePath
-														  );
-						src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
-					}
-
-					auto circleRendererComponent = entity["CircleRendererComponent"];
-					if (circleRendererComponent)
-					{
-						auto& src = deserializedEntity.addComponent<CircleRendererComponent>();
-					
-						src.color = circleRendererComponent["Color"].as<glm::vec4>();
-						src.thickness = circleRendererComponent["Thickness"].as<float>();
-						src.fade = circleRendererComponent["Fade"].as<float>();
-
-						auto texturePath = circleRendererComponent["Texture"].as<std::string>();
-						src.texture = texturePath == "NULL" || texturePath == "null" ?
-							nullptr : new Texture2D(
-															Project::GetActive() ?
-															(Project::GetProjectDirectory() / texturePath).string() : texturePath
-														);
-						src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
-					}
-
-					auto lineRendererComponent = entity["LineRendererComponent"];
-					if (lineRendererComponent)
-					{
-						auto& src = deserializedEntity.addComponent<LineRendererComponent>();
-						src.color = lineRendererComponent["Color"].as<glm::vec4>();
-						src.target = lineRendererComponent["Target"].as<glm::vec3>();
-					}
-					
-					auto rigidBodyComponent = entity["RigidBody2DComponent"];
-					if (rigidBodyComponent)
-					{
-						auto& src = deserializedEntity.addComponent<RigidBody2DComponent>();
-						src.type = (RigidBody2DComponent::BodyType)rigidBodyComponent["Type"].as<int>();
-						src.fixedRotation = rigidBodyComponent["FixedRotation"].as<bool>();
-					}
-
-					auto boxColliderComponent = entity["BoxCollider2DComponent"];
-					if (boxColliderComponent)
-					{
-						auto& src = deserializedEntity.addComponent<BoxCollider2DComponent>();
-						src.offset = boxColliderComponent["Offset"].as<glm::vec2>();
-						src.size = boxColliderComponent["Size"].as<glm::vec2>();
-						src.density = boxColliderComponent["Density"].as<float>();
-						src.friction = boxColliderComponent["Friction"].as<float>();
-						src.restitution = boxColliderComponent["Restitution"].as<float>();
-						src.restitutionThreshold = boxColliderComponent["RestitutionThreshold"].as<float>();
-					}
-
-					auto circleCollider2DComponent = entity["CircleCollider2DComponent"];
-					if (circleCollider2DComponent)
-					{
-						auto& src = deserializedEntity.addComponent<CircleCollider2DComponent>();
-						src.offset = circleCollider2DComponent["Offset"].as<glm::vec2>();
-
-						glm::vec2 tempRadius = circleCollider2DComponent["Radius"].as<glm::vec2>();
-						src.radius = glm::vec2(tempRadius);
-
-						src.density = circleCollider2DComponent["Density"].as<float>();
-						src.friction = circleCollider2DComponent["Friction"].as<float>();
-						src.restitution = circleCollider2DComponent["Restitution"].as<float>();
-						src.restitutionThreshold = circleCollider2DComponent["RestitutionThreshold"].as<float>();
-					}
-
-					auto scriptComponent = entity["ScriptComponent"];
-					if (scriptComponent)
-					{
-						auto& sc = deserializedEntity.addComponent<ScriptComponent>();
-						sc.ClassName = scriptComponent["ClassName"].as<std::string>();
-
-						auto scriptFields = scriptComponent["ScriptFields"];
-						if (scriptFields)
-						{
-							Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName);
-							if (entityClass)
-							{
-								const auto& fields = entityClass->GetFields();
-								auto& entityFields = ScriptEngine::GetScriptFieldMap(deserializedEntity);
-
-								for (auto scriptField : scriptFields)
-								{
-									std::string name = scriptField["Name"].as<std::string>();
-									std::string typeString = scriptField["Type"].as<std::string>();
-									ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
-
-									ScriptFieldInstance& fieldInstance = entityFields[name];
-
-									// TODO(Yan): turn this assert into Hazelnut log warning
-									SHADO_CORE_ASSERT(fields.find(name) != fields.end(), "");
-
-									if (fields.find(name) == fields.end())
-										continue;
-
-									fieldInstance.Field = fields.at(name);
-
-									switch (type)
-									{
-										READ_SCRIPT_FIELD(Float, float);
-										READ_SCRIPT_FIELD(Double, double);
-										READ_SCRIPT_FIELD(Bool, bool);
-										READ_SCRIPT_FIELD(Char, char);
-										READ_SCRIPT_FIELD(Byte, int8_t);
-										READ_SCRIPT_FIELD(Short, int16_t);
-										READ_SCRIPT_FIELD(Int, int32_t);
-										READ_SCRIPT_FIELD(Long, int64_t);
-										READ_SCRIPT_FIELD(UByte, uint8_t);
-										READ_SCRIPT_FIELD(UShort, uint16_t);
-										READ_SCRIPT_FIELD(UInt, uint32_t);
-										READ_SCRIPT_FIELD(ULong, uint64_t);
-										READ_SCRIPT_FIELD(Vector2, glm::vec2);
-										READ_SCRIPT_FIELD(Vector3, glm::vec3);
-										READ_SCRIPT_FIELD(Vector4, glm::vec4);
-										READ_SCRIPT_FIELD(Colour, glm::vec4);
-										READ_SCRIPT_FIELD(Entity, UUID);
-									}
-								}
-							}
-						}
-					}
+					dererializeEntityHelper(entity, [this](std::string name, UUID uuid) {
+						return m_Scene->createEntityWithUUID(name, uuid);
+					}, m_Scene);
 				}
 			}
-
-			return true;
 		}
 		catch (const YAML::Exception& e)
 		{
 			error = e.what();
 			return false;
 		}
+
+		return true;
 	}
 
 	bool SceneSerializer::deserializeRuntime(const std::string& filepath) {
@@ -393,8 +269,46 @@ namespace Shado {
 		return false;
 	}
 
+	static Entity deserializePrefabHelper(YAML::Node node, Ref<Prefab> prefab) {
+		Entity entity = dererializeEntityHelper(node, [&prefab](std::string name, UUID id) {
+			Entity e = prefab->attachEntity(id);
+			e.getComponent<TagComponent>().tag = name;
+			return e;
+		}, Scene::ActiveScene);
+
+		// Deserialize children
+		auto children = node["Children"];
+		if (children) {
+			for (auto child : children) {
+				deserializePrefabHelper(child, prefab);
+			}
+		}
+
+		return entity;
+	}
+	Ref<Prefab> SceneSerializer::deserializePrefab(const std::string& filepath)
+	{
+		SHADO_PROFILE_FUNCTION();
+
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(filepath);
+			UUID prefabId = data["PrefabId"].as<uint64_t>();
+			Ref<Prefab> prefab = CreateRef<Prefab>(prefabId);
+
+			prefab->root = deserializePrefabHelper(data["Data"], prefab);
+
+			return prefab;
+		} catch (const YAML::Exception& e)
+		{
+			SHADO_CORE_ERROR("{0}", e.what());
+			return nullptr;
+		}
+	}
+
 	// Helpers
-	static void SerializeEntity(YAML::Emitter& out, Entity entity)
+	static void SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap)
 	{
 		SHADO_CORE_ASSERT(entity.hasComponent<IDComponent>(), "No ID component");
 
@@ -421,6 +335,7 @@ namespace Shado {
 			out << YAML::Key << "Translation" << YAML::Value << tc.position;
 			out << YAML::Key << "Rotation" << YAML::Value << tc.rotation;
 			out << YAML::Key << "Scale" << YAML::Value << tc.scale;
+			out << YAML::Key << "ParentEntityId" << YAML::Value << tc.parentId;
 
 			out << YAML::EndMap; // TransformComponent
 		}
@@ -614,7 +529,19 @@ namespace Shado {
 			out << YAML::EndMap; // ScriptComponent
 		}
 
-		out << YAML::EndMap; // Entity
+		if (entity.hasComponent<PrefabInstanceComponent>())
+		{
+			auto& prefabComponent = entity.getComponent<PrefabInstanceComponent>();
+
+			out << YAML::Key << "PrefabInstanceComponent";
+			out << YAML::BeginMap; // PrefabInstanceComponent
+			out << YAML::Key << "PrefabId" << YAML::Value << prefabComponent.prefabId;
+
+			out << YAML::EndMap; // PrefabInstanceComponent
+		}
+
+		if (endmap)
+			out << YAML::EndMap; // Entity
 	}
 
 	static std::string getPathAndCopyFileToAssets(const std::string& path) {
@@ -644,5 +571,205 @@ namespace Shado {
 
 		// Return newFilePath relative to the projectPath
 		return newFilePath.string().substr(projectPath.string().length() + 1);
+	}
+
+	static Entity dererializeEntityHelper(
+		YAML::Node entity,
+		std::function<Entity(std::string, UUID)> entityCreatorFunction,
+		Ref<Scene> scene
+	) {
+		uint64_t uuid = entity["Entity"].as<uint64_t>(); // TODO
+
+		std::string name;
+		auto tagComponent = entity["TagComponent"];
+		if (tagComponent)
+			name = tagComponent["Tag"].as<std::string>();
+
+		SHADO_CORE_TRACE("Deserialized entity with ID = {0}, name = {1}", uuid, name);
+
+		Entity deserializedEntity = entityCreatorFunction(name, uuid);
+
+		auto transformComponent = entity["TransformComponent"];
+		if (transformComponent)
+		{
+			// Entities always have transforms
+			auto& tc = deserializedEntity.getComponent<TransformComponent>();
+			tc.position = transformComponent["Translation"].as<glm::vec3>();
+			tc.rotation = transformComponent["Rotation"].as<glm::vec3>();
+			tc.scale = transformComponent["Scale"].as<glm::vec3>();
+
+			// Note: the reason this is this way is because if the serialization order is random then 
+			// the child will be loaded before the parent and getEntityById will return invalid entity
+			// even though the child had a valid parent on serialization
+			if (transformComponent["ParentEntityId"]) {
+				tc.parentId = transformComponent["ParentEntityId"].as<uint64_t>();
+			}
+
+		}
+
+		auto cameraComponent = entity["CameraComponent"];
+		if (cameraComponent)
+		{
+			auto& cameraProps = cameraComponent["Camera"];
+			CameraComponent::Type type = (CameraComponent::Type)cameraProps["ProjectionType"].as<int>();
+
+			auto& cc = deserializedEntity.addComponent<CameraComponent>(type, scene->getViewport().x, scene->getViewport().y);
+			cc.camera->setNearClip(cameraProps["Near"].as<float>());
+			cc.camera->setFarClip(cameraProps["Far"].as<float>());
+
+
+			switch (type) {
+			case CameraComponent::Type::Orthographic:
+				cc.setSize(cameraProps["OrthographicSize"].as<float>());
+				break;
+			case CameraComponent::Type::Orbit:
+				OrbitCamera* orbitCam = (OrbitCamera*)cc.camera.Raw();
+				orbitCam->setFOV(cameraProps["PerspectiveFOV"].as<float>());
+				break;
+			}
+
+			cc.primary = cameraComponent["Primary"].as<bool>();
+			cc.fixedAspectRatio = cameraComponent["FixedAspectRatio"].as<bool>();
+		}
+
+		auto spriteRendererComponent = entity["SpriteRendererComponent"];
+		if (spriteRendererComponent)
+		{
+			auto& src = deserializedEntity.addComponent<SpriteRendererComponent>();
+			auto texturePath = spriteRendererComponent["Texture"].as<std::string>();
+			src.color = spriteRendererComponent["Color"].as<glm::vec4>();
+			src.texture = texturePath == "NULL" || texturePath == "null" ?
+				nullptr : new Texture2D(
+					Project::GetActive() ?
+					(Project::GetProjectDirectory() / texturePath).string() : texturePath
+				);
+			src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
+		}
+
+		auto circleRendererComponent = entity["CircleRendererComponent"];
+		if (circleRendererComponent)
+		{
+			auto& src = deserializedEntity.addComponent<CircleRendererComponent>();
+
+			src.color = circleRendererComponent["Color"].as<glm::vec4>();
+			src.thickness = circleRendererComponent["Thickness"].as<float>();
+			src.fade = circleRendererComponent["Fade"].as<float>();
+
+			auto texturePath = circleRendererComponent["Texture"].as<std::string>();
+			src.texture = texturePath == "NULL" || texturePath == "null" ?
+				nullptr : new Texture2D(
+					Project::GetActive() ?
+					(Project::GetProjectDirectory() / texturePath).string() : texturePath
+				);
+			src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
+		}
+
+		auto lineRendererComponent = entity["LineRendererComponent"];
+		if (lineRendererComponent)
+		{
+			auto& src = deserializedEntity.addComponent<LineRendererComponent>();
+			src.color = lineRendererComponent["Color"].as<glm::vec4>();
+			src.target = lineRendererComponent["Target"].as<glm::vec3>();
+		}
+
+		auto rigidBodyComponent = entity["RigidBody2DComponent"];
+		if (rigidBodyComponent)
+		{
+			auto& src = deserializedEntity.addComponent<RigidBody2DComponent>();
+			src.type = (RigidBody2DComponent::BodyType)rigidBodyComponent["Type"].as<int>();
+			src.fixedRotation = rigidBodyComponent["FixedRotation"].as<bool>();
+		}
+
+		auto boxColliderComponent = entity["BoxCollider2DComponent"];
+		if (boxColliderComponent)
+		{
+			auto& src = deserializedEntity.addComponent<BoxCollider2DComponent>();
+			src.offset = boxColliderComponent["Offset"].as<glm::vec2>();
+			src.size = boxColliderComponent["Size"].as<glm::vec2>();
+			src.density = boxColliderComponent["Density"].as<float>();
+			src.friction = boxColliderComponent["Friction"].as<float>();
+			src.restitution = boxColliderComponent["Restitution"].as<float>();
+			src.restitutionThreshold = boxColliderComponent["RestitutionThreshold"].as<float>();
+		}
+
+		auto circleCollider2DComponent = entity["CircleCollider2DComponent"];
+		if (circleCollider2DComponent)
+		{
+			auto& src = deserializedEntity.addComponent<CircleCollider2DComponent>();
+			src.offset = circleCollider2DComponent["Offset"].as<glm::vec2>();
+
+			glm::vec2 tempRadius = circleCollider2DComponent["Radius"].as<glm::vec2>();
+			src.radius = glm::vec2(tempRadius);
+
+			src.density = circleCollider2DComponent["Density"].as<float>();
+			src.friction = circleCollider2DComponent["Friction"].as<float>();
+			src.restitution = circleCollider2DComponent["Restitution"].as<float>();
+			src.restitutionThreshold = circleCollider2DComponent["RestitutionThreshold"].as<float>();
+		}
+
+		auto scriptComponent = entity["ScriptComponent"];
+		if (scriptComponent)
+		{
+			auto& sc = deserializedEntity.addComponent<ScriptComponent>();
+			sc.ClassName = scriptComponent["ClassName"].as<std::string>();
+
+			auto scriptFields = scriptComponent["ScriptFields"];
+			if (scriptFields)
+			{
+				Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName);
+				if (entityClass)
+				{
+					const auto& fields = entityClass->GetFields();
+					auto& entityFields = ScriptEngine::GetScriptFieldMap(deserializedEntity);
+
+					for (auto scriptField : scriptFields)
+					{
+						std::string name = scriptField["Name"].as<std::string>();
+						std::string typeString = scriptField["Type"].as<std::string>();
+						ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+
+						ScriptFieldInstance& fieldInstance = entityFields[name];
+
+						// TODO(Yan): turn this assert into Hazelnut log warning
+						SHADO_CORE_ASSERT(fields.find(name) != fields.end(), "");
+
+						if (fields.find(name) == fields.end())
+							continue;
+
+						fieldInstance.Field = fields.at(name);
+
+						switch (type)
+						{
+							READ_SCRIPT_FIELD(Float, float);
+							READ_SCRIPT_FIELD(Double, double);
+							READ_SCRIPT_FIELD(Bool, bool);
+							READ_SCRIPT_FIELD(Char, char);
+							READ_SCRIPT_FIELD(Byte, int8_t);
+							READ_SCRIPT_FIELD(Short, int16_t);
+							READ_SCRIPT_FIELD(Int, int32_t);
+							READ_SCRIPT_FIELD(Long, int64_t);
+							READ_SCRIPT_FIELD(UByte, uint8_t);
+							READ_SCRIPT_FIELD(UShort, uint16_t);
+							READ_SCRIPT_FIELD(UInt, uint32_t);
+							READ_SCRIPT_FIELD(ULong, uint64_t);
+							READ_SCRIPT_FIELD(Vector2, glm::vec2);
+							READ_SCRIPT_FIELD(Vector3, glm::vec3);
+							READ_SCRIPT_FIELD(Vector4, glm::vec4);
+							READ_SCRIPT_FIELD(Colour, glm::vec4);
+							READ_SCRIPT_FIELD(Entity, UUID);
+						}
+					}
+				}
+			}
+		}
+
+		auto prefabComponent = entity["PrefabInstanceComponent"];
+		if (prefabComponent)
+		{
+			auto& sc = deserializedEntity.addComponent<PrefabInstanceComponent>();
+			sc.prefabId = prefabComponent["PrefabId"].as<uint64_t>();
+		}
+
+		return deserializedEntity;
 	}
 }

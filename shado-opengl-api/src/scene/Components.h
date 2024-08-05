@@ -8,6 +8,7 @@
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
+#include "../../../shado-editor/EditorEvents.h"
 //#include "script/ScriptManager.h"
 
 namespace Shado {
@@ -27,6 +28,7 @@ namespace Shado {
 		glm::vec3 position = { 0, 0, 0 };
 		glm::vec3 rotation = {0, 0, 0};
 		glm::vec3 scale = { 1.0f, 1.0f, 1.0f };
+		UUID parentId = 0;
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent&) = default;
@@ -34,7 +36,34 @@ namespace Shado {
 
 		glm::mat4 getTransform() const {
 			glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
+			glm::mat4 localTransform = glm::translate(glm::mat4(1.0f), position) * _rotation * glm::scale(glm::mat4(1.0f), scale);
+
+			Entity parent = getParent();
+			if (parent.isValid()) {
+				return parent.getComponent<TransformComponent>().getTransform() + localTransform;
+			} else {
+				return localTransform;
+			}
+		}
+
+		glm::mat4 getLocalTransform() const {
+			glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
 			return glm::translate(glm::mat4(1.0f), position) * _rotation * glm::scale(glm::mat4(1.0f), scale);
+		}
+
+		void setParent(Entity target, Entity parent) {
+			// Push undo event
+			Application::get().onEvent(EditorEntityChanged(EditorEntityChanged::ChangeType::ENTITY_PARENT_CHANGED, target));
+
+			// Change entity parent
+			if (parent)
+				this->parentId = parent.getUUID();
+			else
+				this->parentId = 0;
+		}
+
+		Entity getParent() const {
+			return Scene::ActiveScene->getEntityById(parentId);
 		}
 	};
 	
@@ -211,6 +240,10 @@ namespace Shado {
 		CircleCollider2DComponent(const CircleCollider2DComponent&) = default;
 	};
 
+	struct PrefabInstanceComponent {
+		UUID prefabId = 0;
+	};
+
 	template<typename... Component>
 	struct ComponentGroup
 	{
@@ -220,5 +253,5 @@ namespace Shado {
 		ComponentGroup<TagComponent, TransformComponent, SpriteRendererComponent,
 		CircleRendererComponent, LineRendererComponent, CameraComponent, ScriptComponent,
 		NativeScriptComponent, RigidBody2DComponent, BoxCollider2DComponent,
-		CircleCollider2DComponent>;
+		CircleCollider2DComponent, PrefabInstanceComponent>;
 }

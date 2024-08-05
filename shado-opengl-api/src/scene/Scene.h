@@ -9,6 +9,7 @@ class b2World;
 
 namespace Shado {
 	class Entity;
+	class Prefab;
 
 	class Scene : public RefCounted  {
 	public:
@@ -20,6 +21,7 @@ namespace Shado {
 		Entity createEntityWithUUID(const std::string& name, Shado::UUID id);
 		Entity duplicateEntity(Entity entity);
 		void destroyEntity(Entity entity);
+		void instantiatePrefab(Ref<Prefab> prefab);
 
 		void onRuntimeStart();
 		void onRuntimeStop();
@@ -36,6 +38,9 @@ namespace Shado {
 		Entity getEntityById(uint64_t id);
 		Entity findEntityByName(std::string_view name);
 		const entt::registry& getRegistry() { return m_Registry; }
+		glm::vec2 getViewport() const {
+			return { m_ViewportWidth , m_ViewportHeight };
+		}
 
 		void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
 		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime

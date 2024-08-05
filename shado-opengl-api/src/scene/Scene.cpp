@@ -13,6 +13,7 @@
 #include "box2d/b2_contact.h"
 
 #include "script/ScriptEngine.h"
+#include "Prefab.h"
 
 namespace Shado {
 	/**
@@ -144,9 +145,11 @@ namespace Shado {
 	static Physics2DCallback* s_physics2DCallback = nullptr;
 
 	template<typename Component>
-	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap);
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap, Scene& scene);
 	template<typename Component>
 	static void CopyComponentIfExists(Entity dst, Entity src);
+	template<>
+	static void CopyComponentIfExists<ScriptComponent>(Entity dst, Entity src);
 
 	Scene::Scene() {
 	}
@@ -171,16 +174,17 @@ namespace Shado {
 		}
 
 		// Copy components (except ID Component and Tag component)
-		CopyComponent<TransformComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<SpriteRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<CircleRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<LineRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<CameraComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<BoxCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<CircleCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-		CopyComponent<ScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<TransformComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<SpriteRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<CircleRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<LineRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<CameraComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<BoxCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<CircleCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<ScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyComponent<PrefabInstanceComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
 	}
 
 	Scene::~Scene() {
@@ -218,6 +222,8 @@ namespace Shado {
 		CopyComponentIfExists<RigidBody2DComponent>(newEntity, source);
 		CopyComponentIfExists<BoxCollider2DComponent>(newEntity, source);
 		CopyComponentIfExists<CircleCollider2DComponent>(newEntity, source);
+		CopyComponentIfExists<ScriptComponent>(newEntity, source);
+		CopyComponentIfExists<PrefabInstanceComponent>(newEntity, source);
 
 		return newEntity;
 	}
@@ -254,6 +260,21 @@ namespace Shado {
 		}
 
 		m_Registry.destroy(entity);
+	}
+
+	static Entity instantiatePrefabHelper(Scene& scene, Entity toDuplicate) {
+		Entity duplicated = scene.duplicateEntity(toDuplicate);
+
+		for (const auto& oldChild : toDuplicate.getChildren()) {
+			Entity newChild = instantiatePrefabHelper(scene, oldChild);
+			newChild.getComponent<TransformComponent>().setParent(newChild, duplicated);
+		}
+
+		return duplicated;
+	}
+	void Scene::instantiatePrefab(Ref<Prefab> prefab)
+	{
+		instantiatePrefabHelper(*this, prefab->root);
 	}
 
 	void Scene::onRuntimeStart() {
@@ -591,7 +612,7 @@ namespace Shado {
 
 	// Helpers
 	template<typename Component>
-	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap, Scene& scene)
 	{
 		auto view = src.view<Component>();
 		for (auto e : view)
@@ -610,6 +631,43 @@ namespace Shado {
 	{
 		if (src.hasComponent<Component>())
 			dst.addOrReplaceComponent<Component>(src.getComponent<Component>());
+	}
+
+	template<>
+	static void CopyComponentIfExists<ScriptComponent>(Entity dst, Entity src)
+	{
+		if (src.hasComponent<ScriptComponent>()) {
+			dst.addOrReplaceComponent<ScriptComponent>(src.getComponent<ScriptComponent>());
+		} else {
+			return;
+		}
+
+		const Scene& sc = src.getScene();
+		if (!sc.isRunning()) {
+			auto& srcComponent = src.getComponent<ScriptComponent>();
+			auto& dstComponent = dst.getComponent<ScriptComponent>();
+			bool scriptClassExists = ScriptEngine::EntityClassExists(srcComponent.ClassName);
+
+			if (scriptClassExists) {
+				Ref<ScriptClass> klass = ScriptEngine::GetEntityClass(srcComponent.ClassName);
+				const auto& srcFields = klass->GetFields();
+
+				if (klass) {
+					auto& srcFieldMap = ScriptEngine::GetScriptFieldMap(src);
+					auto& dstFieldMap = ScriptEngine::GetScriptFieldMap(dst);
+				
+					// Copy fields 
+					for (const auto& [name, field] : srcFields) {
+						if (srcFieldMap.find(name) != srcFieldMap.end()) {
+							dstFieldMap[name] = srcFieldMap[name];
+						}					
+					}
+				}
+			}
+
+		} else {
+			SHADO_CORE_WARN("Cannot copy script components while the scene is running");
+		}
 	}
 
 

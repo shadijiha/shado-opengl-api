@@ -60,7 +60,7 @@ project "shado-opengl-api"
         postbuildcommands
         {
             ("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/shado-editor"),
-            ("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/sandbox"),
+            --("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/sandbox"),
         }
 
     filter "configurations:Debug"

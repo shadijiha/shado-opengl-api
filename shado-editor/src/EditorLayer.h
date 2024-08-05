@@ -3,6 +3,7 @@
 #include "panels/ContentBrowserPanel.h"
 #include "panels/SceneHierarchyPanel.h"
 #include "panels/MemoryPanel.h"
+#include <deque>
 
 namespace Shado {
 
@@ -17,7 +18,13 @@ namespace Shado {
 		void onDestroy() override;
 		void onEvent(Event& event) override;
 
-	
+		inline void pushUndoQueue() {
+			// If the undo queue is full, pop the front element
+			if (m_UndoQueue.size() >= 20)
+				m_UndoQueue.pop_front();
+			m_UndoQueue.push_back(CreateRef<Scene>(*m_EditorScene.Raw()));
+		}
+
 	private:
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onMouseButtonPressed(MouseButtonPressedEvent& e);
@@ -29,6 +36,7 @@ namespace Shado {
 
 		void onScenePlay();
 		void onSceneStop();
+		void setActiveScene(Ref<Scene> scene);
 
 		// UI Stuff
 		void UI_ToolBar();
@@ -38,7 +46,7 @@ namespace Shado {
 	private:
 		EditorCamera m_EditorCamera;
 
-		bool m_viewportFocused = false, m_viewportHovered = false;
+		bool m_viewportFocused = false, m_viewportHovered = false, m_lastFrameGuizmosIsUsing = false;
 		glm::vec2 m_ViewportSize = {0, 0};
 		Ref<Framebuffer> buffer;
 
@@ -48,6 +56,7 @@ namespace Shado {
 		// Scenes
 		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene;
+		std::deque<Ref<Scene>> m_UndoQueue;
 
 		int m_GuizmosOperation = -1;
 		std::string m_ScenePath;

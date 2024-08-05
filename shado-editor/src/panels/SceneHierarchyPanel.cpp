@@ -33,7 +33,10 @@ namespace Shado {
 
 			m_Context->m_Registry.each([this](auto entityID) {
 				Entity entity = { entityID, m_Context.Raw() };
-				drawEntityNode(entity);
+
+				// Only draw entities without parent
+				if (!entity.isChild())
+					drawEntityNode(entity);
 			});
 
 			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
@@ -47,6 +50,7 @@ namespace Shado {
 
 				ImGui::EndPopup();
 			}
+
 		}
 		ImGui::End();
 
@@ -89,12 +93,44 @@ namespace Shado {
 				m_Context->duplicateEntity(m_Selected);
 
 			if (ImGui::MenuItem("Delete Entity"))
-				deleteEntity = true;			
+				deleteEntity = true;		
+
+			if (ImGui::MenuItem("Reset parent"))
+				entity.getComponent<TransformComponent>().setParent(entity, {});
 
 			ImGui::EndPopup();
 		}
 
+		// Drag and drop child
+		{
+			ImGuiDragDropFlags src_flags = 0;
+			src_flags |= ImGuiDragDropFlags_SourceNoDisableHover;     // Keep the source displayed as hovered
+			if (ImGui::BeginDragDropSource(src_flags))
+			{
+				if (!(src_flags & ImGuiDragDropFlags_SourceNoPreviewTooltip))
+					ImGui::Text("Moving \"%s\"", tc.tag.c_str());
+				ImGui::SetDragDropPayload(SceneHeirarchyEntityDragDropId.c_str(), &entity.getUUID(), sizeof(UUID));
+				ImGui::EndDragDropSource();
+			}
+
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(SceneHeirarchyEntityDragDropId.c_str()))
+				{
+					UUID childID = *(const UUID*)payload->Data;
+					Entity childEntity = m_Context->getEntityById(childID);
+					childEntity.getComponent<TransformComponent>().setParent(childEntity, entity);
+				}
+				ImGui::EndDragDropTarget();
+			}
+		}
+
 		if (opened) {
+			// Display children
+			for (Entity child : entity.getChildren()) {
+				drawEntityNode(child);
+			}
 			ImGui::TreePop();
 		}
 
@@ -143,6 +179,10 @@ namespace Shado {
 
 			drawVec3Control("Scale", transform.scale, 1.0);
 		}, false);
+
+		drawComponent<PrefabInstanceComponent>("Prefab Source", entity, [](PrefabInstanceComponent& prefabInstanceComponent) {
+			ImGui::Text("Prefab ID: %llu", prefabInstanceComponent.prefabId);
+		});
 
 		drawComponent<SpriteRendererComponent>("Sprite", entity, [](SpriteRendererComponent& sprite) {
 			ImGui::ColorEdit4("Colour", glm::value_ptr(sprite.color));
