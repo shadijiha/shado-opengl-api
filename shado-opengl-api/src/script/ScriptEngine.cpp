@@ -41,6 +41,7 @@ namespace Shado {
 		{ "Shado.Colour", ScriptFieldType::Colour },
 
 		{ "Shado.Entity", ScriptFieldType::Entity },
+		{ "Shado.Prefab", ScriptFieldType::Prefab },
 	};
 
 	namespace Utils {
@@ -573,6 +574,10 @@ namespace Shado {
 		std::string result(ptr);
 		mono_free(ptr);
 		return result;
+	}
+
+	ScriptInstance ScriptEngine::InstanceFromRawObject(MonoObject* object) {
+		return ScriptInstance(CreateRef<ScriptClass>(mono_object_get_class(object)), object);
 	}
 
 	MonoImage* ScriptEngine::GetCoreAssemblyImage()

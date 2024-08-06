@@ -210,11 +210,11 @@ namespace Shado {
 		ImGui::Separator();
 	}
 
-	bool UI::InputTextControl(const std::string& tag, std::string& value) {
+	bool UI::InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags) {
 		char buffer[512];
 		memset(buffer, 0, sizeof(buffer));
 		strcpy_s(buffer, sizeof(buffer), value.c_str());
-		if (ImGui::InputText(tag.c_str(), buffer, sizeof(buffer))) {
+		if (ImGui::InputText(tag.c_str(), buffer, sizeof(buffer), flags)) {
 			value = std::string(buffer);
 			return true;
 		}

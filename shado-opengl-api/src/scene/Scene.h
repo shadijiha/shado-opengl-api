@@ -21,7 +21,7 @@ namespace Shado {
 		Entity createEntityWithUUID(const std::string& name, Shado::UUID id);
 		Entity duplicateEntity(Entity entity);
 		void destroyEntity(Entity entity);
-		void instantiatePrefab(Ref<Prefab> prefab);
+		Entity instantiatePrefab(Ref<Prefab> prefab);
 
 		void onRuntimeStart();
 		void onRuntimeStop();

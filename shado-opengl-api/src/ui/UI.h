@@ -35,7 +35,7 @@ namespace Shado {
 
 		static void TextureControl(Ref<Shado::Texture2D>& texture);
 
-		static bool InputTextControl(const std::string& tag, std::string& value);
+		static bool InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags = 0);
 
 		static bool ButtonControl(const std::string& value, const glm::vec2& size = { 0, 0 });
 

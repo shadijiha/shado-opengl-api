@@ -22,7 +22,10 @@ namespace Sandbox
         public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
         private Test other;
+        public Prefab linePrefab;
         //private ParticuleSystem particuleSystem;
+
+        public ShadoEvent events;
 
         void OnCreate() {
             GetComponent<SpriteRendererComponent>().texture = texture;
@@ -46,9 +49,9 @@ namespace Sandbox
             //particuleSystem = Create<ParticuleSystem>();
             //particuleSystem.OnCreate();
             
-            foreach(var result in Entity.FindEntityByName("Line").children)
+            if (linePrefab)
             {
-                Log.Info(result.tag);
+                Entity e = linePrefab.Instantiate(Vector3.one);
             }
         }
 

@@ -520,6 +520,7 @@ namespace Shado {
 							WRITE_SCRIPT_FIELD(Vector4, glm::vec4);
 							WRITE_SCRIPT_FIELD(Colour, glm::vec4);
 							WRITE_SCRIPT_FIELD(Entity, UUID);
+							WRITE_SCRIPT_FIELD(Prefab, UUID);
 						}
 						out << YAML::EndMap; // ScriptFields
 					}
@@ -757,6 +758,7 @@ namespace Shado {
 							READ_SCRIPT_FIELD(Vector4, glm::vec4);
 							READ_SCRIPT_FIELD(Colour, glm::vec4);
 							READ_SCRIPT_FIELD(Entity, UUID);
+							READ_SCRIPT_FIELD(Prefab, uint64_t);
 						}
 					}
 				}

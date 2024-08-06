@@ -259,6 +259,12 @@ namespace Shado {
 	
 		}
 
+
+		// Destroy children
+		for (const auto& child : entity.getChildren()) {
+			destroyEntity(child);
+		}
+
 		m_Registry.destroy(entity);
 	}
 
@@ -272,9 +278,9 @@ namespace Shado {
 
 		return duplicated;
 	}
-	void Scene::instantiatePrefab(Ref<Prefab> prefab)
+	Entity Scene::instantiatePrefab(Ref<Prefab> prefab)
 	{
-		instantiatePrefabHelper(*this, prefab->root);
+		return instantiatePrefabHelper(*this, prefab->root);
 	}
 
 	void Scene::onRuntimeStart() {
@@ -643,7 +649,7 @@ namespace Shado {
 		}
 
 		const Scene& sc = src.getScene();
-		if (!sc.isRunning()) {
+		if (!&sc || !sc.isRunning()) {
 			auto& srcComponent = src.getComponent<ScriptComponent>();
 			auto& dstComponent = dst.getComponent<ScriptComponent>();
 			bool scriptClassExists = ScriptEngine::EntityClassExists(srcComponent.ClassName);

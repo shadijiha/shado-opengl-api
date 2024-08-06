@@ -52,7 +52,8 @@ namespace Shado {
 		UUID getUUID() const;
 
 		const Scene& getScene() const { return *m_Scene; }
-
+		void setScene(Scene* scene) { m_Scene = scene; }
+		
 		std::vector<Entity> getChildren() const;
 
 		operator bool()		const { return isValid(); }

@@ -323,8 +323,13 @@ namespace Shado
         #region Scene
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static Entity[] Scene_GetAllEntities();
-        
 
+
+		#endregion
+
+		#region PrefabExt
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static ulong PrefabExt_Instantiate(ulong prefabId, Vector3 position);
         #endregion
-	}
+    }
 }

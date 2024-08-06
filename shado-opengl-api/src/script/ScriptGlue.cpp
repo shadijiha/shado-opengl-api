@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "renderer/Framebuffer.h"
+#include "scene/Prefab.h"
 
 namespace Shado {
 
@@ -1261,6 +1262,20 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 	}
 #pragma endregion
 
+#pragma region PrefabExt
+	static uint64_t PrefabExt_Instantiate(uint64_t prefabId, glm::vec3 position) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Ref<Prefab> prefab = Prefab::GetPrefabById(prefabId);
+		SHADO_CORE_ASSERT(prefab, "Invalid prefab ID");
+
+		Entity entity = scene->instantiatePrefab(prefab);
+		entity.getComponent<TransformComponent>().position = position;
+
+		return entity.getUUID();
+	}
+#pragma endregion
+
 	/**
 	 *
 	 */
@@ -1501,6 +1516,11 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsLinkDestroyed);
 			}
 			SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsLinkCreated);			
+		}
+
+		// PrefabExt
+		{
+			SHADO_ADD_INTERNAL_CALL(PrefabExt_Instantiate);
 		}
 	}
 }

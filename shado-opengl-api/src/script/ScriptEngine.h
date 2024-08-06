@@ -30,7 +30,7 @@ namespace Shado {
 		Bool, Char, Byte, Short, Int, Long,
 		UByte, UShort, UInt, ULong,
 		Vector2, Vector3, Vector4, Colour,
-		Entity
+		Entity, Prefab
 	};
 
 	struct ScriptField
@@ -200,6 +200,7 @@ namespace Shado {
 
 		static MonoString* NewString(const char* str);
 		static std::string MonoStrToUT8(MonoString* str);
+		static ScriptInstance InstanceFromRawObject(MonoObject* object);
 	private:
 		static void InitMono();
 		static void ShutdownMono();
@@ -238,6 +239,7 @@ namespace Shado {
 			case ScriptFieldType::Vector4: return "Vector4";
 			case ScriptFieldType::Colour:  return "Colour";
 			case ScriptFieldType::Entity:  return "Entity";
+			case ScriptFieldType::Prefab:  return "Prefab";
 			}
 			SHADO_CORE_ASSERT(false, "Unknown ScriptFieldType");
 			return "None";
@@ -263,7 +265,7 @@ namespace Shado {
 			if (fieldType == "Vector4") return ScriptFieldType::Vector4;
 			if (fieldType == "Entity")  return ScriptFieldType::Entity;
 			if (fieldType == "Colour")	return ScriptFieldType::Colour;
-
+			if (fieldType == "Prefab")	return ScriptFieldType::Prefab;
 			SHADO_CORE_ASSERT(false, "Unknown ScriptFieldType");
 			return ScriptFieldType::None;
 		}

@@ -9,6 +9,8 @@
 #include "ui/UI.h"
 #include "ui/imnodes.h"
 #include <box2d/b2_body.h>
+#include "project/Project.h"
+#include "scene/Prefab.h"
 
 namespace Shado {
 	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
@@ -309,6 +311,11 @@ namespace Shado {
 
 		drawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable
 			{
+				// TODO: Find a better way to organize this code
+				struct PrefabCSMirror {
+					uint64_t id;
+				};
+
 				bool scriptClassExists = ScriptEngine::EntityClassExists(component.ClassName);
 
 				static char buffer[64];
@@ -355,6 +362,17 @@ namespace Shado {
 								{
 									scriptInstance->SetFieldValue(name, data);
 								}
+							} else if (field.Type == ScriptFieldType::Prefab) {
+
+								PrefabCSMirror data = scriptInstance->GetFieldValue<PrefabCSMirror>(name);
+								if (data.id != 0) {
+									std::string prefabIdStr = std::to_string(data.id);
+									UI::InputTextControl(name + "##prefabid", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+								} else {
+									std::string prefabIdStr = "(empty)";
+									UI::InputTextControl(name + "##prefabid", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+								}
+
 							}
 							else {
 								ScriptEngine::DrawCustomEditorForFieldRunning(field, scriptInstance, name);
@@ -394,6 +412,17 @@ namespace Shado {
 									glm::vec4 data = scriptField.GetValue<glm::vec4>();
 									if (UI::ColorControl(name, data))
 										scriptField.SetValue(data);
+								} else if (field.Type == ScriptFieldType::Prefab) {
+
+									PrefabCSMirror data = scriptField.GetValue<PrefabCSMirror>();
+									if (data.id != 0) {
+										std::string prefabIdStr = std::to_string(data.id);
+										UI::InputTextControl(name + "##prefabid", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+									} else {
+										std::string prefabIdStr = "(empty)";
+										UI::InputTextControl(name + "##prefabid", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+									}
+
 								}
 								else {
 									// TODO: How should we deal with complex types when seralizing?
@@ -429,6 +458,32 @@ namespace Shado {
 										ScriptFieldInstance& fieldInstance = entityFields[name];
 										fieldInstance.Field = field;
 										fieldInstance.SetValue(data);
+									}
+								} else if (field.Type == ScriptFieldType::Prefab) {
+									// TODO: Make it so you can drag and drop prefab from content plane or scene hiarchy
+									UUID prefabId = 0;
+									std::string prefabIdStr = prefabId == 0 ? "(empty)" : std::to_string(prefabId);
+									UI::InputTextControl(name + "##prefabid", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+
+									if (ImGui::BeginDragDropTarget()) {
+										if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+											const wchar_t* pathStr = (const wchar_t*)payload->Data;
+											auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
+											auto extension = path.extension();
+
+											if (extension == ".prefab") {
+
+												// Dumb prefab to scene
+												UUID prefabId = std::stoull(path.filename().replace_extension());
+
+												Ref<Prefab> prefab = Prefab::GetPrefabById(prefabId);
+												ScriptFieldInstance& fieldInstance = entityFields[name];
+												fieldInstance.Field = field;
+												fieldInstance.SetValue(PrefabCSMirror { prefabId });
+											}
+										}
+
+										ImGui::EndDragDropTarget();
 									}
 								}
 								else {
