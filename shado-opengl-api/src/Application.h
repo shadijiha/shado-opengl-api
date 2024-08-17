@@ -18,7 +18,13 @@ namespace Shado {
 		static void destroy();
 
 		static void close();
-		
+
+		template<typename T>
+		static void dispatchEvent(T& event) {
+			static_assert(std::is_base_of<Event, T>::value, "Event must be derived from Event class");
+			Application& app = get();
+			app.onEvent(event);	
+		}
 
 		void run();
 		void submit(Layer* scene);

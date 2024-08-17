@@ -7,6 +7,7 @@
 #include "Events/ApplicationEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
+#include "project/Project.h"
 #include "util/Random.h"
 
 namespace Shado {
@@ -136,6 +137,22 @@ namespace Shado {
 		dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& evt) {
 			m_Running = false;
 			return true;
+		});
+
+		dispatcher.dispatch<ProjectChangedEvent>([this](ProjectChangedEvent& evt) {
+			this->getWindow().setTitle(
+#ifdef SHADO_DEBUG
+				"[Debug]" +
+#elif SHADO_RELEASE
+				"[Release] " +
+#elif SHADO_DIST
+				"[Dist] " +
+#else
+				"[Unknown build config] " +
+#endif				
+				evt.getProject()->GetConfig().Name + " - " + evt.getProject()->GetProjectDirectory().string()
+			);
+			return false;
 		});
 
 		// Distaptch the event and excute the required code

@@ -53,7 +53,7 @@ namespace Shado {
 
 		void setParent(Entity target, Entity parent) {
 			// Push undo event
-			Application::get().onEvent(EditorEntityChanged(EditorEntityChanged::ChangeType::ENTITY_PARENT_CHANGED, target));
+			Application::dispatchEvent(EditorEntityChanged(EditorEntityChanged::ChangeType::ENTITY_PARENT_CHANGED, target));
 
 			// Change entity parent
 			if (parent)

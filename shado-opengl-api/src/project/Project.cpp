@@ -1,5 +1,6 @@
 #include "Project.h"
 
+#include "Application.h"
 #include "ProjectSerializer.h"
 
 namespace Shado {
@@ -7,6 +8,7 @@ namespace Shado {
 	Ref<Project> Project::New()
 	{
 		s_ActiveProject = CreateRef<Project>();
+		Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
 		return s_ActiveProject;
 	}
 
@@ -19,9 +21,11 @@ namespace Shado {
 		{
 			project->m_ProjectDirectory = path.parent_path();
 			s_ActiveProject = project;
+
+			Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
 			return s_ActiveProject;
 		}
-
+		
 		return nullptr;
 	}
 
@@ -31,10 +35,17 @@ namespace Shado {
 		if (serializer.Serialize(path))
 		{
 			s_ActiveProject->m_ProjectDirectory = path.parent_path();
+
+			Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
 			return true;
 		}
 
 		return false;
 	}
 
+	ProjectChangedEvent::ProjectChangedEvent(const Ref<Project>& project)
+		: m_Project(project)
+	{
+	}
+	
 }

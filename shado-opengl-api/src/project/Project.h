@@ -3,6 +3,7 @@
 #include <string>
 #include <filesystem>
 #include "debug/Debug.h"
+#include "Events/Event.h"
 
 namespace Shado {
 
@@ -38,7 +39,8 @@ namespace Shado {
 			return GetAssetDirectory() / path;
 		}
 
-		ProjectConfig& GetConfig() { return m_Config; }
+		ProjectConfig& GetConfig()				{ return m_Config; }
+		const ProjectConfig& GetConfig() const	{ return m_Config; }
 
 		static Ref<Project> GetActive() { return s_ActiveProject; }
 
@@ -52,4 +54,15 @@ namespace Shado {
 		inline static Ref<Project> s_ActiveProject;
 	};
 
+	class ProjectChangedEvent : public Event {
+	public:
+		ProjectChangedEvent(const Ref<Project>& project);
+
+		EVENT_CLASS_TYPE(ProjectChanged);
+		EVENT_CLASS_CATEGORY(EventCategoryProject);
+
+		const Ref<Project>& getProject() const { return m_Project; }
+	private:
+		const Ref<Project>& m_Project;
+	};
 }
