@@ -36,6 +36,7 @@ namespace Shado {
 		m_DirectoryIcon = CreateRef<Texture2D>("resources/icons/DirectoryIcon.png");
 		m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
 		m_SceneIcon = CreateRef<Texture2D>("resources/icons/scene.png");
+		m_PrefabIcon = CreateRef<Texture2D>("resources/icons/Prefab.png");
 	}
 
 	ContentBrowserPanel::ContentBrowserPanel(const std::filesystem::path& path)
@@ -44,7 +45,8 @@ namespace Shado {
 		m_DirectoryIcon = CreateRef<Texture2D>("resources/icons/DirectoryIcon.png");
 		m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
 		m_SceneIcon = CreateRef<Texture2D>("resources/icons/scene.png");
-
+		m_PrefabIcon = CreateRef<Texture2D>("resources/icons/Prefab.png");
+		
 		setDirectory(m_CurrentDirectory);
 	}
 
@@ -203,6 +205,8 @@ namespace Shado {
 			icon = getTextureCached(imagesThumbnails, path);
 		} else if (path.extension() == ".shadoscene") {
 			icon = m_SceneIcon;
+		} else if (path.extension() == ".prefab") {
+			icon = m_PrefabIcon;
 		}
 		return icon->getRendererID();
 	}
