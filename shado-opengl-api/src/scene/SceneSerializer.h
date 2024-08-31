@@ -11,7 +11,13 @@ namespace Shado {
 
 		void serialize(const std::string& filepath);
 		void serializeRuntime(const std::string& filepath);
-		UUID serializePrefab(Entity entity);
+
+		/// Saves prefab to disk. If prefabId is not provided, a new UUID is generated
+		/// otherwise old prefab is overwritten
+		/// @param entity The root entity of the prefab
+		/// @param prefabId The UUID of the prefab
+		/// @return The UUID of the prefab
+		UUID serializePrefab(Entity entity, UUID prefabId = UUID());
 
 		bool deserialize(const std::string& filepath, std::string& error);
 		bool deserialize(const std::string& filepath);

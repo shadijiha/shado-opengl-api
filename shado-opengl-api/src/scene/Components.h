@@ -34,13 +34,13 @@ namespace Shado {
 		TransformComponent(const TransformComponent&) = default;
 		TransformComponent(const glm::vec3& position) : position(position) {}
 
-		glm::mat4 getTransform() const {
+		glm::mat4 getTransform(Scene& scene) const {
 			glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
 			glm::mat4 localTransform = glm::translate(glm::mat4(1.0f), position) * _rotation * glm::scale(glm::mat4(1.0f), scale);
 
-			Entity parent = getParent();
+			Entity parent = getParent(scene);
 			if (parent.isValid()) {
-				return parent.getComponent<TransformComponent>().getTransform() + localTransform;
+				return parent.getComponent<TransformComponent>().getTransform(scene) + localTransform;
 			} else {
 				return localTransform;
 			}
@@ -62,8 +62,8 @@ namespace Shado {
 				this->parentId = 0;
 		}
 
-		Entity getParent() const {
-			return Scene::ActiveScene->getEntityById(parentId);
+		Entity getParent(Scene& sceneToLookup) const {
+			return sceneToLookup.getEntityById(parentId);
 		}
 	};
 	
@@ -242,8 +242,16 @@ namespace Shado {
 
 	struct PrefabInstanceComponent {
 		UUID prefabId = 0;
-	};
 
+		// Each entity inside the prefab has a unique id (different from the prefab id)
+		UUID prefabEntityUniqueId = 0;	// <-- We need this so we can propogate changes the prefab changes to the prefab instances
+
+		// Is valid?
+		operator bool() const {
+			return prefabId != 0 && prefabEntityUniqueId != 0;
+		}
+	};
+	
 	template<typename... Component>
 	struct ComponentGroup
 	{

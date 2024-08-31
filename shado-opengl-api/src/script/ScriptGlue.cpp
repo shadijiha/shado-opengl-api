@@ -71,8 +71,12 @@ namespace Shado {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, std::string("Entity ID ") + std::to_string(entityID) + " is invalid"); // <-- Do no use HasComponent and/or AddComponent in the constructor of a script
 
+		if (!entity) {
+			SHADO_CORE_ERROR(std::string("Entity ID ") + std::to_string(entityID) + " is invalid"); // <-- Do no use HasComponent and/or AddComponent in the constructor of a script
+			return false;
+		}
+		
 		MonoType* managedType = mono_reflection_type_get_type(componentType);
 		SHADO_CORE_ASSERT(s_EntityHasComponentFuncs.find(managedType) != s_EntityHasComponentFuncs.end(), "");
 		return s_EntityHasComponentFuncs.at(managedType)(entity);
@@ -903,6 +907,26 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 
 		return result;
 	}
+
+	static MonoString* Scene_LoadScene(MonoString* sceneName) {
+		// Search for the scene in the project directory
+		std::string sceneNameStr = ScriptEngine::MonoStrToUT8(sceneName);
+		const std::filesystem::path projectPath = Project::GetProjectDirectory();
+
+		// Search for the scene in the project directory recursively
+		std::filesystem::path scenePath;
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(projectPath)) {
+			if (entry.is_regular_file() && entry.path().filename().string().find(sceneNameStr) != std::string::npos) {
+				scenePath = entry.path();
+				break;
+			}
+		}
+		
+		// New scene
+		Application::dispatchEvent(SceneChangedEvent(scenePath));
+
+		return ScriptEngine::NewString(scenePath.string().c_str());
+	}
 #pragma endregion
 
 #pragma region Texture2D
@@ -1267,8 +1291,11 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		Ref<Prefab> prefab = Prefab::GetPrefabById(prefabId);
-		SHADO_CORE_ASSERT(prefab, "Invalid prefab ID");
-
+		
+		if (!prefab) {
+			return 0;
+		}
+		
 		Entity entity = scene->instantiatePrefab(prefab);
 		entity.getComponent<TransformComponent>().position = position;
 
@@ -1276,6 +1303,12 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 	}
 #pragma endregion
 
+#pragma region Mono
+	static MonoObject* Mono_GetGCHandleTarget(uint32_t handle) {
+		return mono_gchandle_get_target(handle);
+	}
+#pragma endregion 
+	
 	/**
 	 *
 	 */
@@ -1463,6 +1496,7 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		// Scene
 		{
 			SHADO_ADD_INTERNAL_CALL(Scene_GetAllEntities);
+			SHADO_ADD_INTERNAL_CALL(Scene_LoadScene);
 		}
 
 		// UI
@@ -1521,6 +1555,11 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		// PrefabExt
 		{
 			SHADO_ADD_INTERNAL_CALL(PrefabExt_Instantiate);
+		}
+
+		// Mono
+		{
+			SHADO_ADD_INTERNAL_CALL(Mono_GetGCHandleTarget);
 		}
 	}
 }

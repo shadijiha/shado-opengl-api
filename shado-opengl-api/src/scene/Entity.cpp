@@ -50,7 +50,18 @@ namespace Shado {
 		return children;
 	}
 
-	bool Entity::isChild() const {
-		return getComponent<TransformComponent>().getParent().isValid();
+	bool Entity::isChild(Scene& sceneToLookup) const {
+		return getComponent<TransformComponent>().getParent(sceneToLookup).isValid();
+	}
+
+	Entity Entity::findChildByTag(const std::string& tag) {
+		// Find the entity with the tag
+		for (auto child : getChildren()) {
+			if (child.getComponent<TagComponent>().tag == tag) {
+				return child;
+			}
+		}
+
+		return  {};
 	}
 }

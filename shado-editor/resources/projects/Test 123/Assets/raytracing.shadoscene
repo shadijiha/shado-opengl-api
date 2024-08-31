@@ -1,33 +1,48 @@
 Scene: Untitled
 Entities:
-  - Entity: 15108338217384973561
+  - Entity: 8726415708878521573
     TagComponent:
-      Tag: Boundary (3)
+      Tag: Boundary
     TransformComponent:
-      Translation: [0.778147757, -1.85558057, 0]
+      Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     LineRendererComponent:
       Color: [1, 1, 1, 1]
-      Target: [0.400000006, 2.0999999, 0]
+      Target: [1.5, 1.20000005, 0]
     ScriptComponent:
       ClassName: Sandbox.Boundary
       ScriptFields:
         []
-  - Entity: 14704666501876920994
+  - Entity: 17652823776061132680
     TagComponent:
-      Tag: Boundary (2)
+      Tag: BG
     TransformComponent:
-      Translation: [-0.47885865, 2.59781408, 0]
+      Translation: [0, 0, -0.100000001]
+      Rotation: [0, 0, 0]
+      Scale: [9.80000019, 6.80000019, 1]
+      ParentEntityId: 0
+    SpriteRendererComponent:
+      Color: [9.99999997e-07, 9.99989993e-07, 9.99989993e-07, 1]
+      Texture: "NULL"
+      TillingFactor: 1
+  - Entity: 13401263389545556633
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    LineRendererComponent:
-      Color: [1, 1, 1, 1]
-      Target: [1.60000002, 1.10000002, 0]
-    ScriptComponent:
-      ClassName: Sandbox.Boundary
-      ScriptFields:
-        []
+      ParentEntityId: 0
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        OrthographicSize: 5
+        Near: -2
+        Far: 100
+      Primary: true
+      FixedAspectRatio: false
   - Entity: 16511831124876557525
     TagComponent:
       Tag: RayTracing2D
@@ -35,6 +50,7 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [0.400000006, 0.400000006, 1]
+      ParentEntityId: 0
     CircleRendererComponent:
       Color: [0.474509805, 0.619607866, 0.929411769, 1]
       Texture: "NULL"
@@ -46,43 +62,33 @@ Entities:
       ScriptFields:
         - Name: angleStep
           Type: Float
-          Data: 360
-  - Entity: 13401263389545556633
+          Data: 10
+  - Entity: 14704666501876920994
     TagComponent:
-      Tag: Camera
+      Tag: Boundary (2)
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [-0.47885865, 2.59781408, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    CameraComponent:
-      Camera:
-        ProjectionType: 0
-        OrthographicSize: 5
-        Near: -2
-        Far: 100
-      Primary: true
-      FixedAspectRatio: false
-  - Entity: 17652823776061132680
-    TagComponent:
-      Tag: BG
-    TransformComponent:
-      Translation: [0, 0, -0.100000001]
-      Rotation: [0, 0, 0]
-      Scale: [9.80000019, 6.80000019, 1]
-    SpriteRendererComponent:
-      Color: [9.99999997e-07, 9.99989993e-07, 9.99989993e-07, 1]
-      Texture: "NULL"
-      TillingFactor: 1
-  - Entity: 8726415708878521573
-    TagComponent:
-      Tag: Boundary
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
+      ParentEntityId: 0
     LineRendererComponent:
       Color: [1, 1, 1, 1]
-      Target: [1.5, 1.20000005, 0]
+      Target: [1.60000002, 1.10000002, 0]
+    ScriptComponent:
+      ClassName: Sandbox.Boundary
+      ScriptFields:
+        []
+  - Entity: 15108338217384973561
+    TagComponent:
+      Tag: Boundary (3)
+    TransformComponent:
+      Translation: [0.778147757, -1.85558057, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+      ParentEntityId: 0
+    LineRendererComponent:
+      Color: [1, 1, 1, 1]
+      Target: [0.400000006, 2.0999999, 0]
     ScriptComponent:
       ClassName: Sandbox.Boundary
       ScriptFields:

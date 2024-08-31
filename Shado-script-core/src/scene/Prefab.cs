@@ -20,7 +20,16 @@ namespace Shado
         public static Entity Instantiate(this Prefab prefab, Vector3 position)
         {
             ulong entityId = InternalCalls.PrefabExt_Instantiate(prefab.id, position);
+            if (entityId == 0)
+                throw new InvalidPrefabIdException(prefab);
             return new Entity(entityId);
+        }
+    }
+    
+    public class InvalidPrefabIdException : Exception
+    {
+        public InvalidPrefabIdException(Prefab prefab) : base("Invalid prefab id " + prefab.id)
+        {
         }
     }
 }

@@ -5,6 +5,9 @@
 #include "panels/MemoryPanel.h"
 #include <deque>
 
+#include "panels/PrefabEditor.h"
+#include "panels/SceneInfoPanel.h"
+
 namespace Shado {
 
 	class EditorLayer : public Layer {
@@ -29,7 +32,7 @@ namespace Shado {
 		bool onKeyPressed(KeyPressedEvent& e);
 		bool onMouseButtonPressed(MouseButtonPressedEvent& e);
 
-		void saveScene();
+		void saveScene(const std::optional<std::filesystem::path>& path);
 		void newScene();
 		void openScene();
 		void openScene(const std::filesystem::path&);
@@ -66,6 +69,8 @@ namespace Shado {
 		ContentBrowserPanel m_ContentPanel;
 		ConsolePanel m_ConsolPanel;
 		MemoryPanel m_MemoryPanel;
+		PrefabEditor m_PrefabEditor;
+		SceneInfoPanel m_SceneInfoPanel;
 		Entity m_HoveredEntity;
 
 		// This is needed because on fresh install when no Imgui.ini, we need to be able to move the play button to its location

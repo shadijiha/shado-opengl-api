@@ -1,6 +1,6 @@
-PrefabId: 17064350803900821649
+PrefabId: 13710147030354208236
 Data:
-  Entity: 5567411534524352017
+  Entity: 9643965712961470012
   TagComponent:
     Tag: Square
   TransformComponent:
@@ -27,10 +27,13 @@ Data:
         Data: [0.282106698, 0.6409266, 0.379085064, 1]
       - Name: linePrefab
         Type: Prefab
-        Data: 5555290621436312117
+        Data: 10464616447793372418
       - Name: maxDelta
         Type: Float
         Data: 5
       - Name: moveRate
         Type: Float
-        Data: 0.5
+        Data: 0.100000001
+  PrefabInstanceComponent:
+    PrefabId: 13710147030354208236
+    PrefabEntityUniqueId: 17897602656650665955

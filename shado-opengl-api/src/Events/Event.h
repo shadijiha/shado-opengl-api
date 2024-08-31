@@ -19,8 +19,8 @@ namespace Shado {
 		AppTick, AppUpdate, AppRender,
 		KeyPressed, KeyReleased, KeyTyped,
 		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
-		EditorGuizmosStart, EditorGuizmosEnd, EditorEntityChanged,
-		ProjectChanged
+		EditorGuizmosStart, EditorGuizmosEnd, EditorEntityChanged, PrefabEditorContextChanged,
+		ProjectChanged, SceneChanged
 	};
 
 	enum EventCategory
@@ -32,7 +32,8 @@ namespace Shado {
 		EventCategoryMouse = BIT(3),
 		EventCategoryMouseButton = BIT(4),
 		EventCategoryEditor = BIT(5),
-		EventCategoryProject = BIT(6)
+		EventCategoryProject = BIT(6),
+		EventCategoryScene = BIT(7)
 	};
 
 #define EVENT_CLASS_TYPE(type) static EventType getStaticType() { return EventType::type; }\

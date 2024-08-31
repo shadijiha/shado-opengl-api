@@ -11,6 +11,16 @@ namespace Shado {
 	class Entity;
 	class Prefab;
 
+	class SceneChangedEvent : public Event {
+	public:
+		SceneChangedEvent(std::filesystem::path path)
+			: sceneToLoadPath(std::move(path)) {}
+		EVENT_CLASS_TYPE(SceneChanged);
+		EVENT_CLASS_CATEGORY(EventCategoryScene);
+	public:
+		const std::filesystem::path sceneToLoadPath;
+	};
+
 	class Scene : public RefCounted  {
 	public:
 		Scene();
@@ -19,9 +29,11 @@ namespace Shado {
 
 		Entity createEntity(const std::string& name = "");
 		Entity createEntityWithUUID(const std::string& name, Shado::UUID id);
-		Entity duplicateEntity(Entity entity);
+		Entity duplicateEntity(Entity entity, bool modifyTag = true);
 		void destroyEntity(Entity entity);
-		Entity instantiatePrefab(Ref<Prefab> prefab);
+		
+		Entity instantiatePrefab(Ref<Prefab> prefab, bool modifyTag = true);
+		void propagatePrefabChanges(Ref<Prefab> prefabChanged);
 
 		void onRuntimeStart();
 		void onRuntimeStop();
@@ -38,6 +50,7 @@ namespace Shado {
 		Entity getEntityById(uint64_t id);
 		Entity findEntityByName(std::string_view name);
 		const entt::registry& getRegistry() { return m_Registry; }
+		std::vector<Entity> getAllEntities();
 		glm::vec2 getViewport() const {
 			return { m_ViewportWidth , m_ViewportHeight };
 		}
@@ -46,6 +59,7 @@ namespace Shado {
 		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
 
 		bool isRunning() const { return m_IsRunning; }
+
 	public:
 		inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
 
@@ -65,6 +79,10 @@ namespace Shado {
 		friend class Entity;
 		friend class SceneSerializer;
 		friend class SceneHierarchyPanel;
+		friend class PropertiesPanel;
+		friend class SceneInfoPanel;
 	};
 
+	// Utility functions
+	void CopyRegistries(entt::registry& source, entt::registry& dest, std::function<Entity(const std::string&, UUID)>);
 }

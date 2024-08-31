@@ -13,6 +13,7 @@
 #include "script/ScriptEngine.h"
 #include "../EditorEvents.h"
 #include "scene/Prefab.h"
+#include "util/FileSystem.h"
 
 namespace Shado {
 	static TimeStep lastDt = 1 / 60.0f;
@@ -45,6 +46,7 @@ namespace Shado {
 		m_EditorScene = m_ActiveScene;
 		Scene::ActiveScene = m_ActiveScene;
 
+		m_SceneInfoPanel.setScene(m_ActiveScene.Raw());
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
 	}
 
@@ -180,9 +182,17 @@ namespace Shado {
 				if (ImGui::BeginMenu("File")) {
 
 					if (ImGui::MenuItem("New Project", "Ctrl+P+N")) {
-						Ref<Project> project = Project::New();
-						project->GetConfig().Name = "Test123";
-						project->GetConfig().StartScene = "sample.shadoscene";
+						std::string path = FileDialogs::saveFile("Shado Project (*.sproj)\0*.sproj\0");
+						if (!path.empty()) {
+							const ProjectConfig& config = ProjectUtils::GenerateNewProject(path);
+							
+							// Create empty scene and save it
+							ScriptEngine::Init();
+							newScene();
+							saveScene(config.AssetDirectory /config.StartScene);
+
+							m_ContentPanel = ContentBrowserPanel();
+						}
 					}
 
 					if (ImGui::MenuItem("Open Project...", "Ctrl+P+O")) {
@@ -198,17 +208,7 @@ namespace Shado {
 
 						}
 					}
-
-					if (Project::GetActive() && ImGui::MenuItem("Save Project...", "Ctrl+P+S")) {
-						//std::string path = FileDialogs::chooseFolder();
-						std::string path = std::filesystem::absolute("resources/projects/Test 123").string();
-						auto& config = Project::GetActive()->GetConfig();
-						config.AssetDirectory = path + "/Assets";
-						config.ScriptModulePath = "bin/Release-windows-x86_64/" + config.Name + "/" + config.Name + ".dll";
-
-						Project::SaveActive(path + "/Test 123.sproj");
-					}
-
+					
 					// Disabling fullscreen would allow the window to be moved to the front of other windows,
 					// which we can't undo at the moment without finer window depth/z control.
 					if (ImGui::MenuItem("Exit")) {
@@ -231,12 +231,12 @@ namespace Shado {
 					}
 
 					if (ImGui::MenuItem("Save", "Ctrl+S"))
-						saveScene();
+						saveScene(m_ScenePath);
 
 					// Save scene file
 					if (ImGui::MenuItem("Save As...")) {
 						m_ScenePath = "";
-						saveScene();
+						saveScene(std::nullopt);
 					}
 
 	                ImGui::EndMenu();
@@ -284,6 +284,8 @@ namespace Shado {
 		m_ContentPanel.onImGuiRender();
 		m_ConsolPanel.onImGuiRender();
 		m_MemoryPanel.onImGuiRender();
+		m_PrefabEditor.onImGuiRender();
+		m_SceneInfoPanel.onImGuiRender();
 
         ImGui::End();
 	}
@@ -294,6 +296,7 @@ namespace Shado {
 	void EditorLayer::onEvent(Event& event) {
         m_EditorCamera.OnEvent(event);
 		m_sceneHierarchyPanel.onEvent(event);
+		m_PrefabEditor.onEvent(event);
 
 		EventDispatcher dispatcher(event);
 		dispatcher.dispatch<KeyPressedEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onKeyPressed));
@@ -306,6 +309,16 @@ namespace Shado {
 
 		dispatcher.dispatch<EditorEntityChanged>([this](EditorEntityChanged& e) {
 			this->pushUndoQueue();
+			return false;
+		});
+		
+		dispatcher.dispatch<SceneChangedEvent>([this](SceneChangedEvent& e) {
+			Application::get().SubmitToMainThread([this, e]() {
+				if (m_SceneState == SceneState::Play)
+					this->onSceneStop();		
+				this->openScene(e.sceneToLoadPath);		
+				this->onScenePlay();
+			});			
 			return false;
 		});
 	}
@@ -322,7 +335,7 @@ namespace Shado {
 		switch (e.getKeyCode()) {
 			case KeyCode::S:
 				if (control)
-					saveScene();
+					saveScene(m_ScenePath);
 				break;
 			case KeyCode::N:
 				if (control)
@@ -349,6 +362,7 @@ namespace Shado {
 
 				m_ActiveScene->destroyEntity(selectedEntityDelete);
 				m_sceneHierarchyPanel.resetSelection();
+	
 				break;
 			}
 			// Undo, Redo
@@ -385,18 +399,18 @@ namespace Shado {
 		return false;
 	}
 
-	void EditorLayer::saveScene() {
+	void EditorLayer::saveScene(const std::optional<std::filesystem::path>& path) {
 		if (m_SceneState == SceneState::Play) {
 			Dialog::alert("Cannot save a scene while playing", "Save Error");
 			return;
 		}
 
-		auto filepath = m_ScenePath.empty() ? FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0") : m_ScenePath;
+		auto filepath = !path.has_value() ? FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0") : path.value();
 		
 		if (!filepath.empty()) {
 			SceneSerializer serializer(m_EditorScene);
-			serializer.serialize(filepath);
-			m_ScenePath = filepath;
+			serializer.serialize(filepath.string());
+			m_ScenePath = filepath.string();
 		}		
 	}
 
@@ -460,6 +474,7 @@ namespace Shado {
 		m_ActiveScene = scene;
 		Scene::ActiveScene = m_ActiveScene;
 		m_sceneHierarchyPanel.setContext(m_ActiveScene);
+		m_SceneInfoPanel.setScene(m_ActiveScene.Raw());
 	}
 
 	// =============================== UI Stuff
@@ -533,8 +548,7 @@ namespace Shado {
 
 					// Dumb prefab to scene
 					UUID prefabId = std::stoull(path.filename().replace_extension());
-					SHADO_CORE_INFO("Loading prefab {0} to scene...", (uint64_t)prefabId);
-
+					
 					Ref<Prefab> prefab = Prefab::GetPrefabById(prefabId);
 					m_ActiveScene->instantiatePrefab(prefab);
 
@@ -563,7 +577,7 @@ namespace Shado {
 				auto cameraComponent = runtimeCamera.getComponent<CameraComponent>();
 
 				projection = cameraComponent.camera->getProjectionMatrix();
-				cameraView = glm::inverse(runtimeCamera.getComponent<TransformComponent>().getTransform());
+				cameraView = glm::inverse(runtimeCamera.getComponent<TransformComponent>().getTransform(*m_ActiveScene.Raw()));
 				// Disable or enable orthographic depending on if we are using Ortho camera or not
 				ImGuizmo::SetOrthographic(cameraComponent.type == CameraComponent::Type::Orthographic);
 			}

@@ -8,8 +8,7 @@
 #include "mono/metadata/mono-debug.h"
 #include "mono/metadata/threads.h"
 #include "mono/metadata/exception.h"
-
-#include "FileWatch.h"
+#include <FileWatch.h>
 
 #include "Application.h"
 #include "debug/Profile.h"
@@ -113,43 +112,6 @@ namespace Shado {
 		}
 	}
 
-	struct ScriptEngineData
-	{
-		MonoDomain* RootDomain = nullptr;
-		MonoDomain* AppDomain = nullptr;
-
-		MonoAssembly* CoreAssembly = nullptr;
-		MonoImage* CoreAssemblyImage = nullptr;
-
-		MonoAssembly* AppAssembly = nullptr;
-		MonoImage* AppAssemblyImage = nullptr;
-
-		std::filesystem::path CoreAssemblyFilepath;
-		std::filesystem::path AppAssemblyFilepath;
-
-		ScriptClass EntityClass;
-		ScriptClass EditorClass;
-
-		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
-		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
-		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
-
-		std::unordered_map<std::string, Ref<ScriptClass>> EditorClasses;
-		std::unordered_map<std::string, Ref<ScriptInstance>> EditorInstances;
-
-		std::shared_ptr<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
-		bool AssemblyReloadPending = false;
-
-#if SHADO_DEBUG || SHADO_RELEASE
-		bool EnableDebugging = true;
-#else
-		bool EnableDebugging = false;
-#endif
-		// Runtime
-
-		Scene* SceneContext = nullptr;
-	};
-
 	static ScriptEngineData* s_Data = nullptr;
 
 	static void OnAppAssemblyFileSystemEvent(const std::string& path, const filewatch::Event change_type)
@@ -219,7 +181,7 @@ namespace Shado {
 		allocator->realloc =	[](void* ptr, size_t size)	{ return Memory::ReallocRaw(ptr, size, "C#"); };
 		allocator->free =		[](void* ptr)				{ Memory::FreeRaw(ptr, "C#"); };
 		mono_set_allocator_vtable(allocator);
-		mono_set_assemblies_path("../mono/lib");
+		mono_set_assemblies_path("mono/lib");
 
 		if (s_Data->EnableDebugging)
 		{
@@ -420,6 +382,10 @@ namespace Shado {
 		if (!s_Data)
 			return;
 
+		// Destroy all script instances
+		for (auto& [uuid, instance] : s_Data->EntityInstances)
+			instance->InvokeOnDestroy();
+
 		s_Data->SceneContext = nullptr;
 		s_Data->EntityInstances.clear();
 	}
@@ -504,7 +470,7 @@ namespace Shado {
 			Helper_ProcessFields(monoClass, className, scriptClass);
 
 			// Get an instance of the class
-			Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(scriptClass);
+			Ref<ScriptInstance> scriptInstance = CreateRef<ScriptInstance>(scriptClass, true);
 
 			// Call GetTargetType to get the type for
 			MonoString* typeFor = (MonoString*)scriptClass->InvokeMethod(
@@ -580,6 +546,10 @@ namespace Shado {
 		return ScriptInstance(CreateRef<ScriptClass>(mono_object_get_class(object)), object);
 	}
 
+	const ScriptEngineData& ScriptEngine::GetData() {
+		return *s_Data;
+	}
+
 	MonoImage* ScriptEngine::GetCoreAssemblyImage()
 	{
 		return s_Data->CoreAssemblyImage;
@@ -594,10 +564,16 @@ namespace Shado {
 			if (typeFor == temp) {
 
 				// Set the target
-				MonoObject* target = scriptInstance->GetFieldValue<MonoObject*>(name);
-				mono_field_set_value(editorInstance->GetManagedObject(),
-					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "target"),
-					target
+				MonoObject* scriptInstanceManagedObject = scriptInstance->GetManagedObject();
+				if (scriptInstanceManagedObject == nullptr)
+					continue;
+				
+				MonoObject* target = mono_field_get_value_object(GetAppDomain(), field.ClassField, scriptInstanceManagedObject);//scriptInstance->GetFieldValue<MonoObject*>(name);
+				uint32_t targetGCHandle = mono_gchandle_new_weakref(target, false);
+				mono_field_set_value(
+					editorInstance->GetManagedObject(),
+					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "monoGCHandle"),
+					&targetGCHandle
 				);
 
 				// Set the fieldName
@@ -707,24 +683,29 @@ namespace Shado {
 
 				// Set the target
 				MonoObject* target = scriptInstance->GetFieldValue<MonoObject*>(fieldName);
-				mono_field_set_value(editorInstance->GetManagedObject(),
-					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "target"),
-					target
+				MonoObject* managedObject = editorInstance->GetManagedObject();
+				if (target == nullptr || managedObject == nullptr)
+					continue;
+				
+				uint32_t targetGCHandle = mono_gchandle_new_weakref(target, false);
+				mono_field_set_value(
+					managedObject,
+					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "monoGCHandle"),
+					&targetGCHandle
 				);
 
 				// Set the fieldName
-				mono_field_set_value(editorInstance->GetManagedObject(),
+				mono_field_set_value(managedObject,
 					mono_class_get_field_from_name(s_Data->EditorClass.m_MonoClass, "fieldName"),
 					ScriptEngine::NewString(fieldName.c_str())
 				);
 
-				if (target == nullptr)
-					continue;
+				
 
 				MonoMethod* method = editorInstance->GetScriptClass()->GetMethod("OnEditorDraw", 0);
 				if (method) {
 					editorInstance->GetScriptClass()->InvokeMethod(
-						editorInstance->GetManagedObject(),
+						managedObject,
 						method
 					);
 				}
@@ -806,7 +787,7 @@ namespace Shado {
 			result = mono_runtime_invoke(method, instance, params, &exception);
 		} else if (method && !instance) {
 			const char* methodName = mono_method_get_name(method);
-			SHADO_CORE_ERROR("Attempting to call {0} on null object", methodName, m_ClassName);
+			SHADO_CORE_ERROR("Attempting to call {0} on null object {1}", methodName, m_ClassName);
 		}
 
 		if (exception) {
@@ -830,7 +811,9 @@ namespace Shado {
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity)
 		: m_ScriptClass(scriptClass)
 	{
-		m_Instance = scriptClass->Instantiate();
+		//m_Instance = scriptClass->Instantiate();
+		MonoObject* scriptInstance = scriptClass->Instantiate();
+		m_GCHandle = mono_gchandle_new_weakref(scriptInstance, false);
 
 		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 1);
 		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
@@ -842,18 +825,24 @@ namespace Shado {
 		{
 			UUID entityID = entity.getUUID();
 			void* param = &entityID;
-			m_ScriptClass->InvokeMethod(m_Instance, m_Constructor, &param);
+			m_ScriptClass->InvokeMethod(GetManagedObject(), m_Constructor, &param);
 		}
 	}
 
-	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass)
-		: m_ScriptClass(scriptClass)
+	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, bool handleStrongRef)
+		: m_ScriptClass(scriptClass), m_HandleStrongRef(handleStrongRef)
 	{
-		m_Instance = scriptClass->Instantiate();
+		//m_Instance = scriptClass->Instantiate();
+		MonoObject* scriptInstance = scriptClass->Instantiate();
+
+		if (handleStrongRef)
+			m_GCHandle = mono_gchandle_new(scriptInstance, false);
+		else
+			m_GCHandle = mono_gchandle_new_weakref(scriptInstance, false);
 	}
 
 	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object)
-		: m_ScriptClass(scriptClass), m_Instance(object)
+		: m_ScriptClass(scriptClass), m_GCHandle(mono_gchandle_new_weakref(object, false)) //m_Instance(object)
 	{
 		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 0);
 		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
@@ -862,10 +851,15 @@ namespace Shado {
 		m_OnDestroyedMethod = scriptClass->GetMethod("OnDestroy", 0);
 	}
 
+	ScriptInstance::~ScriptInstance() {
+		if (m_HandleStrongRef)
+			mono_gchandle_free(m_GCHandle);
+	}
+
 	void ScriptInstance::InvokeOnCreate()
 	{
 		if (m_OnCreateMethod)
-			m_ScriptClass->InvokeMethod(m_Instance, m_OnCreateMethod);
+			m_ScriptClass->InvokeMethod(GetManagedObject(), m_OnCreateMethod);
 	}
 
 	void ScriptInstance::InvokeOnUpdate(float ts)
@@ -873,15 +867,30 @@ namespace Shado {
 		if (m_OnUpdateMethod)
 		{
 			void* param = &ts;
-			m_ScriptClass->InvokeMethod(m_Instance, m_OnUpdateMethod, &param);
+			m_ScriptClass->InvokeMethod(GetManagedObject(), m_OnUpdateMethod, &param);
 		}
 	}
 
 	void ScriptInstance::InvokeOnDraw() {
 		if (m_OnDrawMethod)
 		{
-			m_ScriptClass->InvokeMethod(m_Instance, m_OnDrawMethod);
+			m_ScriptClass->InvokeMethod(GetManagedObject(), m_OnDrawMethod);
 		}
+	}
+
+	void ScriptInstance::InvokeOnDestroy() {
+		if (m_OnDestroyedMethod)
+		{
+			m_ScriptClass->InvokeMethod(GetManagedObject(), m_OnDestroyedMethod);
+		}
+	}
+
+	MonoObject* ScriptInstance::GetManagedObject() const {
+		return mono_gchandle_get_target(m_GCHandle);
+	}
+
+	uint32_t ScriptInstance::GetGCHandle() const {
+		return m_GCHandle;
 	}
 
 	bool ScriptInstance::GetFieldValueInternal(const std::string& name, void* buffer)
@@ -892,7 +901,12 @@ namespace Shado {
 			return false;
 
 		const ScriptField& field = it->second;
-		mono_field_get_value(m_Instance, field.ClassField, buffer);
+
+		MonoObject* instance = GetManagedObject();
+		if (!instance)
+			return false;
+		
+		mono_field_get_value(instance, field.ClassField, buffer);
 		return true;
 	}
 
@@ -904,7 +918,11 @@ namespace Shado {
 			return false;
 
 		const ScriptField& field = it->second;
-		mono_field_set_value(m_Instance, field.ClassField, (void*)value);
+		MonoObject* instance = GetManagedObject();
+		if (!instance)
+			return false;
+		
+		mono_field_set_value(instance, field.ClassField, (void*)value);
 		return true;
 	}
 

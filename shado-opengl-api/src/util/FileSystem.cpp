@@ -1,6 +1,8 @@
 #include <fstream>
 #include "FileSystem.h"
 
+#include "debug/Debug.h"
+
 namespace Shado {
 
 	Buffer FileSystem::ReadFileBinary(const std::filesystem::path& filepath)
@@ -30,4 +32,13 @@ namespace Shado {
 		return buffer;
 	}
 
+	std::filesystem::path FileSystem::NewDirectory(const std::filesystem::path& path, const std::string& folderName) {
+		std::filesystem::path folderPath = folderName.empty() ? path : path / folderName;
+		if (!std::filesystem::exists(folderPath)) {
+			std::filesystem::create_directory(folderPath);
+		} else {
+			SHADO_CORE_ERROR("Folder already exists: {0}", folderPath.string());
+		}
+		return folderPath;		
+	}
 }

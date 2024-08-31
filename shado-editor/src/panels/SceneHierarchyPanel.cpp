@@ -13,23 +13,35 @@
 #include "scene/Prefab.h"
 
 namespace Shado {
-	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene) {
+	SceneHierarchyPanel::SceneHierarchyPanel(const std::string& title, const std::string& propertiesPanelTitle )
+		: m_Title(title)
+	{
+		m_PropertiesPanel = PropertiesPanel(propertiesPanelTitle);
+	}
+
+	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& scene, const std::string& title, const std::string& propertiesPanelTitle)
+	: m_Title(title)
+	{
 		setContext(scene);
+
+		m_PropertiesPanel = PropertiesPanel(propertiesPanelTitle);
 	}
 
 	void SceneHierarchyPanel::setSelected(Entity entity) {
 		m_Selected = entity;
+		m_PropertiesPanel.setSelected(entity);
 	}
 
 	void SceneHierarchyPanel::setContext(const Ref<Scene>& scene) {
 		m_Context = scene;
-		m_Selected = {};
+		setSelected({});
+		m_PropertiesPanel.setContext(scene);
 	}
 
 	void SceneHierarchyPanel::onImGuiRender() {
 		SHADO_PROFILE_FUNCTION();
 
-		ImGui::Begin("Scene Hierachy");
+		ImGui::Begin(m_Title.c_str());
 
 		if (m_Context) {
 
@@ -37,7 +49,7 @@ namespace Shado {
 				Entity entity = { entityID, m_Context.Raw() };
 
 				// Only draw entities without parent
-				if (!entity.isChild())
+				if (entity && !entity.isChild(*m_Context.Raw()))
 					drawEntityNode(entity);
 			});
 
@@ -56,12 +68,7 @@ namespace Shado {
 		}
 		ImGui::End();
 
-		ImGui::Begin("Properties");
-		if (m_Selected) {
-			drawComponents(m_Selected);
-		}
-		
-		ImGui::End();
+		m_PropertiesPanel.onImGuiRender();		
 	}
 
 	void SceneHierarchyPanel::onEvent(Event& e)
@@ -69,10 +76,13 @@ namespace Shado {
 		if (m_Context->isRunning()) {
 			ScriptEngine::InvokeCustomEditorEvents(e);
 		}
+
+		m_PropertiesPanel.onEvent(e);
 	}
 
 	void SceneHierarchyPanel::resetSelection() {
 		m_Selected = {};
+		m_PropertiesPanel.resetSelection();
 	}
 
 	void SceneHierarchyPanel::drawEntityNode(Entity entity) {
@@ -85,7 +95,7 @@ namespace Shado {
 
 		bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tc.tag.c_str());
 		if (ImGui::IsItemClicked()) {
-			m_Selected = entity;
+			setSelected(entity);
 		}
 
 		// Context menu item
@@ -144,7 +154,49 @@ namespace Shado {
 		}
 	}
 
-	// Helpers
+	PropertiesPanel::PropertiesPanel(const std::string& title)
+		: m_Title(title)
+	{
+	}
+
+	/**
+	* PropertiesPanel
+	*/
+	PropertiesPanel::PropertiesPanel(const Ref<Scene>& scene, const std::string& title)
+		: m_Title(title)
+	{
+		setContext(scene);
+	}
+
+	void PropertiesPanel::setContext(const Ref<Scene>& scene) {
+		m_Context = scene;
+		m_Selected = {};
+	}
+
+	void PropertiesPanel::onImGuiRender() {
+		ImGui::Begin(m_Title.c_str());
+		if (m_Selected) {
+			drawComponents(m_Selected);
+		}
+		
+		ImGui::End();
+	}
+
+	void PropertiesPanel::onEvent(Event& e) {
+	}
+
+	void PropertiesPanel::setSelected(Entity entity) {
+		m_Selected = entity;
+	}
+
+	void PropertiesPanel::resetSelection() {
+	}
+	
+
+	/**
+	 * Helper functions
+	 */
+	
 	template<typename T>
 	static void drawComponent(const char* label, Entity entity, std::function<void(T&)> ui, bool allowDeletion = true);
 	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
@@ -152,7 +204,7 @@ namespace Shado {
 	static void drawTextureControl(void* spriteData, const std::string& type = "Quad");
 	static void generateShaderFile(const std::string& path, const std::string& type);
 
-	void SceneHierarchyPanel::drawComponents(Entity entity) {
+	void PropertiesPanel::drawComponents(Entity entity) {
 		SHADO_PROFILE_FUNCTION();
 
 		drawComponent<TagComponent>("Tag", entity, [&entity](TagComponent& tc) {
@@ -183,7 +235,15 @@ namespace Shado {
 		}, false);
 
 		drawComponent<PrefabInstanceComponent>("Prefab Source", entity, [](PrefabInstanceComponent& prefabInstanceComponent) {
-			ImGui::Text("Prefab ID: %llu", prefabInstanceComponent.prefabId);
+			
+			std::string prefabIdStr = std::to_string(prefabInstanceComponent.prefabId);
+			
+			UI::InputTextControl("Prefab ID:", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+				Application::dispatchEvent(PrefabEditorContextChanged(Prefab::GetPrefabById(prefabInstanceComponent.prefabId)));
+			}
+			
+			ImGui::Text("Prefab Element ID: %llu", prefabInstanceComponent.prefabEntityUniqueId);
 		});
 
 		drawComponent<SpriteRendererComponent>("Sprite", entity, [](SpriteRendererComponent& sprite) {
@@ -423,6 +483,23 @@ namespace Shado {
 										UI::InputTextControl(name + "##prefabid", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
 									}
 
+									// TODO: refactor duplicate code
+									if (ImGui::BeginDragDropTarget()) {
+										if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+											const wchar_t* pathStr = (const wchar_t*)payload->Data;
+											auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
+
+											if (Prefab::IsPrefabPath(path)) {
+												Ref<Prefab> prefab = Prefab::CreateFromPath(path);
+												ScriptFieldInstance& fieldInstance = scriptField;
+												fieldInstance.Field = field;
+												fieldInstance.SetValue(PrefabCSMirror { prefab->GetId() });
+											}
+										}
+
+										ImGui::EndDragDropTarget();
+									}
+
 								}
 								else {
 									// TODO: How should we deal with complex types when seralizing?
@@ -465,21 +542,17 @@ namespace Shado {
 									std::string prefabIdStr = prefabId == 0 ? "(empty)" : std::to_string(prefabId);
 									UI::InputTextControl(name + "##prefabid", prefabIdStr, ImGuiInputTextFlags_ReadOnly);
 
+									// TODO: refactor duplicate code
 									if (ImGui::BeginDragDropTarget()) {
 										if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
 											const wchar_t* pathStr = (const wchar_t*)payload->Data;
 											auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
-											auto extension = path.extension();
 
-											if (extension == ".prefab") {
-
-												// Dumb prefab to scene
-												UUID prefabId = std::stoull(path.filename().replace_extension());
-
-												Ref<Prefab> prefab = Prefab::GetPrefabById(prefabId);
+											if (Prefab::IsPrefabPath(path)) {
+												Ref<Prefab> prefab = Prefab::CreateFromPath(path);
 												ScriptFieldInstance& fieldInstance = entityFields[name];
 												fieldInstance.Field = field;
-												fieldInstance.SetValue(PrefabCSMirror { prefabId });
+												fieldInstance.SetValue(PrefabCSMirror { prefab->GetId() });
 											}
 										}
 

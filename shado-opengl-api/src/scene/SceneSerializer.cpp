@@ -177,26 +177,31 @@ namespace Shado {
 		SHADO_CORE_ASSERT(false, "Not implemented");
 	}
 
-	static void serializePrefabHelper(YAML::Emitter& out, const Entity& e) {
+	static void serializePrefabHelper(YAML::Emitter& out, Entity& e, UUID prefabId) {
+		// Add a unique ID to every entity
+		if (!e.hasComponent<PrefabInstanceComponent>()) {
+			auto& prefabComponent = e.addComponent<PrefabInstanceComponent>();
+			prefabComponent.prefabId = prefabId;
+			prefabComponent.prefabEntityUniqueId = UUID();
+		}
+		
 		SerializeEntity(out, e, false);
 
 		auto children = e.getChildren();
 
 		if (!children.empty()) {
 			out << YAML::Key << "Children" << YAML::Value << YAML::BeginSeq;
-			for (const auto& child : children) {
-				serializePrefabHelper(out, child);
+			for (auto& child : children) {
+				serializePrefabHelper(out, child, prefabId);
 			}
 			out << YAML::EndSeq;
 		}
 
 		out << YAML::EndMap;
 	}
-	UUID SceneSerializer::serializePrefab(Entity entity)
+	UUID SceneSerializer::serializePrefab(Entity entity, UUID prefabId)
 	{
 		SHADO_PROFILE_FUNCTION();
-
-		UUID prefabId;
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -205,7 +210,7 @@ namespace Shado {
 		out << YAML::Key << "Data" << YAML::Value;
 
 		// Recursively serialize children
-		serializePrefabHelper(out, entity);
+		serializePrefabHelper(out, entity, prefabId);
 
 		out << YAML::EndMap;
 
@@ -214,8 +219,8 @@ namespace Shado {
 		std::ofstream fout(
 			Project::GetAssetDirectory() / (std::to_string((uint64_t)prefabId) + ".prefab"));
 		fout << out.c_str();
-
-		entity.addComponent<PrefabInstanceComponent>().prefabId = prefabId;
+		
+		SHADO_CORE_ASSERT(entity.hasComponent<PrefabInstanceComponent>(), "Entity must have a PrefabInstanceComponent by now");
 
 		return prefabId;
 	}
@@ -537,6 +542,7 @@ namespace Shado {
 			out << YAML::Key << "PrefabInstanceComponent";
 			out << YAML::BeginMap; // PrefabInstanceComponent
 			out << YAML::Key << "PrefabId" << YAML::Value << prefabComponent.prefabId;
+			out << YAML::Key << "PrefabEntityUniqueId" << YAML::Value << prefabComponent.prefabEntityUniqueId;
 
 			out << YAML::EndMap; // PrefabInstanceComponent
 		}
@@ -768,8 +774,9 @@ namespace Shado {
 		auto prefabComponent = entity["PrefabInstanceComponent"];
 		if (prefabComponent)
 		{
-			auto& sc = deserializedEntity.addComponent<PrefabInstanceComponent>();
+			auto& sc = deserializedEntity.addOrReplaceComponent<PrefabInstanceComponent>();
 			sc.prefabId = prefabComponent["PrefabId"].as<uint64_t>();
+			sc.prefabEntityUniqueId = prefabComponent["PrefabEntityUniqueId"].as<uint64_t>();
 		}
 
 		return deserializedEntity;

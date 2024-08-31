@@ -145,7 +145,7 @@ namespace Shado {
 	static Physics2DCallback* s_physics2DCallback = nullptr;
 
 	template<typename Component>
-	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap, Scene& scene);
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap);
 	template<typename Component>
 	static void CopyComponentIfExists(Entity dst, Entity src);
 	template<>
@@ -162,29 +162,10 @@ namespace Shado {
 
 		auto& srcSceneRegistry = other.m_Registry;
 		auto& dstSceneRegistry = m_Registry;
-		std::unordered_map<UUID, entt::entity> enttMap;
 
-		auto idView = srcSceneRegistry.view<IDComponent>();
-		for(auto e : idView) {
-			UUID uuid = srcSceneRegistry.get<IDComponent>(e).id;
-			const auto& tag = srcSceneRegistry.get<TagComponent>(e).tag;
-
-			Entity entity = createEntityWithUUID(tag, uuid);
-			enttMap[uuid] = (entt::entity)entity;
-		}
-
-		// Copy components (except ID Component and Tag component)
-		CopyComponent<TransformComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<SpriteRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<CircleRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<LineRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<CameraComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<BoxCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<CircleCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<ScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
-		CopyComponent<PrefabInstanceComponent>(dstSceneRegistry, srcSceneRegistry, enttMap, *this);
+		CopyRegistries(srcSceneRegistry, dstSceneRegistry, [this](const auto& tag, auto uuid) {
+			return this->createEntityWithUUID(tag, uuid);
+		});
 	}
 
 	Scene::~Scene() {
@@ -207,13 +188,9 @@ namespace Shado {
 		return entity;
 	}
 
-	Entity Scene::duplicateEntity(Entity source) {
-		if (!source)
-			return {};
-
-		Entity newEntity = createEntity(source.getComponent<TagComponent>().tag + " (2)");
-
-		CopyComponentIfExists<TransformComponent>(newEntity, source);
+	static void CopyAllComponentsHelper(Entity newEntity, Entity source, bool copyTransform = true) {
+		if (copyTransform)
+			CopyComponentIfExists<TransformComponent>(newEntity, source);
 		CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
 		CopyComponentIfExists<CircleRendererComponent>(newEntity, source);
 		CopyComponentIfExists<LineRendererComponent>(newEntity, source);
@@ -222,8 +199,23 @@ namespace Shado {
 		CopyComponentIfExists<RigidBody2DComponent>(newEntity, source);
 		CopyComponentIfExists<BoxCollider2DComponent>(newEntity, source);
 		CopyComponentIfExists<CircleCollider2DComponent>(newEntity, source);
-		CopyComponentIfExists<ScriptComponent>(newEntity, source);
 		CopyComponentIfExists<PrefabInstanceComponent>(newEntity, source);
+
+		// Script should always be last
+		CopyComponentIfExists<ScriptComponent>(newEntity, source);
+		
+	}
+	
+	Entity Scene::duplicateEntity(Entity source, bool modifyTag) {
+		if (!source)
+			return {};
+
+		Entity newEntity = createEntity(
+			source.getComponent<TagComponent>().tag +
+			(modifyTag ? " (2)" : "")
+		);
+
+		CopyAllComponentsHelper(newEntity, source);
 
 		return newEntity;
 	}
@@ -268,27 +260,49 @@ namespace Shado {
 		m_Registry.destroy(entity);
 	}
 
-	static Entity instantiatePrefabHelper(Scene& scene, Entity toDuplicate) {
-		Entity duplicated = scene.duplicateEntity(toDuplicate);
+	static Entity instantiatePrefabHelper(Scene& scene, Entity toDuplicate, bool modifyTag = true) {
+		Entity duplicated = scene.duplicateEntity(toDuplicate, modifyTag);
 
 		for (const auto& oldChild : toDuplicate.getChildren()) {
-			Entity newChild = instantiatePrefabHelper(scene, oldChild);
+			Entity newChild = instantiatePrefabHelper(scene, oldChild, modifyTag);
 			newChild.getComponent<TransformComponent>().setParent(newChild, duplicated);
 		}
 
 		return duplicated;
 	}
-	Entity Scene::instantiatePrefab(Ref<Prefab> prefab)
+	
+	Entity Scene::instantiatePrefab(Ref<Prefab> prefab, bool modifyTag)
 	{
-		return instantiatePrefabHelper(*this, prefab->root);
+		return instantiatePrefabHelper(*this, prefab->root, modifyTag);
+	}
+	
+	void Scene::propagatePrefabChanges(Ref<Prefab> prefabChanged) {
+		auto view = m_Registry.view<PrefabInstanceComponent>();
+
+		for (auto entity : view) {
+			Entity e = { entity, this };
+			auto& prefabComponent = e.getComponent<PrefabInstanceComponent>();
+
+			// If the prefab is not the same, skip
+			// If the entity is a child of the prefab root, skip because it will be updated by the root
+			if (prefabComponent.prefabId != prefabChanged->GetId())
+				continue;
+
+			UUID prefabEntityUniqueId = prefabComponent.prefabEntityUniqueId;
+			Entity prefabEntity = prefabChanged->GetEntityByElementUniqueId(prefabEntityUniqueId); // <-- to copy
+			
+			if (prefabEntity) {
+				// Make sure to keep the old parent id
+				Entity oldParent = e.getComponent<TransformComponent>().getParent(*this);
+				CopyAllComponentsHelper(e, prefabEntity, e.isChild(*this));
+				e.getComponent<TransformComponent>().setParent(e, oldParent);
+			} else
+				SHADO_CORE_WARN("Prefab element {0} not found", prefabEntityUniqueId);
+		}		
 	}
 
 	void Scene::onRuntimeStart() {
 		m_IsRunning = true;
-		// Init all Script classes attached to entities
-		// for (auto& temp : ScriptManager::getAssemblyClassList()) {
-		// 	SHADO_CORE_INFO("{0}", temp.toString());
-		// }
 
 		// Scripting
 		{
@@ -393,7 +407,7 @@ namespace Shado {
 
 				if (camera.primary) {
 					primaryCamera = camera.camera.Raw();
-					cameraTransform = transform.getTransform();
+					cameraTransform = transform.getTransform(*this);
 					break;
 				}
 			}
@@ -409,9 +423,9 @@ namespace Shado {
 				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
 				if (!sprite.shader)
-					Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
+					Renderer2D::DrawSprite(transform.getTransform(*this), sprite, (int)entity);
 				else
-					Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
+					Renderer2D::DrawQuad(transform.getTransform(*this), *sprite.shader.Raw(), sprite.color, (int)entity);
 			}
 
 			// Draw circles
@@ -422,9 +436,9 @@ namespace Shado {
 					auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
 
 					if (circle.texture)
-						Renderer2D::DrawCircle(transform.getTransform(), circle.texture, circle.tilingFactor, circle.color, circle.thickness, circle.fade, (int)entity);
+						Renderer2D::DrawCircle(transform.getTransform(*this), circle.texture, circle.tilingFactor, circle.color, circle.thickness, circle.fade, (int)entity);
 					else
-						Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
+						Renderer2D::DrawCircle(transform.getTransform(*this), circle.color, circle.thickness, circle.fade, (int)entity);
 				}
 			}
 
@@ -464,9 +478,9 @@ namespace Shado {
 			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
 			if (!sprite.shader)
-				Renderer2D::DrawSprite(transform.getTransform(), sprite, (int)entity);
+				Renderer2D::DrawSprite(transform.getTransform(*this), sprite, (int)entity);
 			else
-				Renderer2D::DrawQuad(transform.getTransform(), *sprite.shader.Raw(), sprite.color, (int)entity);
+				Renderer2D::DrawQuad(transform.getTransform(*this), *sprite.shader.Raw(), sprite.color, (int)entity);
 		}
 
 		// Draw circles
@@ -477,9 +491,9 @@ namespace Shado {
 				auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
 
 				if (circle.texture)
-					Renderer2D::DrawCircle(transform.getTransform(), circle.texture, circle.tilingFactor, circle.color, circle.thickness, circle.fade, (int)entity);
+					Renderer2D::DrawCircle(transform.getTransform(*this), circle.texture, circle.tilingFactor, circle.color, circle.thickness, circle.fade, (int)entity);
 				else
-					Renderer2D::DrawCircle(transform.getTransform(), circle.color, circle.thickness, circle.fade, (int)entity);
+					Renderer2D::DrawCircle(transform.getTransform(*this), circle.color, circle.thickness, circle.fade, (int)entity);
 			}
 		}
 
@@ -544,6 +558,18 @@ namespace Shado {
 				return Entity{ entity, this };
 		}
 		return {};
+	}
+
+	std::vector<Entity> Scene::getAllEntities() {
+		std::vector<Entity> entities;
+	
+		auto view = m_Registry.view<IDComponent>();
+		for (auto e : view) {
+			Entity entity = { e, this };
+			entities.push_back(entity);
+		}
+		
+		return entities;
 	}
 
 	void Scene::softResetPhysics() {
@@ -616,9 +642,35 @@ namespace Shado {
 		}
 	}
 
+	void CopyRegistries(entt::registry& srcSceneRegistry, entt::registry& dstSceneRegistry, std::function<Entity(const std::string&, UUID)> entityCreatorFunction) {
+		std::unordered_map<UUID, entt::entity> enttMap;
+
+		auto idView = srcSceneRegistry.view<IDComponent>();
+		for(auto e : idView) {
+			UUID uuid = srcSceneRegistry.get<IDComponent>(e).id;
+			const auto& tag = srcSceneRegistry.get<TagComponent>(e).tag;
+
+			Entity entity = entityCreatorFunction(tag, uuid);
+			enttMap[uuid] = (entt::entity)entity;
+		}
+
+		// Copy components (except ID Component and Tag component)
+		CopyComponent<TransformComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<SpriteRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<CircleRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<LineRendererComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<CameraComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<NativeScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<RigidBody2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<BoxCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<CircleCollider2DComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<ScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent<PrefabInstanceComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
+	}
+
 	// Helpers
 	template<typename Component>
-	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap, Scene& scene)
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
 	{
 		auto view = src.view<Component>();
 		for (auto e : view)
@@ -647,14 +699,12 @@ namespace Shado {
 		} else {
 			return;
 		}
+		
+		auto& srcComponent = src.getComponent<ScriptComponent>();
+		auto& dstComponent = dst.getComponent<ScriptComponent>();
+		bool scriptClassExists = ScriptEngine::EntityClassExists(srcComponent.ClassName);
 
-		const Scene& sc = src.getScene();
-		if (!&sc || !sc.isRunning()) {
-			auto& srcComponent = src.getComponent<ScriptComponent>();
-			auto& dstComponent = dst.getComponent<ScriptComponent>();
-			bool scriptClassExists = ScriptEngine::EntityClassExists(srcComponent.ClassName);
-
-			if (scriptClassExists) {
+		if (scriptClassExists) {
 				Ref<ScriptClass> klass = ScriptEngine::GetEntityClass(srcComponent.ClassName);
 				const auto& srcFields = klass->GetFields();
 
@@ -670,11 +720,12 @@ namespace Shado {
 					}
 				}
 			}
-
-		} else {
-			SHADO_CORE_WARN("Cannot copy script components while the scene is running");
+			
+		if (
+			(&src.getScene() && src.getScene().isRunning()) ||
+			(&dst.getScene() && dst.getScene().isRunning())
+			) {
+			ScriptEngine::OnCreateEntity(dst);
 		}
 	}
-
-
 }

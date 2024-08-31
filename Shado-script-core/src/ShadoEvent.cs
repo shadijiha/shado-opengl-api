@@ -48,22 +48,26 @@ namespace Shado
             if (UI.BeginMenu("+##ClassesMenu" + GetHashCode())) {
                 var entities = Scene.GetAllEntities();
 
-                foreach (var entity in entities) {
-                    
-                    if (UI.BeginMenu($"{entity.tag} ({entity.GetType().Name})")) {
-                        var methods = entity.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
-                        foreach (var method in methods) {
-                            if (method.ReturnType == typeof(void) && method.GetParameters().Length == 2) {
-                                var methodInfo = method;
-                                if (UI.MenuItem(method.Name)) {
-                                    var handler = (ShadoEvent)target;
-                                    handler.funcs.Add((a, b) => methodInfo.Invoke(entity, new object[] {a, b}));
+                if (entities != null) {
+                    foreach (var entity in entities) {
+
+                        if (UI.BeginMenu($"{entity.tag} ({entity.GetType().Name})")) {
+                            var methods = entity.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
+                            foreach (var method in methods) {
+                                if (method.ReturnType == typeof(void) && method.GetParameters().Length == 2) {
+                                    var methodInfo = method;
+                                    if (UI.MenuItem(method.Name)) {
+                                        var handler = (ShadoEvent)target;
+                                        handler.funcs.Add((a, b) => methodInfo.Invoke(entity, new object[] { a, b }));
+                                    }
                                 }
                             }
+
+                            UI.EndMenu();
                         }
-                        UI.EndMenu();
                     }
                 }
+
                 UI.EndMenu();
             }
             

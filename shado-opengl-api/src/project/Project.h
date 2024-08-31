@@ -43,6 +43,7 @@ namespace Shado {
 		const ProjectConfig& GetConfig() const	{ return m_Config; }
 
 		static Ref<Project> GetActive() { return s_ActiveProject; }
+		static void SetActive(const Ref<Project>& project) { s_ActiveProject = project; }
 
 		static Ref<Project> New();
 		static Ref<Project> Load(const std::filesystem::path& path);
@@ -65,4 +66,8 @@ namespace Shado {
 	private:
 		const Ref<Project>& m_Project;
 	};
+
+	namespace ProjectUtils {
+		const ProjectConfig& GenerateNewProject(const std::filesystem::path& fullpathToSProjFile);
+	}
 }

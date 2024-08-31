@@ -59,9 +59,15 @@ project "shado-opengl-api"
 
         postbuildcommands
         {
-            ("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/shado-editor"),
+            --("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/shado-editor"),
             --("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/sandbox"),
+
         }
+
+    defines 
+    {
+        "SHADO_OPENGL_SOLUTION_DIR_TODO_REMOVE=\"" .. path.getabsolute("%{wks.location}") .. "\""
+    }
 
     filter "configurations:Debug"
         defines {"SHADO_DEBUG", "SHADO_PROFILE"}

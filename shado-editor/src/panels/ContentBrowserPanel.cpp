@@ -1,6 +1,7 @@
 #include "ContentBrowserPanel.h"
 #include <imgui.h>
 #include <filesystem>
+#include <future>
 
 #include "debug/Profile.h"
 #include "renderer/Texture2D.h"
@@ -10,6 +11,7 @@
 #include "project/Project.h"
 #include "SceneHierarchyPanel.h"
 #include "scene/Components.h"
+#include "scene/Prefab.h"
 
 namespace Shado {
 	static bool isImage(const std::filesystem::path& path);
@@ -26,28 +28,21 @@ namespace Shado {
 	}
 
 	ContentBrowserPanel::ContentBrowserPanel()
+		: ContentBrowserPanel(Project::GetActive() ? std::optional(Project::GetActive()->GetProjectDirectory()) : std::nullopt )
 	{
-		auto project = Project::GetActive();
-		if (project) {
-			m_CurrentDirectory = project->GetProjectDirectory();
-			setDirectory(m_CurrentDirectory);
-		}
-
-		m_DirectoryIcon = CreateRef<Texture2D>("resources/icons/DirectoryIcon.png");
-		m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
-		m_SceneIcon = CreateRef<Texture2D>("resources/icons/scene.png");
-		m_PrefabIcon = CreateRef<Texture2D>("resources/icons/Prefab.png");
 	}
 
-	ContentBrowserPanel::ContentBrowserPanel(const std::filesystem::path& path)
+	ContentBrowserPanel::ContentBrowserPanel(std::optional<std::filesystem::path> path)
 		: m_CurrentDirectory(path)
 	{
 		m_DirectoryIcon = CreateRef<Texture2D>("resources/icons/DirectoryIcon.png");
 		m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
 		m_SceneIcon = CreateRef<Texture2D>("resources/icons/scene.png");
 		m_PrefabIcon = CreateRef<Texture2D>("resources/icons/Prefab.png");
-		
-		setDirectory(m_CurrentDirectory);
+
+		if (path.has_value()) {
+			setDirectory(path.value());
+		}
 	}
 
 	void ContentBrowserPanel::onImGuiRender() {
@@ -76,15 +71,15 @@ namespace Shado {
 		}
 
 		// If m_CurrentDirectory is not defined then display "Open a project to browse
-		if (!Project::GetActive() || m_CurrentDirectory.empty()) {
+		if (!Project::GetActive() || (m_CurrentDirectory.has_value() && m_CurrentDirectory.value().empty())) {
 			ImGui::Text("Open a project to browse");
 			ImGui::End();
 			return;
 		}
 
 		// Recheck the filesystem every 200 tick
-		if (tick++ % 500 == 0) {
-			setDirectory(m_CurrentDirectory);
+		if (tick++ % 500 == 0 && m_CurrentDirectory.has_value()) {
+			setDirectory(m_CurrentDirectory.value());
 			tick = 1;
 		}
 
@@ -94,8 +89,8 @@ namespace Shado {
 			{
 				if (ImGui::Button("<-"))
 				{
-					m_CurrentDirectory = m_CurrentDirectory.parent_path();
-					setDirectory(m_CurrentDirectory);
+					m_CurrentDirectory = m_CurrentDirectory.value().parent_path();
+					setDirectory(m_CurrentDirectory.value());
 				}
 			}
 
@@ -154,12 +149,28 @@ namespace Shado {
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
 					if (directoryEntry.is_directory()) {
-						m_CurrentDirectory /= path.filename();
+						m_CurrentDirectory = m_CurrentDirectory.value() / path.filename();
 						changeDir = true;
 
 					}
-
+					else if (Prefab::IsPrefabPath(directoryEntry.path())) {
+						Application::dispatchEvent(PrefabEditorContextChanged(Prefab::CreateFromPath(path)));
+					}
 				}
+
+				// If it is a loaded prefab, show the name of the root entity
+				if (Prefab::IsPrefabPath(directoryEntry.path())) {
+					// Check if the prefab is loaded
+					UUID prefabID = Prefab::PrefabPathToId(path);
+					if (Prefab::IsLoaded(prefabID)) {
+						auto prefab = Prefab::GetPrefabById(prefabID);
+						auto rootEntity = prefab->root;
+						auto& tag = rootEntity.getComponent<TagComponent>().tag;
+						filenameString = tag;
+					} else {
+						// TODO: load the prefab asynchronously
+					}
+				} 
 				ImGui::TextWrapped(filenameString.c_str());
 
 				ImGui::NextColumn();
@@ -176,8 +187,9 @@ namespace Shado {
 			ImGui::End();
 
 			if (changeDir)
-				setDirectory(m_CurrentDirectory);
+				setDirectory(m_CurrentDirectory.value());
 		}
+
 	}
 
 	void ContentBrowserPanel::setDirectory(const std::filesystem::path& path) {

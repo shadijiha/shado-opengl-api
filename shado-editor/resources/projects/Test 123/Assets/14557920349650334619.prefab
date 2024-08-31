@@ -1,0 +1,19 @@
+PrefabId: 14557920349650334619
+Data:
+  Entity: 16620134260850044031
+  TagComponent:
+    Tag: boid
+  TransformComponent:
+    Translation: [0, 0, 0]
+    Rotation: [0, 0, 0]
+    Scale: [0.25, 0.25, 1]
+    ParentEntityId: 0
+  SpriteRendererComponent:
+    Color: [0.0949896276, 0.364677817, 0.683397651, 1]
+    Texture: "NULL"
+    TillingFactor: 1
+  ScriptComponent:
+    ClassName: Sandbox.Boid
+  PrefabInstanceComponent:
+    PrefabId: 14557920349650334619
+    PrefabEntityUniqueId: 1244687795685625531

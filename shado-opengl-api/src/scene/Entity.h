@@ -33,7 +33,7 @@ namespace Shado {
 
 		template<typename T>
 		bool hasComponent() const {
-			//SHADO_CORE_ASSERT(isValid(), "Invalid entity!")
+			SHADO_CORE_ASSERT(isValid(), "Invalid entity!")
 			return getRegistry().any_of<T>(m_EntityHandle);
 		}
 
@@ -47,12 +47,14 @@ namespace Shado {
 			return m_EntityHandle != entt::null && getRegistry().valid(m_EntityHandle);
 		}
 
-		bool isChild() const;
+		bool isChild(Scene& sceneToLookup) const;
+		Entity findChildByTag(const std::string& tag);
 
 		UUID getUUID() const;
 
 		const Scene& getScene() const { return *m_Scene; }
 		void setScene(Scene* scene) { m_Scene = scene; }
+		void setRegistry(entt::registry* registry) { m_Registry = registry; }
 		
 		std::vector<Entity> getChildren() const;
 
@@ -62,6 +64,7 @@ namespace Shado {
 
 		bool operator==(const Entity& other)	const	{ return m_EntityHandle == other.m_EntityHandle && m_Scene == other.m_Scene; }
 		bool operator!=(const Entity& other)	const	{ return !operator==(other); }
+	
 	protected:
 		entt::registry& getRegistry() const {
 			return m_Scene != nullptr ? m_Scene->m_Registry : *m_Registry;

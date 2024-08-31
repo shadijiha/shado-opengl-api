@@ -42,6 +42,16 @@ project "shado-editor"
         "SHADO_PLATFORM_WINDOWS"
     }
 
+    postbuildcommands
+    {
+        ("{COPY} ./assets                       %{wks.location}/bin/" .. outputdir .. "/%{prj.name}/assets"),
+        ("{COPY} ./resources                    %{wks.location}/bin/" .. outputdir .. "/%{prj.name}/resources"),
+        ("{COPY} ../mono/lib                    %{wks.location}/bin/" .. outputdir .. "/%{prj.name}/mono/lib"),
+        ("{COPY} ../mono/mono-2.0-sgen.dll      %{wks.location}/bin/" ..outputdir .. "/shado-editor"),
+        ("{COPY} ./imgui.ini                    %{wks.location}/bin/" ..outputdir .. "/shado-editor/imgui.ini"),
+        ("{COPY} ../premake                     %{wks.location}/bin/" ..outputdir .. "/shado-editor/premake"),
+    }
+
     filter "configurations:Debug"
         defines "SHADO_DEBUG"
         symbols "On"

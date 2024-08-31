@@ -21,6 +21,11 @@ extern "C" {
 	typedef struct _MonoDomain MonoDomain;
 }
 
+namespace filewatch {
+	template <typename T>
+	class FileWatch;	
+}
+
 namespace Shado {
 
 	enum class ScriptFieldType
@@ -52,7 +57,7 @@ namespace Shado {
 		}
 
 		template<typename T>
-		T GetValue()
+		T GetValue() const
 		{
 			static_assert(sizeof(T) <= 16, "Type too large!");
 			return *(T*)m_Buffer;
@@ -108,14 +113,16 @@ namespace Shado {
 	{
 	public:
 		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);
-		ScriptInstance(Ref<ScriptClass> scriptClass);
+		ScriptInstance(Ref<ScriptClass> scriptClass, bool handleStrongRef = false);
 		ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object);
+		~ScriptInstance();
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(float ts);
 		void InvokeOnDraw();
+		void InvokeOnDestroy();
 
-		Ref<ScriptClass> GetScriptClass() { return m_ScriptClass; }
+		Ref<ScriptClass> GetScriptClass() const { return m_ScriptClass; }
 
 		template<typename T>
 		T GetFieldValue(const std::string& name)
@@ -137,14 +144,19 @@ namespace Shado {
 			SetFieldValueInternal(name, &value);
 		}
 
-		MonoObject* GetManagedObject() { return m_Instance; }
+		MonoObject* GetManagedObject() const;
+		uint32_t GetGCHandle() const;
+
 	private:
 		bool GetFieldValueInternal(const std::string& name, void* buffer);
 		bool SetFieldValueInternal(const std::string& name, const void* value);
 	private:
 		Ref<ScriptClass> m_ScriptClass;
 
-		MonoObject* m_Instance = nullptr;
+		//MonoObject* m_Instance = nullptr;
+		uint32_t m_GCHandle = 0;
+		bool m_HandleStrongRef;
+		
 		MonoMethod* m_Constructor = nullptr;
 		MonoMethod* m_OnCreateMethod = nullptr;
 		MonoMethod* m_OnUpdateMethod = nullptr;
@@ -155,6 +167,43 @@ namespace Shado {
 
 		friend class ScriptEngine;
 		friend struct ScriptFieldInstance;
+	};
+
+	struct ScriptEngineData
+	{
+		MonoDomain* RootDomain = nullptr;
+		MonoDomain* AppDomain = nullptr;
+
+		MonoAssembly* CoreAssembly = nullptr;
+		MonoImage* CoreAssemblyImage = nullptr;
+
+		MonoAssembly* AppAssembly = nullptr;
+		MonoImage* AppAssemblyImage = nullptr;
+
+		std::filesystem::path CoreAssemblyFilepath;
+		std::filesystem::path AppAssemblyFilepath;
+
+		ScriptClass EntityClass;
+		ScriptClass EditorClass;
+
+		std::unordered_map<std::string, Ref<ScriptClass>> EntityClasses;
+		std::unordered_map<UUID, Ref<ScriptInstance>> EntityInstances;
+		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
+
+		std::unordered_map<std::string, Ref<ScriptClass>> EditorClasses;
+		std::unordered_map<std::string, Ref<ScriptInstance>> EditorInstances;
+
+		std::shared_ptr<filewatch::FileWatch<std::string>> AppAssemblyFileWatcher;
+		bool AssemblyReloadPending = false;
+
+#if SHADO_DEBUG || SHADO_RELEASE
+		bool EnableDebugging = true;
+#else
+		bool EnableDebugging = false;
+#endif
+		// Runtime
+
+		Scene* SceneContext = nullptr;
 	};
 
 	class ScriptEngine
@@ -202,6 +251,8 @@ namespace Shado {
 		static std::string MonoStrToUT8(MonoString* str);
 		static ScriptInstance InstanceFromRawObject(MonoObject* object);
 	private:
+		static const ScriptEngineData& GetData();
+	private:
 		static void InitMono();
 		static void ShutdownMono();
 
@@ -213,6 +264,7 @@ namespace Shado {
 
 		friend class ScriptClass;
 		friend class ScriptGlue;
+		friend class SceneInfoPanel;
 	};
 
 	namespace Utils {

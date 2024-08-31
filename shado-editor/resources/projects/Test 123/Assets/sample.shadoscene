@@ -1,42 +1,22 @@
 Scene: Untitled
 Entities:
-  - Entity: 16758938465264930844
+  - Entity: 16620134260850044031
     TagComponent:
-      Tag: Nate
-    TransformComponent:
-      Translation: [-3.9000001, 3.4000001, 0]
-      Rotation: [0, 0, 0]
-      Scale: [0.200000003, 0.200000003, 1]
-      ParentEntityId: 1320691196595273658
-    CircleRendererComponent:
-      Color: [0.045228906, 0.285714269, 0.266215444, 1]
-      Texture: "NULL"
-      TillingFactor: 1
-      Thickness: 1
-      Fade: 0.00499999989
-  - Entity: 1320691196595273658
-    TagComponent:
-      Tag: child
+      Tag: boid
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-      ParentEntityId: 17381819378146153245
+      Scale: [0.25, 0.25, 1]
+      ParentEntityId: 0
     SpriteRendererComponent:
-      Color: [0.172805995, 0.431986034, 0.486486495, 1]
+      Color: [0.0949896276, 0.364677817, 0.683397651, 1]
       Texture: "NULL"
       TillingFactor: 1
-  - Entity: 17381819378146153245
-    TagComponent:
-      Tag: Line
-    TransformComponent:
-      Translation: [-1.79999995, -1.39999998, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-      ParentEntityId: 0
-    LineRendererComponent:
-      Color: [9.99999997e-07, 0, 0, 1]
-      Target: [4.69999981, 1.70000005, 0]
+    ScriptComponent:
+      ClassName: Sandbox.Boid
+    PrefabInstanceComponent:
+      PrefabId: 14557920349650334619
+      PrefabEntityUniqueId: 1244687795685625531
   - Entity: 12300077346565451073
     TagComponent:
       Tag: Empty Entity
@@ -127,12 +107,15 @@ Entities:
     ScriptComponent:
       ClassName: Sandbox.Test
       ScriptFields:
+        - Name: boidPrefab
+          Type: Prefab
+          Data: 14557920349650334619
         - Name: colourTest
           Type: Colour
           Data: [0.282106698, 0.6409266, 0.379085064, 1]
         - Name: linePrefab
           Type: Prefab
-          Data: 5555290621436312117
+          Data: 10464616447793372418
         - Name: maxDelta
           Type: Float
           Data: 5
@@ -167,17 +150,3 @@ Entities:
         Far: 100
       Primary: false
       FixedAspectRatio: false
-  - Entity: 13730885727472941676
-    TagComponent:
-      Tag: "Child2 "
-    TransformComponent:
-      Translation: [3.0999999, 3.20000005, 0.699999988]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-      ParentEntityId: 17381819378146153245
-    CircleRendererComponent:
-      Color: [0.454901963, 0.113725491, 0.290196091, 1]
-      Texture: "NULL"
-      TillingFactor: 1
-      Thickness: 1
-      Fade: 0.00499999989

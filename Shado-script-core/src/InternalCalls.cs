@@ -324,12 +324,20 @@ namespace Shado
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static Entity[] Scene_GetAllEntities();
 
-
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static string Scene_LoadScene(string sceneName);
 		#endregion
 
 		#region PrefabExt
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static ulong PrefabExt_Instantiate(ulong prefabId, Vector3 position);
         #endregion
-    }
+        
+        #region Mono
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static object Mono_GetGCHandleTarget(UInt32 handle);
+        
+        #endregion
+	}
 }
