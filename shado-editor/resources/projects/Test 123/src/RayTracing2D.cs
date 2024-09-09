@@ -14,11 +14,11 @@ namespace Sandbox
         
         // TODO: find why these crash
         //public int[] arr = new int[10];
-        //public ShadoEvent eventHandler = new ShadoEvent();
+        public ShadoEvent eventHandler = new ShadoEvent();
         
         void OnCreate() {
-            //eventHandler += Queen;
-            //eventHandler += (a, b) => { Log.Info("{0} XD", 1); };
+            eventHandler += Queen;
+            eventHandler += (a, b) => { Log.Info("{0} XD", 1); };
             for (float i = 0; i < 360; i += angleStep) {
                 var ray = Create<Ray>(() => new Ray(this, 
                     new Vector2(Mathf.Cos(Mathf.DegToRad(i)), Mathf.Sin(Mathf.DegToRad(i))))

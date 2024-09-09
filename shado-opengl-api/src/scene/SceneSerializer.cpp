@@ -390,6 +390,9 @@ namespace Shado {
 			out << YAML::Key << "Texture" << YAML::Value << newPath;
 			out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
 
+			if (spriteRendererComponent.shader)
+				out << YAML::Key << "Shader" << YAML::Value << Project::GetActive()->GetRelativePath(spriteRendererComponent.shader->getFilepath()).string();
+
 			out << YAML::EndMap; // SpriteRendererComponent
 
 			// if Texture path has changed, then update the component
@@ -413,6 +416,9 @@ namespace Shado {
 
 			out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
 			out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
+
+			if (circleRendererComponent.shader)
+				out << YAML::Key << "Shader" << YAML::Value << Project::GetActive()->GetRelativePath(circleRendererComponent.shader->getFilepath()).string();
 
 			out << YAML::EndMap; // CircleRendererComponent
 
@@ -651,6 +657,14 @@ namespace Shado {
 					(Project::GetProjectDirectory() / texturePath).string() : texturePath
 				);
 			src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
+
+			if (spriteRendererComponent["Shader"]) {
+				try {
+					src.shader = CreateRef<Shader>(Project::GetProjectDirectory() / spriteRendererComponent["Shader"].as<std::string>());
+				} catch (const std::runtime_error& e) {
+					SHADO_CORE_ERROR("Error loading shader: {0}", e.what());
+				}
+			}
 		}
 
 		auto circleRendererComponent = entity["CircleRendererComponent"];
@@ -669,6 +683,14 @@ namespace Shado {
 					(Project::GetProjectDirectory() / texturePath).string() : texturePath
 				);
 			src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
+
+			if (circleRendererComponent["Shader"]) {
+				try {
+					src.shader = CreateRef<Shader>(Project::GetProjectDirectory() / circleRendererComponent["Shader"].as<std::string>());
+				} catch (const std::runtime_error& e) {
+					SHADO_CORE_ERROR("Error loading shader: {0}", e.what());
+				}
+			}
 		}
 
 		auto lineRendererComponent = entity["LineRendererComponent"];

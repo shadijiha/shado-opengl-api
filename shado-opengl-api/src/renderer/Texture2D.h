@@ -34,10 +34,8 @@ namespace Shado {
 		int getDataFormat() const { return m_DataFormat; }
 		int getInternalFormat() const { return m_InternalFormat; }
 
-		bool operator==(const Texture2D& other) const
-		{
-			return m_RendererID == ((Texture2D&)other).m_RendererID;
-		}
+		bool operator==(const Texture2D& other) const;
+		
 
 	private:
 		uint32_t m_RendererID;

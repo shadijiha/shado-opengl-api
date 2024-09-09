@@ -13,6 +13,9 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
+#include "Events/input.h"
+#include "math/Math.h"
+
 namespace Shado {
 
 
@@ -71,6 +74,7 @@ namespace Shado {
 		Ref<Shader> QuadShader;
 		Ref<Texture2D> WhiteTexture;
 		std::vector<QuadFace> transparentQuads;
+		
 
 		Ref<VertexArray> CircleVertexArray;
 		Ref<VertexBuffer> CircleVertexBuffer;
@@ -210,6 +214,9 @@ namespace Shado {
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_LINE_SMOOTH);
+		glDepthFunc(GL_LESS);
+		glEnable(GL_ALPHA_TEST);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 	}
 
 	void Renderer2D::Shutdown()
@@ -289,6 +296,9 @@ namespace Shado {
 				s_Data.TextureSlots[i]->bind(i);
 
 			s_Data.QuadShader->bind();
+			s_Data.QuadShader->setFloat("u_Time", (float)glfwGetTime());
+			s_Data.QuadShader->setFloat2("u_ScreenResolution", {Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight()});
+			s_Data.QuadShader->setFloat2("u_MousePos", {Input::getMouseX(), Input::getMouseY()});
 			CmdDrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
@@ -451,7 +461,7 @@ namespace Shado {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const glm::mat4& transform, Shader& shader, const glm::vec4& color, int entityID) {
+	void Renderer2D::DrawQuad(const glm::mat4& transform, Shader& shader, const glm::vec4& color, int entityID, float textureIndex) {
 
 		SHADO_PROFILE_FUNCTION();
 		shader.bind();
@@ -480,25 +490,62 @@ namespace Shado {
 
 		constexpr size_t quadVertexCount = 4;
 		constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
-
-		shader.bind();
-
+		
 		QuadVertex vertex[4];
 		for (size_t i = 0; i < quadVertexCount; i++)
 		{
 			vertex[i].Position = transform * s_Data.QuadVertexPositions[i];
 			vertex[i].Color = color;
 			vertex[i].TexCoord = textureCoords[i];
-			vertex[i].TexIndex = 0.0f;
+			vertex[i].TexIndex = textureIndex;
 			vertex[i].TilingFactor = 1.0f;
 			vertex[i].EntityID = entityID;
 		}
 
 		buffer->setData(&vertex, 4 * sizeof(QuadVertex));
+		
+		// if transparent, then draw 
+		if (color.a < 1.0f) {
+			NextBatch();	
+		}
+		
+		shader.bind();
+		shader.setFloat("u_Time", (float)glfwGetTime());
 
+		auto res = glm::vec2{Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight()};		
+		shader.setFloat2("u_ScreenResolution", res);
+		shader.setFloat2("u_MousePos", {Input::getMouseX(), Input::getMouseY()});
 		CmdDrawIndexed(vertexArray, indexBuffer->getCount());
 		s_Data.Stats.DrawCalls++;
 		s_Data.Stats.QuadCount++;
+	}
+
+	void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Texture2D> texture, Shader& shader,
+		const glm::vec4& color, int entityID) {
+
+		float textureIndex = 0.0f;
+		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++)
+		{
+			if (*s_Data.TextureSlots[i] == *texture)
+			{
+				textureIndex = (float)i;
+				break;
+			}
+		}
+
+		if (textureIndex == 0.0f)
+		{
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+				NextBatch();
+
+			textureIndex = (float)s_Data.TextureSlotIndex;
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+			s_Data.TextureSlotIndex++;
+		}
+
+		texture->bind(textureIndex);
+		DrawQuad(transform, shader, color, entityID, textureIndex);
+		texture->unbind();
 	}
 
 	void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation, const glm::vec4& color)
@@ -656,10 +703,18 @@ namespace Shado {
 
 	void Renderer2D::DrawSprite(const glm::mat4& transform, SpriteRendererComponent& src, int entityID)
 	{
-		if (src.texture)
-			DrawQuad(transform, src.texture, src.tilingFactor, src.color, entityID);
-		else
-			DrawQuad(transform, src.color, entityID);
+		if (src.shader) {
+			if (src.texture)
+				DrawQuad(transform, *src.shader, src.color, entityID, src.texture);
+			else
+				DrawQuad(transform, *src.shader, src.color, entityID);
+		} else {
+			if (src.texture)
+				DrawQuad(transform, src.texture, src.tilingFactor, src.color, entityID);
+			else
+				DrawQuad(transform, src.color, entityID);	
+		}
+
 	}
 
 	float Renderer2D::GetLineWidth()

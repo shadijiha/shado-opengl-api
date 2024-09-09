@@ -79,6 +79,10 @@ namespace Shado {
 			memory_history.emplace_back(glfwGetTime(), total_alive);
 		}
 
+		inline static void* CallocRaw(size_t count, size_t size, const char* label = "Engine") {
+			return std::calloc(count, size);
+		}
+
 		template<typename T>
 		inline static T* Stack() {
 			return (T*)alloca(sizeof(T));
@@ -93,6 +97,7 @@ namespace Shado {
 			return memory_history;
 		}
 		inline static const std::unordered_map<const char*, size_t>& GetMemoryLabels() { return memory_labels; }
+
 	private:
 		inline static size_t total_allocated = 0;
 		inline static size_t total_alive = 0;

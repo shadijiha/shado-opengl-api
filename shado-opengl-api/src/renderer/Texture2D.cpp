@@ -140,4 +140,7 @@ namespace Shado {
 		//glCall(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
+	bool Texture2D::operator==(const Texture2D& other) const {
+		return m_RendererID == ((Texture2D&)other).m_RendererID;
+	}
 }

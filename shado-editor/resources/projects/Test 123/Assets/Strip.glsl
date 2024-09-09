@@ -57,16 +57,55 @@ layout (location = 4) in flat int v_EntityID;
 layout (binding = 0) uniform sampler2D u_Textures[32];
 
 uniform float u_Time;
-uniform vec2 u_ScreenResolution;
-uniform vec2 u_MousePos;
+#define time u_Time*10.
+
+
+float stripe(vec2 uv) {
+    return cos(uv.x*20.-time+uv.y*-30.);
+}
+
+float glass(vec2 uv) {
+    return cos(dot(uv.xy, vec2(12.41234,2442.123))*cos(uv.y));
+}
 
 void main()
 {
 	vec4 texColor = Input.Color;
-	// TexIndex between 0 and 31
-	texColor *= texture(u_Textures[int(v_TexIndex)], Input.TexCoord * Input.TilingFactor);	
+	vec2 fragCoord = gl_FragCoord.xy;
+	vec2 iResolution = vec2(1280, 720);
 
+	vec2 uv = fragCoord.xy / iResolution.xy;
+    float a = iResolution.x/iResolution.y;
+    uv.x *= a;
+    
 
+    float g = stripe(uv);
+
+    
+    vec3 col = vec3(smoothstep(0., .2, g));
+
+    col.r = .8;
+    col /= (pow(glass(vec2(uv.x*30., uv.y)),2.))+.5;
+    
+  
+    //Mask sides
+    col *= smoothstep(.12, .0, abs(uv.x - .5*a));
+
+    //Mask top and bottom
+    col *= smoothstep(.33, .30, abs(uv.y - .5));
+
+    if (uv.y > .80 && uv.y < .94 || uv.y < .2 && uv.y >.06) {
+       col = vec3(smoothstep(.13, .0, abs(uv.x - .5*a)));
+    
+    }
+
+    if (uv.y > .77 && uv.y < .87 || uv.y < .23 && uv.y >.13) {
+       col = vec3(smoothstep(.15, .0, abs(uv.x - .5*a)));
+        
+    }
+
+	texColor = vec4(col,1.0);
+	texColor *= texture(u_Textures[int(v_TexIndex)], Input.TexCoord * Input.TilingFactor);
 	o_Color = texColor;
 	//o_Color.a = Input.Color.a;
 	o_EntityID = v_EntityID;

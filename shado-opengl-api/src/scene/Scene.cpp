@@ -421,11 +421,7 @@ namespace Shado {
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group) {
 				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
-
-				if (!sprite.shader)
-					Renderer2D::DrawSprite(transform.getTransform(*this), sprite, (int)entity);
-				else
-					Renderer2D::DrawQuad(transform.getTransform(*this), *sprite.shader.Raw(), sprite.color, (int)entity);
+				Renderer2D::DrawSprite(transform.getTransform(*this), sprite, (int)entity);
 			}
 
 			// Draw circles
@@ -476,11 +472,7 @@ namespace Shado {
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 		for (auto entity : group) {
 			auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
-
-			if (!sprite.shader)
-				Renderer2D::DrawSprite(transform.getTransform(*this), sprite, (int)entity);
-			else
-				Renderer2D::DrawQuad(transform.getTransform(*this), *sprite.shader.Raw(), sprite.color, (int)entity);
+			Renderer2D::DrawSprite(transform.getTransform(*this), sprite, (int)entity);
 		}
 
 		// Draw circles

@@ -39,8 +39,11 @@ namespace Shado {
 			return GetAssetDirectory() / path;
 		}
 
+		std::filesystem::path GetRelativePath(const std::filesystem::path& path);
+
 		ProjectConfig& GetConfig()				{ return m_Config; }
 		const ProjectConfig& GetConfig() const	{ return m_Config; }
+		
 
 		static Ref<Project> GetActive() { return s_ActiveProject; }
 		static void SetActive(const Ref<Project>& project) { s_ActiveProject = project; }

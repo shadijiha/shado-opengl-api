@@ -8,102 +8,91 @@
 #include "scene/Entity.h"
 #include "scene/Prefab.h"
 #include "script/ScriptEngine.h"
+#include "ui/UI.h"
 
 #define INDENTED(block) { ImGui::Indent(); block; ImGui::Unindent(); }
 
 namespace Shado {
     static void drawEntityNode(Entity entity, Entity& selected);
 
+    static int sectionId = 0;
     static void drawSection(const std::string& name, std::function<void(const std::string&)> drawFn) {
-        if (ImGui::TreeNodeEx((void*)&name, 0, name.c_str())) {
+        UI::TreeNode(sectionId++, name, [&name, drawFn]() {
             drawFn(name);
-            ImGui::TreePop();
-        }
+        }, ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding);
     }
-    
-    static bool typeDropDown(const char* id, int& selectedItem) {
-        static constexpr int enumLength = 18;
-        static std::array<std::string, enumLength> fieldTypeStr;
-        static bool initialized = false;
-        if (!initialized) {
-            for (int i = 0; i < enumLength; i++) {
-                fieldTypeStr[i] = Utils::ScriptFieldTypeToString((ScriptFieldType)i);
-            }
-            initialized = true;
-        }
-        
-        return ImGui::Combo(id, &selectedItem, fieldTypeStr.data()->data(), fieldTypeStr.size());
-    } 
     
     void SceneInfoPanel::onImGuiRender()  {
         static ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+        sectionId = 0;
         
         ImGui::Begin("Scene Info");
 
         if (m_Scene == nullptr) {
-            ImGui::Text("No scene selected");
+            UI::Text("No scene selected");
             ImGui::End();
             return;
         }
 
-        drawSection("Scene Data", [this](const auto& name) {
-            ImGui::Text("Name: %s", m_Scene->name.c_str());
-            ImGui::Text("Viewport: %d x %d", m_Scene->m_ViewportWidth, m_Scene->m_ViewportHeight);
-            ImGui::Text("Is Running: %s", m_Scene->isRunning() ? "true" : "false");
-            ImGui::Text("Physics Enabled: %s", m_Scene->m_PhysicsEnabled ? "true" : "false");
+        drawSection("Scene Data", [this](const std::string& name) {
+            UI::Text("Name: %s", m_Scene->name.c_str());
+            UI::Text("Viewport: %d x %d", m_Scene->m_ViewportWidth, m_Scene->m_ViewportHeight);
+            UI::Text("Is Running: %s", m_Scene->isRunning() ? "true" : "false");
+            UI::Text("Physics Enabled: %s", m_Scene->m_PhysicsEnabled ? "true" : "false");
 
-            ImGui::NewLine();
+            UI::NewLine();
             drawSection("Entities:", [this](const auto& name) {
                 listEntities(m_Scene->getAllEntities(), m_Scene);
             });
 
-            drawSection("Physics (box2d)", [this](const auto& name) {
+            drawSection("Physics (box2d)", [this](const std::string& name) {
                 if (!m_Scene->m_World) {
-                    ImGui::Text("No physics world");
+                    UI::Text("No physics world");
                     return;
                 }
 
                 b2World* world = m_Scene->m_World;
-                ImGui::Text("Gravity: %.2f, %.2f", world->GetGravity().x, world->GetGravity().y);
-                ImGui::Text("Bodies: %d", world->GetBodyCount());
-                ImGui::Text("Contacts: %d", world->GetContactCount());
-                ImGui::Text("Joints: %d", world->GetJointCount());
-
+                UI::Text("Gravity: %.2f, %.2f", world->GetGravity().x, world->GetGravity().y);
+                UI::Text("Bodies: %d", world->GetBodyCount());
+                UI::Text("Contacts: %d", world->GetContactCount());
+                UI::Text("Joints: %d", world->GetJointCount());
                 
-                if (ImGui::BeginTable("World bodies", 3, tableFlags))
-                {
-                    for (b2Body* body = world->GetBodyList(); body != nullptr; body = body->GetNext()) 
-                    {
-                        ImGui::TableNextRow();
-
-                        ImGui::TableSetColumnIndex(0);
-                        ImGui::Text(body->GetType() == b2_dynamicBody ? "Dynamic" : body->GetType() == b2_staticBody ? "Static" : "Kinematic");
-
-                        ImGui::TableSetColumnIndex(1);
-                        auto entityId = (uint64_t)body->GetUserData().pointer;
+                // Make it an iterator
+                struct BodyIterator {
+                    b2Body* body;
+                    BodyIterator(b2Body* body) : body(body) {}
+                    b2Body*& operator*() { return body; }
+                    BodyIterator& operator++() { body = body->GetNext(); return *this; }
+                    bool operator!=(const BodyIterator& other) { return body != other.body; }
+                };                
+                UI::Table("World bodies", BodyIterator(world->GetBodyList()), BodyIterator(nullptr), {
+                    {"Entity", [this]( b2Body*& body, int i) {
+                        uint64_t entityId = body->GetUserData().pointer;
                         auto entity = m_Scene->getEntityById(entityId);
-                        ImGui::Text("Entity: %s (%llu)", entity ? entity.getComponent<TagComponent>().tag.c_str() : "invalid", entityId);
-
-                        ImGui::TableSetColumnIndex(2);
-                        ImGui::Text("Position: %.2f, %.2f", body->GetPosition().x, body->GetPosition().y);
-                    }
-                    ImGui::EndTable();
-                }
+                        UI::Text("%s (%llu)", entity ? entity.getComponent<TagComponent>().tag.c_str() : "invalid", entityId);
+                    }},
+                    {"Position", []( b2Body*& body, int i) {
+                        UI::Text("%.2f, %.2f", body->GetPosition().x, body->GetPosition().y);
+                    }},
+                    {"Type", []( b2Body*& body, int i) {
+                    UI::Text(body->GetType() == b2_dynamicBody ? "Dynamic" : body->GetType() == b2_staticBody ? "Static" : "Kinematic");
+                    }},
+                }, tableFlags);
 
             });
         });
 
         drawSection("Prefabs", [this](const auto& name) {
-            ImGui::Text("Loaded Prefabs: %d", Prefab::loadedPrefabs.size());
+            UI::Text("Loaded Prefabs: %d", Prefab::loadedPrefabs.size());
             INDENTED(
                 for (auto& [uuid, prefab] : Prefab::loadedPrefabs) {
-                    ImGui::Text("%llu (root = %s)", uuid, prefab->root.getComponent<TagComponent>().tag.c_str());
+                    UI::Text("%llu (root = %s)", uuid, prefab->root.getComponent<TagComponent>().tag.c_str());
                 }        
             );
         });
 
         drawSection("Entities to Destroy", [this](const auto& name) {
-            ImGui::Text("Entities to Destroy: %d", m_Scene->toDestroy.size());
+            UI::Text("Entities to Destroy: %d", m_Scene->toDestroy.size());
             INDENTED(
                 for (auto& entity : m_Scene->toDestroy) {
                     drawEntityNode(entity, m_Selected);
@@ -114,63 +103,54 @@ namespace Shado {
         drawSection("Script Engine:", [this](const auto& name) {
             const ScriptEngineData& data = ScriptEngine::GetData();
             if (!&data) {
-                ImGui::Text("No script engine data");
+                UI::Text("No script engine data");
                 return;
             }
 
-            ImGui::Text("Root:");
+            UI::Text("Root:");
             INDENTED({
 
-                //ImGui::Text("Root domain: %s", mono_domain_get_friendly_name(data.RootDomain));
-                //ImGui::Text("Core image filename: %s", mono_image_get_filename(data.CoreAssemblyImage));
-                ImGui::Text("Core assembly filepath: %s", data.CoreAssemblyFilepath.string().c_str());
+                //UI::Text("Root domain: %s", mono_domain_get_friendly_name(data.RootDomain));
+                //UI::Text("Core image filename: %s", mono_image_get_filename(data.CoreAssemblyImage));
+                UI::Text("Core assembly filepath: %s", data.CoreAssemblyFilepath.string().c_str());
             });
 
-            ImGui::Text("App:");
+            UI::Text("App:");
             INDENTED({
-                //ImGui::Text("App domain: %s", mono_domain_get_friendly_name(data.AppDomain));            
-                //ImGui::Text("App image name: %s", mono_image_get_filename(data.AppAssemblyImage));
-                ImGui::Text("Core assembly filepath: %s", data.AppAssemblyFilepath.string().c_str());
+                //UI::Text("App domain: %s", mono_domain_get_friendly_name(data.AppDomain));            
+                //UI::Text("App image name: %s", mono_image_get_filename(data.AppAssemblyImage));
+                UI::Text("Core assembly filepath: %s", data.AppAssemblyFilepath.string().c_str());
             });
 
             drawSection("Entity Classes:", [this, &data](const auto& name) {
                 INDENTED(
                     for (auto& [klassName, klassRef] : data.EntityClasses) {
-                        ImGui::Text("%s", klassRef->GetClassFullName().c_str());
+                        UI::Text("%s", klassRef->GetClassFullName().c_str());
                     }
                 );
             });
 
             drawSection("Entity Instances:", [this, &data](const auto& name) {
                 INDENTED(
-                    ImGui::BeginTable("##Entity Instances", 3, tableFlags);
-
-                    ImGui::TableSetupColumn("Entity");
-                    ImGui::TableSetupColumn("Class fullname");
-                    ImGui::TableSetupColumn("MonoObject alive?");
-                    ImGui::TableHeadersRow();
-                    
-                    for (auto& [entityId, instance] : data.EntityInstances) {
-                        ImGui::TableNextRow();
-                        ImGui::TableSetColumnIndex(0);
-                        
-                        auto entity = m_Scene->getEntityById(entityId);
-                        if (!entity) {
-                            ImGui::Text("Invalid entity (%llu)", entityId);
-                            continue;
-                        }
-                        
-                        ImGui::Text("%s (%llu)", entity.getComponent<TagComponent>().tag.c_str(), entityId);
-
-                        ImGui::TableSetColumnIndex(1);
-                        ImGui::Text("Script: %s", instance->GetScriptClass()->GetClassFullName().c_str());
-
-                        ImGui::TableSetColumnIndex(2);
-                        ImGui::Text("%s", instance->GetManagedObject() ? "true" : "false");
-
-                        
-                    }
-                    ImGui::EndTable();
+                    UI::Table("##Entity Instances", data.EntityInstances.begin(), data.EntityInstances.end(), {
+                        {"Entity", [this](const std::pair<UUID, Ref<ScriptInstance>>& key, int i) {
+                            auto& [entityId, instance] = key;
+                            auto entity = m_Scene->getEntityById(entityId);
+                            if (!entity) {
+                                UI::Text("Invalid entity (%llu)", entityId);
+                                return;
+                            }
+                            UI::Text("%s (%llu)", entity.getComponent<TagComponent>().tag.c_str(), entityId);
+                        }},
+                        {"Class fullname", [](const std::pair<UUID, Ref<ScriptInstance>>& key, int i) {
+                            auto& [entityId, instance] = key;
+                            UI::Text("Script: %s", instance->GetScriptClass()->GetClassFullName().c_str());
+                        }},
+                        {"MonoObject alive?", [](const std::pair<UUID, Ref<ScriptInstance>>& key, int i) {
+                            auto& [entityId, instance] = key;
+                            UI::Text("%s", instance->GetManagedObject() ? "true" : "false");
+                        }},
+                    }, tableFlags);
                 );
             });
 
@@ -179,18 +159,18 @@ namespace Shado {
             //         for (auto& [entityId, fieldMap] : data.EntityScriptFields) {
             //             Entity e = m_Scene->getEntityById(entityId);
             //             if (!e) {
-            //                 ImGui::Text("Invalid entity (%llu)", entityId);
+            //                 UI::Text("Invalid entity (%llu)", entityId);
             //                 continue;
             //             }
             //             
-            //             ImGui::Text("Entity: %s (%llu)", e.getComponent<TransformComponent>(), entityId);
+            //             UI::Text("Entity: %s (%llu)", e.getComponent<TransformComponent>(), entityId);
             //             INDENTED(
             //                 for (auto& [fieldName, fieldInstance] : fieldMap) {
-            //                     ImGui::Text("%s: ", fieldName.c_str());
+            //                     UI::Text("%s: ", fieldName.c_str());
             //                     ImGui::SameLine();
             //                     
             //                     double value = fieldInstance.GetValue<double>();                                
-            //                     ImGui::Text("%s: %f", fieldName.c_str(), value);
+            //                     UI::Text("%s: %f", fieldName.c_str(), value);
             //
             //                     
             //                 }
@@ -230,3 +210,4 @@ namespace Shado {
         }
     }
 }
+   

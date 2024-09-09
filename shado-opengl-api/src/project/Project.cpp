@@ -7,6 +7,9 @@
 #include "util/FileSystem.h"
 
 namespace Shado {
+	std::filesystem::path Project::GetRelativePath(const std::filesystem::path& path) {
+		return std::filesystem::relative(path, m_ProjectDirectory);
+	}
 
 	Ref<Project> Project::New()
 	{

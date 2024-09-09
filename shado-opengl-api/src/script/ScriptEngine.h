@@ -112,9 +112,9 @@ namespace Shado {
 	class ScriptInstance : public RefCounted
 	{
 	public:
-		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity);
+		ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity, bool handleStrongRef = false);
 		ScriptInstance(Ref<ScriptClass> scriptClass, bool handleStrongRef = false);
-		ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object);
+		ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object, bool handleStrongRef = false);
 		~ScriptInstance();
 
 		void InvokeOnCreate();

@@ -180,6 +180,7 @@ namespace Shado {
 		allocator->malloc =		[](size_t size)				{ return Memory::HeapRaw(size, "C#"); };
 		allocator->realloc =	[](void* ptr, size_t size)	{ return Memory::ReallocRaw(ptr, size, "C#"); };
 		allocator->free =		[](void* ptr)				{ Memory::FreeRaw(ptr, "C#"); };
+		allocator->calloc =		[](size_t count, size_t size) { return Memory::CallocRaw(count, size, "C#"); };
 		mono_set_allocator_vtable(allocator);
 		mono_set_assemblies_path("mono/lib");
 
@@ -286,7 +287,7 @@ namespace Shado {
 		{
 			UUID entityID = entity.getUUID();
 
-			Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity);
+			Ref<ScriptInstance> instance = CreateRef<ScriptInstance>(s_Data->EntityClasses[sc.ClassName], entity, true);
 			s_Data->EntityInstances[entityID] = instance;
 
 			// Copy field values
@@ -808,12 +809,16 @@ namespace Shado {
 		return result;
 	}
 
-	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity)
+	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, Entity entity, bool handleStrongRef)
 		: m_ScriptClass(scriptClass)
 	{
 		//m_Instance = scriptClass->Instantiate();
 		MonoObject* scriptInstance = scriptClass->Instantiate();
-		m_GCHandle = mono_gchandle_new_weakref(scriptInstance, false);
+		if (handleStrongRef)
+			m_GCHandle = mono_gchandle_new(scriptInstance, false);
+		else
+			m_GCHandle = mono_gchandle_new_weakref(scriptInstance, false);
+		m_HandleStrongRef = handleStrongRef;
 
 		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 1);
 		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
@@ -841,9 +846,16 @@ namespace Shado {
 			m_GCHandle = mono_gchandle_new_weakref(scriptInstance, false);
 	}
 
-	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object)
-		: m_ScriptClass(scriptClass), m_GCHandle(mono_gchandle_new_weakref(object, false)) //m_Instance(object)
+	ScriptInstance::ScriptInstance(Ref<ScriptClass> scriptClass, MonoObject* object, bool handleStrongRef)
+		: m_ScriptClass(scriptClass) //m_Instance(object)
 	{
+		//m_GCHandle = mono_gchandle_new_weakref(object, false);
+		if (handleStrongRef)
+			m_GCHandle = mono_gchandle_new(object, false);
+		else
+			m_GCHandle = mono_gchandle_new_weakref(object, false);
+		m_HandleStrongRef = handleStrongRef;
+		
 		m_Constructor = s_Data->EntityClass.GetMethod(".ctor", 0);
 		m_OnCreateMethod = scriptClass->GetMethod("OnCreate", 0);
 		m_OnUpdateMethod = scriptClass->GetMethod("OnUpdate", 1);

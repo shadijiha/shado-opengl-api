@@ -202,7 +202,7 @@ namespace Shado {
 	static void drawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 	static void addComponentContextMenu(Entity m_Selected, uint32_t vpWidth, uint32_t vpHeight);
 	static void drawTextureControl(void* spriteData, const std::string& type = "Quad");
-	static void generateShaderFile(const std::string& path, const std::string& type);
+	static void generateShaderFile(const std::filesystem::path& path, const std::string& type);
 
 	void PropertiesPanel::drawComponents(Entity entity) {
 		SHADO_PROFILE_FUNCTION();
@@ -378,14 +378,29 @@ namespace Shado {
 
 				bool scriptClassExists = ScriptEngine::EntityClassExists(component.ClassName);
 
-				static char buffer[64];
-				strcpy_s(buffer, sizeof(buffer), component.ClassName.c_str());
-
 				ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), !scriptClassExists);
 
-				if (ImGui::InputText("Class", buffer, sizeof(buffer)))
+				std::string currentItem = component.ClassName;
+				std::vector<std::string> hints;
+				for (auto& [name, scriptClass] : ScriptEngine::GetEntityClasses())
+					hints.push_back(name);
+				// Sort the hints
+				std::sort(hints.begin(), hints.end());
+			
+				if (ImGui::BeginCombo("Class", currentItem.c_str()))
 				{
-					component.ClassName = buffer;
+					for (std::size_t n = 0; n < hints.size(); n++)
+					{
+						bool is_selected = (currentItem == hints[n]); // You can store your selection however you want, outside or inside your objects
+						if (ImGui::Selectable(hints[n].c_str(), is_selected)) {
+							currentItem = hints[n];
+							component.ClassName = currentItem;
+						}
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+					}
+					
+					ImGui::EndCombo();
 					return;
 				}
 
@@ -591,8 +606,8 @@ namespace Shado {
 
 			// Component settings menu
 			if (allowDeletion) {
-				ImGui::SameLine(contentRegionAvail.x - lineHeight * 0.5f);
-				if (ImGui::Button("...", { lineHeight, lineHeight })) {
+				UI::SameLine(contentRegionAvail.x - lineHeight * 0.5f);
+				if (UI::ButtonControl("...", { lineHeight, lineHeight })) {
 					ImGui::OpenPopup("ComponentSettings");
 				}
 			}
@@ -767,6 +782,10 @@ namespace Shado {
 		// Image
 		if (sprite.texture) {
 			ImGui::Image((void*)sprite.texture->getRendererID(), { 60, 60 }, ImVec2(0, 1), ImVec2(1, 0));
+
+			if (UI::ButtonControl("X")) {
+				sprite.texture = nullptr;
+			}
 		}
 
 		// =========== Tilling factor
@@ -775,34 +794,45 @@ namespace Shado {
 		ImGui::Separator();
 
 		// =========== Shader
-		// Create Shader file
-		// only for quad for now
-		if (type != "Quad")
-			return;
-
-		std::string shaderPath = sprite.shader ? sprite.shader->getName().c_str() : "Default Shader";
+		std::string shaderPath = sprite.shader ? Project::GetActive()->GetRelativePath(sprite.shader->getFilepath()).string().c_str() : "Default Shader";
 		UI::InputTextWithChooseFile("Shader", shaderPath, { ".glsl", ".shader" }, typeid(sprite.shader).hash_code(),
 			[&](std::string path) {
 				sprite.shader = CreateRef<Shader>(path);
 			}
 		);
 
-		if (ImGui::Button("+")) {
-			std::string path = FileDialogs::saveFile("Shader file (*glsl)\0*.glsl\0");
+		if (UI::ButtonControl("+")) {
+			std::filesystem::path path = FileDialogs::saveFile("Shader file (*glsl)\0*.glsl\0");
 			if (!path.empty()) {
 				generateShaderFile(path, type);
 				Dialog::openPathInExplorer(path);
+
+				// Create shader
+				try {
+					sprite.shader = CreateRef<Shader>(path);
+				} catch (const ShaderCompilationException& e) {
+					SHADO_CORE_ERROR("Failed to compile shader: {0}", e.what());
+				}
 			}
 		}
 
-		if (ImGui::Button("Recompile")) {
+		UI::SameLine();
+		if (UI::ButtonControl("Recompile")) {
 			if (sprite.shader) {
-				sprite.shader = CreateRef<Shader>(sprite.shader->getFilepath());
+				try {
+					sprite.shader = CreateRef<Shader>(sprite.shader->getFilepath());
+				} catch (const ShaderCompilationException& e) {
+					SHADO_CORE_ERROR("Failed to recompile shader: {0}", e.what());
+				}
 			}
+		}
+
+		if (sprite.shader && UI::ButtonControl("X")) {
+			sprite.shader = nullptr;
 		}
 	}
 
-	static void generateShaderFile(const std::string& path, const std::string& type) {
+	static void generateShaderFile(const std::filesystem::path& path, const std::string& type) {
 
 		auto filepath = type == "Circle" ? CIRCLE_SHADER : QUAD_SHADER;
 

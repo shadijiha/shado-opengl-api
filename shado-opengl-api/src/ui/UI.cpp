@@ -7,6 +7,14 @@
 #include "scene/utils/SceneUtils.h"
 
 namespace Shado {
+	void UI::TreeNode(int id, const std::string& label, std::function<void()> ui, ImGuiTreeNodeFlags flags) {
+		bool open = ImGui::TreeNodeEx((void*)(intptr_t)id, flags, label.c_str());
+		if (open) {
+			ui();
+			ImGui::TreePop();
+		}
+	}
+
 	void UI::DropDown(const std::string& label, std::initializer_list<std::pair<std::string, std::function<void()>>> options, std::string& currentType) {
 		if (ImGui::BeginCombo(label.c_str(), currentType.c_str())) {
 
@@ -224,4 +232,13 @@ namespace Shado {
 	bool UI::ButtonControl(const std::string& value, const glm::vec2& size) {
 		return ImGui::Button(value.c_str(), { size.x, size.y });
 	}
+
+	void UI::NewLine() {
+		ImGui::NewLine();
+	}
+
+	void UI::SameLine(float offsetFromStart, float spacing) {
+		ImGui::SameLine(offsetFromStart, spacing);
+	}
+	
 }

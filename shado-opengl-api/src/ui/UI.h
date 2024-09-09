@@ -1,9 +1,11 @@
 #pragma once
 #include <functional>
+#include <map>
 #include <string>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <iterator>
 
 #include "Application.h"
 #include "imgui_internal.h"
@@ -14,10 +16,11 @@ namespace Shado {
 		enum class FileChooserType {
 			Open = 0, Save, Folder
 		};
-
-		template<typename T>
-		static void TreeNode(const std::string& label, std::function<void()> ui);
-
+		
+		static void TreeNode(int id, const std::string& label, std::function<void()> ui, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap
+																											| ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding
+																											| ImGuiTreeNodeFlags_AllowItemOverlap);
+		
 		static void DropDown(const std::string& label, std::initializer_list<std::pair<std::string, std::function<void()>>> options, std::string& currentType);
 
 		static bool Vec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
@@ -39,23 +42,24 @@ namespace Shado {
 
 		static bool ButtonControl(const std::string& value, const glm::vec2& size = { 0, 0 });
 
-	};
-
-	template <typename T>
-	void UI::TreeNode(const std::string& label, std::function<void()> ui) {
-		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap
-			| ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding
-			| ImGuiTreeNodeFlags_AllowItemOverlap;
-
-		// Olaf settings
-		bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, label.c_str());
-		if (open) {
-			ui();
-			ImGui::TreePop();
+		template<typename... Args>
+		static void Text(const std::string& format, Args... args) {
+			ImGui::Text(format.c_str(), args...);
 		}
-		ImGui::NewLine();
-	}
 
+		static void NewLine();
+
+		static void SameLine(float offsetFromStart = 0, float spacing = -1);
+
+		template<typename Iterator>
+		static bool Table(const std::string& label,
+						  Iterator begin,
+						  Iterator end,
+						  const std::map<std::string, std::function<void(decltype(*begin)&, int)>>& columnHeaderUi,
+						  ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
+		
+	};
+	
 	template <typename T>
 	bool UI::Vec1Control(const std::string& label, T& value, T resetValue, float columnWidth) {
 		ImGuiIO& io = ImGui::GetIO();
@@ -102,6 +106,38 @@ namespace Shado {
 		ImGui::PopID();
 
 		return result;
+	}
+
+	template<typename Iterator>
+	bool UI::Table( const std::string& label,
+					Iterator begin,
+					Iterator end,
+					const std::map<std::string, std::function<void(decltype(*begin)&, int)>>& columnHeaderUi,
+				    ImGuiTableFlags flags) {
+		
+		if (ImGui::BeginTable(label.c_str(), columnHeaderUi.size(), flags)) {
+			for (const auto& [header, ui] : columnHeaderUi) {
+				ImGui::TableSetupColumn(header.c_str());
+			}
+			ImGui::TableHeadersRow();
+
+			for(auto it = begin; it != end; ++it) {
+				ImGui::TableNextRow();
+				
+				auto& item = *it;
+				int i = 0;
+				for(const auto& [header, ui] : columnHeaderUi) {
+					ImGui::TableSetColumnIndex(i);
+					ui(item, i);
+					i++;
+				}
+			}
+
+		
+			ImGui::EndTable();
+			return true;
+		}
+		return false;
 	}
 
 	struct ScopedStyleColor
