@@ -25,6 +25,8 @@ namespace Shado {
 		Ref<Texture2D> m_FileIcon;
 		Ref<Texture2D> m_SceneIcon;
 		Ref<Texture2D> m_PrefabIcon;
+		Ref<Texture2D> m_CSIcon;
+		Ref<Texture2D> m_SlnIcon;
 
 		std::vector<std::filesystem::directory_entry> directories;
 		uint32_t tick = 1;

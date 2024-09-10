@@ -39,6 +39,8 @@ namespace Shado {
 		m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
 		m_SceneIcon = CreateRef<Texture2D>("resources/icons/scene.png");
 		m_PrefabIcon = CreateRef<Texture2D>("resources/icons/Prefab.png");
+		m_CSIcon = CreateRef<Texture2D>("resources/icons/CS.png");
+		m_SlnIcon = CreateRef<Texture2D>("resources/icons/sln.png");
 
 		if (path.has_value()) {
 			setDirectory(path.value());
@@ -219,6 +221,10 @@ namespace Shado {
 			icon = m_SceneIcon;
 		} else if (path.extension() == ".prefab") {
 			icon = m_PrefabIcon;
+		} else if (path.extension() == ".cs") {
+			icon = m_CSIcon;
+		} else if (path.extension() == ".sln") {
+			icon = m_SlnIcon;
 		}
 		return icon->getRendererID();
 	}

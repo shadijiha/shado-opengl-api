@@ -2,33 +2,10 @@
 #include "scene/Scene.h"
 #include "util/Util.h"
 #include "scene/Entity.h"
-#include "imgui.h"
+#include "PropertiesPanel.h"
 
 namespace Shado {
 
-	class PropertiesPanel {
-	public:
-		PropertiesPanel( const std::string& title = "Properties");
-		PropertiesPanel(const Ref<Scene>& scene, const std::string& title = "Properties");
-
-		void setContext(const Ref<Scene>& scene);
-
-		void onImGuiRender();
-		void onEvent(Event& e);
-
-		void setSelected(Entity entity);
-
-		Entity getSelected() const { return m_Selected; }
-		void resetSelection();
-		
-	private:
-		void drawComponents(Entity e);
-	private:
-		Ref<Scene> m_Context;
-		Entity m_Selected;
-		std::string m_Title;
-	};
-	
 	class SceneHierarchyPanel
 	{
 	public:
