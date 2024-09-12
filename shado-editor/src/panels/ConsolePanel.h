@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "renderer/Texture2D.h"
-#include "util/Util.h"
+#include "util/TimeStep.h"
 
 namespace Shado {
 	class ConsolePanel {

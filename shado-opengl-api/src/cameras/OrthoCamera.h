@@ -5,7 +5,7 @@
 #include "../Events/MouseEvent.h"
 #include "../Events/ApplicationEvent.h"
 #include "glm/ext/quaternion_float.hpp"
-#include "../util/Util.h"
+#include "../util/TimeStep.h"
 #include "Camera.h"
 
 namespace Shado

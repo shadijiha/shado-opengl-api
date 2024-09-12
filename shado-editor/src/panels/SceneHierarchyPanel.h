@@ -1,6 +1,6 @@
 #pragma once
 #include "scene/Scene.h"
-#include "util/Util.h"
+#include "util/TimeStep.h"
 #include "scene/Entity.h"
 #include "PropertiesPanel.h"
 

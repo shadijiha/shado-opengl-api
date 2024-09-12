@@ -75,6 +75,24 @@ namespace Shado {
         virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
     };
 
+    class ScriptIntRenderer final : public ScriptTypeRenderer {
+    public:
+        ScriptIntRenderer()
+            : ScriptTypeRenderer(ScriptFieldType::Int) {}
+        
+        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
+        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+    };
+
+    class ScriptBoolRenderer final : public ScriptTypeRenderer {
+    public:
+        ScriptBoolRenderer()
+            : ScriptTypeRenderer(ScriptFieldType::Bool) {}
+        
+        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
+        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+    };
+
     class ScriptVector3Renderer final : public ScriptTypeRenderer {
     public:
         ScriptVector3Renderer()

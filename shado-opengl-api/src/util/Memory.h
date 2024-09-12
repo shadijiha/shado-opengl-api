@@ -2,334 +2,323 @@
 #include <cstdint>
 #include <atomic>
 #include <unordered_map>
+#include <memory>
 
 #define snew(Type) new(Shado::Memory::Heap<Type>())
 #define sdelete(ptr) Shado::Memory::Free(ptr)
 
 extern "C" {
-	double glfwGetTime();
+double glfwGetTime();
 }
 
 namespace Shado {
+    class Memory {
+    public:
+        template <typename T>
+        static T* Heap(const char* label = "Engine") {
+            total_allocated += sizeof(T);
+            total_alive += sizeof(T);
+            memory_history.emplace_back(glfwGetTime(), total_alive);
+            memory_labels[label] += sizeof(T);
+            return static_cast<T*>(malloc(sizeof(T)));
+        }
 
-	class Memory {
-	public:
-		template<typename T>
-		inline static T* Heap(const char* label = "Engine") {
-			total_allocated += sizeof(T);
-			total_alive += sizeof(T);
-			memory_history.emplace_back(glfwGetTime(), total_alive);
-			memory_labels[label] += sizeof(T);
-			return (T*)malloc(sizeof(T));
-		}
+        template <typename T>
+        static T* Heap(uint32_t count, const char* label = "Engine") {
+            total_allocated += sizeof(T) * count;
+            total_alive += sizeof(T) * count;
+            T* ptr = static_cast<T*>(std::malloc(sizeof(T) * count));
+            live_array_refs[ptr] = count;
+            memory_labels[label] += sizeof(T) * count;
+            return ptr;
+        }
 
-		template<typename T>
-		inline static T* Heap(uint32_t count, const char* label = "Engine") {
-			total_allocated += sizeof(T) * count;
-			total_alive += sizeof(T) * count;
-			T* ptr = (T*)std::malloc(sizeof(T) * count);
-			live_array_refs[ptr] = count;
-			memory_labels[label] += sizeof(T) * count;
-			return ptr;
-		}
+        static void* HeapRaw(size_t size, const char* label = "Engine") {
+            total_allocated += size;
+            total_alive += size;
+            void* ptr = std::malloc(size);
+            live_array_refs[ptr] = size;
+            memory_history.emplace_back(glfwGetTime(), total_alive);
+            memory_labels[label] += size;
+            return ptr;
+        }
 
-		inline static void* HeapRaw(size_t size, const char* label = "Engine") {
-			total_allocated += size;
-			total_alive += size;
-			void* ptr = std::malloc(size);
-			live_array_refs[ptr] = size;
-			memory_history.emplace_back(glfwGetTime(), total_alive);
-			memory_labels[label] += size;
-			return ptr;
-		}
+        static void* ReallocRaw(void* block, size_t size, const char* label = "Engine") {
+            uint32_t old_block_size = live_array_refs.contains(block) ? live_array_refs[block] : 0;
+            total_allocated += size;
+            total_alive += size - old_block_size;
+            memory_history.emplace_back(glfwGetTime(), total_alive);
+            void* ptr = std::realloc(block, size);
+            live_array_refs.erase(block);
+            live_array_refs[ptr] = size;
+            memory_labels[label] += size - old_block_size;
+            return ptr;
+        }
 
-		inline static void* ReallocRaw(void* block, size_t size, const char* label = "Engine") {
-			uint32_t old_block_size = live_array_refs.find(block) != live_array_refs.end() ? live_array_refs[block] : 0;
-			total_allocated += size;
-			total_alive += size - old_block_size;
-			memory_history.emplace_back(glfwGetTime(), total_alive);
-			void* ptr = std::realloc(block, size);
-			live_array_refs.erase(block);
-			live_array_refs[ptr] = size;
-			memory_labels[label] += size - old_block_size;
-			return ptr;
-		}
+        template <typename T>
+        static void Free(T* ptr, bool array = false) {
+            if (array) {
+                uint32_t count =
+                    live_array_refs.contains(ptr) ? live_array_refs[ptr] : 1;
+                live_array_refs.erase(ptr);
+                total_alive -= sizeof(T) * count;
+                delete[] ptr;
+            }
+            else {
+                total_alive -= sizeof(T);
+                delete ptr;
+            }
+            memory_history.emplace_back(glfwGetTime(), total_alive);
+        }
 
-		template<typename T>
-		inline static void Free(T* ptr, bool array = false) {
-			if (array) {
-				uint32_t count =
-					live_array_refs.find(ptr) != live_array_refs.end() ? live_array_refs[ptr] : 1;
-				live_array_refs.erase(ptr);
-				total_alive -= sizeof(T) * count;
-				delete[] ptr;
-			}
-			else {
-				total_alive -= sizeof(T);
-				delete ptr;
-			}
-			memory_history.emplace_back(glfwGetTime(), total_alive);
-		}
+        static void FreeRaw(void* ptr, const char* label = "Engine") {
+            size_t size = live_array_refs.contains(ptr) ? live_array_refs[ptr] : 0;
+            live_array_refs.erase(ptr);
+            total_alive -= size;
+            free(ptr);
+            memory_history.emplace_back(glfwGetTime(), total_alive);
+        }
 
-		inline static void FreeRaw(void* ptr, const char* label = "Engine") {
-			size_t size = live_array_refs.find(ptr) != live_array_refs.end() ? live_array_refs[ptr] : 0;
-			live_array_refs.erase(ptr);
-			total_alive -= size;
-			free(ptr);
-			memory_history.emplace_back(glfwGetTime(), total_alive);
-		}
+        static void* CallocRaw(size_t count, size_t size, const char* label = "Engine") {
+            return std::calloc(count, size);
+        }
 
-		inline static void* CallocRaw(size_t count, size_t size, const char* label = "Engine") {
-			return std::calloc(count, size);
-		}
+        template <typename T>
+        static T* Stack() {
+            return static_cast<T*>(alloca(sizeof(T)));
+        }
 
-		template<typename T>
-		inline static T* Stack() {
-			return (T*)alloca(sizeof(T));
-		}
+        static size_t GetTotalAllocated() { return total_allocated; }
+        static size_t GetTotalAlive() { return total_alive; }
 
-		inline static size_t GetTotalAllocated() { return total_allocated; }
-		inline static size_t GetTotalAlive() { return total_alive; }
-		inline static const std::vector<std::pair<float, size_t>>& GetMemoryHistory() {
-			// If more than 50 entries, remove until 50
-			if (memory_history.size() > 50)
-				memory_history.erase(memory_history.begin(), memory_history.begin() + (memory_history.size() - 50));
-			return memory_history;
-		}
-		inline static const std::unordered_map<const char*, size_t>& GetMemoryLabels() { return memory_labels; }
+        static const std::vector<std::pair<float, size_t>>& GetMemoryHistory() {
+            // If more than 50 entries, remove until 50
+            if (memory_history.size() > 50)
+                memory_history.erase(memory_history.begin(), memory_history.begin() + (memory_history.size() - 50));
+            return memory_history;
+        }
 
-	private:
-		inline static size_t total_allocated = 0;
-		inline static size_t total_alive = 0;
-		inline static std::unordered_map<void*, uint32_t> live_array_refs;
-		inline static std::vector<std::pair<float, size_t>> memory_history;
-		inline static std::unordered_map<const char*, size_t> memory_labels;
-	};
+        static const std::unordered_map<const char*, size_t>& GetMemoryLabels() { return memory_labels; }
 
-	class RefCounted
-	{
-	public:
-		void IncRefCount() const
-		{
-			++m_RefCount;
-		}
-		void DecRefCount() const
-		{
-			--m_RefCount;
-		}
+    private:
+        inline static size_t total_allocated = 0;
+        inline static size_t total_alive = 0;
+        inline static std::unordered_map<void*, uint32_t> live_array_refs;
+        inline static std::vector<std::pair<float, size_t>> memory_history;
+        inline static std::unordered_map<const char*, size_t> memory_labels;
+    };
 
-		uint32_t GetRefCount() const { return m_RefCount.load(); }
+    class RefCounted {
+    public:
+        void IncRefCount() const {
+            ++m_RefCount;
+        }
 
-	private:
-		mutable std::atomic<uint32_t> m_RefCount = 0;
-	};
+        void DecRefCount() const {
+            --m_RefCount;
+        }
 
-	namespace RefUtils {
-		void AddToLiveReferences(void* instance);
-		void RemoveFromLiveReferences(void* instance);
-		bool IsLive(void* instance);
-	}
+        uint32_t GetRefCount() const { return m_RefCount.load(); }
 
-	template<typename T>
-	class Ref
-	{
-	public:
-		Ref()
-			: m_Instance(nullptr)
-		{
-		}
+    private:
+        mutable std::atomic<uint32_t> m_RefCount = 0;
+    };
 
-		Ref(std::nullptr_t n)
-			: m_Instance(nullptr)
-		{
-		}
+    namespace RefUtils {
+        void AddToLiveReferences(void* instance);
+        void RemoveFromLiveReferences(void* instance);
+        bool IsLive(void* instance);
+    }
 
-		Ref(T* instance)
-			: m_Instance(instance)
-		{
-			static_assert(std::is_base_of<RefCounted, T>::value, "Class is not RefCounted!");
+    template <typename T>
+    class Ref {
+    public:
+        Ref()
+            : m_Instance(nullptr) {
+        }
 
-			IncRef();
-		}
+        Ref(std::nullptr_t n)
+            : m_Instance(nullptr) {
+        }
 
-		template<typename T2>
-		Ref(const Ref<T2>& other)
-		{
-			m_Instance = (T*)other.m_Instance;
-			IncRef();
-		}
+        Ref(T* instance)
+            : m_Instance(instance) {
+            static_assert(std::is_base_of_v<RefCounted, T>, "Class is not RefCounted!");
 
-		template<typename T2>
-		Ref(Ref<T2>&& other)
-		{
-			m_Instance = (T*)other.m_Instance;
-			other.m_Instance = nullptr;
-		}
+            IncRef();
+        }
 
-		static Ref<T> CopyWithoutIncrement(const Ref<T>& other)
-		{
-			Ref<T> result = nullptr;
-			result->m_Instance = other.m_Instance;
-			return result;
-		}
+        template <typename T2>
+        Ref(const Ref<T2>& other) {
+            m_Instance = static_cast<T*>(other.m_Instance);
+            IncRef();
+        }
 
-		~Ref()
-		{
-			DecRef();
-		}
+        template <typename T2>
+        Ref(Ref<T2>&& other) {
+            m_Instance = static_cast<T*>(other.m_Instance);
+            other.m_Instance = nullptr;
+        }
 
-		Ref(const Ref<T>& other)
-			: m_Instance(other.m_Instance)
-		{
-			IncRef();
-		}
+        static Ref<T> CopyWithoutIncrement(const Ref<T>& other) {
+            Ref<T> result = nullptr;
+            result->m_Instance = other.m_Instance;
+            return result;
+        }
 
-		Ref& operator=(std::nullptr_t)
-		{
-			DecRef();
-			m_Instance = nullptr;
-			return *this;
-		}
+        ~Ref() {
+            DecRef();
+        }
 
-		Ref& operator=(const Ref<T>& other)
-		{
-			other.IncRef();
-			DecRef();
+        Ref(const Ref<T>& other)
+            : m_Instance(other.m_Instance) {
+            IncRef();
+        }
 
-			m_Instance = other.m_Instance;
-			return *this;
-		}
+        Ref& operator=(std::nullptr_t) {
+            DecRef();
+            m_Instance = nullptr;
+            return *this;
+        }
 
-		template<typename T2>
-		Ref& operator=(const Ref<T2>& other)
-		{
-			other.IncRef();
-			DecRef();
+        Ref& operator=(const Ref<T>& other) {
+            other.IncRef();
+            DecRef();
 
-			m_Instance = other.m_Instance;
-			return *this;
-		}
+            m_Instance = other.m_Instance;
+            return *this;
+        }
 
-		template<typename T2>
-		Ref& operator=(Ref<T2>&& other)
-		{
-			DecRef();
+        template <typename T2>
+        Ref& operator=(const Ref<T2>& other) {
+            other.IncRef();
+            DecRef();
 
-			m_Instance = other.m_Instance;
-			other.m_Instance = nullptr;
-			return *this;
-		}
+            m_Instance = other.m_Instance;
+            return *this;
+        }
 
-		operator bool() { return m_Instance != nullptr; }
-		operator bool() const { return m_Instance != nullptr; }
+        template <typename T2>
+        Ref& operator=(Ref<T2>&& other) {
+            DecRef();
 
-		T* operator->() { return m_Instance; }
-		const T* operator->() const { return m_Instance; }
+            m_Instance = other.m_Instance;
+            other.m_Instance = nullptr;
+            return *this;
+        }
 
-		T& operator*() { return *m_Instance; }
-		const T& operator*() const { return *m_Instance; }
+        operator bool() { return m_Instance != nullptr; }
+        operator bool() const { return m_Instance != nullptr; }
 
-		T* Raw() { return  m_Instance; }
-		const T* Raw() const { return  m_Instance; }
+        T* operator->() { return m_Instance; }
+        const T* operator->() const { return m_Instance; }
 
-		void Reset(T* instance = nullptr)
-		{
-			DecRef();
-			m_Instance = instance;
-		}
-		void Leak() {
-			m_Instance->IncRefCount();
-		}
+        T& operator*() { return *m_Instance; }
+        const T& operator*() const { return *m_Instance; }
 
-		template<typename T2>
-		Ref<T2> As() const
-		{
-			return Ref<T2>(*this);
-		}
+        T* Raw() { return m_Instance; }
+        const T* Raw() const { return m_Instance; }
 
-		template<typename... Args>
-		static Ref<T> Create(Args&&... args)
-		{
+        void Reset(T* instance = nullptr) {
+            DecRef();
+            m_Instance = instance;
+        }
+
+        void Leak() {
+            m_Instance->IncRefCount();
+        }
+
+        template <typename T2>
+        Ref<T2> As() const {
+            return Ref<T2>(*this);
+        }
+
+        template <typename... Args>
+        static Ref<T> Create(Args&&... args) {
 #if HZ_TRACK_MEMORY
 			return Ref<T>(new(typeid(T).name()) T(std::forward<Args>(args)...));
 #else
-			return Ref<T>(new T(std::forward<Args>(args)...));
-			return Ref<T>(snew(T) T(std::forward<Args>(args)...));
+            return Ref<T>(new T(std::forward<Args>(args)...));
+            return Ref<T>(snew(T) T(std::forward<Args>(args)...));
 #endif
-		}
+        }
 
-		bool operator==(const Ref<T>& other) const
-		{
-			return m_Instance == other.m_Instance;
-		}
+        bool operator==(const Ref<T>& other) const {
+            return m_Instance == other.m_Instance;
+        }
 
-		bool operator!=(const Ref<T>& other) const
-		{
-			return !(*this == other);
-		}
+        bool operator!=(const Ref<T>& other) const {
+            return !(*this == other);
+        }
 
-		bool EqualsObject(const Ref<T>& other)
-		{
-			if (!m_Instance || !other.m_Instance)
-				return false;
+        bool EqualsObject(const Ref<T>& other) {
+            if (!m_Instance || !other.m_Instance)
+                return false;
 
-			return *m_Instance == *other.m_Instance;
-		}
-	private:
-		void IncRef() const
-		{
-			if (m_Instance)
-			{
-				m_Instance->IncRefCount();
-				RefUtils::AddToLiveReferences((void*)m_Instance);
-			}
-		}
+            return *m_Instance == *other.m_Instance;
+        }
 
-		void DecRef() const
-		{
-			if (m_Instance)
-			{
-				m_Instance->DecRefCount();
-				if (m_Instance->GetRefCount() == 0)
-				{
-					sdelete(m_Instance);
-					RefUtils::RemoveFromLiveReferences((void*)m_Instance);
-					m_Instance = nullptr;
-				}
-			}
-		}
+    private:
+        void IncRef() const {
+            if (m_Instance) {
+                m_Instance->IncRefCount();
+                RefUtils::AddToLiveReferences(static_cast<void*>(m_Instance));
+            }
+        }
 
-		template<class T2>
-		friend class Ref;
-		mutable T* m_Instance;
-	};
+        void DecRef() const {
+            if (m_Instance) {
+                m_Instance->DecRefCount();
+                if (m_Instance->GetRefCount() == 0) {
+                    sdelete(m_Instance);
+                    RefUtils::RemoveFromLiveReferences(static_cast<void*>(m_Instance));
+                    m_Instance = nullptr;
+                }
+            }
+        }
 
-	template<typename T>
-	class WeakRef
-	{
-	public:
-		WeakRef() = default;
+        template <class T2>
+        friend class Ref;
+        mutable T* m_Instance;
+    };
 
-		WeakRef(Ref<T> ref)
-		{
-			m_Instance = ref.Raw();
-		}
+    template <typename T>
+    class WeakRef {
+    public:
+        WeakRef() = default;
 
-		WeakRef(T* instance)
-		{
-			m_Instance = instance;
-		}
+        WeakRef(Ref<T> ref) {
+            m_Instance = ref.Raw();
+        }
 
-		T* operator->() { return m_Instance; }
-		const T* operator->() const { return m_Instance; }
+        WeakRef(T* instance) {
+            m_Instance = instance;
+        }
 
-		T& operator*() { return *m_Instance; }
-		const T& operator*() const { return *m_Instance; }
+        T* operator->() { return m_Instance; }
+        const T* operator->() const { return m_Instance; }
 
-		bool IsValid() const { return m_Instance ? RefUtils::IsLive(m_Instance) : false; }
-		operator bool() const { return IsValid(); }
-	private:
-		T* m_Instance = nullptr;
-	};
+        T& operator*() { return *m_Instance; }
+        const T& operator*() const { return *m_Instance; }
 
+        bool IsValid() const { return m_Instance ? RefUtils::IsLive(m_Instance) : false; }
+        operator bool() const { return IsValid(); }
+
+    private:
+        T* m_Instance = nullptr;
+    };
+
+    /****************** Costum smart ptr ********************/
+    template <typename T>
+    using ScopedRef = std::unique_ptr<T>;
+
+    template <typename T, typename... Args>
+    ScopedRef<T> CreateScoped(Args&&... args) {
+        return ScopedRef<T>(snew(T) T(std::forward<Args>(args)...));
+    }
+
+    template <typename T, typename... Args>
+    Ref<T> CreateRef(Args&&... args) {
+        return Ref(snew(T) T(std::forward<Args>(args)...));
+    }
 }

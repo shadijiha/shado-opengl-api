@@ -7,7 +7,7 @@
 #include "renderer/Texture2D.h"
 #include "scene/utils/SceneUtils.h"
 #include "scene/SceneSerializer.h"
-#include "util/Util.h"
+#include "util/TimeStep.h"
 #include "project/Project.h"
 #include "SceneHierarchyPanel.h"
 #include "scene/Components.h"

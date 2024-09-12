@@ -49,7 +49,7 @@ namespace Shado {
 		ImGui::NextColumn();
 
 		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
 
 		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
@@ -108,8 +108,46 @@ namespace Shado {
 		return  resultX || resultY || resultZ;
 	}
 
+	bool UI::Checkbox(const std::string& label, bool& data, float columnWidth) {
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.c_str());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
+
+		bool modified = ImGui::Checkbox("##Vea5", &data);
+
+		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+		ImGui::Columns(1);
+		ImGui::PopID();
+
+		return modified;		
+	}
+
 	bool UI::ColorControl(const std::string& label, glm::vec4& values, float columnWidth) {
-		return ImGui::ColorEdit4(label.c_str(), (float*)&values);
+		ImGui::PushID(label.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.c_str());
+		ImGui::NextColumn();
+		
+		ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
+		
+		bool modified = ImGui::ColorEdit4("##eafefa4", (float*)&values);
+
+		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+		ImGui::Columns(1);
+		ImGui::PopID();
+		
+		return modified;
 	}
 
 	void UI::InputTextWithChooseFile(const std::string& label, const std::string& text,
@@ -218,15 +256,33 @@ namespace Shado {
 		ImGui::Separator();
 	}
 
-	bool UI::InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags) {
+	bool UI::InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags, float columnWidth) {
+		ImGui::PushID(tag.c_str());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(tag.c_str());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
+		
 		char buffer[512];
 		memset(buffer, 0, sizeof(buffer));
 		strcpy_s(buffer, sizeof(buffer), value.c_str());
-		if (ImGui::InputText(tag.c_str(), buffer, sizeof(buffer), flags)) {
+
+		bool modified = false;
+		if (ImGui::InputText("##rafvvara4", buffer, sizeof(buffer), flags)) {
 			value = std::string(buffer);
-			return true;
+			modified = true;
 		}
-		return false;
+
+		ImGui::PopItemWidth();
+		ImGui::PopStyleVar();
+		ImGui::Columns(1);
+		ImGui::PopID();
+		
+		return modified;
 	}
 
 	bool UI::ButtonControl(const std::string& value, const glm::vec2& size) {

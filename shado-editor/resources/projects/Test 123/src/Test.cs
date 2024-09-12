@@ -12,30 +12,17 @@ namespace Sandbox
     {
         public float maxDelta = 3.0f;
         public float moveRate = 1.0f;
-        public float tilingFactor = 1.0f;
-        //private TransformComponent transform;
         private float dir = 1;
 
         public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
-        public Colour colourTest;
-        public Vector3 debug_size = Vector3.one;
-        public float angle = 0.0f;
         public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
-        private Test other;
         public Prefab linePrefab;
-        public Prefab squarePrefab;
         //private ParticuleSystem particuleSystem;
-        public Prefab boidPrefab;
 
-        public ShadoEvent events;
+        //public ShadoEvent events;
 
         void OnCreate() {
-            GetComponent<SpriteRendererComponent>().texture = texture;
-            //var t = this.Create<Test>();
-            //t.AddComponent<SpriteRendererComponent>().colour = Colour.Blue;
-            //GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
-
             const float max = 0.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
@@ -48,22 +35,13 @@ namespace Sandbox
                     //GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
                 }
             }
-
-            //particuleSystem = Create<ParticuleSystem>();
-            //particuleSystem.OnCreate();
-            
-            if (linePrefab)
-            {
-                //Entity e = linePrefab.Instantiate(Vector3.one);
-            }
         }
 
         void OnUpdate(float dt)
         {
-            //particuleSystem.OnUpdate(dt);   
             totalDt += dt;
-            GetComponent<SpriteRendererComponent>().colour = Colour.Random(); //colourTest;
-            GetComponent<SpriteRendererComponent>().texture = texture;
+            if (GetComponent<SpriteRendererComponent>().texture != texture)
+                GetComponent<SpriteRendererComponent>().texture = texture;
             Vector3 pos = transform.position;
             
             pos.x += moveRate * 2 * dt * dir;
@@ -74,9 +52,6 @@ namespace Sandbox
                 dir *= -1;
             }
 
-            if (Input.IsKeyDown(KeyCode.K) && other is null) {
-                //other = Create<Test>();
-            } 
             if (Input.IsKeyDown(KeyCode.L)) {
                 Log.Info("Loading new scene...");
                 Scene.LoadScene("raytracing.shadoscene");
@@ -143,6 +118,22 @@ namespace Sandbox
             
             translation = pos;
         }
+    }
+
+    public class TextIncrementor : Entity
+    {
+        TextComponent text;
+        Entity square;
+        void OnCreate() {
+            text = GetComponent<TextComponent>();
+            text.text = "0";
+            square = FindEntityByName("Square");
+        }
+
+        void OnUpdate(float dt) {
+            text.text = square.transform.position.x + "";
+        }
+        
     }
     
     class GridCell : Entity {

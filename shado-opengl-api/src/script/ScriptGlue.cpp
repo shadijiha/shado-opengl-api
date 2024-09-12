@@ -748,6 +748,82 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 
 #pragma endregion
 
+#pragma region TextComponent
+
+	static void TextComponent_GetText(UUID entityID, MonoString** outText) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*outText = ScriptEngine::NewString(entity.getComponent<TextComponent>().text.c_str());
+	}
+
+	static void TextComponent_SetText(UUID entityID, MonoString** refText) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().text = ScriptEngine::MonoStrToUT8(*refText);
+	}
+
+	static void TextComponent_GetColour(UUID entityID, glm::vec4* refColour) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*refColour = entity.getComponent<TextComponent>().color;
+	}
+
+	static void TextComponent_SetColour(UUID entityID, glm::vec4* refColour) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().color = *refColour;
+	}
+
+	static void TextComponent_GetLineSpacing(UUID entityID, float* refLineSpacing) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*refLineSpacing = entity.getComponent<TextComponent>().lineSpacing;
+	}
+
+	static void TextComponent_SetLineSpacing(UUID entityID, float* refLineSpacing) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().lineSpacing = *refLineSpacing;
+	}
+
+	static void TextComponent_GetKerning(UUID entityID, float* refKerning) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*refKerning = entity.getComponent<TextComponent>().kerning;
+	}
+
+	static void TextComponent_SetKerning(UUID entityID, float* refKerning) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().kerning = *refKerning;
+	}
+	
+#pragma endregion 
+	
 #pragma region Input
 	/**
 	* Input
@@ -1188,6 +1264,10 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		ImGui::NewLine();
 	}
 
+	static void SameLine(float offsetFromStart, float spacing) {
+		ImGui::SameLine(offsetFromStart, spacing);
+	}
+
 	static void ShowDemoWindow() {
 		static bool show = true;
 		ImGui::ShowDemoWindow(&show);
@@ -1432,6 +1512,17 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		}
 
 		{
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetText);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetText);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetColour);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetColour);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetLineSpacing);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetLineSpacing);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetKerning);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetKerning);
+		}
+
+		{
 			SHADO_ADD_INTERNAL_CALL(Input_IsKeyDown);
 			SHADO_ADD_INTERNAL_CALL(Input_GetMousePos);
 		}
@@ -1518,6 +1609,7 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 			SHADO_ADD_UI_INTERNAL_CALL(GetId);
 			SHADO_ADD_UI_INTERNAL_CALL(SetFocus);
 			SHADO_ADD_UI_INTERNAL_CALL(NewLine);
+			SHADO_ADD_UI_INTERNAL_CALL(SameLine);
 			SHADO_ADD_UI_INTERNAL_CALL(ShowDemoWindow);
 			SHADO_ADD_UI_INTERNAL_CALL(ShowMetricsWindow);
 			SHADO_ADD_UI_INTERNAL_CALL(BeginGroup);

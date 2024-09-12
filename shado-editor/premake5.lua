@@ -2,6 +2,7 @@
 project "shado-editor"
     kind "ConsoleApp"
     language "C++"
+    cppdialect "C++20"
 
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -33,7 +34,6 @@ project "shado-editor"
     }
 
     filter "system:windows"
-        cppdialect "C++17"
         staticruntime "Off"
         systemversion "latest"
 

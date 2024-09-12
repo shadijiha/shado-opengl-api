@@ -4,7 +4,7 @@
 #include "scene/Entity.h"
 #include "scene/Prefab.h"
 #include "scene/SceneSerializer.h"
-#include "util/Util.h"
+#include "util/TimeStep.h"
 
 namespace Shado {
     class Scene;

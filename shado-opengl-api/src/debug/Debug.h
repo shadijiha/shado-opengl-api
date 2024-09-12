@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <glm/detail/type_quat.hpp>
-#include "util/Util.h"
+#include "util/TimeStep.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/string_cast.hpp"

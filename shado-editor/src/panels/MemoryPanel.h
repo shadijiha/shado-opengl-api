@@ -3,7 +3,7 @@
 #define MEMORY_H
 #include <filesystem>
 #include "renderer/Texture2D.h"
-#include "util/Util.h"
+#include "util/TimeStep.h"
 #include <unordered_map>
 
 namespace Shado {

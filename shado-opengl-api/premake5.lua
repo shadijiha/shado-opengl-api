@@ -3,6 +3,7 @@ project "shado-opengl-api"
     kind "StaticLib"
     language "C++"
     staticruntime "off"
+    cppdialect "C++20"
 
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -30,7 +31,9 @@ project "shado-opengl-api"
         "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.ImGuizmo}",
         "%{IncludeDir.mono}",
-        "%{IncludeDir.filewatch}"
+        "%{IncludeDir.filewatch}",
+        "%{IncludeDir.msdfgen}",
+        "%{IncludeDir.msdf_atlas_gen}"
     }
 
     links
@@ -44,11 +47,11 @@ project "shado-opengl-api"
         "yaml-cpp",
         "shcore.lib",
         "%{wks.location}/mono/mono-2.0-sgen.lib",
+        "msdf-atlas-gen"
         --"mono/mono-2.0-sgen.dll",
     }
 
     filter "system:windows"
-        cppdialect "C++17"
         staticruntime "Off"
         systemversion "latest"
 
