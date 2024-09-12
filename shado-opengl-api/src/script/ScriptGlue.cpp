@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "renderer/Framebuffer.h"
+#include "scene/Prefab.h"
 
 namespace Shado {
 
@@ -70,8 +71,12 @@ namespace Shado {
 		Scene* scene = ScriptEngine::GetSceneContext();
 		SHADO_CORE_ASSERT(scene, "");
 		Entity entity = scene->getEntityById(entityID);
-		SHADO_CORE_ASSERT(entity, std::string("Entity ID ") + std::to_string(entityID) + " is invalid"); // <-- Do no use HasComponent and/or AddComponent in the constructor of a script
 
+		if (!entity) {
+			SHADO_CORE_ERROR(std::string("Entity ID ") + std::to_string(entityID) + " is invalid"); // <-- Do no use HasComponent and/or AddComponent in the constructor of a script
+			return false;
+		}
+		
 		MonoType* managedType = mono_reflection_type_get_type(componentType);
 		SHADO_CORE_ASSERT(s_EntityHasComponentFuncs.find(managedType) != s_EntityHasComponentFuncs.end(), "");
 		return s_EntityHasComponentFuncs.at(managedType)(entity);
@@ -157,6 +162,22 @@ namespace Shado {
 		ScriptEngine::OnCreateEntity(entity, instance);
 	}
 
+	static void Entity_GetChildren(UUID entityId, MonoArray** childrenIds, MonoReflectionType* arrayType) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityId);
+		SHADO_CORE_ASSERT(entity, "");
+
+		auto children = entity.getChildren();
+
+		 *childrenIds = mono_array_new(
+		 	ScriptEngine::GetAppDomain(),
+		 	mono_class_from_mono_type(mono_reflection_type_get_type(arrayType)),
+		 	children.size());
+		 for (int i = 0; i < children.size(); i++) {
+		 	mono_array_set(*childrenIds, uint64_t, i, children[i].getUUID());
+		 }
+	}
 #pragma endregion
 
 #pragma region TagComponent
@@ -244,6 +265,29 @@ namespace Shado {
 		SHADO_CORE_ASSERT(entity, "");
 
 		entity.getComponent<TransformComponent>().scale = *scale;
+	}
+
+	static uint64_t TransformComponent_GetParentId(UUID entityID)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		return entity.getComponent<TransformComponent>().parentId;
+	}
+
+	static void TransformComponent_SetParentId(UUID entityID, uint64_t newParentId)
+	{
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "");
+
+		Entity parent = scene->getEntityById(newParentId);
+		SHADO_CORE_ASSERT(parent, "");
+
+		entity.getComponent<TransformComponent>().parentId = parent.getUUID();
 	}
 #pragma endregion
 
@@ -704,6 +748,82 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 
 #pragma endregion
 
+#pragma region TextComponent
+
+	static void TextComponent_GetText(UUID entityID, MonoString** outText) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*outText = ScriptEngine::NewString(entity.getComponent<TextComponent>().text.c_str());
+	}
+
+	static void TextComponent_SetText(UUID entityID, MonoString** refText) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().text = ScriptEngine::MonoStrToUT8(*refText);
+	}
+
+	static void TextComponent_GetColour(UUID entityID, glm::vec4* refColour) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*refColour = entity.getComponent<TextComponent>().color;
+	}
+
+	static void TextComponent_SetColour(UUID entityID, glm::vec4* refColour) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().color = *refColour;
+	}
+
+	static void TextComponent_GetLineSpacing(UUID entityID, float* refLineSpacing) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*refLineSpacing = entity.getComponent<TextComponent>().lineSpacing;
+	}
+
+	static void TextComponent_SetLineSpacing(UUID entityID, float* refLineSpacing) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().lineSpacing = *refLineSpacing;
+	}
+
+	static void TextComponent_GetKerning(UUID entityID, float* refKerning) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		*refKerning = entity.getComponent<TextComponent>().kerning;
+	}
+
+	static void TextComponent_SetKerning(UUID entityID, float* refKerning) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Entity entity = scene->getEntityById(entityID);
+		SHADO_CORE_ASSERT(entity, "Invalid entity ID {0}", entityID);
+
+		entity.getComponent<TextComponent>().kerning = *refKerning;
+	}
+	
+#pragma endregion 
+	
 #pragma region Input
 	/**
 	* Input
@@ -862,6 +982,26 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		}
 
 		return result;
+	}
+
+	static MonoString* Scene_LoadScene(MonoString* sceneName) {
+		// Search for the scene in the project directory
+		std::string sceneNameStr = ScriptEngine::MonoStrToUT8(sceneName);
+		const std::filesystem::path projectPath = Project::GetProjectDirectory();
+
+		// Search for the scene in the project directory recursively
+		std::filesystem::path scenePath;
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(projectPath)) {
+			if (entry.is_regular_file() && entry.path().filename().string().find(sceneNameStr) != std::string::npos) {
+				scenePath = entry.path();
+				break;
+			}
+		}
+		
+		// New scene
+		Application::dispatchEvent(SceneChangedEvent(scenePath));
+
+		return ScriptEngine::NewString(scenePath.string().c_str());
 	}
 #pragma endregion
 
@@ -1124,6 +1264,10 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		ImGui::NewLine();
 	}
 
+	static void SameLine(float offsetFromStart, float spacing) {
+		ImGui::SameLine(offsetFromStart, spacing);
+	}
+
 	static void ShowDemoWindow() {
 		static bool show = true;
 		ImGui::ShowDemoWindow(&show);
@@ -1222,6 +1366,29 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 	}
 #pragma endregion
 
+#pragma region PrefabExt
+	static uint64_t PrefabExt_Instantiate(uint64_t prefabId, glm::vec3 position) {
+		Scene* scene = ScriptEngine::GetSceneContext();
+		SHADO_CORE_ASSERT(scene, "");
+		Ref<Prefab> prefab = Prefab::GetPrefabById(prefabId);
+		
+		if (!prefab) {
+			return 0;
+		}
+		
+		Entity entity = scene->instantiatePrefab(prefab);
+		entity.getComponent<TransformComponent>().position = position;
+
+		return entity.getUUID();
+	}
+#pragma endregion
+
+#pragma region Mono
+	static MonoObject* Mono_GetGCHandleTarget(uint32_t handle) {
+		return mono_gchandle_get_target(handle);
+	}
+#pragma endregion 
+	
 	/**
 	 *
 	 */
@@ -1277,6 +1444,7 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 			SHADO_ADD_INTERNAL_CALL(Entity_Destroy);
 			SHADO_ADD_INTERNAL_CALL(Entity_CreateEntityId);
 			SHADO_ADD_INTERNAL_CALL(Entity_InvokeScriptEngineCreate);
+			SHADO_ADD_INTERNAL_CALL(Entity_GetChildren);
 		}
 			
 		{
@@ -1291,6 +1459,8 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetRotation);
 			SHADO_ADD_INTERNAL_CALL(TransformComponent_GetScale);
 			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetScale);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_GetParentId);
+			SHADO_ADD_INTERNAL_CALL(TransformComponent_SetParentId);
 		}
 
 		{
@@ -1339,6 +1509,17 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 
 		{
 			SHADO_ADD_INTERNAL_CALL(ScriptComponent_GetClassName);
+		}
+
+		{
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetText);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetText);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetColour);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetColour);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetLineSpacing);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetLineSpacing);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_GetKerning);
+			SHADO_ADD_INTERNAL_CALL(TextComponent_SetKerning);
 		}
 
 		{
@@ -1406,6 +1587,7 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 		// Scene
 		{
 			SHADO_ADD_INTERNAL_CALL(Scene_GetAllEntities);
+			SHADO_ADD_INTERNAL_CALL(Scene_LoadScene);
 		}
 
 		// UI
@@ -1427,6 +1609,7 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 			SHADO_ADD_UI_INTERNAL_CALL(GetId);
 			SHADO_ADD_UI_INTERNAL_CALL(SetFocus);
 			SHADO_ADD_UI_INTERNAL_CALL(NewLine);
+			SHADO_ADD_UI_INTERNAL_CALL(SameLine);
 			SHADO_ADD_UI_INTERNAL_CALL(ShowDemoWindow);
 			SHADO_ADD_UI_INTERNAL_CALL(ShowMetricsWindow);
 			SHADO_ADD_UI_INTERNAL_CALL(BeginGroup);
@@ -1459,6 +1642,16 @@ static void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* colour
 				SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsLinkDestroyed);
 			}
 			SHADO_ADD_NODE_EDITOR_INTERNAL_CALL(IsLinkCreated);			
+		}
+
+		// PrefabExt
+		{
+			SHADO_ADD_INTERNAL_CALL(PrefabExt_Instantiate);
+		}
+
+		// Mono
+		{
+			SHADO_ADD_INTERNAL_CALL(Mono_GetGCHandleTarget);
 		}
 	}
 }

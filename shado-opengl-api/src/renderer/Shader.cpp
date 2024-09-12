@@ -16,14 +16,15 @@ namespace Shado {
 		return 0;
 	}
 
-	Shader::Shader(const std::string& filepath)
-		: filepath(filepath)
+	Shader::Shader(const std::filesystem::path& path)
+		: filepath(path)
 	{
-		std::string source = readFile(filepath);
+		std::string source = readFile(path);
 		auto shaderSources = preProcess(source);
 		compile(shaderSources);
-
+		
 		// Extract name from filepath
+		std::string filepath = path.string();
 		auto lastSlash = filepath.find_last_of("/\\");
 		lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
 		auto lastDot = filepath.rfind('.');
@@ -45,8 +46,6 @@ namespace Shado {
 	Shader::Shader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
 		: m_Name(name)
 	{
-
-
 		std::unordered_map<GLenum, std::string> sources;
 		sources[GL_VERTEX_SHADER] = vertexSrc;
 		sources[GL_FRAGMENT_SHADER] = fragmentSrc;
@@ -55,15 +54,11 @@ namespace Shado {
 
 	Shader::~Shader()
 	{
-
-
 		glDeleteProgram(m_Renderer2DID);
 	}
 
-	std::string Shader::readFile(const std::string& filepath)
+	std::string Shader::readFile(const std::filesystem::path& filepath)
 	{
-
-
 		std::string result;
 		std::ifstream in(filepath, std::ios::in | std::ios::binary); // ifstream closes itself due to RAII
 		if (in)
@@ -77,11 +72,11 @@ namespace Shado {
 				in.read(&result[0], size);
 			} else
 			{
-				SHADO_CORE_ERROR("Could not read from file " + filepath);
+				throw ShaderFileException("Could not read from file " + filepath.string());
 			}
 		} else
 		{
-			SHADO_CORE_ASSERT(false, "Could not open file " + filepath);
+			throw ShaderFileException("Could not open file " + filepath.string());
 		}
 
 		return result;
@@ -97,14 +92,17 @@ namespace Shado {
 		while (pos != std::string::npos)
 		{
 			size_t eol = source.find_first_of("\r\n", pos); //End of shader type declaration line
-			SHADO_CORE_ASSERT(eol != std::string::npos, "Syntax error");
+			if (eol == std::string::npos)
+				throw ShaderCompilationException("Syntax error");
 
 			size_t begin = pos + typeTokenLength + 1; //Start of shader type name (after "#type " keyword)
 			std::string type = source.substr(begin, eol - begin);
-			SHADO_CORE_ASSERT(ShaderTypeFromString(type), "Invalid shader type specified");
+			if (!ShaderTypeFromString(type))
+				throw ShaderCompilationException("Invalid shader type specified");
 
 			size_t nextLinePos = source.find_first_not_of("\r\n", eol); //Start of shader code after shader type declaration line
-			//HZ_CORE_ASSERT(nextLinePos != std::string::npos, "Syntax error");
+			if (nextLinePos == std::string::npos)
+				throw ShaderCompilationException("Syntax error");
 			pos = source.find(typeToken, nextLinePos); //Start of next shader type declaration line
 
 			shaderSources[ShaderTypeFromString(type)] = (pos == std::string::npos) ? source.substr(nextLinePos) : source.substr(nextLinePos, pos - nextLinePos);
@@ -116,7 +114,8 @@ namespace Shado {
 	void Shader::compile(const std::unordered_map<GLenum, std::string>& shaderSources)
 	{
 		GLuint program = glCreateProgram();
-		SHADO_CORE_ASSERT(shaderSources.size() <= 2, "We only support 2 shaders for now");
+		if (shaderSources.size() > 2)
+			throw ShaderCompilationException("We only support 2 shaders for now");
 
 		std::array<GLenum, 2> glShaderIDs;
 		int glShaderIDIndex = 0;
@@ -144,8 +143,8 @@ namespace Shado {
 
 				glDeleteShader(shader);
 
-				SHADO_CORE_ERROR(infoLog.data());
-				SHADO_CORE_ASSERT(false, type + " Shader compilation failure!");
+				std::string errorMessage = "Shader compilation failure: " + std::to_string(type) + infoLog.data();
+				throw ShaderCompilationException(errorMessage);
 				break;
 			}
 
@@ -175,9 +174,8 @@ namespace Shado {
 
 			for (auto id : glShaderIDs)
 				glDeleteShader(id);
-
-			SHADO_CORE_ERROR(infoLog.data());
-			//HZ_CORE_ASSERT(false, "Shader link failure!");
+			
+			throw ShaderCompilationException("Shader link failure: " + std::string(infoLog.data()));
 			return;
 		}
 
@@ -217,10 +215,12 @@ namespace Shado {
 		uploadUniformFloat(name, value);
 	}
 
+	void Shader::setFloat2(const std::string& name, const glm::vec2& value) {
+		uploadUniformFloat2(name, value);
+	}
+
 	void Shader::setFloat3(const std::string& name, const glm::vec3& value)
 	{
-
-
 		uploadUniformFloat3(name, value);
 	}
 
@@ -280,5 +280,25 @@ namespace Shado {
 	{
 		GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
 		glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
+	}
+
+	std::map<std::string, int> Shader::getActiveUniforms() {
+		std::map<std::string, int> uniforms;
+		int count = 0;
+		glGetProgramiv(m_Renderer2DID, GL_ACTIVE_ATTRIBUTES, &count);
+
+		for (int i = 0; i < count; i++)
+		{
+			GLchar name[256]; // name of the uniform
+			GLsizei length; // length of the name
+			GLint size;	// size of the uniform
+			GLenum type; // type of the uniform
+			glGetActiveUniform(m_Renderer2DID, (GLuint)i, sizeof(name) - 1, &length, &size, &type, name);
+
+			std::string uniformName(name, length);
+			uniforms[uniformName] = i;
+		}
+
+		return uniforms;
 	}
 }

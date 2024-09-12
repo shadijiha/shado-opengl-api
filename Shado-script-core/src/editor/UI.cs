@@ -83,6 +83,9 @@ namespace Shado.Editor
         
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void NewLine();
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void SameLine(float offset = 0.0f, float spacing = -1.0f);
         
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void ShowDemoWindow();
@@ -136,6 +139,7 @@ namespace Shado.Editor
         
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal static extern void GetContentRegionAvail_Native(out Vector2 result);
+
     }
     
     /**

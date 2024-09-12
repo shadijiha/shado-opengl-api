@@ -9,18 +9,18 @@ namespace Shado
 	{
 		private ulong id;
 
-        // IMPORTANT:
-        // This constructor is used by the script engine to create entities
-        // Do not remove it or modify it
-        // NEVER modify otherwise bugs will be cause when invoking Entity.Create()
-        protected Entity() { ID = 0; }
+		// IMPORTANT:
+		// This constructor is used by the script engine to create entities
+		// Do not remove it or modify it
+		// NEVER modify otherwise bugs will be cause when invoking Entity.Create()
+		protected Entity() { ID = 0; }
 
 		internal Entity(ulong id)
 		{
 			ID = id;
 		}
 
-		public ulong ID { get { return id; } private set { id = value; } }	// TODO: IF we have weird error. revert this to be --> public readonly ulong ID
+		public ulong ID { get { return id; } private set { id = value; } }  // TODO: IF we have weird error. revert this to be --> public readonly ulong ID
 
 		public Vector3 translation
 		{
@@ -34,37 +34,39 @@ namespace Shado
 			}
 		}
 
-		/// <summary>
-		/// Transform component of the entity (and its caching)
-		/// </summary>
-		private TransformComponent cachedTransform = null;
-		public TransformComponent transform {
-			get {
-				if (cachedTransform is null)
-                    cachedTransform = GetComponent<TransformComponent>();
-                return cachedTransform;
-			}
+		public TransformComponent transform => GetComponent<TransformComponent>();
+
+		public Entity parent {
+			get { return transform.parent; }
+			set { transform.parent = value; }
 		}
 
+		public Entity[] children
+		{
+			get
+			{
+				
+				ulong[] childrenIds = new ulong[0];
+				InternalCalls.Entity_GetChildren(id, ref childrenIds, childrenIds.GetType());
+
+				Entity[] entities = new Entity[childrenIds.Length];
+				for (int i = 0; i < childrenIds.Length; i++)
+				{
+					entities[i] = new Entity(childrenIds[i]);
+				}
+				return entities;
+			}
+		}
 		/// <summary>
 		/// Tag component of the entity (and its caching)
 		/// </summary>
-		private TagComponent cachedTagComp = null;
-		private string cachedTag = null;
 		public string tag {
-			get { 
-				if (cachedTagComp is null)
-                    cachedTagComp = GetComponent<TagComponent>();
-				if (cachedTag is null)
-					cachedTag = cachedTagComp.tag;
-                return cachedTag;
-			}
-			set { 
-				if (cachedTagComp is null)
-                    cachedTagComp = GetComponent<TagComponent>();
-				cachedTagComp.tag = value;
-				cachedTag = null;	// Invalidate the cache
-			}
+			get {
+				return GetComponent<TagComponent>().tag;
+            }
+			set {
+                GetComponent<TagComponent>().tag = value;
+            }
 		}
 
 		public bool HasComponent<T>() where T : Component, new()

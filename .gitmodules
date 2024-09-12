@@ -19,3 +19,6 @@
 [submodule "shado-opengl-api/vendor/spdlog"]
 	path = shado-opengl-api/vendor/spdlog
 	url = https://github.com/shadijiha/spdlog
+[submodule "shado-opengl-api/vendor/msdf-atlas-gen"]
+	path = shado-opengl-api/vendor/msdf-atlas-gen
+	url = https://github.com/TheCherno/msdf-atlas-gen.git

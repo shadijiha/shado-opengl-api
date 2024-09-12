@@ -1,65 +1,92 @@
 #pragma once
 #include "entt.hpp"
 //#include "Physics2DCallback.h"
+#include <filesystem>
+
 #include "cameras/EditorCamera.h"
 #include "ui/UUID.h"
-#include "util/Util.h"
+#include "util/TimeStep.h"
 
 class b2World;
 
 namespace Shado {
-	class Entity;
+    class Entity;
+    class Prefab;
 
-	class Scene : public RefCounted  {
-	public:
-		Scene();
-		Scene(Scene& other);
-		~Scene();
+    class SceneChangedEvent : public Event {
+    public:
+        SceneChangedEvent(std::filesystem::path path)
+            : sceneToLoadPath(std::move(path)) {
+        }
 
-		Entity createEntity(const std::string& name = "");
-		Entity createEntityWithUUID(const std::string& name, Shado::UUID id);
-		Entity duplicateEntity(Entity entity);
-		void destroyEntity(Entity entity);
+        EVENT_CLASS_TYPE(SceneChanged);
+        EVENT_CLASS_CATEGORY(EventCategoryScene);
+        const std::filesystem::path sceneToLoadPath;
+    };
 
-		void onRuntimeStart();
-		void onRuntimeStop();
+    class Scene : public RefCounted {
+    public:
+        Scene();
+        Scene(Scene& other);
+        ~Scene();
 
-		void onUpdateRuntime(TimeStep ts);
-		void onDrawRuntime();
+        Entity createEntity(const std::string& name = "");
+        Entity createEntityWithUUID(const std::string& name, UUID id);
+        Entity duplicateEntity(Entity entity, bool modifyTag = true);
+        void destroyEntity(Entity entity);
 
-		void onUpdateEditor(TimeStep ts, EditorCamera& camera);
-		void onDrawEditor(EditorCamera& camera);
+        Entity instantiatePrefab(Ref<Prefab> prefab, bool modifyTag = true);
+        void propagatePrefabChanges(Ref<Prefab> prefabChanged);
 
-		void onViewportResize(uint32_t width, uint32_t height);
+        void onRuntimeStart();
+        void onRuntimeStop();
 
-		Entity getPrimaryCameraEntity();
-		Entity getEntityById(uint64_t id);
-		Entity findEntityByName(std::string_view name);
-		const entt::registry& getRegistry() { return m_Registry; }
+        void onUpdateRuntime(TimeStep ts);
+        void onDrawRuntime();
 
-		void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
-		void softResetPhysics();	// Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
+        void onUpdateEditor(TimeStep ts, EditorCamera& camera);
+        void onDrawEditor(EditorCamera& camera);
 
-		bool isRunning() const { return m_IsRunning; }
-	public:
-		inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
+        void onViewportResize(uint32_t width, uint32_t height);
 
-	private:
-		entt::registry m_Registry;
-		uint32_t m_ViewportWidth = 0;
-		uint32_t m_ViewportHeight = 0;
-		std::string name = "Untitled";
+        Entity getPrimaryCameraEntity();
+        Entity getEntityById(uint64_t id);
+        Entity findEntityByName(std::string_view name);
+        const entt::registry& getRegistry() { return m_Registry; }
+        std::vector<Entity> getAllEntities();
 
-		std::vector<Entity> toDestroy;
+        glm::vec2 getViewport() const {
+            return {m_ViewportWidth, m_ViewportHeight};
+        }
 
-		b2World* m_World = nullptr;
-		bool m_PhysicsEnabled = true;
+        void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
+        void softResetPhysics();
+        // Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
 
-		bool m_IsRunning = false;
+        bool isRunning() const { return m_IsRunning; }
 
-		friend class Entity;
-		friend class SceneSerializer;
-		friend class SceneHierarchyPanel;
-	};
+        inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
 
+    private:
+        entt::registry m_Registry;
+        uint32_t m_ViewportWidth = 0;
+        uint32_t m_ViewportHeight = 0;
+        std::string name = "Untitled";
+
+        std::vector<Entity> toDestroy;
+
+        b2World* m_World = nullptr;
+        bool m_PhysicsEnabled = true;
+
+        bool m_IsRunning = false;
+
+        friend class Entity;
+        friend class SceneSerializer;
+        friend class SceneHierarchyPanel;
+        friend class PropertiesPanel;
+        friend class SceneInfoPanel;
+    };
+
+    // Utility functions
+    void CopyRegistries(entt::registry& source, entt::registry& dest, std::function<Entity(const std::string&, UUID)>);
 }

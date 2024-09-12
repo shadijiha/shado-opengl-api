@@ -84,6 +84,7 @@ namespace Shado
 		
 		public static float Distance(Vector2 a, Vector2 b) {
 			// TODO: Optimize
+			// TODO is this accurate?
 			return (a - b).magnitude;	
 		}
 

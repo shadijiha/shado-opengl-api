@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <string>
 #include <Windows.h>
 #include <winuser.h>
@@ -28,6 +29,6 @@ namespace Shado {
 
 		static void alert(const std::string& message, const std::string& alertTitle = "Alert", DialogIcon icon = DialogIcon::WARNING);
 
-		static void openPathInExplorer(const std::string& path);
+		static void openPathInExplorer(const std::filesystem::path& path);
 	};
 }

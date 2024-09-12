@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Shado;
 using Shado.Editor;
@@ -9,28 +10,19 @@ namespace Sandbox
 { 
     public class Test : Entity
     {
-        public float maxDelta;
-        public float moveRate;
-        public float tilingFactor = 1.0f;
-        private TransformComponent transform;
+        public float maxDelta = 3.0f;
+        public float moveRate = 1.0f;
         private float dir = 1;
 
         public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
-        public Colour colourTest;
-        public Vector3 debug_size = Vector3.one;
-        public float angle = 0.0f;
         public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
-        private Test other;
+        public Prefab linePrefab;
         //private ParticuleSystem particuleSystem;
 
-        void OnCreate() {
-            transform = GetComponent<TransformComponent>();
-            GetComponent<SpriteRendererComponent>().texture = texture;
-            //var t = this.Create<Test>();
-            //t.AddComponent<SpriteRendererComponent>().colour = Colour.Blue;
-            //GetComponent<BoxCollider2DComponent>().restitution = 0.6f;
+        //public ShadoEvent events;
 
+        void OnCreate() {
             const float max = 0.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
@@ -40,33 +32,29 @@ namespace Sandbox
                     // Create<T>(param object[] ctorArgs)
                     // The reason for that is because right now it is not possible to invode 
                     // internal methods such as AddComponent in the .ctor
-                    GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
+                    //GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
                 }
             }
-
-            //particuleSystem = Create<ParticuleSystem>();
-            //particuleSystem.OnCreate();
         }
 
         void OnUpdate(float dt)
         {
-            //particuleSystem.OnUpdate(dt);   
-            if (this.tag == "Square (2)") {
-                float x = 10;
-            }
             totalDt += dt;
-            GetComponent<SpriteRendererComponent>().colour = colourTest;
-            GetComponent<SpriteRendererComponent>().texture = texture;
+            if (GetComponent<SpriteRendererComponent>().texture != texture)
+                GetComponent<SpriteRendererComponent>().texture = texture;
             Vector3 pos = transform.position;
-            pos.x += moveRate * 2 * dt * dir;
-            //transform.position = pos;
             
-            if (pos.x > maxDelta || pos.x < -maxDelta) {
-                dir = -dir;
+            pos.x += moveRate * 2 * dt * dir;
+            transform.position = pos;
+
+            if (pos.x > maxDelta || pos.x <= -maxDelta)
+            {
+                dir *= -1;
             }
 
-            if (Input.IsKeyDown(KeyCode.K) && other is null) {
-                //other = Create<Test>();
+            if (Input.IsKeyDown(KeyCode.L)) {
+                Log.Info("Loading new scene...");
+                Scene.LoadScene("raytracing.shadoscene");
             }
         }
 
@@ -130,6 +118,22 @@ namespace Sandbox
             
             translation = pos;
         }
+    }
+
+    public class TextIncrementor : Entity
+    {
+        TextComponent text;
+        Entity square;
+        void OnCreate() {
+            text = GetComponent<TextComponent>();
+            text.text = "0";
+            square = FindEntityByName("Square");
+        }
+
+        void OnUpdate(float dt) {
+            text.text = square.transform.position.x + "";
+        }
+        
     }
     
     class GridCell : Entity {
@@ -196,4 +200,5 @@ namespace Sandbox
             }
         }
     }
+
 }

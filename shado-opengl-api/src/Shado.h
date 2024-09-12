@@ -37,7 +37,7 @@
 #include "Events/MouseEvent.h"
 
 // Utility
-#include "util/Util.h"
+#include "util/TimeStep.h"
 #include "util/random.h"
 #include "util/ParticuleSystem.h"
 

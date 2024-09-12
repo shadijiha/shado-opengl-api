@@ -7,6 +7,7 @@ Entities:
       Translation: [0.778147757, -1.85558057, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     LineRendererComponent:
       Color: [1, 1, 1, 1]
       Target: [0.400000006, 2.0999999, 0]
@@ -21,6 +22,7 @@ Entities:
       Translation: [-0.47885865, 2.59781408, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     LineRendererComponent:
       Color: [1, 1, 1, 1]
       Target: [1.60000002, 1.10000002, 0]
@@ -35,6 +37,7 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [0.400000006, 0.400000006, 1]
+      ParentEntityId: 0
     CircleRendererComponent:
       Color: [0.474509805, 0.619607866, 0.929411769, 1]
       Texture: "NULL"
@@ -54,6 +57,7 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     CameraComponent:
       Camera:
         ProjectionType: 0
@@ -69,6 +73,7 @@ Entities:
       Translation: [0, 0, -0.100000001]
       Rotation: [0, 0, 0]
       Scale: [9.80000019, 6.80000019, 1]
+      ParentEntityId: 0
     SpriteRendererComponent:
       Color: [9.99999997e-07, 9.99989993e-07, 9.99989993e-07, 1]
       Texture: "NULL"
@@ -80,6 +85,7 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
+      ParentEntityId: 0
     LineRendererComponent:
       Color: [1, 1, 1, 1]
       Target: [1.5, 1.20000005, 0]

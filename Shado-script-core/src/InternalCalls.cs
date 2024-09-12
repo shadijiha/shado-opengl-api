@@ -28,6 +28,10 @@ namespace Shado
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static object GetScriptInstance(ulong entityID);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void Entity_GetChildren(ulong entityID, ref ulong[] childrenIds, Type arrayType);
+        
         #endregion
 
         /**
@@ -62,6 +66,12 @@ namespace Shado
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static void TransformComponent_SetScale(ulong entityID, ref Vector3 scale);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static ulong TransformComponent_GetParentId(ulong entityID);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static void TransformComponent_SetParentId(ulong entityID, ulong parentId);
         #endregion
 
         /**
@@ -168,6 +178,42 @@ namespace Shado
 		internal extern static string ScriptComponent_GetClassName(ulong entityID);
 		
 		#endregion
+		
+		
+		/**
+		* Text
+		**/
+		#region TextComponent
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_GetText(ulong entityID, out string text);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_SetText(ulong entityID, ref string text);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_GetColour(ulong entityID, out Vector4 colour);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_SetColour(ulong entityID, ref Vector4 colour);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_GetLineSpacing(ulong entityID, out float lineSpacing);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_SetLineSpacing(ulong entityID, ref float lineSpacing);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_GetKerning(ulong entityID, out float kerning);
+		
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static void TextComponent_SetKerning(ulong entityID, ref float kerning);
+		
+		//[MethodImpl(MethodImplOptions.InternalCall)]
+		//internal extern static void TextComponent_GetFont(ulong entityID, out object font);
+		
+		
+		#endregion
+
 
         /**
 		 * Input
@@ -313,8 +359,21 @@ namespace Shado
         #region Scene
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal extern static Entity[] Scene_GetAllEntities();
-        
 
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static string Scene_LoadScene(string sceneName);
+		#endregion
+
+		#region PrefabExt
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal extern static ulong PrefabExt_Instantiate(ulong prefabId, Vector3 position);
+        #endregion
+
+        #region Mono
+        
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal extern static object Mono_GetGCHandleTarget(UInt32 handle);
+        
         #endregion
 	}
 }

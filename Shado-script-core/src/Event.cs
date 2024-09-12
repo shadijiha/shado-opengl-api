@@ -4,6 +4,10 @@ using System.Text;
 
 namespace Shado
 {
+    /**
+     * These classes represent C++ engine events that are passed to C#
+     *
+     */
     public interface IEvent {
     }
     

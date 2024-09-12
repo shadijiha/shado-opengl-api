@@ -62,6 +62,20 @@ namespace Shado
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return x * x + y * y + z * z; }
         }
+        
+        public static float Distance(Vector3 a, Vector3 b)
+		{
+			return (float)Math.Sqrt(Math.Pow(b.x - a.x, 2) + Math.Pow(b.y - a.y, 2) + Math.Pow(b.z - a.z, 2));
+		}
+        
+        static Random random = new Random();
+        public static Vector3 Random(float min, float max)
+		{
+			return new Vector3(
+				(float)random.NextDouble() * (max - min) + min,
+				(float)random.NextDouble() * (max - min) + min,
+				(float)random.NextDouble() * (max - min) + min);
+		}
 
         #region Operators
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

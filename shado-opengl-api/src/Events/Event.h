@@ -18,7 +18,9 @@ namespace Shado {
 		WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
 		AppTick, AppUpdate, AppRender,
 		KeyPressed, KeyReleased, KeyTyped,
-		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
+		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
+		EditorGuizmosStart, EditorGuizmosEnd, EditorEntityChanged, PrefabEditorContextChanged,
+		ProjectChanged, SceneChanged
 	};
 
 	enum EventCategory
@@ -28,7 +30,10 @@ namespace Shado {
 		EventCategoryInput = BIT(1),
 		EventCategoryKeyboard = BIT(2),
 		EventCategoryMouse = BIT(3),
-		EventCategoryMouseButton = BIT(4)
+		EventCategoryMouseButton = BIT(4),
+		EventCategoryEditor = BIT(5),
+		EventCategoryProject = BIT(6),
+		EventCategoryScene = BIT(7)
 	};
 
 #define EVENT_CLASS_TYPE(type) static EventType getStaticType() { return EventType::type; }\
@@ -41,6 +46,7 @@ namespace Shado {
 	class Event {
 		friend class EventDispatcher;
 	public:
+		virtual ~Event() = default;
 		virtual EventType getEventType() const = 0;
 		virtual const char* getName() const = 0;
 		virtual int getCategoryFlags() const = 0;

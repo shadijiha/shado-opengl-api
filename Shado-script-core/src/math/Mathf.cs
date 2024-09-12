@@ -61,7 +61,7 @@ namespace Shado
         }
 
         private static Random random = new Random();
-        public static float Random(float min, float max)
+        public static float Random(float min = 0.0f, float max = 1.0f)
         {
             return (float)((max - min) * random.NextDouble()) + min;
         }

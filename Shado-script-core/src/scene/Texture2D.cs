@@ -51,12 +51,12 @@ namespace Shado
             }
 
             Texture2D texture = (Texture2D)target;
-            UI.Text(texture.filepath);
-            UI.Image(texture, new Vector2(60, 60));
             UI.InputTextFileChoose(fieldName, texture.filepath, textureExtension, path => {
                 Log.Info(path);
                 texture.Reset(path);
             });
+            UI.SameLine();
+            UI.Image(texture, new Vector2(60, 60));
         }
 
         //void OnEvent(ref Event e) {

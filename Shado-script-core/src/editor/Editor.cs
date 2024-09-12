@@ -4,8 +4,10 @@ namespace Shado.Editor
 {
     public abstract class Editor
     {
-        protected object target;
+        private UInt32 monoGCHandle;
         protected string fieldName;
+        
+        protected object target => InternalCalls.Mono_GetGCHandleTarget(monoGCHandle);
 
         protected abstract void OnEditorDraw();
 

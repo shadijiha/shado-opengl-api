@@ -45,6 +45,10 @@ struct VertexOutput
 layout (location = 0) in VertexOutput Input;
 layout (location = 1) in flat int v_EntityID;
 
+uniform float u_Time;
+uniform vec2 u_ScreenResolution;
+uniform vec2 u_MousePos;
+
 void main()
 {
 	o_Color = Input.Color;

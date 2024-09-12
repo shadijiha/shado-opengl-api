@@ -7,23 +7,30 @@
 #include <GLFW/glfw3native.h>
 #include <shlobj_core.h>
 
+#include "Project/Project.h"
+
 namespace Shado {
 
 	std::string FileDialogs::openFile(const char* filter) {
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };
 		CHAR currentDir[256] = { 0 };
+		
 		ZeroMemory(&ofn, sizeof(OPENFILENAME));
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = glfwGetWin32Window(Application::get().getWindow().getNativeWindow());
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = sizeof(szFile);
-		if (GetCurrentDirectoryA(256, currentDir))
+
+		if (Project::GetActive()) {
+			std::strcpy(currentDir, Project::GetActive()->GetProjectDirectory().string().c_str());
+		} else if (GetCurrentDirectoryA(256, currentDir))
 			ofn.lpstrInitialDir = currentDir;
+		
 		ofn.lpstrFilter = filter;
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
+		
 		if (GetOpenFileNameA(&ofn) == TRUE)
 			return ofn.lpstrFile;
 
@@ -39,8 +46,12 @@ namespace Shado {
 		ofn.hwndOwner = glfwGetWin32Window(Application::get().getWindow().getNativeWindow());
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = sizeof(szFile);
-		if (GetCurrentDirectoryA(256, currentDir))
+		
+		if (Project::GetActive()) {
+			std::strcpy(currentDir, Project::GetActive()->GetProjectDirectory().string().c_str());
+		} else if (GetCurrentDirectoryA(256, currentDir))
 			ofn.lpstrInitialDir = currentDir;
+		
 		ofn.lpstrFilter = filter;
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
@@ -55,8 +66,10 @@ namespace Shado {
 	}
 
 	std::string FileDialogs::chooseFolder() {
+		
 		BROWSEINFO brwinfo = { 0 };
 		brwinfo.lpszTitle = L"Select Your Source Directory";
+		brwinfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_EDITBOX | BIF_USENEWUI;
 		LPITEMIDLIST pitemidl = SHBrowseForFolder(&brwinfo);
 
 		if (pitemidl == 0)
@@ -96,8 +109,8 @@ namespace Shado {
 		);
 	}
 
-	void Dialog::openPathInExplorer(const std::string& path) {
-		ShellExecuteA(NULL, "open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+	void Dialog::openPathInExplorer(const std::filesystem::path& path) {
+		ShellExecuteA(NULL, "open", path.string().c_str(), NULL, NULL, SW_SHOWDEFAULT);
 	}
 }
 
