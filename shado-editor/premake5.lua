@@ -3,6 +3,7 @@ project "shado-editor"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++20"
+    --debuggertype "NativeWithManagedCore"
 
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -23,9 +24,10 @@ project "shado-editor"
         "%{IncludeDir.spdlog}",
         "%{IncludeDir.entt}",
         "%{IncludeDir.box2d}",
-        --"%{IncludeDir.mono}",	-- TODO: remove this
         "%{wks.location}/shado-opengl-api/src",
-        "%{wks.location}/shado-opengl-api/vendor"
+        "%{wks.location}/shado-opengl-api/vendor",
+        "%{IncludeDir.Coral}",
+        "%{IncludeDir.CoralSrc}",
     }
 
     links

@@ -1,10 +1,12 @@
+include "../shado-opengl-api/vendor/Coral/Premake/CSExtensions.lua"
+
 project "Shado-script-core"
 	kind "SharedLib"
 	language "C#"
 	clr "Unsafe"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+	targetdir ("../shado-editor/ScriptCore")
+	objdir ("../shado-editor/ScriptCore/Intermediates")
 
 	configurations
 	{
