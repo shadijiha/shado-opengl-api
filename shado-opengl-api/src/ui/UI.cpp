@@ -7,294 +7,290 @@
 #include "scene/utils/SceneUtils.h"
 
 namespace Shado {
-	void UI::TreeNode(int id, const std::string& label, std::function<void()> ui, ImGuiTreeNodeFlags flags) {
-		bool open = ImGui::TreeNodeEx((void*)(intptr_t)id, flags, label.c_str());
-		if (open) {
-			ui();
-			ImGui::TreePop();
-		}
-	}
+    void UI::TreeNode(int id, const std::string& label, std::function<void()> ui, ImGuiTreeNodeFlags flags) {
+        bool open = ImGui::TreeNodeEx((void*)(intptr_t)id, flags, label.c_str());
+        if (open) {
+            ui();
+            ImGui::TreePop();
+        }
+    }
 
-	void UI::DropDown(const std::string& label, std::initializer_list<std::pair<std::string, std::function<void()>>> options, std::string& currentType) {
-		if (ImGui::BeginCombo(label.c_str(), currentType.c_str())) {
+    void UI::DropDown(const std::string& label,
+                      std::initializer_list<std::pair<std::string, std::function<void()>>> options,
+                      std::string& currentType) {
+        if (ImGui::BeginCombo(label.c_str(), currentType.c_str())) {
+            for (const auto& option : options) {
+                bool isSelected = currentType == option.first;
 
-			for (const auto& option : options) {
-				bool isSelected = currentType == option.first;
+                if (ImGui::Selectable(option.first.c_str(), isSelected)) {
+                    currentType = option.first;
 
-				if (ImGui::Selectable(option.first.c_str(), isSelected)) {
-					currentType = option.first;
+                    // Change camera type
+                    option.second();
+                }
 
-					// Change camera type
-					option.second();
-				}
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
 
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();
-			}
+            ImGui::EndCombo();
+        }
+    }
 
-			ImGui::EndCombo();
-		}
-	}
+    // Draw a vector with colourful x, y and z
+    bool UI::Vec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
+        ImGuiIO& io = ImGui::GetIO();
+        auto boldFont = io.Fonts->Fonts[0];
 
-	// Draw a vector with colourful x, y and z
-	bool UI::Vec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
-		ImGuiIO& io = ImGui::GetIO();
-		auto boldFont = io.Fonts->Fonts[0];
+        ImGui::PushID(label.c_str());
 
-		ImGui::PushID(label.c_str());
+        ImGui::Columns(2);
+        ImGui::SetColumnWidth(0, columnWidth);
+        ImGui::Text(label.c_str());
+        ImGui::NextColumn();
 
-		ImGui::Columns(2);
-		ImGui::SetColumnWidth(0, columnWidth);
-		ImGui::Text(label.c_str());
-		ImGui::NextColumn();
+        ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
 
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
+        float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+        ImVec2 buttonSize = {lineHeight + 3.0f, lineHeight};
 
-		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
-
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.1f, 0.15f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.1f, 0.15f, 1.0f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("X", buttonSize))
-			values.x = resetValue;
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-
-
-		ImGui::SameLine();
-		bool resultX = ImGui::DragFloat("##X", &values.x, 0.1f, 0, 0, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.1f, 0.15f, 1.0f});
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.9f, 0.2f, 0.2f, 1.0f});
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.8f, 0.1f, 0.15f, 1.0f});
+        ImGui::PushFont(boldFont);
+        if (ImGui::Button(("X" + label).c_str(), buttonSize))
+            values.x = resetValue;
+        ImGui::PopFont();
+        ImGui::PopStyleColor(3);
 
 
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.2f, 0.7f, 0.2f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.3f, 0.8f, 0.3f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.2f, 0.7f, 0.2f, 1.0f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("Y", buttonSize))
-			values.y = resetValue;
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
+        ImGui::SameLine();
+        bool resultX = ImGui::DragFloat(("##X" + label).c_str(), &values.x, 0.1f, 0, 0, "%.2f");
+        ImGui::PopItemWidth();
+        ImGui::SameLine();
 
 
-		ImGui::SameLine();
-		bool resultY = ImGui::DragFloat("##Y", &values.y, 0.1f, 0, 0, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Button, {0.2f, 0.7f, 0.2f, 1.0f});
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.3f, 0.8f, 0.3f, 1.0f});
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.2f, 0.7f, 0.2f, 1.0f});
+        ImGui::PushFont(boldFont);
+        if (ImGui::Button(("Y" + label).c_str(), buttonSize))
+            values.y = resetValue;
+        ImGui::PopFont();
+        ImGui::PopStyleColor(3);
 
 
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f, 0.25f, 0.8f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.35f, 0.9f, 1.0f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.1f, 0.25f, 0.8f, 1.0f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("Z", buttonSize))
-			values.z = resetValue;
-		ImGui::PopFont();
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine();
-		bool resultZ = ImGui::DragFloat("##Z", &values.z, 0.1f, 0, 0, "%.2f");
-		ImGui::PopItemWidth();
-
-		ImGui::PopStyleVar();
-
-		ImGui::Columns(1);
-
-		ImGui::PopID();
-
-		return  resultX || resultY || resultZ;
-	}
-
-	bool UI::Checkbox(const std::string& label, bool& data, float columnWidth) {
-		ImGui::PushID(label.c_str());
-
-		ImGui::Columns(2);
-		ImGui::SetColumnWidth(0, columnWidth);
-		ImGui::Text(label.c_str());
-		ImGui::NextColumn();
-
-		ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
-
-		bool modified = ImGui::Checkbox("##Vea5", &data);
-
-		ImGui::PopItemWidth();
-		ImGui::PopStyleVar();
-		ImGui::Columns(1);
-		ImGui::PopID();
-
-		return modified;		
-	}
-
-	bool UI::ColorControl(const std::string& label, glm::vec4& values, float columnWidth) {
-		ImGui::PushID(label.c_str());
-
-		ImGui::Columns(2);
-		ImGui::SetColumnWidth(0, columnWidth);
-		ImGui::Text(label.c_str());
-		ImGui::NextColumn();
-		
-		ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
-		
-		bool modified = ImGui::ColorEdit4("##eafefa4", (float*)&values);
-
-		ImGui::PopItemWidth();
-		ImGui::PopStyleVar();
-		ImGui::Columns(1);
-		ImGui::PopID();
-		
-		return modified;
-	}
-
-	void UI::InputTextWithChooseFile(const std::string& label, const std::string& text,
-		const std::vector<std::string>& dragAndDropExtensions, int id, std::function<void(std::string)> onChange, UI::FileChooserType chooseType) {
-		bool textureChanged = false;
-
-		std::string texturePath = text;
-		if (InputTextControl(label, texturePath) && Shado::Input::isKeyPressed(Shado::KeyCode::Enter)) {
-			textureChanged = true;
-		}
-		//ImGui::InputText(label.c_str(), (char*)text.c_str(), text.length(), ImGuiInputTextFlags_ReadOnly);
+        ImGui::SameLine();
+        bool resultY = ImGui::DragFloat(("##Y" + label).c_str(), &values.y, 0.1f, 0, 0, "%.2f");
+        ImGui::PopItemWidth();
+        ImGui::SameLine();
 
 
-		// For drag and drop
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-			{
-				const wchar_t* path = (const wchar_t*)payload->Data;
-				std::filesystem::path dataPath = std::filesystem::path("assets") / path;
+        ImGui::PushStyleColor(ImGuiCol_Button, {0.1f, 0.25f, 0.8f, 1.0f});
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.2f, 0.35f, 0.9f, 1.0f});
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.1f, 0.25f, 0.8f, 1.0f});
+        ImGui::PushFont(boldFont);
+        if (ImGui::Button(("Z" + label).c_str(), buttonSize))
+            values.z = resetValue;
+        ImGui::PopFont();
+        ImGui::PopStyleColor(3);
 
-				bool acceptable = dragAndDropExtensions.empty();
-				for (const auto& ext : dragAndDropExtensions) {
-					if (ext == dataPath.extension()) {
-						acceptable = true;
-						break;
-					}
-				}
+        ImGui::SameLine();
+        bool resultZ = ImGui::DragFloat(("##Z" + label).c_str(), &values.z, 0.1f, 0, 0, "%.2f");
+        ImGui::PopItemWidth();
 
-				if (acceptable)
-					onChange(dataPath.string());
-				else
-					SHADO_CORE_WARN("Invalid drag and drop file extension {0}", dataPath.filename());
-			}
+        ImGui::PopStyleVar();
 
-			ImGui::EndDragDropTarget();
-		}
+        ImGui::Columns(1);
 
-		// File choose
-		ImGui::PushID(id);
-		ImGui::SameLine();
-		if (ImGui::Button("...", { 24, 24 })) {
+        ImGui::PopID();
 
-			std::string buffer = "";
-			int count = 0;
-			for (const auto& ext : dragAndDropExtensions) {
-				buffer += "*" + ext;
+        return resultX || resultY || resultZ;
+    }
 
-				if (count != dragAndDropExtensions.size() - 1)
-					buffer += ";";
-				count++;
-			}
+    bool UI::Checkbox(const std::string& label, bool& data, float columnWidth) {
+        ImGui::PushID(label.c_str());
 
-			// Need to do this because we have \0 in string body
-			std::string filter = "Files (";
-			filter += std::string((buffer + ")\0").c_str(), buffer.length() + 2);
-			filter += std::string((buffer + "\0").c_str(), buffer.length() + 1);
+        ImGui::Columns(2);
+        ImGui::SetColumnWidth(0, columnWidth);
+        ImGui::Text(label.c_str());
+        ImGui::NextColumn();
 
-			switch (chooseType)
-			{
-				case UI::FileChooserType::Open:
-					texturePath = Shado::FileDialogs::openFile(filter.c_str());
-					break;
-				case UI::FileChooserType::Save:
-					texturePath = Shado::FileDialogs::saveFile(filter.c_str());
-					break;
-				case UI::FileChooserType::Folder:
-					texturePath = Shado::FileDialogs::chooseFolder();
-					break;
-				default:
-					SHADO_CORE_ERROR("Unknown File dialog type ", (int)chooseType);
-					break;
-			}
+        ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
 
-			textureChanged = true;
-		}
-		ImGui::PopID();
+        bool modified = ImGui::Checkbox("##Vea5", &data);
+
+        ImGui::PopItemWidth();
+        ImGui::PopStyleVar();
+        ImGui::Columns(1);
+        ImGui::PopID();
+
+        return modified;
+    }
+
+    bool UI::ColorControl(const std::string& label, glm::vec4& values, float columnWidth) {
+        ImGui::PushID(label.c_str());
+
+        ImGui::Columns(2);
+        ImGui::SetColumnWidth(0, columnWidth);
+        ImGui::Text(label.c_str());
+        ImGui::NextColumn();
+
+        ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
+
+        bool modified = ImGui::ColorEdit4("##eafefa4", (float*)&values);
+
+        ImGui::PopItemWidth();
+        ImGui::PopStyleVar();
+        ImGui::Columns(1);
+        ImGui::PopID();
+
+        return modified;
+    }
+
+    void UI::InputTextWithChooseFile(const std::string& label, const std::string& text,
+                                     const std::vector<std::string>& dragAndDropExtensions, int id,
+                                     std::function<void(std::string)> onChange, UI::FileChooserType chooseType) {
+        bool textureChanged = false;
+
+        std::string texturePath = text;
+        if (InputTextControl(label, texturePath) && Shado::Input::isKeyPressed(Shado::KeyCode::Enter)) {
+            textureChanged = true;
+        }
+        //ImGui::InputText(label.c_str(), (char*)text.c_str(), text.length(), ImGuiInputTextFlags_ReadOnly);
 
 
-		if (textureChanged && !texturePath.empty())
-			onChange(texturePath);
+        // For drag and drop
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+                const wchar_t* path = (const wchar_t*)payload->Data;
+                std::filesystem::path dataPath = std::filesystem::path("assets") / path;
 
-	}
+                bool acceptable = dragAndDropExtensions.empty();
+                for (const auto& ext : dragAndDropExtensions) {
+                    if (ext == dataPath.extension()) {
+                        acceptable = true;
+                        break;
+                    }
+                }
 
-	void UI::TextureControl(Ref<Shado::Texture2D>& texture) {
+                if (acceptable)
+                    onChange(dataPath.string());
+                else
+                    SHADO_CORE_WARN("Invalid drag and drop file extension {0}", dataPath.filename());
+            }
 
-		// =========== Texture
-		std::string texturePath = texture ? texture->getFilePath().c_str() : "No Texture";
+            ImGui::EndDragDropTarget();
+        }
 
-		InputTextWithChooseFile("Texture", texturePath, { ".jpg", ".png" }, typeid(texture).hash_code(),
-			[&](std::string path) {
-				Ref<Shado::Texture2D> text = CreateRef<Shado::Texture2D>(path);
-				if (text->isLoaded())
-					texture = text;
-				else
-					SHADO_CORE_WARN("Could not load texture %s", path.c_str());
-				SHADO_CORE_INFO("Loaded texture %s", path.c_str());
-			}
-		);
+        // File choose
+        ImGui::PushID(id);
+        ImGui::SameLine();
+        if (ImGui::Button("...", {24, 24})) {
+            std::string buffer = "";
+            int count = 0;
+            for (const auto& ext : dragAndDropExtensions) {
+                buffer += "*" + ext;
 
-		// Image
-		if (texture) {
-			ImGui::Image((void*)texture->getRendererID(), { 60, 60 }, ImVec2(0, 1), ImVec2(1, 0));
-		}
+                if (count != dragAndDropExtensions.size() - 1)
+                    buffer += ";";
+                count++;
+            }
 
-		ImGui::Separator();
-	}
+            // Need to do this because we have \0 in string body
+            std::string filter = "Files (";
+            filter += std::string((buffer + ")\0").c_str(), buffer.length() + 2);
+            filter += std::string((buffer + "\0").c_str(), buffer.length() + 1);
 
-	bool UI::InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags, float columnWidth) {
-		ImGui::PushID(tag.c_str());
+            switch (chooseType) {
+            case UI::FileChooserType::Open:
+                texturePath = Shado::FileDialogs::openFile(filter.c_str());
+                break;
+            case UI::FileChooserType::Save:
+                texturePath = Shado::FileDialogs::saveFile(filter.c_str());
+                break;
+            case UI::FileChooserType::Folder:
+                texturePath = Shado::FileDialogs::chooseFolder();
+                break;
+            default:
+                SHADO_CORE_ERROR("Unknown File dialog type ", (int)chooseType);
+                break;
+            }
 
-		ImGui::Columns(2);
-		ImGui::SetColumnWidth(0, columnWidth);
-		ImGui::Text(tag.c_str());
-		ImGui::NextColumn();
+            textureChanged = true;
+        }
+        ImGui::PopID();
 
-		ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 10 });
-		
-		char buffer[512];
-		memset(buffer, 0, sizeof(buffer));
-		strcpy_s(buffer, sizeof(buffer), value.c_str());
 
-		bool modified = false;
-		if (ImGui::InputText("##rafvvara4", buffer, sizeof(buffer), flags)) {
-			value = std::string(buffer);
-			modified = true;
-		}
+        if (textureChanged && !texturePath.empty())
+            onChange(texturePath);
+    }
 
-		ImGui::PopItemWidth();
-		ImGui::PopStyleVar();
-		ImGui::Columns(1);
-		ImGui::PopID();
-		
-		return modified;
-	}
+    void UI::TextureControl(Ref<Shado::Texture2D>& texture) {
+        // =========== Texture
+        std::string texturePath = texture ? texture->getFilePath().c_str() : "No Texture";
 
-	bool UI::ButtonControl(const std::string& value, const glm::vec2& size) {
-		return ImGui::Button(value.c_str(), { size.x, size.y });
-	}
+        InputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(texture).hash_code(),
+                                [&](std::string path) {
+                                    Ref<Shado::Texture2D> text = CreateRef<Shado::Texture2D>(path);
+                                    if (text->isLoaded())
+                                        texture = text;
+                                    else
+                                        SHADO_CORE_WARN("Could not load texture %s", path.c_str());
+                                    SHADO_CORE_INFO("Loaded texture %s", path.c_str());
+                                }
+        );
 
-	void UI::NewLine() {
-		ImGui::NewLine();
-	}
+        // Image
+        if (texture) {
+            ImGui::Image((void*)texture->getRendererID(), {60, 60}, ImVec2(0, 1), ImVec2(1, 0));
+        }
 
-	void UI::SameLine(float offsetFromStart, float spacing) {
-		ImGui::SameLine(offsetFromStart, spacing);
-	}
-	
+        ImGui::Separator();
+    }
+
+    bool UI::InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags,
+                              float columnWidth) {
+        ImGui::PushID(tag.c_str());
+
+        ImGui::Columns(2);
+        ImGui::SetColumnWidth(0, columnWidth);
+        ImGui::Text(tag.c_str());
+        ImGui::NextColumn();
+
+        ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
+
+        char buffer[512];
+        memset(buffer, 0, sizeof(buffer));
+        strcpy_s(buffer, sizeof(buffer), value.c_str());
+
+        bool modified = false;
+        if (ImGui::InputText("##rafvvara4", buffer, sizeof(buffer), flags)) {
+            value = std::string(buffer);
+            modified = true;
+        }
+
+        ImGui::PopItemWidth();
+        ImGui::PopStyleVar();
+        ImGui::Columns(1);
+        ImGui::PopID();
+
+        return modified;
+    }
+
+    bool UI::ButtonControl(const std::string& value, const glm::vec2& size) {
+        return ImGui::Button(value.c_str(), {size.x, size.y});
+    }
+
+    void UI::NewLine() {
+        ImGui::NewLine();
+    }
+
+    void UI::SameLine(float offsetFromStart, float spacing) {
+        ImGui::SameLine(offsetFromStart, spacing);
+    }
 }

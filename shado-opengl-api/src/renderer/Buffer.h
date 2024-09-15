@@ -7,7 +7,7 @@
 
 namespace Shado {
     enum class ShaderDataType {
-        None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
+        None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool, Sampler2D
     };
 
     static uint32_t ShaderDataTypeSize(ShaderDataType type) {
@@ -28,6 +28,8 @@ namespace Shado {
         SHADO_CORE_ASSERT(false, "Unknown ShaderDataType!");
         return 0;
     }
+
+    ShaderDataType ShaderDataTypeFromGLType(uint32_t openGLType);
 
     struct BufferElement {
         std::string Name;

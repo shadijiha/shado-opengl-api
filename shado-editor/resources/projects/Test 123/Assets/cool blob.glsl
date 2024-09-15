@@ -62,6 +62,8 @@ layout (binding = 0) uniform sampler2D u_Textures[32];
 uniform float u_Time;
 uniform vec2 u_ScreenResolution;
 uniform vec2 u_MousePos;
+uniform vec4 u_Colour;
+uniform float u_Alpha;
 
 vec3 palette(float d){
 	return mix(vec3(0.2,0.7,0.9),vec3(1.,0.,1.),d);
@@ -128,7 +130,7 @@ void main()
     
     vec4 col = texColor * rm(ro,rd);
 
-	o_Color = col;
-	o_Color.a = Input.Color.a;
+	o_Color = col * u_Colour;
+	o_Color.a = u_Alpha; //Input.Color.a;
 	o_EntityID = v_EntityID;
 }

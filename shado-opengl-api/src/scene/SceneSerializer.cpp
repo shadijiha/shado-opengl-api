@@ -122,13 +122,7 @@ namespace Shado {
         return out;
     }
 
-    static void SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap = true);
     static std::string getPathAndCopyFileToAssets(const std::string& path);
-    static Entity dererializeEntityHelper(
-        YAML::Node entity,
-        std::function<Entity(std::string, UUID)> entityCreatorFunction,
-        Ref<Scene> scene
-    );
 
     SceneSerializer::SceneSerializer(const Ref<Scene>& scene)
         : m_Scene(scene) {
@@ -159,7 +153,7 @@ namespace Shado {
         SHADO_CORE_ASSERT(false, "Not implemented");
     }
 
-    static void serializePrefabHelper(YAML::Emitter& out, Entity& e, UUID prefabId) {
+    void SceneSerializer::serializePrefabHelper(YAML::Emitter& out, Entity& e, UUID prefabId) {
         // Add a unique ID to every entity
         if (!e.hasComponent<PrefabInstanceComponent>()) {
             auto& prefabComponent = e.addComponent<PrefabInstanceComponent>();
@@ -252,7 +246,7 @@ namespace Shado {
         return false;
     }
 
-    static Entity deserializePrefabHelper(YAML::Node node, Ref<Prefab> prefab) {
+    Entity SceneSerializer::deserializePrefabHelper(YAML::Node node, Ref<Prefab> prefab) {
         Entity entity = dererializeEntityHelper(node, [&prefab](std::string name, UUID id) {
             Entity e = prefab->attachEntity(id);
             e.getComponent<TagComponent>().tag = name;
@@ -289,8 +283,7 @@ namespace Shado {
         }
     }
 
-    // Helpers
-    static void SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap) {
+    void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap) {
         SHADO_CORE_ASSERT(entity.hasComponent<IDComponent>(), "No ID component");
 
         out << YAML::BeginMap; // Entity
@@ -364,9 +357,27 @@ namespace Shado {
             out << YAML::Key << "Texture" << YAML::Value << newPath;
             out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
 
-            if (spriteRendererComponent.shader)
+            if (spriteRendererComponent.shader) {
                 out << YAML::Key << "Shader" << YAML::Value << Project::GetActive()->GetRelativePath(
                     spriteRendererComponent.shader->getFilepath()).string();
+
+                auto& shader = spriteRendererComponent.shader;
+                const auto customUniformSerializer = [&out]<typename T>(const std::string& mapName,
+                                                                        const std::unordered_map<std::string, T>& map) {
+                    if (!map.empty()) {
+                        out << YAML::Key << mapName << YAML::Value << YAML::BeginMap;
+                        for (auto& [name, value] : map) {
+                            out << YAML::Key << name << YAML::Value << value;
+                        }
+                        out << YAML::EndMap;
+                    }
+                };
+                customUniformSerializer("ShaderCustomUniformInt", shader->m_IntNextFrame);
+                customUniformSerializer("ShaderCustomUniformFloat", shader->m_FloatNextFrame);
+                customUniformSerializer("ShaderCustomUniformFloat2", shader->m_Float2NextFrame);
+                customUniformSerializer("ShaderCustomUniformFloat3", shader->m_Float3NextFrame);
+                customUniformSerializer("ShaderCustomUniformFloat4", shader->m_Float4NextFrame);
+            }
 
             out << YAML::EndMap; // SpriteRendererComponent
 
@@ -573,8 +584,8 @@ namespace Shado {
         return newFilePath.string().substr(projectPath.string().length() + 1);
     }
 
-    static Entity dererializeEntityHelper(
-        YAML::Node entity,
+    Entity SceneSerializer::dererializeEntityHelper(
+        const YAML::Node& entity,
         std::function<Entity(std::string, UUID)> entityCreatorFunction,
         Ref<Scene> scene
     ) {
@@ -648,6 +659,20 @@ namespace Shado {
                 try {
                     src.shader = CreateRef<Shader>(
                         Project::GetProjectDirectory() / spriteRendererComponent["Shader"].as<std::string>());
+
+                    const auto customUniformsDeserializer = [&spriteRendererComponent]<typename T>(
+                        const std::string& mapName, std::unordered_map<std::string, T>& map) {
+                        if (auto node = spriteRendererComponent[mapName]) {
+                            for (auto it = node.begin(); it != node.end(); ++it) {
+                                map[it->first.as<std::string>()] = it->second.as<T>();
+                            }
+                        }
+                    };
+                    customUniformsDeserializer("ShaderCustomUniformInt", src.shader->m_IntNextFrame);
+                    customUniformsDeserializer("ShaderCustomUniformFloat", src.shader->m_FloatNextFrame);
+                    customUniformsDeserializer("ShaderCustomUniformFloat2", src.shader->m_Float2NextFrame);
+                    customUniformsDeserializer("ShaderCustomUniformFloat3", src.shader->m_Float3NextFrame);
+                    customUniformsDeserializer("ShaderCustomUniformFloat4", src.shader->m_Float4NextFrame);
                 }
                 catch (const std::runtime_error& e) {
                     SHADO_CORE_ERROR("Error loading shader: {0}", e.what());
@@ -741,7 +766,7 @@ namespace Shado {
                         ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
 
                         ScriptFieldInstance& fieldInstance = entityFields[name];
-                        
+
                         SHADO_CORE_WARN("Could not find field {0} in script class {1}",
                                         name, sc.ClassName);
 

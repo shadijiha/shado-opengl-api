@@ -549,6 +549,18 @@ namespace Shado {
         auto res = glm::vec2{Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight()};
         shader.setFloat2("u_ScreenResolution", res);
         shader.setFloat2("u_MousePos", {Input::getMouseX(), Input::getMouseY()});
+
+        for (const auto& [uniformName, value] : shader.m_IntNextFrame)
+            shader.setInt(uniformName, value);
+        for (const auto& [uniformName, value] : shader.m_FloatNextFrame)
+            shader.setFloat(uniformName, value);
+        for (const auto& [uniformName, value] : shader.m_Float2NextFrame)
+            shader.setFloat2(uniformName, value);
+        for (const auto& [uniformName, value] : shader.m_Float3NextFrame)
+            shader.setFloat3(uniformName, value);
+        for (const auto& [uniformName, value] : shader.m_Float4NextFrame)
+            shader.setFloat4(uniformName, value);
+
         CmdDrawIndexed(vertexArray, indexBuffer->getCount());
         s_Data.Stats.DrawCalls++;
         s_Data.Stats.QuadCount++;

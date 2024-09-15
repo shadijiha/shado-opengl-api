@@ -810,6 +810,7 @@ namespace Shado {
         if (sprite.texture) {
             ImGui::Image((void*)sprite.texture->getRendererID(), {60, 60}, ImVec2(0, 1), ImVec2(1, 0));
 
+            UI::SameLine();
             if (UI::ButtonControl("X")) {
                 sprite.texture = nullptr;
             }
@@ -830,6 +831,11 @@ namespace Shado {
                                         sprite.shader = CreateRef<Shader>(path);
                                     }
         );
+
+        UI::SameLine();
+        if (UI::ButtonControl("x")) {
+            sprite.shader = nullptr;
+        }
 
         if (UI::ButtonControl("+")) {
             std::filesystem::path path = FileDialogs::saveFile("Shader file (*glsl)\0*.glsl\0");
@@ -859,8 +865,52 @@ namespace Shado {
             }
         }
 
-        if (sprite.shader && UI::ButtonControl("X")) {
-            sprite.shader = nullptr;
+        // Draw shader uniforms
+        if (sprite.shader) {
+            auto& shader = sprite.shader;
+            auto uniforms = sprite.shader->getActiveUniforms();
+
+            UI::NewLine();
+            UI::Text("Shader active uniforms");
+            for (auto& [name, dataType] : uniforms) {
+                switch (dataType) {
+                case ShaderDataType::Float: {
+                    float value = shader->getFloat(name);
+                    if (UI::Vec1Control(name, value)) {
+                        shader->setUniformNextFrame(name, value);
+                    }
+                    break;
+                }
+                case ShaderDataType::Float2: {
+                    glm::vec3 value = glm::vec3(shader->getFloat2(name), 0.0f);
+                    if (UI::Vec3Control(name, value)) {
+                        shader->setUniformNextFrame(name, value);
+                    }
+                    break;
+                }
+                case ShaderDataType::Float3: {
+                    glm::vec3 value = shader->getFloat3(name);
+                    if (UI::Vec3Control(name, value)) {
+                        shader->setUniformNextFrame(name, value);
+                    }
+                    break;
+                }
+                case ShaderDataType::Float4: {
+                    glm::vec4 value = shader->getFloat4(name);
+                    if (UI::ColorControl(name, value)) {
+                        shader->setUniformNextFrame(name, value);
+                    }
+                    break;
+                }
+                case ShaderDataType::Int: {
+                    int value = shader->getInt(name);
+                    if (UI::Vec1Control(name, value)) {
+                        shader->setUniformNextFrame(name, value);
+                    }
+                    break;
+                }
+                }
+            }
         }
     }
 

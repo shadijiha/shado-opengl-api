@@ -63,7 +63,10 @@ uniform vec2 u_MousePos;
 void main()
 {
 	vec4 texColor = Input.Color;
-	// TexIndex between 0 and 31
+
+	// IMPORTANT: This may cause certain drivers to crash. Certain graphics drivers only
+	// support indexing into arrays with constant indices. If you encounter a crash, try
+	// using a switch statement instead from 0 to 31 to sample the texture.
 	texColor *= texture(u_Textures[int(v_TexIndex)], Input.TexCoord * Input.TilingFactor);	
 
 

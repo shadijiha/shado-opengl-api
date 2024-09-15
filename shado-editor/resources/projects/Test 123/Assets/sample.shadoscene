@@ -73,12 +73,6 @@ Entities:
     ScriptComponent:
       ClassName: Sandbox.Test
       ScriptFields:
-        - Name: boidPrefab
-          Type: Prefab
-          Data: 14557920349650334619
-        - Name: colourTest
-          Type: Colour
-          Data: [0.282106698, 0.6409266, 0.379085064, 1]
         - Name: linePrefab
           Type: Prefab
           Data: 10464616447793372418
@@ -188,10 +182,14 @@ Entities:
       Scale: [3.56000543, 3.58406186, 1]
       ParentEntityId: 0
     SpriteRendererComponent:
-      Color: [1, 1, 1, 1]
+      Color: [1, 0.999989986, 0.999989986, 1]
       Texture: "NULL"
       TillingFactor: 1
       Shader: Assets\cool blob.glsl
+      ShaderCustomUniformFloat:
+        u_Alpha: 1
+      ShaderCustomUniformFloat4:
+        u_Colour: [0.31394884, 0.586220086, 0.752895772, 1]
   - Entity: 16695476663163877899
     TagComponent:
       Tag: Text test

@@ -91,9 +91,11 @@ void main()
     o_Color = Input.Color;
 	o_Color.a *= circle;
 
-	o_EntityID = v_EntityID;
+	
 
-	// TexIndex between 0 and 31
+	// IMPORTANT: This may cause certain drivers to crash. Certain graphics drivers only
+	// support indexing into arrays with constant indices. If you encounter a crash, try
+	// using a switch statement instead from 0 to 31 to sample the texture.
 	o_Color *= texture(u_Textures[int(v_TexIndex)], v_TexCoord * v_TilingFactor);
-
+	o_EntityID = v_EntityID;
 }
