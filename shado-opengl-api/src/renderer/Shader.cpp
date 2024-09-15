@@ -48,6 +48,46 @@ namespace Shado {
         compile(sources);
     }
 
+    Shader::Shader(const Shader& other)
+        : Shader(other.filepath) {
+        // Copy custom uniforms
+        for (auto& [name, value] : other.m_CustomUniforms) {
+            auto [type, buffer] = value;
+            switch (type) {
+            case ShaderDataType::Int: {
+                auto data = *(int*)buffer;
+                setInt(name, data);
+                saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float: {
+                auto data = *(float*)buffer;
+                setFloat(name, data);
+                saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float2: {
+                auto data = *(glm::vec2*)buffer;
+                setFloat2(name, data);
+                saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float3: {
+                auto data = *(glm::vec3*)buffer;
+                setFloat3(name, data);
+                saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float4: {
+                auto data = *(glm::vec4*)buffer;
+                setFloat4(name, data);
+                saveCustomUniformValue(name, type, data);
+                break;
+            }
+            }
+        }
+    }
+
     Shader::~Shader() {
         glDeleteProgram(m_Renderer2DID);
 

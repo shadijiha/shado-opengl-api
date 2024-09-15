@@ -20,23 +20,21 @@ struct VertexOutput
 	vec4 Color;
 	vec2 TexCoord;
 	float TilingFactor;
-	vec4 WorldPosition;
 };
 
-layout (location = 0) out VertexOutput Output;
-layout (location = 4) out flat float v_TexIndex;
-layout (location = 5) out flat int v_EntityID;
+out VertexOutput v_Output;
+out flat float v_TexIndex;
+out flat int v_EntityID;
 
 void main()
 {
-	Output.Color = a_Color;
-	Output.TexCoord = a_TexCoord;
-	Output.TilingFactor = a_TilingFactor;
+	v_Output.Color = a_Color;
+	v_Output.TexCoord = a_TexCoord;
+	v_Output.TilingFactor = a_TilingFactor;
 	v_TexIndex = a_TexIndex;
 	v_EntityID = a_EntityID;
 
 	gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
-	Output.WorldPosition = vec4(a_Position, 1.0);
 }
 
 #type fragment
@@ -50,12 +48,11 @@ struct VertexOutput
 	vec4 Color;
 	vec2 TexCoord;
 	float TilingFactor;
-	vec4 WorldPosition;
 };
 
-layout (location = 0) in VertexOutput Input;
-layout (location = 4) in flat float v_TexIndex;
-layout (location = 5) in flat int v_EntityID;
+in VertexOutput v_Output;
+in flat float v_TexIndex;
+in flat int v_EntityID;
 
 layout (binding = 0) uniform sampler2D u_Textures[32];
 
@@ -64,6 +61,7 @@ uniform vec2 u_ScreenResolution;
 uniform vec2 u_MousePos;
 uniform vec4 u_Colour;
 uniform float u_Alpha;
+uniform vec2 u_CustomRes;
 
 vec3 palette(float d){
 	return mix(vec3(0.2,0.7,0.9),vec3(1.,0.,1.),d);
@@ -108,11 +106,12 @@ vec4 rm (vec3 ro, vec3 rd){
 
 void main()
 {
-	vec4 texColor = Input.Color;
+	vec4 texColor = v_Output.Color;
 	// TexIndex between 0 and 31
-	texColor *= texture(u_Textures[int(v_TexIndex)], Input.TexCoord * Input.TilingFactor);	
+	texColor *= texture(u_Textures[int(v_TexIndex)], v_Output.TexCoord * v_Output.TilingFactor);	
 
-	vec2 fragCoord = gl_FragCoord.xy - Input.WorldPosition.xy * 5;
+	vec2 fragCoord = gl_FragCoord.xy;
+	
 	vec2 iResolution = vec2(800, 800);
 	float iTime = u_Time;
 

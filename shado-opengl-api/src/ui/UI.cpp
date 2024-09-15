@@ -60,7 +60,7 @@ namespace Shado {
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.9f, 0.2f, 0.2f, 1.0f});
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.8f, 0.1f, 0.15f, 1.0f});
         ImGui::PushFont(boldFont);
-        if (ImGui::Button(("X" + label).c_str(), buttonSize))
+        if (ImGui::Button(("X##" + label).c_str(), buttonSize))
             values.x = resetValue;
         ImGui::PopFont();
         ImGui::PopStyleColor(3);
@@ -76,7 +76,7 @@ namespace Shado {
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.3f, 0.8f, 0.3f, 1.0f});
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.2f, 0.7f, 0.2f, 1.0f});
         ImGui::PushFont(boldFont);
-        if (ImGui::Button(("Y" + label).c_str(), buttonSize))
+        if (ImGui::Button(("Y##" + label).c_str(), buttonSize))
             values.y = resetValue;
         ImGui::PopFont();
         ImGui::PopStyleColor(3);
@@ -92,7 +92,7 @@ namespace Shado {
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.2f, 0.35f, 0.9f, 1.0f});
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.1f, 0.25f, 0.8f, 1.0f});
         ImGui::PushFont(boldFont);
-        if (ImGui::Button(("Z" + label).c_str(), buttonSize))
+        if (ImGui::Button(("Z##" + label).c_str(), buttonSize))
             values.z = resetValue;
         ImGui::PopFont();
         ImGui::PopStyleColor(3);

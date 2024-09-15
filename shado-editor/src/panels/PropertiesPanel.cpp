@@ -857,7 +857,7 @@ namespace Shado {
         if (UI::ButtonControl("Recompile")) {
             if (sprite.shader) {
                 try {
-                    sprite.shader = CreateRef<Shader>(sprite.shader->getFilepath());
+                    sprite.shader = CreateRef<Shader>(*sprite.shader);
                 }
                 catch (const ShaderCompilationException& e) {
                     SHADO_CORE_ERROR("Failed to recompile shader: {0}", e.what());

@@ -27,6 +27,7 @@ namespace Shado {
     public:
         Shader(const std::filesystem::path& filepath);
         Shader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
+        Shader(const Shader& other);
         virtual ~Shader();
 
         void bind() const;
