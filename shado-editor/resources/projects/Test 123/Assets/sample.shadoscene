@@ -13,6 +13,8 @@ Entities:
       Texture: "NULL"
       TillingFactor: 1
       Shader: Assets\Iterations  inversion 2.glsl
+      ShaderCustomUniforms:
+        {}
     RigidBody2DComponent:
       Type: 2
       FixedRotation: false
@@ -163,6 +165,8 @@ Entities:
       Texture: "NULL"
       TillingFactor: 1
       Shader: Assets\Raymarched Hexagonal Truchet.glsl
+      ShaderCustomUniforms:
+        {}
     RigidBody2DComponent:
       Type: 2
       FixedRotation: false
@@ -186,10 +190,13 @@ Entities:
       Texture: "NULL"
       TillingFactor: 1
       Shader: Assets\cool blob.glsl
-      ShaderCustomUniformFloat:
-        u_Alpha: 1
-      ShaderCustomUniformFloat4:
-        u_Colour: [0.31394884, 0.586220086, 0.752895772, 1]
+      ShaderCustomUniforms:
+        u_Colour:
+          Type: 4
+          Data: [0.370939642, 0.644787669, 0.622155547, 1]
+        u_Alpha:
+          Type: 1
+          Data: 1
   - Entity: 16695476663163877899
     TagComponent:
       Tag: Text test

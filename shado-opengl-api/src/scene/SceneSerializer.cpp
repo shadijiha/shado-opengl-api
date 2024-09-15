@@ -362,21 +362,33 @@ namespace Shado {
                     spriteRendererComponent.shader->getFilepath()).string();
 
                 auto& shader = spriteRendererComponent.shader;
-                const auto customUniformSerializer = [&out]<typename T>(const std::string& mapName,
-                                                                        const std::unordered_map<std::string, T>& map) {
-                    if (!map.empty()) {
-                        out << YAML::Key << mapName << YAML::Value << YAML::BeginMap;
-                        for (auto& [name, value] : map) {
-                            out << YAML::Key << name << YAML::Value << value;
-                        }
-                        out << YAML::EndMap;
+                out << YAML::Key << "ShaderCustomUniforms" << YAML::Value;
+                out << YAML::BeginMap;
+                for (const auto& [name, value] : shader->m_CustomUniforms) {
+                    auto [type, data] = value;
+                    out << YAML::Key << name << YAML::Value;
+                    out << YAML::BeginMap;
+                    out << YAML::Key << "Type" << YAML::Value << (int)type;
+                    switch (type) {
+                    case ShaderDataType::Int:
+                        out << YAML::Key << "Data" << YAML::Value << *(int*)data;
+                        break;
+                    case ShaderDataType::Float:
+                        out << YAML::Key << "Data" << YAML::Value << *(float*)data;
+                        break;
+                    case ShaderDataType::Float2:
+                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec2*)data;
+                        break;
+                    case ShaderDataType::Float3:
+                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec3*)data;
+                        break;
+                    case ShaderDataType::Float4:
+                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec4*)data;
+                        break;
                     }
-                };
-                customUniformSerializer("ShaderCustomUniformInt", shader->m_IntNextFrame);
-                customUniformSerializer("ShaderCustomUniformFloat", shader->m_FloatNextFrame);
-                customUniformSerializer("ShaderCustomUniformFloat2", shader->m_Float2NextFrame);
-                customUniformSerializer("ShaderCustomUniformFloat3", shader->m_Float3NextFrame);
-                customUniformSerializer("ShaderCustomUniformFloat4", shader->m_Float4NextFrame);
+                    out << YAML::EndMap;
+                }
+                out << YAML::EndMap;
             }
 
             out << YAML::EndMap; // SpriteRendererComponent
@@ -660,19 +672,46 @@ namespace Shado {
                     src.shader = CreateRef<Shader>(
                         Project::GetProjectDirectory() / spriteRendererComponent["Shader"].as<std::string>());
 
-                    const auto customUniformsDeserializer = [&spriteRendererComponent]<typename T>(
-                        const std::string& mapName, std::unordered_map<std::string, T>& map) {
-                        if (auto node = spriteRendererComponent[mapName]) {
-                            for (auto it = node.begin(); it != node.end(); ++it) {
-                                map[it->first.as<std::string>()] = it->second.as<T>();
+                    if (auto shaderCustomUniforms = spriteRendererComponent["ShaderCustomUniforms"]) {
+                        for (auto uniform : shaderCustomUniforms) {
+                            std::string name = uniform.first.as<std::string>();
+                            auto uniformData = uniform.second;
+
+                            ShaderDataType type = (ShaderDataType)uniformData["Type"].as<int>();
+                            switch (type) {
+                            case ShaderDataType::Int: {
+                                int data = uniformData["Data"].as<int>();
+                                src.shader->setInt(name, data);
+                                src.shader->saveCustomUniformValue(name, type, data);
+                                break;
+                            }
+                            case ShaderDataType::Float: {
+                                float data = uniformData["Data"].as<float>();
+                                src.shader->setFloat(name, data);
+                                src.shader->saveCustomUniformValue(name, type, data);
+                                break;
+                            }
+                            case ShaderDataType::Float2: {
+                                auto data = uniformData["Data"].as<glm::vec2>();
+                                src.shader->setFloat2(name, data);
+                                src.shader->saveCustomUniformValue(name, type, data);
+                                break;
+                            }
+                            case ShaderDataType::Float3: {
+                                auto data = uniformData["Data"].as<glm::vec3>();
+                                src.shader->setFloat3(name, data);
+                                src.shader->saveCustomUniformValue(name, type, data);
+                                break;
+                            }
+                            case ShaderDataType::Float4: {
+                                auto data = uniformData["Data"].as<glm::vec4>();
+                                src.shader->setFloat4(name, data);
+                                src.shader->saveCustomUniformValue(name, type, data);
+                                break;
+                            }
                             }
                         }
-                    };
-                    customUniformsDeserializer("ShaderCustomUniformInt", src.shader->m_IntNextFrame);
-                    customUniformsDeserializer("ShaderCustomUniformFloat", src.shader->m_FloatNextFrame);
-                    customUniformsDeserializer("ShaderCustomUniformFloat2", src.shader->m_Float2NextFrame);
-                    customUniformsDeserializer("ShaderCustomUniformFloat3", src.shader->m_Float3NextFrame);
-                    customUniformsDeserializer("ShaderCustomUniformFloat4", src.shader->m_Float4NextFrame);
+                    }
                 }
                 catch (const std::runtime_error& e) {
                     SHADO_CORE_ERROR("Error loading shader: {0}", e.what());

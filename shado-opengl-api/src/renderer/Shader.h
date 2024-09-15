@@ -52,24 +52,9 @@ namespace Shado {
         glm::vec3 getFloat3(const std::string& name);
         glm::vec4 getFloat4(const std::string& name);
 
-        template <typename T> requires std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<
-            T, glm::vec2> || std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::vec4>
-        void setUniformNextFrame(const std::string& name, const T& value) {
-            if constexpr (std::is_same_v<T, int>) {
-                m_IntNextFrame[name] = value;
-            }
-            else if constexpr (std::is_same_v<T, float>) {
-                m_FloatNextFrame[name] = value;
-            }
-            else if constexpr (std::is_same_v<T, glm::vec2>) {
-                m_Float2NextFrame[name] = glm::vec2(value);
-            }
-            else if constexpr (std::is_same_v<T, glm::vec3>) {
-                m_Float3NextFrame[name] = glm::vec3(value);
-            }
-            else if constexpr (std::is_same_v<T, glm::vec4>) {
-                m_Float4NextFrame[name] = glm::vec4(value);
-            }
+        template <typename T>
+        void saveCustomUniformValue(const std::string& uniformName, ShaderDataType type, const T& value) {
+            m_CustomUniforms[uniformName] = std::make_tuple(type, snew(T) T(value));
         }
 
     private:
@@ -77,16 +62,15 @@ namespace Shado {
         std::unordered_map<unsigned int, std::string> preProcess(const std::string& source);
         void compile(const std::unordered_map<unsigned int, std::string>& shaderSources);
 
+        static int getCurrentActiveProgram();
+
     private:
         uint32_t m_Renderer2DID;
         std::string m_Name;
         std::filesystem::path filepath;
 
-        std::unordered_map<std::string, int> m_IntNextFrame;
-        std::unordered_map<std::string, float> m_FloatNextFrame;
-        std::unordered_map<std::string, glm::vec2> m_Float2NextFrame;
-        std::unordered_map<std::string, glm::vec3> m_Float3NextFrame;
-        std::unordered_map<std::string, glm::vec4> m_Float4NextFrame;
+        // Uniforms set by the editor. They are serialized and deserialized by the SceneSerializer
+        std::unordered_map<std::string, std::tuple<ShaderDataType, void*>> m_CustomUniforms;
 
         friend class Renderer2D;
         friend class SceneSerializer;

@@ -877,35 +877,40 @@ namespace Shado {
                 case ShaderDataType::Float: {
                     float value = shader->getFloat(name);
                     if (UI::Vec1Control(name, value)) {
-                        shader->setUniformNextFrame(name, value);
+                        shader->setFloat(name, value);
+                        shader->saveCustomUniformValue(name, dataType, value);
                     }
                     break;
                 }
                 case ShaderDataType::Float2: {
                     glm::vec3 value = glm::vec3(shader->getFloat2(name), 0.0f);
                     if (UI::Vec3Control(name, value)) {
-                        shader->setUniformNextFrame(name, value);
+                        shader->setFloat2(name, value);
+                        shader->saveCustomUniformValue(name, dataType, value);
                     }
                     break;
                 }
                 case ShaderDataType::Float3: {
                     glm::vec3 value = shader->getFloat3(name);
                     if (UI::Vec3Control(name, value)) {
-                        shader->setUniformNextFrame(name, value);
+                        shader->setFloat3(name, value);
+                        shader->saveCustomUniformValue(name, dataType, value);
                     }
                     break;
                 }
                 case ShaderDataType::Float4: {
                     glm::vec4 value = shader->getFloat4(name);
                     if (UI::ColorControl(name, value)) {
-                        shader->setUniformNextFrame(name, value);
+                        shader->setFloat4(name, value);
+                        shader->saveCustomUniformValue(name, dataType, value);
                     }
                     break;
                 }
                 case ShaderDataType::Int: {
                     int value = shader->getInt(name);
                     if (UI::Vec1Control(name, value)) {
-                        shader->setUniformNextFrame(name, value);
+                        shader->setInt(name, value);
+                        shader->saveCustomUniformValue(name, dataType, value);
                     }
                     break;
                 }

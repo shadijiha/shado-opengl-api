@@ -4,6 +4,7 @@
 
 #include "debug/Debug.h"
 #include "Events/input.h"
+#include "project/Project.h"
 #include "scene/utils/SceneUtils.h"
 
 namespace Shado {
@@ -154,20 +155,29 @@ namespace Shado {
     void UI::InputTextWithChooseFile(const std::string& label, const std::string& text,
                                      const std::vector<std::string>& dragAndDropExtensions, int id,
                                      std::function<void(std::string)> onChange, UI::FileChooserType chooseType) {
-        bool textureChanged = false;
+        bool filepathHasChanged = false;
 
-        std::string texturePath = text;
-        if (InputTextControl(label, texturePath) && Shado::Input::isKeyPressed(Shado::KeyCode::Enter)) {
-            textureChanged = true;
+        std::string filepath = text;
+        if (InputTextControl(label, filepath) && Shado::Input::isKeyPressed(Shado::KeyCode::Enter)) {
+            filepathHasChanged = true;
         }
-        //ImGui::InputText(label.c_str(), (char*)text.c_str(), text.length(), ImGuiInputTextFlags_ReadOnly);
 
+        // Double click opens the file
+        if (ImGui::BeginPopupContextItem()) {
+            if (ImGui::MenuItem("Open...")) {
+                std::filesystem::path path = std::filesystem::path(filepath).is_absolute()
+                                                 ? filepath
+                                                 : Project::GetProjectDirectory() / filepath;
+                Dialog::openPathInExplorer(path);
+            }
+            ImGui::EndPopup();
+        }
 
         // For drag and drop
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                const wchar_t* path = (const wchar_t*)payload->Data;
-                std::filesystem::path dataPath = std::filesystem::path("assets") / path;
+                const wchar_t* pathRelativeToProject = (const wchar_t*)payload->Data;
+                std::filesystem::path dataPath = pathRelativeToProject;
 
                 bool acceptable = dragAndDropExtensions.empty();
                 for (const auto& ext : dragAndDropExtensions) {
@@ -177,8 +187,10 @@ namespace Shado {
                     }
                 }
 
-                if (acceptable)
-                    onChange(dataPath.string());
+                if (acceptable) {
+                    filepath = dataPath.string();
+                    onChange((Project::GetProjectDirectory() / dataPath).string());
+                }
                 else
                     SHADO_CORE_WARN("Invalid drag and drop file extension {0}", dataPath.filename());
             }
@@ -207,26 +219,31 @@ namespace Shado {
 
             switch (chooseType) {
             case UI::FileChooserType::Open:
-                texturePath = Shado::FileDialogs::openFile(filter.c_str());
+                filepath = Shado::FileDialogs::openFile(filter.c_str());
                 break;
             case UI::FileChooserType::Save:
-                texturePath = Shado::FileDialogs::saveFile(filter.c_str());
+                filepath = Shado::FileDialogs::saveFile(filter.c_str());
                 break;
             case UI::FileChooserType::Folder:
-                texturePath = Shado::FileDialogs::chooseFolder();
+                filepath = Shado::FileDialogs::chooseFolder();
                 break;
             default:
                 SHADO_CORE_ERROR("Unknown File dialog type ", (int)chooseType);
                 break;
             }
 
-            textureChanged = true;
+            // Check if the path is inside the project directory
+            if (filepath.find(Project::GetProjectDirectory().string()) == std::string::npos)
+                Dialog::alert("The file is not inside the project directory", "Error", Dialog::DialogIcon::WARNING);
+            else
+                filepath = std::filesystem::relative(filepath, Project::GetProjectDirectory()).string();
+
+            filepathHasChanged = true;
         }
         ImGui::PopID();
 
-
-        if (textureChanged && !texturePath.empty())
-            onChange(texturePath);
+        if (filepathHasChanged && !filepath.empty())
+            onChange(filepath);
     }
 
     void UI::TextureControl(Ref<Shado::Texture2D>& texture) {

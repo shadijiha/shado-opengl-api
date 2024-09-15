@@ -50,6 +50,12 @@ namespace Shado {
 
     Shader::~Shader() {
         glDeleteProgram(m_Renderer2DID);
+
+        // delete custom uniforms
+        for (auto& [name, value] : m_CustomUniforms) {
+            auto [type, data] = value;
+            delete data;
+        }
     }
 
     std::string Shader::readFile(const std::filesystem::path& filepath) {
@@ -174,6 +180,12 @@ namespace Shado {
         }
     }
 
+    int Shader::getCurrentActiveProgram() {
+        GLint prog = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
+        return prog;
+    }
+
     void Shader::bind() const {
         glUseProgram(m_Renderer2DID);
     }
@@ -184,42 +196,42 @@ namespace Shado {
 
     void Shader::setInt(const std::string& name, int value) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniform1i(location, value);
+        glProgramUniform1i(m_Renderer2DID, location, value);
     }
 
     void Shader::setIntArray(const std::string& name, int* values, uint32_t count) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniform1iv(location, count, values);
+        glProgramUniform1iv(m_Renderer2DID, location, count, values);
     }
 
     void Shader::setFloat(const std::string& name, float value) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniform1f(location, value);
+        glProgramUniform1f(m_Renderer2DID, location, value);
     }
 
     void Shader::setFloat2(const std::string& name, const glm::vec2& value) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniform2f(location, value.x, value.y);
+        glProgramUniform2f(m_Renderer2DID, location, value.x, value.y);
     }
 
     void Shader::setFloat3(const std::string& name, const glm::vec3& value) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniform3f(location, value.x, value.y, value.z);
+        glProgramUniform3f(m_Renderer2DID, location, value.x, value.y, value.z);
     }
 
     void Shader::setFloat4(const std::string& name, const glm::vec4& value) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniform4f(location, value.x, value.y, value.z, value.w);
+        glProgramUniform4f(m_Renderer2DID, location, value.x, value.y, value.z, value.w);
     }
 
     void Shader::setMat3(const std::string& name, const glm::mat3& value) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(value));
+        glProgramUniformMatrix3fv(m_Renderer2DID, location, 1, GL_FALSE, glm::value_ptr(value));
     }
 
     void Shader::setMat4(const std::string& name, const glm::mat4& value) {
         GLint location = glGetUniformLocation(m_Renderer2DID, name.c_str());
-        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+        glProgramUniformMatrix4fv(m_Renderer2DID, location, 1, GL_FALSE, glm::value_ptr(value));
     }
 
     std::map<std::string, ShaderDataType> Shader::getActiveUniforms() {
@@ -242,35 +254,58 @@ namespace Shado {
     }
 
     int Shader::getInt(const std::string& name) {
+        int currentProgram = getCurrentActiveProgram();
+        this->bind();
+
         int result;
         glGetUniformiv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), &result);
+
+        // Bind back the previous program
+        glUseProgram(currentProgram);
         return result;
     }
 
     float Shader::getFloat(const std::string& name) {
+        int currentProgram = getCurrentActiveProgram();
+        this->bind();
         float result;
         glGetUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), &result);
+
+        // Bind back the previous program
+        glUseProgram(currentProgram);
         return result;
     }
 
     glm::vec2 Shader::getFloat2(const std::string& name) {
+        int currentProgram = getCurrentActiveProgram();
+        this->bind();
         glm::vec2 result;
         glGetnUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), sizeof(glm::vec2),
                         glm::value_ptr(result));
+        // Bind back the previous program
+        glUseProgram(currentProgram);
         return result;
     }
 
     glm::vec3 Shader::getFloat3(const std::string& name) {
+        int currentProgram = getCurrentActiveProgram();
+        this->bind();
         glm::vec3 result;
         glGetnUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), sizeof(glm::vec3),
                         glm::value_ptr(result));
+        // Bind back the previous program
+        glUseProgram(currentProgram);
         return result;
     }
 
     glm::vec4 Shader::getFloat4(const std::string& name) {
+        int currentProgram = getCurrentActiveProgram();
+        this->bind();
         glm::vec4 result;
         glGetnUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), sizeof(glm::vec4),
                         glm::value_ptr(result));
+        // Bind back the previous program
+        glUseProgram(currentProgram);
         return result;
     }
 }
