@@ -3,8 +3,6 @@
 #include "renderer/Renderer2D.h"
 #include "Entity.h"
 #include <box2d/b2_world.h>
-#include <mono/metadata/appdomain.h>
-#include <mono/metadata/object.h>
 
 #include "box2d/b2_body.h"
 #include "box2d/b2_fixture.h"
