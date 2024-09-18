@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <string>
 
 #include "CSharpObject.h"
 #include "ScriptEntityStorage.hpp"
@@ -22,7 +23,6 @@ namespace Coral {
 
 namespace Shado {
     class Scene;
-    class SceneRenderer;
     class Project;
 
     struct AssemblyData {
@@ -68,9 +68,6 @@ namespace Shado {
     public:
         Ref<Scene> GetCurrentScene() const { return m_CurrentScene; }
         void SetCurrentScene(Ref<Scene> scene) { m_CurrentScene = scene; }
-
-        Ref<SceneRenderer> GetSceneRenderer() const { return m_SceneRenderer; }
-        void SetSceneRenderer(Ref<SceneRenderer> sceneRenderer) { m_SceneRenderer = sceneRenderer; }
 
         bool IsValidScript(UUID scriptID) const;
 
@@ -203,7 +200,6 @@ namespace Shado {
         std::unordered_map<UUID, ScriptMetadata> m_ScriptMetadata;
 
         Ref<Scene> m_CurrentScene = nullptr;
-        Ref<SceneRenderer> m_SceneRenderer = nullptr;
         Coral::StableVector<Coral::ManagedObject> m_ManagedObjects;
 
     private:
@@ -213,6 +209,6 @@ namespace Shado {
         friend class SceneHierarchyPanel;
         friend class SceneSerializer;
         friend class EditorLayer;
-        friend class RuntimeLayer;
+        friend class PropertiesPanel;
     };
 }

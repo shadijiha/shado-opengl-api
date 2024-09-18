@@ -47,7 +47,8 @@ project "shado-opengl-api"
         "box2d",
         "yaml-cpp",
         "shcore.lib",
-        "msdf-atlas-gen"
+        "msdf-atlas-gen",
+        "Coral.Native",
     }
 
     filter "system:windows"

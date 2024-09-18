@@ -8,8 +8,6 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [-0.800000012, -1.5, 1]
       ParentEntityId: 5567411534524352017
-    ScriptComponent:
-      ClassName: Sandbox.TextIncrementor
     PrefabInstanceComponent:
       PrefabId: 9272373329109538123
       PrefabEntityUniqueId: 5941834728084377729
@@ -123,12 +121,6 @@ Entities:
         Far: 100
       Primary: true
       FixedAspectRatio: false
-    ScriptComponent:
-      ClassName: Sandbox.TestCamera
-      ScriptFields:
-        - Name: moveDelta
-          Type: Float
-          Data: 5
   - Entity: 1816516960762403436
     TagComponent:
       Tag: Ground
@@ -171,17 +163,29 @@ Entities:
       Restitution: 0
       RestitutionThreshold: 0.5
     ScriptComponent:
-      ClassName: Sandbox.Test
-      ScriptFields:
-        - Name: linePrefab
-          Type: Prefab
-          Data: 10464616447793372418
-        - Name: maxDelta
-          Type: Float
-          Data: 5
-        - Name: moveRate
-          Type: Float
-          Data: 0.5
+      ScriptID: 3572598034
+      ScriptName: Sandbox.Test
+      Fields:
+        - ID: 4237153936
+          Name: maxDelta
+          Type: 8
+          Value: 3
+        - ID: 49257961
+          Name: texture
+          Type: 20
+          Value: 0
+        - ID: 1435041189
+          Name: moveRate
+          Type: 8
+          Value: 1
+        - ID: 1338514742
+          Name: totalDt
+          Type: 8
+          Value: 0
+        - ID: 1914835392
+          Name: linePrefab
+          Type: 16
+          Value: 15435
   - Entity: 9598989020573115777
     TagComponent:
       Tag: Sky

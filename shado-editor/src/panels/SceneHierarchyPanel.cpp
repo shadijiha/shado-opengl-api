@@ -68,7 +68,7 @@ namespace Shado {
 
     void SceneHierarchyPanel::onEvent(Event& e) {
         if (m_Context->isRunning()) {
-            ScriptEngine::InvokeCustomEditorEvents(e);
+            //ScriptEngine::InvokeCustomEditorEvents(e);
         }
 
         m_PropertiesPanel.onEvent(e);
@@ -90,6 +90,7 @@ namespace Shado {
 
         return false;
     };
+
     void SceneHierarchyPanel::drawEntityNode(Entity entity) {
         SHADO_PROFILE_FUNCTION();
 

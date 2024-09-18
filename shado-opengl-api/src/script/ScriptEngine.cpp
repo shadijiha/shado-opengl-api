@@ -46,7 +46,8 @@ namespace Shado {
     void ScriptEngine::LoadProjectAssembly() {
         m_AppAssemblyData.reset();
 
-        auto filepath = std::filesystem::absolute(Project::GetConfig().ScriptModulePath);
+        const auto& projectConfig = Project::GetActive()->GetConfig();
+        auto filepath = Project::GetProjectDirectory() / projectConfig.ScriptModulePath;
 
         m_AppAssemblyData = CreateScoped<AssemblyData>();
         m_AppAssemblyData->Assembly = &m_LoadContext->LoadAssembly(filepath.string());
@@ -146,41 +147,40 @@ namespace Shado {
         case Coral::CoralInitStatus::CoralManagedNotFound: {
             auto message = std::format("Could not find Coral.Managed.dll in directory {}", settings.CoralDirectory);
 
-#if defined(HZ_PLATFORM_WINDOWS)
-				int response = MessageBoxA(nullptr,
-					message.c_str(),
-					"Hazel C# Scripting Engine Initialization Failure", MB_OK | MB_ICONERROR
-				);
+#if defined(SHADO_PLATFORM_WINDOWS)
+            int response = MessageBoxA(nullptr,
+                                       message.c_str(),
+                                       "Hazel C# Scripting Engine Initialization Failure", MB_OK | MB_ICONERROR
+            );
 #else
             SHADO_CORE_ERROR("Hazel C# Scripting Engine Initialization Failure: {}", message);
 #endif
             break;
         }
         case Coral::CoralInitStatus::CoralManagedInitError: {
-#if defined(HZ_PLATFORM_WINDOWS)
-				int response = MessageBoxA(nullptr,
-					"Failed to initialize Coral.Managed",
-					"Hazel C# Scripting Engine Initialization Failure", MB_OK | MB_ICONERROR
-				);
+#if defined(SHADO_PLATFORM_WINDOWS)
+            int response = MessageBoxA(nullptr,
+                                       "Failed to initialize Coral.Managed",
+                                       "Shado C# Scripting Engine Initialization Failure", MB_OK | MB_ICONERROR
+            );
 #else
             SHADO_CORE_ERROR("Hazel C# Scripting Engine Initialization Failure: Failed to initialize Coral.Managed");
 #endif
             break;
         }
         case Coral::CoralInitStatus::DotNetNotFound: {
-#if defined(HZ_PLATFORM_WINDOWS)
-				int response = MessageBoxA(nullptr,
-					"Hazel requires .NET 8 or higher!\n\n"
-					"Please make sure you have the appropriate .NET Runtime installed. Installers for all platforms can be found here: https://dotnet.microsoft.com/en-us/download/dotnet\n\n"
-					"Would you like to download the latest .NET 8 Runtime installer?",
-					"Hazel C# Scripting Engine Initialization Failure",
-					MB_YESNO | MB_ICONERROR
-				);
+#if defined(SHADO_PLATFORM_WINDOWS)
+            int response = MessageBoxA(nullptr,
+                                       "Shado requires .NET 8 or higher!\n\n"
+                                       "Please make sure you have the appropriate .NET Runtime installed. Installers for all platforms can be found here: https://dotnet.microsoft.com/en-us/download/dotnet\n\n"
+                                       "Would you like to download the latest .NET 8 Runtime installer?",
+                                       "Shado C# Scripting Engine Initialization Failure",
+                                       MB_YESNO | MB_ICONERROR
+            );
 
-				if (response == IDYES)
-				{
-					system("start https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe");
-				}
+            if (response == IDYES) {
+                system("start https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe");
+            }
 #else
             SHADO_CORE_ERROR(
                 "Hazel requires .NET 8 or higher!\n\n"
@@ -211,11 +211,16 @@ namespace Shado {
         m_LoadContext = std::make_unique<Coral::AssemblyLoadContext>(
             std::move(m_Host->CreateAssemblyLoadContext("HazelLoadContext")));
 
-        auto scriptCorePath = (std::filesystem::current_path() / "Resources" / "Scripts" / "Hazel-ScriptCore.dll").
-            string();
-        m_CoreAssemblyData = CreateScoped<AssemblyData>();
+        auto scriptCorePath = (Project::GetProjectDirectory() / Project::GetActive()->GetConfig().ScriptModulePath).
+            parent_path() / "Shado-script-core.dll";
 
-        m_CoreAssemblyData->Assembly = &m_LoadContext->LoadAssembly(scriptCorePath);
+        if (!std::filesystem::exists(scriptCorePath)) {
+            throw std::runtime_error(
+                std::format("Could not find Shado-script-core.dll in directory {}", scriptCorePath.string()));
+        }
+
+        m_CoreAssemblyData = CreateScoped<AssemblyData>();
+        m_CoreAssemblyData->Assembly = &m_LoadContext->LoadAssembly(scriptCorePath.string());
         BuildAssemblyCache(m_CoreAssemblyData.get());
 
         ScriptGlue::RegisterGlue(*m_CoreAssemblyData->Assembly);

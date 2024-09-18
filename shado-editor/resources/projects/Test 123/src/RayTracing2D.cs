@@ -6,6 +6,7 @@ using Shado.Editor;
 
 namespace Sandbox
 {
+    #if false
     public class RayTracing2D : Entity
     {
         public float velocity = 1.0f;
@@ -167,4 +168,5 @@ namespace Sandbox
                     return false;
         }
     }
+#endif
 }

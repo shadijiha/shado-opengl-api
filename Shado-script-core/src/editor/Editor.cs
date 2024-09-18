@@ -6,8 +6,8 @@ namespace Shado.Editor
     {
         private UInt32 monoGCHandle;
         protected string fieldName;
-        
-        protected object target => InternalCalls.Mono_GetGCHandleTarget(monoGCHandle);
+
+        protected object? target => null; //InternalCalls.Mono_GetGCHandleTarget(monoGCHandle);
 
         protected abstract void OnEditorDraw();
 
@@ -16,19 +16,20 @@ namespace Shado.Editor
         }
 
         protected string GetTargetType() {
-            foreach (var attibute in GetAttibutes())
-            {
+            foreach (var attibute in GetAttibutes()) {
                 if (attibute.GetType() == typeof(EditorTargetType)) {
                     return ((EditorTargetType)attibute).targetType.FullName;
                 }
             }
+
             return null;
         }
     }
 
-    public class EditorTargetType : System.Attribute { 
-        
+    public class EditorTargetType : System.Attribute
+    {
         internal Type targetType;
+
         public EditorTargetType(Type type) {
             targetType = type;
         }

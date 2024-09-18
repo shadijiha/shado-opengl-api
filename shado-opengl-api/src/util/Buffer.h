@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Memory.h"
+#include "debug/Debug.h"
 
 namespace Shado {
     using byte = uint8_t;

@@ -15,7 +15,9 @@ workspace "Test123"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 group "Shado"
-	include(RootDir .. "Shado-script-core")
+	--include(RootDir .. "Shado-script-core")
+	include(RootDir .. "shado-opengl-api/vendor/Coral/Coral.Managed")
+ 	include(RootDir .. "Shado-script-core")
 group ""
 
 project "Test123"
@@ -26,6 +28,11 @@ project "Test123"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	propertytags {
+        { "AppendTargetFrameworkToOutputPath", "false" },
+        { "Nullable", "enable" },
+    }
+
 	configurations
 	{
 		"Release"
@@ -33,8 +40,9 @@ project "Test123"
 	
 	links
 	{
-		RootDir .. "shado-editor/ScriptCore/Hazel-ScriptCore.dll",
+		RootDir .. "shado-editor/ScriptCore/Shado-script-core.dll",
 		RootDir .. "shado-editor/DotNet/Coral.Managed.dll",
+		
 	}
 
 	files

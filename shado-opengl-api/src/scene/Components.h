@@ -9,6 +9,7 @@
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
 #include "../../../shado-editor/EditorEvents.h"
+#include "script/CSharpObject.h"
 //#include "script/ScriptManager.h"
 
 namespace Shado {
@@ -205,12 +206,12 @@ namespace Shado {
     };
 
     struct ScriptComponent {
-        std::string ClassName;
+        UUID ScriptID = 0;
+        CSharpObject Instance;
+        std::vector<uint32_t> FieldIDs;
 
-        ScriptComponent() {
-        }
-
-        ScriptComponent(const ScriptComponent&) = default;
+        // NOTE(Peter): Gets set to true when OnCreate has been called for this entity
+        bool IsRuntimeInitialized = false;
     };
 
     // Physics

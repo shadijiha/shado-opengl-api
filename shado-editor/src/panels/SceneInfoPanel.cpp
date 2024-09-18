@@ -16,16 +16,17 @@ namespace Shado {
     static void drawEntityNode(Entity entity, Entity& selected);
 
     static int sectionId = 0;
+
     static void drawSection(const std::string& name, std::function<void(const std::string&)> drawFn) {
         UI::TreeNode(sectionId++, name, [&name, drawFn]() {
             drawFn(name);
         }, ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_FramePadding);
     }
-    
-    void SceneInfoPanel::onImGuiRender()  {
+
+    void SceneInfoPanel::onImGuiRender() {
         static ImGuiTableFlags tableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
         sectionId = 0;
-        
+
         ImGui::Begin("Scene Info");
 
         if (m_Scene == nullptr) {
@@ -56,29 +57,48 @@ namespace Shado {
                 UI::Text("Bodies: %d", world->GetBodyCount());
                 UI::Text("Contacts: %d", world->GetContactCount());
                 UI::Text("Joints: %d", world->GetJointCount());
-                
+
                 // Make it an iterator
                 struct BodyIterator {
                     b2Body* body;
-                    BodyIterator(b2Body* body) : body(body) {}
-                    b2Body*& operator*() { return body; }
-                    BodyIterator& operator++() { body = body->GetNext(); return *this; }
-                    bool operator!=(const BodyIterator& other) { return body != other.body; }
-                };                
-                UI::Table("World bodies", BodyIterator(world->GetBodyList()), BodyIterator(nullptr), {
-                    {"Entity", [this]( b2Body*& body, int i) {
-                        uint64_t entityId = body->GetUserData().pointer;
-                        auto entity = m_Scene->getEntityById(entityId);
-                        UI::Text("%s (%llu)", entity ? entity.getComponent<TagComponent>().tag.c_str() : "invalid", entityId);
-                    }},
-                    {"Position", []( b2Body*& body, int i) {
-                        UI::Text("%.2f, %.2f", body->GetPosition().x, body->GetPosition().y);
-                    }},
-                    {"Type", []( b2Body*& body, int i) {
-                    UI::Text(body->GetType() == b2_dynamicBody ? "Dynamic" : body->GetType() == b2_staticBody ? "Static" : "Kinematic");
-                    }},
-                }, tableFlags);
 
+                    BodyIterator(b2Body* body) : body(body) {
+                    }
+
+                    b2Body*& operator*() { return body; }
+
+                    BodyIterator& operator++() {
+                        body = body->GetNext();
+                        return *this;
+                    }
+
+                    bool operator!=(const BodyIterator& other) { return body != other.body; }
+                };
+                UI::Table("World bodies", BodyIterator(world->GetBodyList()), BodyIterator(nullptr), {
+                              {
+                                  "Entity", [this](b2Body*& body, int i) {
+                                      uint64_t entityId = body->GetUserData().pointer;
+                                      auto entity = m_Scene->getEntityById(entityId);
+                                      UI::Text("%s (%llu)",
+                                               entity ? entity.getComponent<TagComponent>().tag.c_str() : "invalid",
+                                               entityId);
+                                  }
+                              },
+                              {
+                                  "Position", [](b2Body*& body, int i) {
+                                      UI::Text("%.2f, %.2f", body->GetPosition().x, body->GetPosition().y);
+                                  }
+                              },
+                              {
+                                  "Type", [](b2Body*& body, int i) {
+                                      UI::Text(body->GetType() == b2_dynamicBody
+                                                   ? "Dynamic"
+                                                   : body->GetType() == b2_staticBody
+                                                   ? "Static"
+                                                   : "Kinematic");
+                                  }
+                              },
+                          }, tableFlags);
             });
         });
 
@@ -86,8 +106,8 @@ namespace Shado {
             UI::Text("Loaded Prefabs: %d", Prefab::loadedPrefabs.size());
             INDENTED(
                 for (auto& [uuid, prefab] : Prefab::loadedPrefabs) {
-                    UI::Text("%llu (root = %s)", uuid, prefab->root.getComponent<TagComponent>().tag.c_str());
-                }        
+                UI::Text("%llu (root = %s)", uuid, prefab->root.getComponent<TagComponent>().tag.c_str());
+                }
             );
         });
 
@@ -95,11 +115,11 @@ namespace Shado {
             UI::Text("Entities to Destroy: %d", m_Scene->toDestroy.size());
             INDENTED(
                 for (auto& entity : m_Scene->toDestroy) {
-                    drawEntityNode(entity, m_Selected);
+                drawEntityNode(entity, m_Selected);
                 }
             );
         });
-
+#if 0
         drawSection("Script Engine:", [this](const auto& name) {
             const ScriptEngineData& data = ScriptEngine::GetData();
             if (!&data) {
@@ -179,17 +199,18 @@ namespace Shado {
             //     );
             // });
         });
-                
+#endif
         ImGui::End();
     }
 
     static void drawEntityNode(Entity entity, Entity& selected) {
         TagComponent& tc = entity.getComponent<TagComponent>();
-		
+
         auto flags = ImGuiTreeNodeFlags_OpenOnArrow | (selected == entity ? ImGuiTreeNodeFlags_Selected : 0);
         flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 
-        bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, "%s (%llu)", tc.tag.c_str(), entity.getUUID());
+        bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, "%s (%llu)", tc.tag.c_str(),
+                                        entity.getUUID());
         if (ImGui::IsItemClicked()) {
             selected = entity;
         }
@@ -202,6 +223,7 @@ namespace Shado {
             ImGui::TreePop();
         }
     }
+
     void SceneInfoPanel::listEntities(std::vector<Entity> entities, Scene* scene) {
         for (auto entity : entities) {
             if (entity && !entity.isChild(*scene)) {
@@ -210,4 +232,3 @@ namespace Shado {
         }
     }
 }
-   

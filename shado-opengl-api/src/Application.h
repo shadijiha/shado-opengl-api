@@ -37,6 +37,7 @@ namespace Shado {
 
         Window& getWindow() { return *window; }
         ImguiLayer* getUILayer() { return uiScene; }
+        float getTime() const;
 
     private:
         void Init();

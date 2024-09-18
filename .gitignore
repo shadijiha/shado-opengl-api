@@ -20,3 +20,10 @@ bin-int/
 **.csproj.user
 
 **/imgui.ini
+
+shado-editor/DotNet
+shado-editor/ScriptCore
+
+Shado-script-core/obj
+
+shado-opengl-api.sln.DotSettings.user

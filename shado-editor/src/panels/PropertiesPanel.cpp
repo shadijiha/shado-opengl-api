@@ -236,24 +236,32 @@ namespace Shado {
         });
 
         drawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable {
-            bool scriptClassExists = ScriptEngine::EntityClassExists(component.ClassName);
+            bool scriptClassExists = ScriptEngine::GetMutable().IsValidScript(component.ScriptID);
 
             ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), !scriptClassExists);
 
-            std::string currentItem = component.ClassName;
-            std::vector<std::string> hints;
-            for (auto& [name, scriptClass] : ScriptEngine::GetEntityClasses())
-                hints.push_back(name);
-            // Sort the hints
-            std::sort(hints.begin(), hints.end());
+            UUID oldScriptID = component.ScriptID;
+            UUID currentItem = component.ScriptID;
+            std::map<UUID, std::string> hints;
+            for (auto& [id, scriptClass] : ScriptEngine::GetMutable().GetAllScripts())
+                hints[id] = scriptClass.FullName;
 
-            if (ImGui::BeginCombo("Class", currentItem.c_str())) {
-                for (std::size_t n = 0; n < hints.size(); n++) {
-                    bool is_selected = (currentItem == hints[n]);
+            // TODO handle script invalid script ID
+            if (ImGui::BeginCombo("Class", hints.find(currentItem) != hints.end()
+                                               ? hints[currentItem].c_str()
+                                               : "")) {
+                for (auto& [id, hintValue] : hints) {
+                    bool is_selected = (currentItem == id);
                     // You can store your selection however you want, outside or inside your objects
-                    if (ImGui::Selectable(hints[n].c_str(), is_selected)) {
-                        currentItem = hints[n];
-                        component.ClassName = currentItem;
+                    if (ImGui::Selectable(hintValue.c_str(), is_selected)) {
+                        currentItem = id;
+                        component.ScriptID = id;
+
+                        if (component.ScriptID != oldScriptID) {
+                            if (oldScriptID)
+                                scene->GetScriptStorage().ShutdownEntityStorage(oldScriptID, entity.getUUID());
+                            scene->GetScriptStorage().InitializeEntityStorage(component.ScriptID, entity.getUUID());
+                        }
                     }
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
@@ -265,48 +273,48 @@ namespace Shado {
             }
 
             // Fields
-            bool sceneRunning = scene->isRunning();
-            Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.getUUID());
+            //bool sceneRunning = scene->isRunning();
+            //Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.getUUID());
 
-            const std::map<std::string, ScriptField>* fields = nullptr;
-            if (sceneRunning && scriptInstance)
-                fields = &scriptInstance->GetScriptClass()->GetFields();
-            else if (scriptClassExists) {
-                Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-                fields = &entityClass->GetFields();
-            }
+            // const std::map<std::string, ScriptField>* fields = nullptr;
+            // if (sceneRunning && scriptInstance)
+            //     fields = &scriptInstance->GetScriptClass()->GetFields();
+            // else if (scriptClassExists) {
+            //     Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
+            //     fields = &entityClass->GetFields();
+            // }
 
-            if (fields) {
-                for (const auto& [name, field] : *fields) {
-                    if (sceneRunning && scriptInstance) {
-                        ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
-                        ScriptTypeRendererDataRunning context = {
-                            scene,
-                            entity,
-                            name,
-                            scriptInstance,
-                            *fields
-                        };
-                        renderer.onRenderSceneRunning(context);
-                    }
-                    else if (scriptClassExists) {
-                        Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-                        auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
-
-                        ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
-                        ScriptTypeRendererDataStopped context = {
-                            scene,
-                            entity,
-                            name,
-                            field,
-                            entityClass,
-                            entityFields,
-                            *fields
-                        };
-                        renderer.onRenderSceneStopped(context);
-                    }
-                }
-            }
+            // if (fields) {
+            //     for (const auto& [name, field] : *fields) {
+            //         if (sceneRunning && scriptInstance) {
+            //             ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
+            //             ScriptTypeRendererDataRunning context = {
+            //                 scene,
+            //                 entity,
+            //                 name,
+            //                 scriptInstance,
+            //                 *fields
+            //             };
+            //             renderer.onRenderSceneRunning(context);
+            //         }
+            //         else if (scriptClassExists) {
+            //             Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
+            //             auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
+            //
+            //             ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
+            //             ScriptTypeRendererDataStopped context = {
+            //                 scene,
+            //                 entity,
+            //                 name,
+            //                 field,
+            //                 entityClass,
+            //                 entityFields,
+            //                 *fields
+            //             };
+            //             renderer.onRenderSceneStopped(context);
+            //         }
+            //     }
+            // }
         });
 
         drawComponent<TextComponent>("Text Renderer", entity, [](TextComponent& text) {
@@ -331,268 +339,55 @@ namespace Shado {
     }
 
     void ScriptFloatRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene, entity, fieldName, field, scriptClass, scriptModifiedFields, scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            float data = scriptField.GetValue<float>();
-            if (UI::Vec1Control(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            float data = 0.0f;
-            if (UI::Vec1Control(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
-        }
     }
 
     void ScriptFloatRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-
-        float data = scriptInstance->GetFieldValue<float>(fieldName);
-        if (UI::Vec1Control(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
     }
 
     void ScriptIntRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene, entity, fieldName, field, scriptClass, scriptModifiedFields, scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            int data = scriptField.GetValue<int>();
-            if (UI::Vec1Control(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            int data = 0;
-            if (UI::Vec1Control(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
-        }
     }
 
     void ScriptIntRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-
-        int data = scriptInstance->GetFieldValue<int>(fieldName);
-        if (UI::Vec1Control(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
     }
 
     void ScriptBoolRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene, entity, fieldName, field, scriptClass, scriptModifiedFields, scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            bool data = scriptField.GetValue<bool>();
-            if (UI::Checkbox(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            bool data = false;
-            if (UI::Checkbox(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
-        }
     }
 
     void ScriptBoolRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-
-        bool data = scriptInstance->GetFieldValue<bool>(fieldName);
-        if (UI::Checkbox(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
     }
 
     void ScriptVector3Renderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
-
-        // Field has been set in editor
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            glm::vec3 data = scriptField.GetValue<glm::vec3>();
-            if (UI::Vec3Control(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            glm::vec3 data = {0, 0, 0};
-            if (UI::Vec3Control(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
-        }
     }
 
     void ScriptVector3Renderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-        glm::vec3 data = scriptInstance->GetFieldValue<glm::vec3>(fieldName);
-        if (UI::Vec3Control(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
     }
 
     void ScriptColourRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
-
-        // Field has been set in editor
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-
-            glm::vec4 data = scriptField.GetValue<glm::vec4>();
-            if (UI::ColorControl(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            glm::vec4 data = {0, 0, 0, 1.0f};
-            if (UI::ColorControl(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
-        }
     }
 
     void ScriptColourRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-        glm::vec4 data = scriptInstance->GetFieldValue<glm::vec4>(fieldName);
-        if (UI::ColorControl(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
     }
 
     void ScriptPrefabRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-
-            PrefabCSMirror data = scriptField.GetValue<PrefabCSMirror>();
-            if (data.id != 0) {
-                Ref<Prefab> prefab = Prefab::GetPrefabById(data.id);
-                ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), prefab == nullptr);
-                std::string prefabTextValue = prefab
-                                                  ? prefab->root.getComponent<TagComponent>().tag
-                                                  : std::to_string(data.id);
-                prefabTextValue += " (prefab)";
-
-                UI::InputTextControl(fieldName, prefabTextValue, ImGuiInputTextFlags_ReadOnly);
-            }
-            else {
-                std::string prefabIdStr = "(empty)";
-                UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
-            }
-
-            // TODO: refactor duplicate code
-            if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                    const wchar_t* pathStr = (const wchar_t*)payload->Data;
-                    auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
-
-                    if (Prefab::IsPrefabPath(path)) {
-                        Ref<Prefab> prefab = Prefab::CreateFromPath(path);
-                        ScriptFieldInstance& fieldInstance = scriptField;
-                        fieldInstance.Field = field;
-                        fieldInstance.SetValue(PrefabCSMirror{prefab->GetId()});
-                    }
-                }
-
-                ImGui::EndDragDropTarget();
-            }
-        }
-        else {
-            // TODO: Make it so you can drag and drop prefab from content plane or scene hiarchy
-            UUID prefabId = 0;
-            std::string prefabIdStr = prefabId == 0 ? "(empty)" : std::to_string(prefabId);
-
-            UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
-
-            // TODO: refactor duplicate code
-            if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                    const wchar_t* pathStr = (const wchar_t*)payload->Data;
-                    auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
-
-                    if (Prefab::IsPrefabPath(path)) {
-                        Ref<Prefab> prefab = Prefab::CreateFromPath(path);
-                        ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                        fieldInstance.Field = field;
-                        fieldInstance.SetValue(PrefabCSMirror{prefab->GetId()});
-                    }
-                }
-
-                ImGui::EndDragDropTarget();
-            }
-        }
     }
 
     void ScriptPrefabRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-        PrefabCSMirror data = scriptInstance->GetFieldValue<PrefabCSMirror>(fieldName);
-        if (data.id != 0) {
-            std::string prefabIdStr = std::to_string(data.id);
-            UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
-        }
-        else {
-            std::string prefabIdStr = "(empty)";
-            UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
-        }
     }
 
     void ScriptCustomEditorRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            // TODO: How should we deal with complex types when seralizing?
-            ScriptEngine::DrawCustomEditorForFieldStopped(fieldName, field, entity, scriptClass, true);
-        }
-        else {
-            ScriptEngine::DrawCustomEditorForFieldStopped(fieldName, field, entity, scriptClass, false);
-        }
     }
 
-    ScriptTypeRenderer& GetRendererForType(ScriptFieldType type) {
-        static std::unordered_map<ScriptFieldType, ScriptTypeRenderer*> s_Renderers = {
-            {ScriptFieldType::Float, snew(ScriptFloatRenderer) ScriptFloatRenderer()},
-            {ScriptFieldType::Int, snew(ScriptIntRenderer) ScriptIntRenderer()},
-            {ScriptFieldType::Bool, snew(ScriptBoolRenderer) ScriptBoolRenderer()},
-            {ScriptFieldType::Vector3, snew(ScriptVector3Renderer) ScriptVector3Renderer()},
-            {ScriptFieldType::Colour, snew(ScriptColourRenderer) ScriptColourRenderer()},
-            {ScriptFieldType::Prefab, snew(ScriptPrefabRenderer) ScriptPrefabRenderer()},
+    void ScriptCustomEditorRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
+    }
+
+    ScriptTypeRenderer& GetRendererForType(DataType type) {
+        static std::unordered_map<DataType, ScriptTypeRenderer*> s_Renderers = {
+            {DataType::Float, snew(ScriptFloatRenderer) ScriptFloatRenderer()},
+            {DataType::Int, snew(ScriptIntRenderer) ScriptIntRenderer()},
+            {DataType::Bool, snew(ScriptBoolRenderer) ScriptBoolRenderer()},
+            {DataType::Vector3, snew(ScriptVector3Renderer) ScriptVector3Renderer()},
+            {DataType::Vector4, snew(ScriptColourRenderer) ScriptColourRenderer()},
+            {DataType::Prefab, snew(ScriptPrefabRenderer) ScriptPrefabRenderer()},
         };
         static auto* customEditor = snew(ScriptCustomEditorRenderer) ScriptCustomEditorRenderer();
 
@@ -600,11 +395,6 @@ namespace Shado {
             return *s_Renderers[type];
         else
             return *customEditor;
-    }
-
-    void ScriptCustomEditorRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto& field = context.scriptClassFields.at(context.fieldName);
-        ScriptEngine::DrawCustomEditorForFieldRunning(field, context.scriptInstance, context.fieldName);
     }
 
     template <typename T>

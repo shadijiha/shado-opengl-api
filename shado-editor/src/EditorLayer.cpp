@@ -54,8 +54,12 @@ namespace Shado {
 
     void EditorLayer::onUpdate(TimeStep dt) {
         lastDt = dt;
-
         SHADO_PROFILE_FUNCTION();
+
+        if (m_ShouldReloadCSharp) {
+            ReloadCSharp();
+            m_ShouldReloadCSharp = false;
+        }
 
         // If viewports don't match recreate frame buffer
         if (m_ViewportSize != *((glm::vec2*)&m_viewportPanelSize) && m_viewportPanelSize.x > 0 && m_viewportPanelSize.y
@@ -186,9 +190,10 @@ namespace Shado {
                             const ProjectConfig& config = ProjectUtils::GenerateNewProject(path);
 
                             // Create empty scene and save it
-                            ScriptEngine::Init();
                             newScene();
                             saveScene(config.AssetDirectory / config.StartScene);
+
+                            // TODO: Make it so the C# dll is reloaded
 
                             m_ContentPanel = ContentBrowserPanel();
                         }
@@ -198,12 +203,30 @@ namespace Shado {
                         std::string path = FileDialogs::openFile("Shado Project (*.sproj)\0*.sproj\0");
 
                         if (!path.empty() && Project::Load(path)) {
-                            ScriptEngine::Init();
+                            auto appAssemblyPath = Project::GetActive()->GetConfig().ScriptModulePath;
+                            if (!appAssemblyPath.empty()) {
+                                ScriptEngine::GetMutable().LoadProjectAssembly();
+                            }
 
                             auto startScenePath = Project::GetAssetFileSystemPath(
                                 Project::GetActive()->GetConfig().StartScene);
                             openScene(startScenePath);
                             m_ContentPanel = ContentBrowserPanel();
+
+                            m_ScriptFileWatcher = CreateScoped<filewatch::FileWatch<std::string>>(
+                                (Project::GetProjectDirectory() / Project::GetActive()->GetConfig().ScriptModulePath).
+                                string(),
+                                filewatch::ChangeLastWrite,
+                                [this](const auto& file, filewatch::Event eventType) {
+                                    std::filesystem::path filePath = file;
+                                    if (eventType != filewatch::Event::modified)
+                                        return;
+
+                                    if (filePath.extension().string() != ".dll")
+                                        return;
+
+                                    m_ShouldReloadCSharp = true;
+                                });
                         }
                     }
 
@@ -419,6 +442,7 @@ namespace Shado {
         scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
         m_EditorScene = scene;
         setActiveScene(m_EditorScene);
+        ScriptEngine::GetMutable().SetCurrentScene(m_EditorScene);
         m_ScenePath = "";
     }
 
@@ -440,6 +464,7 @@ namespace Shado {
             return;
         }
 
+        ScriptEngine::GetMutable().SetCurrentScene(nullptr);
         Ref<Scene> scene = CreateRef<Scene>();
         scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
@@ -461,6 +486,7 @@ namespace Shado {
         m_SceneState = SceneState::Play;
         auto scene = CreateRef<Scene>(*m_EditorScene.Raw());
         setActiveScene(scene);
+        ScriptEngine::GetMutable().SetCurrentScene(scene);
         m_ActiveScene->onRuntimeStart();
     }
 
@@ -468,6 +494,7 @@ namespace Shado {
         m_SceneState = SceneState::Edit;
         m_ActiveScene->onRuntimeStop();
         setActiveScene(m_EditorScene);
+        ScriptEngine::GetMutable().SetCurrentScene(m_EditorScene);
     }
 
     void EditorLayer::setActiveScene(Ref<Scene> scene) {
@@ -687,5 +714,20 @@ namespace Shado {
             Application::get().getWindow().setOpacity(windowOpacity);
 
         ImGui::End();
+    }
+
+    void EditorLayer::ReloadCSharp() {
+        ScriptStorage tempStorage;
+
+        auto& scriptStorage = m_ActiveScene->GetScriptStorage();
+        scriptStorage.CopyTo(tempStorage);
+        scriptStorage.Clear();
+
+        Project::GetActive()->ReloadScriptEngine();
+
+        tempStorage.CopyTo(scriptStorage);
+        tempStorage.Clear();
+
+        scriptStorage.SynchronizeStorage();
     }
 }

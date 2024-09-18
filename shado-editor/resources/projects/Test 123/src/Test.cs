@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Shado;
-using Shado.Editor;
 
 namespace Sandbox
 { 
@@ -22,7 +21,7 @@ namespace Sandbox
 
         //public ShadoEvent events;
 
-        void OnCreate() {
+        protected override void OnCreate() {
             const float max = 0.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
@@ -37,11 +36,11 @@ namespace Sandbox
             }
         }
 
-        void OnUpdate(float dt)
+        public void OnUpdate(float dt)
         {
             totalDt += dt;
-            if (GetComponent<SpriteRendererComponent>().texture != texture)
-                GetComponent<SpriteRendererComponent>().texture = texture;
+            //if (GetComponent<SpriteRendererComponent>().texture != texture)
+            //    GetComponent<SpriteRendererComponent>().texture = texture;
             Vector3 pos = transform.position;
             
             pos.x += moveRate * 2 * dt * dir;
@@ -57,14 +56,6 @@ namespace Sandbox
                 Scene.LoadScene("raytracing.shadoscene");
             }
         }
-
-        void OnDraw() {
-            //Renderer.DrawQuad(new Vector3(-1, 1, 0), debug_size, Colour.Blue, shader);
-            //Renderer.DrawRotatedQuad(new Vector3(2, 1, 0), Vector3.one, new Vector3(angle, angle, angle), Colour.Green);
-            //Renderer.DrawLine(new Vector3(-1, 1, 0), new Vector3(2, 1, 0), Colour.Red);
-            //angle += 0.01f;
-        }
-
         void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
             Log.Info("Collision enter {0} with {1}", info, other.tag);
             //Destroy(this);
@@ -82,13 +73,13 @@ namespace Sandbox
         private CameraComponent camera;
         private Entity camera2;
 
-        void OnCreate() { 
+        protected override void OnCreate() { 
             if (HasComponent<CameraComponent>())
                 camera = GetComponent<CameraComponent>();
-            camera2 = FindEntityByName("camera2");
+            //camera2 = FindEntityByName("camera2");
         }
 
-        void OnUpdate(float dt) {
+        public void OnUpdate(float dt) {
             
             Vector3 pos = translation;
             if (Input.IsKeyDown(KeyCode.W)) {
@@ -108,12 +99,12 @@ namespace Sandbox
             }
             if (Input.IsKeyDown(KeyCode.Space))
             {
-                camera.primary = false;
-                camera2.GetComponent<CameraComponent>().primary = true;
+                //camera.primary = false;
+                //camera2.GetComponent<CameraComponent>().primary = true;
             }
             else {
-                camera.primary = true;
-                camera2.GetComponent<CameraComponent>().primary = false;
+                //camera.primary = true;
+                //camera2.GetComponent<CameraComponent>().primary = false;
             }
             
             translation = pos;
@@ -124,13 +115,14 @@ namespace Sandbox
     {
         TextComponent text;
         Entity square;
-        void OnCreate() {
+
+        protected override void OnCreate() {
             text = GetComponent<TextComponent>();
             text.text = "0";
-            square = FindEntityByName("Square");
+            //square = FindEntityByName("Square");
         }
 
-        void OnUpdate(float dt) {
+        protected override void OnUpdate(float dt) {
             text.text = square.transform.position.x + "";
         }
         
@@ -155,9 +147,9 @@ namespace Sandbox
             this.parent = parent;
         }
 
-        internal void OnCreate() {
+        protected override void OnCreate() {
             var script = GetComponent<ScriptComponent>();
-            Log.Info("Class: {0}, ID: {1}", script.ClassName, this.ID);
+            //Log.Info("Class: {0}, ID: {1}", script.ClassName, this.ID);
             transform.position = parent.transform.position + new Vector3(x, y, 0);
             transform.scale = new Vector3(0.45f, 0.45f, 0);
             tag = $"Grid cell {x}, {y}";
@@ -165,14 +157,14 @@ namespace Sandbox
             var sprite = AddComponent<SpriteRendererComponent>();
             //sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
             sprite.colour = Colour.Random();
-            sprite.texture = texture[random.Next(texture.Length)];
+            //sprite.texture = texture[random.Next(texture.Length)];
  
             var rb = AddComponent<RigidBody2DComponent>();
             AddComponent<BoxCollider2DComponent>();
             rb.type = RigidBody2DComponent.BodyType.Dynamic;
         }
 
-        void OnUpdate(float dt)
+        protected override void OnUpdate(float dt)
         {
             
             //GetComponent<SpriteRendererComponent>().colour = Colour.FromHSL(angle % 360, 100, 100);

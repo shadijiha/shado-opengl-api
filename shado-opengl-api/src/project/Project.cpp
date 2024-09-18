@@ -4,103 +4,112 @@
 
 #include "Application.h"
 #include "ProjectSerializer.h"
+#include "script/ScriptEngine.h"
 #include "util/FileSystem.h"
+#include "scene/Scene.h"
 
 namespace Shado {
-	std::filesystem::path Project::GetRelativePath(const std::filesystem::path& path) {
-		return std::filesystem::relative(path, m_ProjectDirectory);
-	}
+    std::filesystem::path Project::GetRelativePath(const std::filesystem::path& path) {
+        return std::filesystem::relative(path, m_ProjectDirectory);
+    }
 
-	Ref<Project> Project::New()
-	{
-		s_ActiveProject = CreateRef<Project>();
-		Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
-		return s_ActiveProject;
-	}
+    void Project::ReloadScriptEngine() {
+        auto& scriptEngine = ScriptEngine::GetMutable();
+        scriptEngine.Shutdown();
+        scriptEngine.Initialize(this);
+        scriptEngine.LoadProjectAssembly();
+    }
 
-	Ref<Project> Project::Load(const std::filesystem::path& path)
-	{
-		Ref<Project> project = CreateRef<Project>();
+    void Project::SetActive(const Ref<Project>& project) {
+        s_ActiveProject = project;
+        ScriptEngine::GetMutable().Initialize(s_ActiveProject);
+    }
 
-		ProjectSerializer serializer(project);
-		if (serializer.Deserialize(path))
-		{
-			project->m_ProjectDirectory = path.parent_path();
-			s_ActiveProject = project;
+    Ref<Project> Project::New() {
+        SetActive(CreateRef<Project>());
+        Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
+        return s_ActiveProject;
+    }
 
-			Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
-			return s_ActiveProject;
-		}
-		
-		return nullptr;
-	}
+    Ref<Project> Project::Load(const std::filesystem::path& path) {
+        Ref<Project> project = CreateRef<Project>();
 
-	bool Project::SaveActive(const std::filesystem::path& path)
-	{
-		ProjectSerializer serializer(s_ActiveProject);
-		if (serializer.Serialize(path))
-		{
-			s_ActiveProject->m_ProjectDirectory = path.parent_path();
+        ProjectSerializer serializer(project);
+        if (serializer.Deserialize(path)) {
+            project->m_ProjectDirectory = path.parent_path();
+            SetActive(project);
 
-			Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
-			return true;
-		}
+            Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
+            return s_ActiveProject;
+        }
 
-		return false;
-	}
+        return nullptr;
+    }
 
-	ProjectChangedEvent::ProjectChangedEvent(const Ref<Project>& project)
-		: m_Project(project)
-	{
-	}
+    bool Project::SaveActive(const std::filesystem::path& path) {
+        ProjectSerializer serializer(s_ActiveProject);
+        if (serializer.Serialize(path)) {
+            s_ActiveProject->m_ProjectDirectory = path.parent_path();
 
-	/************************************************************
-	 * 
-	 *
-	 */
-	
-	const ProjectConfig& ProjectUtils::GenerateNewProject(const std::filesystem::path& fullpathToSProjFile) {
-		const auto& path = fullpathToSProjFile;
-		
-		Ref<Project> project = Project::New();
-		std::string projectName = std::filesystem::path(path).filename().replace_extension().string();
-		std::filesystem::path projectPath = std::filesystem::path(path).parent_path() / projectName;
+            Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
+            return true;
+        }
 
-		// Create project root directory
-		FileSystem::NewDirectory(projectPath);
+        return false;
+    }
 
-		project->GetConfig().Name = projectName;
-		project->GetConfig().StartScene = "main.shadoscene";
+    ProjectChangedEvent::ProjectChangedEvent(const Ref<Project>& project)
+        : m_Project(project) {
+    }
 
-		project->GetConfig().AssetDirectory = projectPath / "Assets";
-		project->GetConfig().ScriptModulePath = projectPath / "bin" / "Release-windows-x86_64" / projectName / (projectName + ".dll");
+    /************************************************************
+     * 
+     *
+     */
 
-		// Create folders
-		FileSystem::NewDirectory(project->GetConfig().AssetDirectory);
-		//FileSystem::NewDirectory(project->GetConfig().ScriptModulePath.parent_path());
-		FileSystem::NewDirectory(projectPath / "src");
+    const ProjectConfig& ProjectUtils::GenerateNewProject(const std::filesystem::path& fullpathToSProjFile) {
+        const auto& path = fullpathToSProjFile;
 
-		Project::SetActive(project);
-		Project::SaveActive(projectPath / (projectName + ".sproj"));
+        Ref<Project> project = Project::New();
+        std::string projectName = std::filesystem::path(path).filename().replace_extension().string();
+        std::filesystem::path projectPath = std::filesystem::path(path).parent_path() / projectName;
 
-		// Copy premake file
-		constexpr std::string_view PREMAKE_BIN_DIR = "premake/premake5.exe";
-		SHADO_CORE_ASSERT(std::filesystem::exists(PREMAKE_BIN_DIR), "Premake binary not found");
-		std::filesystem::copy(PREMAKE_BIN_DIR, projectPath / "premake5.exe");
+        // Create project root directory
+        FileSystem::NewDirectory(projectPath);
 
-		// Generate premake bat file
-		std::ofstream batFile(projectPath / "GenerateSolution.bat");
-		batFile << "call " + (projectPath / "premake5.exe").string() + " vs2022\nPAUSE";
-		batFile.close();
+        project->GetConfig().Name = projectName;
+        project->GetConfig().StartScene = "main.shadoscene";
 
-		// Generate premake5.lua
-		std::string solutionItems_TODO_REMOVE = std::string(SHADO_OPENGL_SOLUTION_DIR_TODO_REMOVE) + "/";
-		SHADO_CORE_ASSERT(std::filesystem::exists(solutionItems_TODO_REMOVE), "Solution items not found");
-		{
-			std::ofstream luaFile(projectPath / "premake5.lua");
-			luaFile << std::string("local RootDir = \"" + solutionItems_TODO_REMOVE + "\"\n") +
-				"include(RootDir .. \"premake/solution_items.lua\")\nworkspace \"" + projectName + "\""
-R"(
+        project->GetConfig().AssetDirectory = projectPath / "Assets";
+        project->GetConfig().ScriptModulePath = projectPath / "bin" / "Release-windows-x86_64" / projectName / (
+            projectName + ".dll");
+
+        // Create folders
+        FileSystem::NewDirectory(project->GetConfig().AssetDirectory);
+        //FileSystem::NewDirectory(project->GetConfig().ScriptModulePath.parent_path());
+        FileSystem::NewDirectory(projectPath / "src");
+
+        Project::SetActive(project);
+        Project::SaveActive(projectPath / (projectName + ".sproj"));
+
+        // Copy premake file
+        constexpr std::string_view PREMAKE_BIN_DIR = "premake/premake5.exe";
+        SHADO_CORE_ASSERT(std::filesystem::exists(PREMAKE_BIN_DIR), "Premake binary not found");
+        std::filesystem::copy(PREMAKE_BIN_DIR, projectPath / "premake5.exe");
+
+        // Generate premake bat file
+        std::ofstream batFile(projectPath / "GenerateSolution.bat");
+        batFile << "call " + (projectPath / "premake5.exe").string() + " vs2022\nPAUSE";
+        batFile.close();
+
+        // Generate premake5.lua
+        std::string solutionItems_TODO_REMOVE = std::string(SHADO_OPENGL_SOLUTION_DIR_TODO_REMOVE) + "/";
+        SHADO_CORE_ASSERT(std::filesystem::exists(solutionItems_TODO_REMOVE), "Solution items not found");
+        {
+            std::ofstream luaFile(projectPath / "premake5.lua");
+            luaFile << std::string("local RootDir = \"" + solutionItems_TODO_REMOVE + "\"\n") +
+                "include(RootDir .. \"premake/solution_items.lua\")\nworkspace \"" + projectName + "\""
+                R"(
 	architecture "x64"
 
 	configurations
@@ -116,8 +125,8 @@ group "Shado"
 	include(RootDir .. "Shado-script-core")
 group ""
 )" +
-"project \""+ projectName + "\"\n" +
-R"(
+                "project \"" + projectName + "\"\n" +
+                R"(
 	kind "SharedLib"
 	language "C#"
 
@@ -144,13 +153,13 @@ R"(
 		--("{COPY} \"$(ProjectDir)bin/Release-windows-x86_64/%{prj.name}/%{prj.name}.dll\" \"$(ProjectDir)Assets/%{prj.name}.dll\""),
 	}
 )";
-			luaFile.close();
-		}
+            luaFile.close();
+        }
 
-		// Generate a sample C# class
-		{
-			std::ofstream sampleClass(projectPath / "src" / "SampleClass.cs");
-			sampleClass << R"(
+        // Generate a sample C# class
+        {
+            std::ofstream sampleClass(projectPath / "src" / "SampleClass.cs");
+            sampleClass << R"(
 using System;
 using System.Collections.Generic;
 using Shado;
@@ -187,8 +196,8 @@ namespace )" + projectName + R"( {
 	}
 }
 )";
-			sampleClass.close();
-		}
-		return project->GetConfig();
-	}
+            sampleClass.close();
+        }
+        return project->GetConfig();
+    }
 }

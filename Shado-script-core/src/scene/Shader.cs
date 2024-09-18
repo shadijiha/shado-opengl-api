@@ -8,38 +8,42 @@ namespace Shado
     {
         internal IntPtr native;
         public string filepath { get; private set; }
+
         internal Shader(string filepath) {
             this.filepath = filepath;
-            InternalCalls.Shader_CreateShader(filepath, out native);
+            //InternalCalls.Shader_CreateShader(filepath, out native);
         }
 
         ~Shader() {
-            InternalCalls.Shader_Destroy(native);
+            //InternalCalls.Shader_Destroy(native);
         }
 
         public void SetInt(string name, int value) {
-            InternalCalls.Shader_SetInt(native, name, ref value);
-        }
-        
-        public void SetIntArray(string name, int[] values) {
-            InternalCalls.Shader_SetIntArray(native, name, values);
-        }
-        public void SetFloat(string name, float value) {
-            InternalCalls.Shader_SetFloat(native, name, ref value);
-        }
-        public void SetFloat3(string name, Vector3 value) {
-            InternalCalls.Shader_SetFloat3(native, name, ref value);
-        }
-        public void SetFloat4(string name, Vector4 value) {
-            InternalCalls.Shader_SetFloat4(native, name, ref value);
+            //InternalCalls.Shader_SetInt(native, name, ref value);
         }
 
-        public static Shader Create(string filepath) { 
+        public void SetIntArray(string name, int[] values) {
+            //InternalCalls.Shader_SetIntArray(native, name, values);
+        }
+
+        public void SetFloat(string name, float value) {
+            //InternalCalls.Shader_SetFloat(native, name, ref value);
+        }
+
+        public void SetFloat3(string name, Vector3 value) {
+            //InternalCalls.Shader_SetFloat3(native, name, ref value);
+        }
+
+        public void SetFloat4(string name, Vector4 value) {
+            //InternalCalls.Shader_SetFloat4(native, name, ref value);
+        }
+
+        public static Shader Create(string filepath) {
             return new Shader(filepath);
         }
 
         public void Reset(string filepath) {
-            InternalCalls.Shader_Reset(native, filepath, out native);
+            //InternalCalls.Shader_Reset(native, filepath, out native);
         }
     }
 
@@ -49,22 +53,21 @@ namespace Shado
         static string[] shaderExtension = {
             ".shader", ".glsl"
         };
-        protected override void OnEditorDraw()
-        {
+
+        protected override void OnEditorDraw() {
             if (target is null)
                 return;
 
             Shader shader = (Shader)target;
             UI.Separator();
-            UI.InputTextFileChoose(fieldName, shader.filepath, shaderExtension, path => {
-                shader.Reset(path);
-            });
+            UI.InputTextFileChoose(fieldName, shader.filepath, shaderExtension, path => { shader.Reset(path); });
 
             if (UI.Button("+")) {
                 string path = UI.OpenFileDialog(shaderExtension, UI.FileChooserType.Save);
                 if (path != null)
-                    GenerateFile(path);                
+                    GenerateFile(path);
             }
+
             if (UI.Button("Recompile"))
                 shader.Reset(shader.filepath);
             UI.Separator();

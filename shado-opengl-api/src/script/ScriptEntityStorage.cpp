@@ -1,6 +1,6 @@
-#include "hzpch.h"
 #include "ScriptEntityStorage.hpp"
 #include "ScriptEngine.h"
+#include "scene/Scene.h"
 
 namespace Shado {
     void ScriptStorage::InitializeEntityStorage(UUID scriptID, UUID entityID) {

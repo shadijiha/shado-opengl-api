@@ -8,13 +8,17 @@ namespace Shado
         public readonly string filepath;
         internal IntPtr native;
 
-        internal Texture2D(string filepath) { 
+        internal Texture2D(string filepath) {
             this.filepath = filepath;
-            InternalCalls.Texture2D_Create(filepath, out this.native);
+            unsafe {
+                fixed (IntPtr* ptr = &this.native) {
+                    InternalCalls.Texture2D_Create(filepath, (int**)ptr);
+                }
+            }
         }
 
         ~Texture2D() {
-            InternalCalls.Texture2D_Destroy(native);
+            //InternalCalls.Texture2D_Destroy(native);
         }
 
         public static Texture2D Create(string filepath) {
@@ -23,15 +27,13 @@ namespace Shado
             return new Texture2D(filepath);
         }
 
-        internal void Reset(string filepath)
-        {
-            IntPtr newHandle;
-            InternalCalls.Texture2D_Reset(native, filepath, out newHandle);
+        internal void Reset(string filepath) {
+            IntPtr newHandle = IntPtr.Zero;
+            //InternalCalls.Texture2D_Reset(native, filepath, out newHandle);
             native = newHandle;
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return $"Texture2D({filepath}, {native})";
         }
     }
@@ -43,10 +45,8 @@ namespace Shado
             ".jpg", ".png"
         };
 
-        protected override void OnEditorDraw()
-        {
-            if (target is null)
-            {
+        protected override void OnEditorDraw() {
+            if (target is null) {
                 return;
             }
 
@@ -55,7 +55,7 @@ namespace Shado
                 Log.Info(path);
                 texture.Reset(path);
             });
-            UI.SameLine();
+            //UI.SameLine();
             UI.Image(texture, new Vector2(60, 60));
         }
 
