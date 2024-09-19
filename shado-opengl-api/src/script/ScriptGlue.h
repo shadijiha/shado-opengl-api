@@ -62,6 +62,7 @@ namespace Shado {
         void Entity_CreateComponent(uint64_t entityID, Coral::ReflectionType componentType);
         bool Entity_HasComponent(uint64_t entityID, Coral::ReflectionType componentType);
         bool Entity_RemoveComponent(uint64_t entityID, Coral::ReflectionType componentType);
+        uint64_t Entity_FindEntityByName(Coral::String name);
 
 #pragma endregion
 
@@ -96,6 +97,11 @@ namespace Shado {
 #pragma endregion
 
 #pragma region CameraComponent
+        bool CameraComponent_GetPrimary(uint64_t entityID);
+        void CameraComponent_SetPrimary(uint64_t entityID, bool inPrimary);
+        CameraComponent::Type CameraComponent_GetType(uint64_t entityID);
+        void CameraComponent_SetType(uint64_t entityID, CameraComponent::Type inType);
+        void CameraComponent_SetViewportSize(uint64_t entityID, uint32_t inWidth, uint32_t inHeight);
 
 #pragma endregion
 
@@ -110,15 +116,47 @@ namespace Shado {
 
 #pragma endregion
 
+#pragma region CircleRendererComponent
+        void CircleRendererComponent_GetColor(uint64_t entityID, glm::vec4* outColor);
+        void CircleRendererComponent_SetColor(uint64_t entityID, glm::vec4* inColor);
+        float CircleRendererComponent_GetThickness(uint64_t entityID);
+        void CircleRendererComponent_SetThickness(uint64_t entityID, float inThickness);
+        float CircleRendererComponent_GetFade(uint64_t entityID);
+        void CircleRendererComponent_SetFade(uint64_t entityID, float inFade);
+#pragma endregion
+
+#pragma region LineRendererComponent
+        void LineRendererComponent_GetTarget(uint64_t entityID, glm::vec3* outTarget);
+        void LineRendererComponent_SetTarget(uint64_t entityID, glm::vec3* inTarget);
+        void LineRendererComponent_GetColour(uint64_t entityID, glm::vec4* outColor);
+        void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* inColor);
+#pragma endregion
+
 #pragma region RigidBody2DComponent
 
+        void RigidBody2DComponent_GetLinearVelocity(uint64_t entityID, glm::vec2* outVelocity);
         RigidBody2DComponent::BodyType RigidBody2DComponent_GetBodyType(uint64_t entityID);
         void RigidBody2DComponent_SetBodyType(uint64_t entityID, RigidBody2DComponent::BodyType inType);
+        void Rigidbody2DComponent_ApplyLinearImpulse(uint64_t entityID, glm::vec2 impulse, glm::vec2 worldPosition,
+                                                     bool wake);
+        void Rigidbody2DComponent_ApplyLinearImpulseToCenter(uint64_t entityID, glm::vec2 impulse, bool wake);
 
 #pragma endregion
 
-#pragma region BoxCollider2DComponent
+#pragma region BoxCollider2DComponent and CircleCollider2DComponent
 
+        void BoxCollider2DComponent_GetOffset(uint64_t entityID, glm::vec2* outOffset);
+        void BoxCollider2DComponent_SetOffset(uint64_t entityID, glm::vec2* inOffset);
+        void BoxCollider2DComponent_GetSize(uint64_t entityID, glm::vec2* outSize);
+        void BoxCollider2DComponent_SetSize(uint64_t entityID, glm::vec2* inSize);
+        float BoxCollider2DComponent_GetDensity(uint64_t entityID);
+        void BoxCollider2DComponent_SetDensity(uint64_t entityID, float inDensity);
+        float BoxCollider2DComponent_GetFriction(uint64_t entityID);
+        void BoxCollider2DComponent_SetFriction(uint64_t entityID, float inFriction);
+        float BoxCollider2DComponent_GetRestitution(uint64_t entityID);
+        void BoxCollider2DComponent_SetRestitution(uint64_t entityID, float inRestitution);
+        float BoxCollider2DComponent_GetRestitutionThreshold(uint64_t entityID);
+        void BoxCollider2DComponent_SetRestitutionThreshold(uint64_t entityID, float inRestitutionThreshold);
 
 #pragma endregion
 
@@ -128,12 +166,16 @@ namespace Shado {
         void TextComponent_SetText(uint64_t entityID, Coral::String text);
         void TextComponent_GetColor(uint64_t entityID, glm::vec4* outColor);
         void TextComponent_SetColor(uint64_t entityID, glm::vec4* inColor);
+        float TextComponent_GetLineSpacing(uint64_t entityID);
+        void TextComponent_SetLineSpacing(uint64_t entityID, float inLineSpacing);
+        float TextComponent_GetKerning(uint64_t entityID);
+        void TextComponent_SetKerning(uint64_t entityID, float inKerning);
 
 #pragma endregion
 
 #pragma region Texture2D
 
-        intptr_t Texture2D_Create(Coral::String inPath/*, OutParam<intptr_t> outHandle*/);
+        bool Texture2D_Create(Coral::String inPath, OutParam<intptr_t> outHandle);
         //void Texture2D_GetSize(intptr_t inHandle, uint32_t* outWidth, uint32_t* outHeight);
         //void Texture2D_SetData(intptr_t inHandle, Coral::Array<glm::vec4> inData);
         //Coral::Array Texture2D_GetData(Param<AssetHandle> inHandle);

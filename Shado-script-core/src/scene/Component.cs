@@ -151,7 +151,7 @@ namespace Shado
             }
             set {
                 unsafe {
-                    InternalCalls.SpriteRendererComponent_SetTexture(Entity.ID, (int*)value.native);
+                    InternalCalls.SpriteRendererComponent_SetTexture(Entity.ID, value.native);
                 }
             }
         }
@@ -170,46 +170,82 @@ namespace Shado
         }
     }
 
-    public class CircleRendererComponent : SpriteRendererComponent
+    public class CircleRendererComponent : Component
     {
-        // public float thickness {
-        //     get {
-        //         float result;
-        //         InternalCalls.CircleRendererComponent_GetFloatValue(Entity.ID, "thickness", out result);
-        //         return result;
-        //     }
-        //     set { InternalCalls.CircleRendererComponent_SetFloatValue(Entity.ID, "thickness", ref value); }
-        // }
-        //
-        // public float fade {
-        //     get {
-        //         float result;
-        //         InternalCalls.CircleRendererComponent_GetFloatValue(Entity.ID, "fade", out result);
-        //         return result;
-        //     }
-        //     set { InternalCalls.CircleRendererComponent_SetFloatValue(Entity.ID, "fade", ref value); }
-        // }
+        public Vector4 colour {
+            get {
+                Vector4 result;
+                unsafe {
+                    InternalCalls.CircleRendererComponent_GetColor(Entity.ID, &result);
+                }
+
+                return result;
+            }
+            set {
+                unsafe {
+                    InternalCalls.CircleRendererComponent_SetColor(Entity.ID, &value);
+                }
+            }
+        }
+
+        public float thickness {
+            get {
+                unsafe {
+                    return InternalCalls.CircleRendererComponent_GetThickness(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.CircleRendererComponent_SetThickness(Entity.ID, value);
+                }
+            }
+        }
+
+        public float fade {
+            get {
+                unsafe {
+                    return InternalCalls.CircleRendererComponent_GetFade(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.CircleRendererComponent_SetFade(Entity.ID, value);
+                }
+            }
+        }
     }
 
     public class LineRendererComponent : Component
     {
-        // public Vector3 target {
-        //     get {
-        //         Vector3 result;
-        //         InternalCalls.LineRendererComponent_GetTarget(Entity.ID, out result);
-        //         return result;
-        //     }
-        //     set { InternalCalls.LineRendererComponent_SetTarget(Entity.ID, ref value); }
-        // }
-        //
-        // public Vector4 colour {
-        //     get {
-        //         Vector4 result;
-        //         InternalCalls.LineRendererComponent_GetColour(Entity.ID, out result);
-        //         return result;
-        //     }
-        //     set { InternalCalls.LineRendererComponent_SetColour(Entity.ID, ref value); }
-        // }
+        public Vector3 target {
+            get {
+                unsafe {
+                    Vector3 result;
+                    InternalCalls.LineRendererComponent_GetTarget(Entity.ID, &result);
+                    return result;
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.LineRendererComponent_SetTarget(Entity.ID, &value);
+                }
+            }
+        }
+
+        public Vector4 colour {
+            get {
+                unsafe {
+                    Vector4 result;
+                    InternalCalls.LineRendererComponent_GetColour(Entity.ID, &result);
+                    return result;
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.LineRendererComponent_SetColour(Entity.ID, &value);
+                }
+            }
+        }
     }
 
     public class RigidBody2DComponent : Component
@@ -221,12 +257,16 @@ namespace Shado
             Kinematic = 1
         }
 
-        // public Vector2 linearVelocity {
-        //     get {
-        //         InternalCalls.Rigidbody2DComponent_GetLinearVelocity(Entity.ID, out Vector2 velocity);
-        //         return velocity;
-        //     }
-        // }
+        public Vector2 linearVelocity {
+            get {
+                Vector2 velocity;
+                unsafe {
+                    InternalCalls.RigidBody2DComponent_GetLinearVelocity(Entity.ID, &velocity);
+                }
+
+                return velocity;
+            }
+        }
 
         public BodyType type {
             get {
@@ -241,118 +281,103 @@ namespace Shado
             }
         }
 
-        // public void ApplyLinearImpulse(Vector2 impulse, Vector2 worldPosition, bool wake) {
-        //     InternalCalls.Rigidbody2DComponent_ApplyLinearImpulse(Entity.ID, ref impulse, ref worldPosition, wake);
-        // }
-        //
-        // public void ApplyLinearImpulse(Vector2 impulse, bool wake) {
-        //     InternalCalls.Rigidbody2DComponent_ApplyLinearImpulseToCenter(Entity.ID, ref impulse, wake);
-        // }
+        public void ApplyLinearImpulse(Vector2 impulse, Vector2 worldPosition, bool wake) {
+            unsafe {
+                InternalCalls.Rigidbody2DComponent_ApplyLinearImpulse(Entity.ID, impulse, worldPosition, wake);
+            }
+        }
+
+        public void ApplyLinearImpulse(Vector2 impulse, bool wake) {
+            unsafe {
+                InternalCalls.Rigidbody2DComponent_ApplyLinearImpulseToCenter(Entity.ID, impulse, wake);
+            }
+        }
     }
 
     public class BoxCollider2DComponent : Component
     {
-        // public Vector2 offset {
-        //     get {
-        //         Vector2 result;
-        //         InternalCalls.BoxCollider2DComponent_GetVec2(Entity.ID, FieldToQuery.Offset, out result,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //         return result;
-        //     }
-        //     set {
-        //         InternalCalls.BoxCollider2DComponent_SetVec2(Entity.ID, FieldToQuery.Offset, ref value,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //     }
-        // }
-        //
-        // public Vector2 size {
-        //     get {
-        //         Vector2 result;
-        //         InternalCalls.BoxCollider2DComponent_GetVec2(Entity.ID, FieldToQuery.Size, out result,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //         return result;
-        //     }
-        //     set {
-        //         InternalCalls.BoxCollider2DComponent_SetVec2(Entity.ID, FieldToQuery.Size, ref value,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //     }
-        // }
-        //
-        // public float density {
-        //     get {
-        //         float result;
-        //         InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.Density, out result,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //         return result;
-        //     }
-        //     set {
-        //         InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.Density, ref value,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //     }
-        // }
-        //
-        // public float friction {
-        //     get {
-        //         float result;
-        //         InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.Friction, out result,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //         return result;
-        //     }
-        //     set {
-        //         InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.Friction, ref value,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //     }
-        // }
-        //
-        // public float restitution {
-        //     get {
-        //         float result;
-        //         InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.Restitution, out result,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //         return result;
-        //     }
-        //     set {
-        //         InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.Restitution, ref value,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //     }
-        // }
-        //
-        // public float restitutionThreshold {
-        //     get {
-        //         float result;
-        //         InternalCalls.BoxCollider2DComponent_GetFloat(Entity.ID, FieldToQuery.RestitutionThreshold, out result,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //         return result;
-        //     }
-        //     set {
-        //         InternalCalls.BoxCollider2DComponent_SetFloat(Entity.ID, FieldToQuery.RestitutionThreshold, ref value,
-        //             GetType() == typeof(BoxCollider2DComponent)
-        //                 ? FieldToQuery.BoxCollider
-        //                 : FieldToQuery.CircleCollider);
-        //     }
-        // }
+        public Vector2 offset {
+            get {
+                unsafe {
+                    Vector2 result;
+                    InternalCalls.BoxCollider2DComponent_GetOffset(Entity.ID, &result);
+                    return result;
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.BoxCollider2DComponent_SetOffset(Entity.ID, &value);
+                }
+            }
+        }
+
+        public Vector2 size {
+            get {
+                unsafe {
+                    Vector2 result;
+                    InternalCalls.BoxCollider2DComponent_GetSize(Entity.ID, &result);
+                    return result;
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.BoxCollider2DComponent_SetSize(Entity.ID, &value);
+                }
+            }
+        }
+
+        public float density {
+            get {
+                unsafe {
+                    return InternalCalls.BoxCollider2DComponent_GetDensity(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.BoxCollider2DComponent_SetDensity(Entity.ID, value);
+                }
+            }
+        }
+
+        public float friction {
+            get {
+                unsafe {
+                    return InternalCalls.BoxCollider2DComponent_GetFriction(Entity.ID);
+                }
+            }
+
+            set {
+                unsafe {
+                    InternalCalls.BoxCollider2DComponent_SetFriction(Entity.ID, value);
+                }
+            }
+        }
+
+        public float restitution {
+            get {
+                unsafe {
+                    return InternalCalls.BoxCollider2DComponent_GetRestitution(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.BoxCollider2DComponent_SetRestitution(Entity.ID, value);
+                }
+            }
+        }
+
+        public float restitutionThreshold {
+            get {
+                unsafe {
+                    return InternalCalls.BoxCollider2DComponent_GetRestitutionThreshold(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.BoxCollider2DComponent_SetRestitutionThreshold(Entity.ID, value);
+                }
+            }
+        }
     }
 
     public class CircleCollider2DComponent : BoxCollider2DComponent
@@ -360,34 +385,44 @@ namespace Shado
 
     public class CameraComponent : Component
     {
-        // public bool primary {
-        //     get {
-        //         bool result;
-        //         InternalCalls.CameraComponent_GetPrimary(Entity.ID, out result);
-        //         return result;
-        //     }
-        //
-        //     set { InternalCalls.CameraComponent_SetPrimary(Entity.ID, ref value); }
-        // }
-        //
-        // public Type type {
-        //     get {
-        //         Type result;
-        //         InternalCalls.CameraComponent_GetType(Entity.ID, out result);
-        //         return result;
-        //     }
-        //     set { InternalCalls.CameraComponent_SetType(Entity.ID, ref value); }
-        // }
-        //
-        // public void SetViewport(uint width, uint height) {
-        //     InternalCalls.CameraComponent_SetViewport(Entity.ID, width, height);
-        // }
-        //
-        // public enum Type
-        // {
-        //     Orthographic = 0,
-        //     Orbit = 1
-        // }
+        public bool primary {
+            get {
+                unsafe {
+                    return InternalCalls.CameraComponent_GetPrimary(Entity.ID);
+                }
+            }
+
+            set {
+                unsafe {
+                    InternalCalls.CameraComponent_SetPrimary(Entity.ID, value);
+                }
+            }
+        }
+
+        public Type type {
+            get {
+                unsafe {
+                    return InternalCalls.CameraComponent_GetType(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.CameraComponent_SetType(Entity.ID, value);
+                }
+            }
+        }
+
+        public void SetViewport(uint width, uint height) {
+            unsafe {
+                InternalCalls.CameraComponent_SetViewportSize(Entity.ID, width, height);
+            }
+        }
+
+        public enum Type
+        {
+            Orthographic = 0,
+            Orbit = 1
+        }
     }
 
     public class ScriptComponent : Component
@@ -437,20 +472,30 @@ namespace Shado
             }
         }
 
-        // public float lineSpacing {
-        //     get {
-        //         InternalCalls.TextComponent_GetLineSpacing(Entity.ID, out float lineSpacing);
-        //         return lineSpacing;
-        //     }
-        //     set { InternalCalls.TextComponent_SetLineSpacing(Entity.ID, ref value); }
-        // }
-        //
-        // public float kerning {
-        //     get {
-        //         InternalCalls.TextComponent_GetKerning(Entity.ID, out float kerning);
-        //         return kerning;
-        //     }
-        //     set { InternalCalls.TextComponent_SetKerning(Entity.ID, ref value); }
-        // }
+        public float lineSpacing {
+            get {
+                unsafe {
+                    return InternalCalls.TextComponent_GetLineSpacing(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.TextComponent_SetLineSpacing(Entity.ID, value);
+                }
+            }
+        }
+
+        public float kerning {
+            get {
+                unsafe {
+                    return InternalCalls.TextComponent_GetKerning(Entity.ID);
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.TextComponent_SetKerning(Entity.ID, value);
+                }
+            }
+        }
     }
 }

@@ -12,8 +12,7 @@ namespace Sandbox
     {
         public float maxDelta = 3.0f;
         public float moveRate = 1.0f;
-        [ShowInEditor("Dir")]private float dir = 1;
-        public Vector3 queen;
+        [ShowInEditor] private float dir = 1;
 
         //public Texture2D texture;
         //public Shader shader = Shader.Create("Assets/empty.glsl");
@@ -38,7 +37,8 @@ namespace Sandbox
             }
 
             //texture = Texture2D.Create("Assets/riven2.jpg");
-            //GetComponent<SpriteRendererComponent>().texture = texture;
+            //GetComponent<SpriteRendererComponent>().tilingFactor = (int)Mathf.Random(2, 10);
+            
         }
 
         protected override void OnUpdate(float dt)
@@ -60,6 +60,10 @@ namespace Sandbox
                 Log.Info("Loading new scene...");
                 Scene.LoadScene("raytracing.shadoscene");
             }
+            
+            if (Input.IsKeyDown(KeyCode.C)) {
+               GetComponent<RigidBody2DComponent>().ApplyLinearImpulse(Vector2.one, false);
+            }
         }
         void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
             Log.Info("Collision enter {0} with {1}", info, other.tag);
@@ -75,13 +79,13 @@ namespace Sandbox
     public class TestCamera : Entity {
 
         public float moveDelta = 5.0f;
-        private CameraComponent camera;
-        private Entity camera2;
+        private CameraComponent? camera;
+        private Entity? camera2;
 
         protected override void OnCreate() { 
             if (HasComponent<CameraComponent>())
                 camera = GetComponent<CameraComponent>();
-            //camera2 = FindEntityByName("camera2");
+            camera2 = FindEntityByName("camera2");
         }
 
         protected override void OnUpdate(float dt) {
@@ -104,12 +108,12 @@ namespace Sandbox
             }
             if (Input.IsKeyDown(KeyCode.Space))
             {
-                //camera.primary = false;
-                //camera2.GetComponent<CameraComponent>().primary = true;
+                camera.primary = false;
+                camera2.GetComponent<CameraComponent>().primary = true;
             }
             else {
-                //camera.primary = true;
-                //camera2.GetComponent<CameraComponent>().primary = false;
+                camera.primary = true;
+                camera2.GetComponent<CameraComponent>().primary = false;
             }
             
             translation = pos;
@@ -118,13 +122,13 @@ namespace Sandbox
 
     public class TextIncrementor : Entity
     {
-        TextComponent text;
-        Entity square;
+        TextComponent? text;
+        Entity? square;
 
         protected override void OnCreate() {
             text = GetComponent<TextComponent>();
             text.text = "0";
-            //square = FindEntityByName("Square");
+            square = FindEntityByName("Square");
         }
 
         protected override void OnUpdate(float dt) {
@@ -146,6 +150,7 @@ namespace Sandbox
         internal Entity parent;
         float angle = 0.01f;
 
+        public GridCell() { }
         public GridCell(Entity parent, float x, float y) { 
             this.x = x;
             this.y = y;

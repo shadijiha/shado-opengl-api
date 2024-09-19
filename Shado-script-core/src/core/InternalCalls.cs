@@ -25,6 +25,7 @@ namespace Shado
         internal static delegate* unmanaged<ulong, ReflectionType, void> Entity_CreateComponent;
         internal static delegate* unmanaged<ulong, ReflectionType, bool> Entity_HasComponent;
         internal static delegate* unmanaged<ulong, ReflectionType, bool> Entity_RemoveComponent;
+        internal static delegate* unmanaged<NativeString, ulong> Entity_FindEntityByName;
 
         #endregion
 
@@ -56,6 +57,12 @@ namespace Shado
 
         #region CameraComponent
 
+        internal static delegate* unmanaged<ulong, bool> CameraComponent_GetPrimary;
+        internal static delegate* unmanaged<ulong, bool, void> CameraComponent_SetPrimary;
+        internal static delegate* unmanaged<ulong, CameraComponent.Type> CameraComponent_GetType;
+        internal static delegate* unmanaged<ulong, CameraComponent.Type, void> CameraComponent_SetType;
+        internal static delegate* unmanaged<ulong, uint, uint, void> CameraComponent_SetViewportSize;
+
         #endregion
 
         #region SpriteRendererComponent
@@ -65,16 +72,59 @@ namespace Shado
         internal static delegate* unmanaged<ulong, float> SpriteRendererComponent_GetTilingFactor;
         internal static delegate* unmanaged<ulong, float, void> SpriteRendererComponent_SetTilingFactor;
         internal static delegate* unmanaged<ulong, int*> SpriteRendererComponent_GetTexture;
-        internal static delegate* unmanaged<ulong, int*, void> SpriteRendererComponent_SetTexture;
+        internal static delegate* unmanaged<ulong, IntPtr, void> SpriteRendererComponent_SetTexture;
+
+        #endregion
+
+        #region CircleRendererComponent
+
+        internal static delegate* unmanaged<ulong, Vector4*, void> CircleRendererComponent_GetColor;
+        internal static delegate* unmanaged<ulong, Vector4*, void> CircleRendererComponent_SetColor;
+        internal static delegate* unmanaged<ulong, float> CircleRendererComponent_GetThickness;
+        internal static delegate* unmanaged<ulong, float, void> CircleRendererComponent_SetThickness;
+        internal static delegate* unmanaged<ulong, float> CircleRendererComponent_GetFade;
+        internal static delegate* unmanaged<ulong, float, void> CircleRendererComponent_SetFade;
+
+        #endregion
+
+        #region LineRendererComponent
+
+        internal static delegate* unmanaged<ulong, Vector3*, void> LineRendererComponent_GetTarget;
+        internal static delegate* unmanaged<ulong, Vector3*, void> LineRendererComponent_SetTarget;
+        internal static delegate* unmanaged<ulong, Vector4*, void> LineRendererComponent_GetColour;
+        internal static delegate* unmanaged<ulong, Vector4*, void> LineRendererComponent_SetColour;
 
         #endregion
 
         #region RigidBody2DComponent
 
+        internal static delegate* unmanaged<ulong, Vector2*, void> RigidBody2DComponent_GetLinearVelocity;
         internal static delegate* unmanaged<ulong, RigidBody2DComponent.BodyType> RigidBody2DComponent_GetBodyType;
 
         internal static delegate* unmanaged<ulong, RigidBody2DComponent.BodyType, void>
             RigidBody2DComponent_SetBodyType;
+
+        internal static delegate* unmanaged<ulong, Vector2, Vector2, bool, void>
+            Rigidbody2DComponent_ApplyLinearImpulse;
+
+        internal static delegate* unmanaged<ulong, Vector2, bool, void> Rigidbody2DComponent_ApplyLinearImpulseToCenter;
+
+        #endregion
+
+        #region BoxCollider2DComponent and CircleCollider2DComponent
+
+        internal static delegate* unmanaged<ulong, Vector2*, void> BoxCollider2DComponent_GetOffset;
+        internal static delegate* unmanaged<ulong, Vector2*, void> BoxCollider2DComponent_SetOffset;
+        internal static delegate* unmanaged<ulong, Vector2*, void> BoxCollider2DComponent_GetSize;
+        internal static delegate* unmanaged<ulong, Vector2*, void> BoxCollider2DComponent_SetSize;
+        internal static delegate* unmanaged<ulong, float> BoxCollider2DComponent_GetDensity;
+        internal static delegate* unmanaged<ulong, float, void> BoxCollider2DComponent_SetDensity;
+        internal static delegate* unmanaged<ulong, float> BoxCollider2DComponent_GetFriction;
+        internal static delegate* unmanaged<ulong, float, void> BoxCollider2DComponent_SetFriction;
+        internal static delegate* unmanaged<ulong, float> BoxCollider2DComponent_GetRestitution;
+        internal static delegate* unmanaged<ulong, float, void> BoxCollider2DComponent_SetRestitution;
+        internal static delegate* unmanaged<ulong, float> BoxCollider2DComponent_GetRestitutionThreshold;
+        internal static delegate* unmanaged<ulong, float, void> BoxCollider2DComponent_SetRestitutionThreshold;
 
         #endregion
 
@@ -84,12 +134,16 @@ namespace Shado
         internal static delegate* unmanaged<ulong, NativeString, void> TextComponent_SetText;
         internal static delegate* unmanaged<ulong, Vector4*, void> TextComponent_GetColor;
         internal static delegate* unmanaged<ulong, Vector4*, void> TextComponent_SetColor;
+        internal static delegate* unmanaged<ulong, float> TextComponent_GetLineSpacing;
+        internal static delegate* unmanaged<ulong, float, void> TextComponent_SetLineSpacing;
+        internal static delegate* unmanaged<ulong, float> TextComponent_GetKerning;
+        internal static delegate* unmanaged<ulong, float, void> TextComponent_SetKerning;
 
         #endregion
 
         #region Texture2D
 
-        internal static delegate* unmanaged<NativeString, IntPtr> Texture2D_Create;
+        internal static delegate* unmanaged<NativeString, IntPtr*, void> Texture2D_Create;
 
         #endregion
 

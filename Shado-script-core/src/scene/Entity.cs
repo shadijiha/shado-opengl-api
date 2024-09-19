@@ -82,7 +82,7 @@ namespace Shado
         protected virtual void OnLateUpdate(float ts) { }
         protected virtual void OnPhysicsUpdate(float ts) { }
         protected virtual void OnDestroy() { }
-        
+
         public bool HasComponent<T>() where T : Component {
             unsafe {
                 return InternalCalls.Entity_HasComponent(ID, typeof(T));
@@ -159,9 +159,18 @@ namespace Shado
         //
         //     return new Entity(entityID);
         // }
-        
-        public bool Equals(Entity? other)
-        {
+
+        public static Entity? FindEntityByName(string name) {
+            unsafe {
+                ulong entityID = InternalCalls.Entity_FindEntityByName(name);
+                if (entityID == 0)
+                    return null;
+
+                return new Entity(entityID);
+            }
+        }
+
+        public bool Equals(Entity? other) {
             if (other is null)
                 return false;
 
@@ -171,19 +180,22 @@ namespace Shado
             return ID == other.ID;
         }
 
-        private static bool IsValid(Entity? entity)
-        {
-            if (entity is null) 
+        private static bool IsValid(Entity? entity) {
+            if (entity is null)
                 return false;
-			
-            unsafe { return InternalCalls.Scene_IsEntityValid(entity.ID); }
+
+            unsafe {
+                return InternalCalls.Scene_IsEntityValid(entity.ID);
+            }
         }
 
         public override int GetHashCode() => (int)ID;
 
-        public static bool operator ==(Entity? entityA, Entity? entityB) => entityA is null ? entityB is null : entityA.Equals(entityB);
+        public static bool operator ==(Entity? entityA, Entity? entityB) =>
+            entityA is null ? entityB is null : entityA.Equals(entityB);
+
         public static bool operator !=(Entity? entityA, Entity? entityB) => !(entityA == entityB);
-		
+
         public static implicit operator bool(Entity entity) => IsValid(entity);
     }
 }

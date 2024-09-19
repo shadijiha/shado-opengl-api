@@ -8,7 +8,7 @@ namespace Shado.Editor
         public string DisplayName = "";
         public bool IsReadOnly = false;
 
-        public ShowInEditorAttribute(string displayName) {
+        public ShowInEditorAttribute(string displayName = "") {
             DisplayName = displayName;
         }
     }

@@ -278,14 +278,14 @@ namespace Shado {
                 auto& entityStorage = scriptStorage.EntityStorage.at(entity.getUUID());
                 for (auto& [fieldID, fieldStorage] : entityStorage.Fields) {
                     if (fieldStorage.IsArray()) {
-                        //if (UI::DrawFieldArray(m_Context, fieldStorage.GetName(), fieldStorage)) {
-                        /*for (auto entityID : entities)
-                        {
-                            Entity entity = m_Context->GetEntityWithUUID(entityID);
-                            const auto& sc = entity.GetComponent<ScriptComponent>();
-                            storage->CopyData(firstComponent.ManagedInstance, sc.ManagedInstance);
-                        }*/
-                        //}
+                        static ScriptArrayRenderer renderer;
+                        ScriptTypeRendererData context = {
+                            scene,
+                            entity,
+                            fieldStorage.GetName(),
+                            fieldStorage
+                        };
+                        renderer.onImGuiRender(context);
                     }
                     else {
                         ScriptTypeRenderer& renderer = GetRendererForType(fieldStorage.GetType());
@@ -363,6 +363,18 @@ namespace Shado {
     }
 
     void ScriptPrefabRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+    }
+
+    void ScriptArrayRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+
+        int length = storage.GetLength();
+        if (UI::Vec1Control("Length", length, 1, 100)) {
+            storage.Resize(length);
+            length = storage.GetLength();
+        }
+
+        // TODO: Implement array rendering
     }
 
     void ScriptCustomEditorRenderer::onImGuiRender(const ScriptTypeRendererData& context) {

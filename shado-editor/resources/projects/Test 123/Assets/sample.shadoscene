@@ -79,7 +79,11 @@ Entities:
         - ID: 4237153936
           Name: maxDelta
           Type: 8
-          Value: 5.5999999
+          Value: 0.0500000007
+        - ID: 2054882781
+          Name: dir
+          Type: 8
+          Value: 1
         - ID: 1435041189
           Name: moveRate
           Type: 8
@@ -126,6 +130,14 @@ Entities:
         Far: 100
       Primary: true
       FixedAspectRatio: false
+    ScriptComponent:
+      ScriptID: 1395645343
+      ScriptName: Sandbox.TestCamera
+      Fields:
+        - ID: 966399746
+          Name: moveDelta
+          Type: 8
+          Value: 5
   - Entity: 12300077346565451073
     TagComponent:
       Tag: Empty Entity
@@ -222,6 +234,11 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [-0.800000012, -1.5, 1]
       ParentEntityId: 5567411534524352017
+    ScriptComponent:
+      ScriptID: 3407664129
+      ScriptName: Sandbox.TextIncrementor
+      Fields:
+        []
     PrefabInstanceComponent:
       PrefabId: 9272373329109538123
       PrefabEntityUniqueId: 5941834728084377729

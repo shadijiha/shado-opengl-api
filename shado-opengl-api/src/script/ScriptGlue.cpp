@@ -106,8 +106,11 @@ namespace Shado {
         RegisterManagedComponent<ScriptComponent>(coreAssembly);
         RegisterManagedComponent<CameraComponent>(coreAssembly);
         RegisterManagedComponent<SpriteRendererComponent>(coreAssembly);
+        RegisterManagedComponent<CircleRendererComponent>(coreAssembly);
+        RegisterManagedComponent<LineRendererComponent>(coreAssembly);
         RegisterManagedComponent<RigidBody2DComponent>(coreAssembly);
         RegisterManagedComponent<BoxCollider2DComponent>(coreAssembly);
+        RegisterManagedComponent<CircleCollider2DComponent>(coreAssembly);
         RegisterManagedComponent<TextComponent>(coreAssembly);
     }
 
@@ -123,6 +126,7 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Entity_CreateComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
+        SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
 
         SHADO_ADD_INTERNAL_CALL(Scene_IsEntityValid);
 
@@ -134,6 +138,12 @@ namespace Shado {
 
         SHADO_ADD_INTERNAL_CALL(ScriptComponent_GetInstance);
 
+        SHADO_ADD_INTERNAL_CALL(CameraComponent_GetPrimary);
+        SHADO_ADD_INTERNAL_CALL(CameraComponent_SetPrimary);
+        SHADO_ADD_INTERNAL_CALL(CameraComponent_GetType);
+        SHADO_ADD_INTERNAL_CALL(CameraComponent_SetType);
+        SHADO_ADD_INTERNAL_CALL(CameraComponent_SetViewportSize);
+
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetColor);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetColor);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTilingFactor);
@@ -141,13 +151,47 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
 
+        SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_GetColor);
+        SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_SetColor);
+        SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_GetThickness);
+        SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_SetThickness);
+        SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_GetFade);
+        SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_SetFade);
+
+        SHADO_ADD_INTERNAL_CALL(LineRendererComponent_GetTarget);
+        SHADO_ADD_INTERNAL_CALL(LineRendererComponent_SetTarget);
+        SHADO_ADD_INTERNAL_CALL(LineRendererComponent_GetColour);
+        SHADO_ADD_INTERNAL_CALL(LineRendererComponent_SetColour);
+
         SHADO_ADD_INTERNAL_CALL(RigidBody2DComponent_GetBodyType);
         SHADO_ADD_INTERNAL_CALL(RigidBody2DComponent_SetBodyType);
+        SHADO_ADD_INTERNAL_CALL(RigidBody2DComponent_GetLinearVelocity);
+        SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulse);
+        SHADO_ADD_INTERNAL_CALL(Rigidbody2DComponent_ApplyLinearImpulseToCenter);
+
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetOffset);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetOffset);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetSize);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetSize);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetDensity);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetDensity);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetFriction);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetFriction);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetRestitution);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetRestitution);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetRestitution);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetRestitution);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_GetRestitutionThreshold);
+        SHADO_ADD_INTERNAL_CALL(BoxCollider2DComponent_SetRestitutionThreshold);
 
         SHADO_ADD_INTERNAL_CALL(TextComponent_GetText);
         SHADO_ADD_INTERNAL_CALL(TextComponent_SetText);
         SHADO_ADD_INTERNAL_CALL(TextComponent_GetColor);
         SHADO_ADD_INTERNAL_CALL(TextComponent_SetColor);
+        SHADO_ADD_INTERNAL_CALL(TextComponent_GetLineSpacing);
+        SHADO_ADD_INTERNAL_CALL(TextComponent_SetLineSpacing);
+        SHADO_ADD_INTERNAL_CALL(TextComponent_GetKerning);
+        SHADO_ADD_INTERNAL_CALL(TextComponent_SetKerning);
 
         //============================================================================================
 
@@ -297,6 +341,16 @@ namespace Shado {
             return false;
         }
 
+        uint64_t Entity_FindEntityByName(Coral::String name) {
+            auto scene = ScriptEngine::GetInstance().GetCurrentScene();
+            std::string nameStr = name;
+            Entity entity = scene->findEntityByName(nameStr);
+            if (entity.isValid())
+                return entity.getUUID();
+            else
+                return 0;
+        }
+
 #pragma endregion
 
 #pragma region Scene
@@ -419,6 +473,40 @@ namespace Shado {
 
 #pragma region CameraComponent
 
+        bool CameraComponent_GetPrimary(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
+            return entity.getComponent<CameraComponent>().primary;
+        }
+
+        void CameraComponent_SetPrimary(uint64_t entityID, bool inPrimary) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
+            entity.getComponent<CameraComponent>().primary = inPrimary;
+        }
+
+        CameraComponent::Type CameraComponent_GetType(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
+            return entity.getComponent<CameraComponent>().type;
+        }
+
+        void CameraComponent_SetType(uint64_t entityID, CameraComponent::Type inType) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
+            entity.getComponent<CameraComponent>().type = inType;
+        }
+
+        void CameraComponent_SetViewportSize(uint64_t entityID, uint32_t inWidth, uint32_t inHeight) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
+            entity.getComponent<CameraComponent>().setViewportSize(inWidth, inHeight);
+        }
 
 #pragma endregion
 
@@ -469,7 +557,93 @@ namespace Shado {
 
 #pragma endregion
 
+#pragma region CircleRendererComponent
+        void CircleRendererComponent_GetColor(uint64_t entityID, glm::vec4* outColor) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CircleRendererComponent>());
+            *outColor = entity.getComponent<CircleRendererComponent>().color;
+        }
+
+        void CircleRendererComponent_SetColor(uint64_t entityID, glm::vec4* inColor) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CircleRendererComponent>());
+            entity.getComponent<CircleRendererComponent>().color = *inColor;
+        }
+
+        float CircleRendererComponent_GetThickness(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CircleRendererComponent>());
+            return entity.getComponent<CircleRendererComponent>().thickness;
+        }
+
+        void CircleRendererComponent_SetThickness(uint64_t entityID, float inThickness) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CircleRendererComponent>());
+            entity.getComponent<CircleRendererComponent>().thickness = inThickness;
+        }
+
+        float CircleRendererComponent_GetFade(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CircleRendererComponent>());
+            return entity.getComponent<CircleRendererComponent>().fade;
+        }
+
+        void CircleRendererComponent_SetFade(uint64_t entityID, float inFade) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CircleRendererComponent>());
+            entity.getComponent<CircleRendererComponent>().fade = inFade;
+        }
+
+#pragma endregion
+
+#pragma region LineRendererComponent
+        void LineRendererComponent_GetTarget(uint64_t entityID, glm::vec3* outTarget) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<LineRendererComponent>());
+            *outTarget = entity.getComponent<LineRendererComponent>().target;
+        }
+
+        void LineRendererComponent_SetTarget(uint64_t entityID, glm::vec3* inTarget) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<LineRendererComponent>());
+            entity.getComponent<LineRendererComponent>().target = *inTarget;
+        }
+
+        void LineRendererComponent_GetColour(uint64_t entityID, glm::vec4* outColor) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<LineRendererComponent>());
+            *outColor = entity.getComponent<LineRendererComponent>().color;
+        }
+
+        void LineRendererComponent_SetColour(uint64_t entityID, glm::vec4* inColor) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<LineRendererComponent>());
+            entity.getComponent<LineRendererComponent>().color = *inColor;
+        }
+
+#pragma endregion
+
 #pragma region RigidBody2DComponent
+
+        void RigidBody2DComponent_GetLinearVelocity(uint64_t entityID, glm::vec2* outVelocity) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<RigidBody2DComponent>());
+            auto& rb2d = entity.getComponent<RigidBody2DComponent>();
+            b2Body* body = (b2Body*)rb2d.runtimeBody;
+            const b2Vec2& linearVelocity = body->GetLinearVelocity();
+            *outVelocity = glm::vec2(linearVelocity.x, linearVelocity.y);
+        }
 
         RigidBody2DComponent::BodyType RigidBody2DComponent_GetBodyType(uint64_t entityID) {
             auto entity = GetEntity(entityID);
@@ -485,10 +659,189 @@ namespace Shado {
             entity.getComponent<RigidBody2DComponent>().type = inType;
         }
 
+        void Rigidbody2DComponent_ApplyLinearImpulse(uint64_t entityID, glm::vec2 impulse, glm::vec2 worldPosition,
+                                                     bool wake) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<RigidBody2DComponent>());
+            auto& rb2d = entity.getComponent<RigidBody2DComponent>();
+            b2Body* body = (b2Body*)rb2d.runtimeBody;
+            body->ApplyLinearImpulse(b2Vec2(impulse.x, impulse.y), b2Vec2(worldPosition.x, worldPosition.y), wake);
+        }
+
+        void Rigidbody2DComponent_ApplyLinearImpulseToCenter(uint64_t entityID, glm::vec2 impulse, bool wake) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<RigidBody2DComponent>());
+            auto& rb2d = entity.getComponent<RigidBody2DComponent>();
+            b2Body* body = (b2Body*)rb2d.runtimeBody;
+            body->ApplyLinearImpulseToCenter(b2Vec2(impulse.x, impulse.y), wake);
+        }
+
 #pragma endregion
 
-#pragma region BoxCollider2DComponent
+#pragma region BoxCollider2DComponent and CircleCollider2DComponent
 
+        void BoxCollider2DComponent_GetOffset(uint64_t entityID, glm::vec2* outOffset) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                *outOffset = bc.offset;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                *outOffset = bc.offset;
+            }
+        }
+
+        void BoxCollider2DComponent_SetOffset(uint64_t entityID, glm::vec2* inOffset) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                bc.offset = *inOffset;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                bc.offset = *inOffset;
+            }
+        }
+
+        void BoxCollider2DComponent_GetSize(uint64_t entityID, glm::vec2* outSize) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                *outSize = bc.size;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                *outSize = bc.radius;
+            }
+        }
+
+        void BoxCollider2DComponent_SetSize(uint64_t entityID, glm::vec2* inSize) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                bc.size = *inSize;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                bc.radius = *inSize;
+            }
+        }
+
+        float BoxCollider2DComponent_GetDensity(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                return bc.density;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                return bc.density;
+            }
+            return 0.0f;
+        }
+
+        void BoxCollider2DComponent_SetDensity(uint64_t entityID, float inDensity) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                bc.density = inDensity;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                bc.density = inDensity;
+            }
+        }
+
+        float BoxCollider2DComponent_GetFriction(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                return bc.friction;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                return bc.friction;
+            }
+            return 0.0f;
+        }
+
+        void BoxCollider2DComponent_SetFriction(uint64_t entityID, float inFriction) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                bc.friction = inFriction;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                bc.friction = inFriction;
+            }
+        }
+
+        float BoxCollider2DComponent_GetRestitution(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                return bc.restitution;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                return bc.restitution;
+            }
+            return 0.0f;
+        }
+
+        void BoxCollider2DComponent_SetRestitution(uint64_t entityID, float inRestitution) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                bc.restitution = inRestitution;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                bc.restitution = inRestitution;
+            }
+        }
+
+        float BoxCollider2DComponent_GetRestitutionThreshold(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                return bc.restitutionThreshold;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                return bc.restitutionThreshold;
+            }
+            return 0.0f;
+        }
+
+        void BoxCollider2DComponent_SetRestitutionThreshold(uint64_t entityID, float inRestitutionThreshold) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            if (entity.hasComponent<BoxCollider2DComponent>()) {
+                auto& bc = entity.getComponent<BoxCollider2DComponent>();
+                bc.restitutionThreshold = inRestitutionThreshold;
+            }
+            else if (entity.hasComponent<CircleCollider2DComponent>()) {
+                auto& bc = entity.getComponent<CircleCollider2DComponent>();
+                bc.restitutionThreshold = inRestitutionThreshold;
+            }
+        }
 #pragma endregion
 
 #pragma region TextComponent
@@ -530,15 +883,48 @@ namespace Shado {
             component.color = *inColor;
         }
 
+        float TextComponent_GetLineSpacing(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<TextComponent>());
+            auto& component = entity.getComponent<TextComponent>();
+            return component.lineSpacing;
+        }
+
+        void TextComponent_SetLineSpacing(uint64_t entityID, float inLineSpacing) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<TextComponent>());
+            auto& component = entity.getComponent<TextComponent>();
+            component.lineSpacing = inLineSpacing;
+        }
+
+        float TextComponent_GetKerning(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<TextComponent>());
+            auto& component = entity.getComponent<TextComponent>();
+            return component.kerning;
+        }
+
+        void TextComponent_SetKerning(uint64_t entityID, float inKerning) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<TextComponent>());
+            auto& component = entity.getComponent<TextComponent>();
+            component.kerning = inKerning;
+        }
+
 #pragma endregion
 
 #pragma region Texture2D
 
-        intptr_t Texture2D_Create(Coral::String inPath) {
+        bool Texture2D_Create(Coral::String inPath, OutParam<intptr_t> outHandle) {
             std::filesystem::path path = std::string(inPath);
             path = Project::GetProjectDirectory() / path; // TODO: Replace with asset manager
             Texture2D* texture = snew(Texture2D) Texture2D(path.string());
-            return (intptr_t)texture;
+            *outHandle = (intptr_t)texture;
+            return true;
         }
 
 

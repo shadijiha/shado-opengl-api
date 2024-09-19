@@ -153,8 +153,6 @@ namespace Shado {
                               const std::unordered_map<UUID, entt::entity>& enttMap);
     template <typename Component>
     static void CopyComponentIfExists(Entity dst, Entity src);
-    //template <>
-    //static void CopyComponentIfExists<ScriptComponent>(Entity dst, Entity src);
 
     Scene::Scene() {
     }
@@ -768,42 +766,4 @@ namespace Shado {
         if (src.hasComponent<Component>())
             dst.addOrReplaceComponent<Component>(src.getComponent<Component>());
     }
-
-    // template <>
-    // static void CopyComponentIfExists<ScriptComponent>(Entity dst, Entity src) {
-    //     if (src.hasComponent<ScriptComponent>()) {
-    //         dst.addOrReplaceComponent<ScriptComponent>(src.getComponent<ScriptComponent>());
-    //     }
-    //     else {
-    //         return;
-    //     }
-    //
-    //     auto& srcComponent = src.getComponent<ScriptComponent>();
-    //     auto& dstComponent = dst.getComponent<ScriptComponent>();
-    //     bool scriptClassExists = ScriptEngine::EntityClassExists(srcComponent.ClassName);
-    //
-    //     if (scriptClassExists) {
-    //         Ref<ScriptClass> klass = ScriptEngine::GetEntityClass(srcComponent.ClassName);
-    //         const auto& srcFields = klass->GetFields();
-    //
-    //         if (klass) {
-    //             auto& srcFieldMap = ScriptEngine::GetScriptFieldMap(src);
-    //             auto& dstFieldMap = ScriptEngine::GetScriptFieldMap(dst);
-    //
-    //             // Copy fields 
-    //             for (const auto& [name, field] : srcFields) {
-    //                 if (srcFieldMap.find(name) != srcFieldMap.end()) {
-    //                     dstFieldMap[name] = srcFieldMap[name];
-    //                 }
-    //             }
-    //         }
-    //     }
-    //
-    //     if (
-    //         (&src.getScene() && src.getScene().isRunning()) ||
-    //         (&dst.getScene() && dst.getScene().isRunning())
-    //     ) {
-    //         ScriptEngine::OnCreateEntity(dst);
-    //     }
-    // }
 }

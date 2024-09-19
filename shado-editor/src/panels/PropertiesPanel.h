@@ -117,6 +117,15 @@ namespace Shado {
         virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
+    class ScriptArrayRenderer final : public ScriptTypeRenderer {
+    public:
+        ScriptArrayRenderer()
+            : ScriptTypeRenderer((DataType)-1) {
+        }
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
+    };
+
     /**
      * All the custom editors defined in C# with [EditorTargetType()] and extends Editor class
      */

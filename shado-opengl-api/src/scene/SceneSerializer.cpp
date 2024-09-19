@@ -610,10 +610,10 @@ namespace Shado {
                             out << fieldStorage.GetValue<glm::vec2>();
                             break;
                         case DataType::Vector3:
-                            out << fieldStorage.GetValue<glm::vec2>();
+                            out << fieldStorage.GetValue<glm::vec3>();
                             break;
                         case DataType::Vector4:
-                            out << fieldStorage.GetValue<glm::vec2>();
+                            out << fieldStorage.GetValue<glm::vec4>();
                             break;
                         // TODO(Emily): This appears to write a spurious `\x00`
                         case DataType::String:
