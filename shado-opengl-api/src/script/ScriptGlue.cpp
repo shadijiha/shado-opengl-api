@@ -12,6 +12,7 @@
 
 #include "ScriptEngine.h"
 #include "Events/input.h"
+#include "project/Project.h"
 #include "util/TypeInfo.h"
 
 namespace Shado {
@@ -137,6 +138,8 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetColor);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTilingFactor);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTilingFactor);
+        SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
+        SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
 
         SHADO_ADD_INTERNAL_CALL(RigidBody2DComponent_GetBodyType);
         SHADO_ADD_INTERNAL_CALL(RigidBody2DComponent_SetBodyType);
@@ -449,6 +452,21 @@ namespace Shado {
             entity.getComponent<SpriteRendererComponent>().tilingFactor = tilingFactor;
         }
 
+        intptr_t SpriteRendererComponent_GetTexture(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<SpriteRendererComponent>());
+            return (intptr_t)entity.getComponent<SpriteRendererComponent>().texture.Raw();
+        }
+
+        void SpriteRendererComponent_SetTexture(uint64_t entityID, intptr_t inTexture) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<SpriteRendererComponent>());
+            Texture2D* texture = (Texture2D*)inTexture;
+            entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texture);
+        }
+
 #pragma endregion
 
 #pragma region RigidBody2DComponent
@@ -516,11 +534,11 @@ namespace Shado {
 
 #pragma region Texture2D
 
-        bool Texture2D_Create(Coral::String inPath, OutParam<intptr_t> outHandle) {
-            std::string path = inPath;
-            Texture2D* texture = snew(Texture2D) Texture2D(path);
-            *outHandle = (intptr_t)texture;
-            return true;
+        intptr_t Texture2D_Create(Coral::String inPath) {
+            std::filesystem::path path = std::string(inPath);
+            path = Project::GetProjectDirectory() / path; // TODO: Replace with asset manager
+            Texture2D* texture = snew(Texture2D) Texture2D(path.string());
+            return (intptr_t)texture;
         }
 
 

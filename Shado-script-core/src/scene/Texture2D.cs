@@ -11,10 +11,12 @@ namespace Shado
         internal Texture2D(string filepath) {
             this.filepath = filepath;
             unsafe {
-                fixed (IntPtr* ptr = &this.native) {
-                    InternalCalls.Texture2D_Create(filepath, (int**)ptr);
-                }
+                this.native = InternalCalls.Texture2D_Create(filepath);
             }
+        }
+
+        internal Texture2D(IntPtr native) {
+            this.native = native;
         }
 
         ~Texture2D() {

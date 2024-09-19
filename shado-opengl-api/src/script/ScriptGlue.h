@@ -105,6 +105,8 @@ namespace Shado {
         void SpriteRendererComponent_SetColor(uint64_t entityID, glm::vec4* inColor);
         float SpriteRendererComponent_GetTilingFactor(uint64_t entityID);
         void SpriteRendererComponent_SetTilingFactor(uint64_t entityID, float tilingFactor);
+        intptr_t SpriteRendererComponent_GetTexture(uint64_t entityID);
+        void SpriteRendererComponent_SetTexture(uint64_t entityID, intptr_t inTexture);
 
 #pragma endregion
 
@@ -131,7 +133,7 @@ namespace Shado {
 
 #pragma region Texture2D
 
-        bool Texture2D_Create(Coral::String inPath, OutParam<intptr_t> outHandle);
+        intptr_t Texture2D_Create(Coral::String inPath/*, OutParam<intptr_t> outHandle*/);
         //void Texture2D_GetSize(intptr_t inHandle, uint32_t* outWidth, uint32_t* outHeight);
         //void Texture2D_SetData(intptr_t inHandle, Coral::Array<glm::vec4> inData);
         //Coral::Array Texture2D_GetData(Param<AssetHandle> inHandle);

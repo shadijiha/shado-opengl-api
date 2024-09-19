@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Shado;
+using Shado.Editor;
 
 namespace Sandbox
 { 
@@ -11,12 +12,13 @@ namespace Sandbox
     {
         public float maxDelta = 3.0f;
         public float moveRate = 1.0f;
-        private float dir = 1;
+        [ShowInEditor("Dir")]private float dir = 1;
+        public Vector3 queen;
 
-        public Texture2D texture = Texture2D.Create("Assets/riven2.jpg");
-        public Shader shader = Shader.Create("Assets/empty.glsl");
+        //public Texture2D texture;
+        //public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
-        public Prefab linePrefab;
+        //public Prefab linePrefab;
         //private ParticuleSystem particuleSystem;
 
         //public ShadoEvent events;
@@ -34,9 +36,12 @@ namespace Sandbox
                     //GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
                 }
             }
+
+            //texture = Texture2D.Create("Assets/riven2.jpg");
+            //GetComponent<SpriteRendererComponent>().texture = texture;
         }
 
-        public void OnUpdate(float dt)
+        protected override void OnUpdate(float dt)
         {
             totalDt += dt;
             //if (GetComponent<SpriteRendererComponent>().texture != texture)
@@ -79,7 +84,7 @@ namespace Sandbox
             //camera2 = FindEntityByName("camera2");
         }
 
-        public void OnUpdate(float dt) {
+        protected override void OnUpdate(float dt) {
             
             Vector3 pos = translation;
             if (Input.IsKeyDown(KeyCode.W)) {

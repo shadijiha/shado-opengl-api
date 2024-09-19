@@ -273,48 +273,32 @@ namespace Shado {
             }
 
             // Fields
-            //bool sceneRunning = scene->isRunning();
-            //Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.getUUID());
-
-            // const std::map<std::string, ScriptField>* fields = nullptr;
-            // if (sceneRunning && scriptInstance)
-            //     fields = &scriptInstance->GetScriptClass()->GetFields();
-            // else if (scriptClassExists) {
-            //     Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-            //     fields = &entityClass->GetFields();
-            // }
-
-            // if (fields) {
-            //     for (const auto& [name, field] : *fields) {
-            //         if (sceneRunning && scriptInstance) {
-            //             ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
-            //             ScriptTypeRendererDataRunning context = {
-            //                 scene,
-            //                 entity,
-            //                 name,
-            //                 scriptInstance,
-            //                 *fields
-            //             };
-            //             renderer.onRenderSceneRunning(context);
-            //         }
-            //         else if (scriptClassExists) {
-            //             Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-            //             auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
-            //
-            //             ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
-            //             ScriptTypeRendererDataStopped context = {
-            //                 scene,
-            //                 entity,
-            //                 name,
-            //                 field,
-            //                 entityClass,
-            //                 entityFields,
-            //                 *fields
-            //             };
-            //             renderer.onRenderSceneStopped(context);
-            //         }
-            //     }
-            // }
+            auto& scriptStorage = scene->GetScriptStorage();
+            if (scriptStorage.EntityStorage.contains(entity.getUUID())) {
+                auto& entityStorage = scriptStorage.EntityStorage.at(entity.getUUID());
+                for (auto& [fieldID, fieldStorage] : entityStorage.Fields) {
+                    if (fieldStorage.IsArray()) {
+                        //if (UI::DrawFieldArray(m_Context, fieldStorage.GetName(), fieldStorage)) {
+                        /*for (auto entityID : entities)
+                        {
+                            Entity entity = m_Context->GetEntityWithUUID(entityID);
+                            const auto& sc = entity.GetComponent<ScriptComponent>();
+                            storage->CopyData(firstComponent.ManagedInstance, sc.ManagedInstance);
+                        }*/
+                        //}
+                    }
+                    else {
+                        ScriptTypeRenderer& renderer = GetRendererForType(fieldStorage.GetType());
+                        ScriptTypeRendererData context = {
+                            scene,
+                            entity,
+                            fieldStorage.GetName(),
+                            fieldStorage
+                        };
+                        renderer.onImGuiRender(context);
+                    }
+                }
+            }
         });
 
         drawComponent<TextComponent>("Text Renderer", entity, [](TextComponent& text) {
@@ -338,46 +322,50 @@ namespace Shado {
         });
     }
 
-    void ScriptFloatRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
+    void ScriptFloatRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        float value = storage.GetValue<float>();
+        if (UI::Vec1Control(fieldName.data(), value)) {
+            storage.SetValue(value);
+        }
     }
 
-    void ScriptFloatRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
+    void ScriptIntRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        int32_t value = storage.GetValue<int32_t>();
+        if (UI::Vec1Control(fieldName.data(), value)) {
+            storage.SetValue(value);
+        }
     }
 
-    void ScriptIntRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
+    void ScriptBoolRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        bool value = storage.GetValue<bool>();
+        if (UI::Checkbox(fieldName.data(), value)) {
+            storage.SetValue(value);
+        }
     }
 
-    void ScriptIntRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
+    void ScriptVector3Renderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        glm::vec3 value = storage.GetValue<glm::vec3>();
+        if (UI::Vec3Control(fieldName.data(), value)) {
+            storage.SetValue(value);
+        }
     }
 
-    void ScriptBoolRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
+    void ScriptVector4Renderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        glm::vec4 value = storage.GetValue<glm::vec4>();
+        if (UI::ColorControl(fieldName.data(), value)) {
+            storage.SetValue(value);
+        }
     }
 
-    void ScriptBoolRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
+    void ScriptPrefabRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
     }
 
-    void ScriptVector3Renderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-    }
-
-    void ScriptVector3Renderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-    }
-
-    void ScriptColourRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-    }
-
-    void ScriptColourRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-    }
-
-    void ScriptPrefabRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-    }
-
-    void ScriptPrefabRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-    }
-
-    void ScriptCustomEditorRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-    }
-
-    void ScriptCustomEditorRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
+    void ScriptCustomEditorRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
     }
 
     ScriptTypeRenderer& GetRendererForType(DataType type) {
@@ -386,7 +374,7 @@ namespace Shado {
             {DataType::Int, snew(ScriptIntRenderer) ScriptIntRenderer()},
             {DataType::Bool, snew(ScriptBoolRenderer) ScriptBoolRenderer()},
             {DataType::Vector3, snew(ScriptVector3Renderer) ScriptVector3Renderer()},
-            {DataType::Vector4, snew(ScriptColourRenderer) ScriptColourRenderer()},
+            {DataType::Vector4, snew(ScriptVector4Renderer) ScriptVector4Renderer()},
             {DataType::Prefab, snew(ScriptPrefabRenderer) ScriptPrefabRenderer()},
         };
         static auto* customEditor = snew(ScriptCustomEditorRenderer) ScriptCustomEditorRenderer();

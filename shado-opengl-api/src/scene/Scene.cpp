@@ -170,6 +170,8 @@ namespace Shado {
         CopyRegistries(srcSceneRegistry, dstSceneRegistry, [this](const auto& tag, auto uuid) {
             return this->createEntityWithUUID(tag, uuid);
         });
+
+        other.m_ScriptStorage.CopyTo(this->m_ScriptStorage);
     }
 
     Scene::~Scene() {
@@ -192,7 +194,8 @@ namespace Shado {
         return entity;
     }
 
-    static void CopyAllComponentsHelper(Entity newEntity, Entity source, bool copyTransform = true) {
+    static void CopyAllComponentsHelper(Entity newEntity, Entity source, ScriptStorage& scriptStorage,
+                                        bool copyTransform = true) {
         if (copyTransform)
             CopyComponentIfExists<TransformComponent>(newEntity, source);
         CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
@@ -208,6 +211,12 @@ namespace Shado {
 
         // Script should always be last
         CopyComponentIfExists<ScriptComponent>(newEntity, source);
+
+        if (newEntity.hasComponent<ScriptComponent>()) {
+            const auto& scriptComponent = newEntity.getComponent<ScriptComponent>();
+            scriptStorage.InitializeEntityStorage(scriptComponent.ScriptID, newEntity.getUUID());
+            scriptStorage.CopyEntityStorage(source.getUUID(), newEntity.getUUID(), scriptStorage);
+        }
     }
 
     Entity Scene::duplicateEntity(Entity source, bool modifyTag) {
@@ -219,7 +228,7 @@ namespace Shado {
             (modifyTag ? " (2)" : "")
         );
 
-        CopyAllComponentsHelper(newEntity, source);
+        CopyAllComponentsHelper(newEntity, source, m_ScriptStorage);
 
         return newEntity;
     }
@@ -295,7 +304,7 @@ namespace Shado {
             if (prefabEntity) {
                 // Make sure to keep the old parent id
                 Entity oldParent = e.getComponent<TransformComponent>().getParent(*this);
-                CopyAllComponentsHelper(e, prefabEntity, e.isChild(*this));
+                CopyAllComponentsHelper(e, prefabEntity, m_ScriptStorage, e.isChild(*this));
                 e.getComponent<TransformComponent>().setParent(e, oldParent);
             }
             else
@@ -326,10 +335,7 @@ namespace Shado {
                 if (!m_ScriptStorage.EntityStorage.contains(idComponent.id)) {
                     SHADO_CORE_ERROR("Entity {} isn't in script storage", Entity{scriptEntityID,
                                      this}.getComponent<TagComponent>().tag);
-                    //SHADO_CORE_ASSERT(false, "");
-
-                    // Add to script storage
-                    m_ScriptStorage.InitializeEntityStorage(scriptComponent.ScriptID, idComponent.id);
+                    SHADO_CORE_ASSERT(false, "");
                 }
 
                 scriptComponent.Instance = scriptEngine.Instantiate(idComponent.id, m_ScriptStorage,

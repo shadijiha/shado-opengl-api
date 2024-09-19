@@ -140,10 +140,21 @@ namespace Shado
             }
         }
 
-        // public Texture2D texture {
-        //     get { return InternalCalls.SpriteRendererComponent_GetTexture(Entity.ID, GetType().Name); }
-        //     set { InternalCalls.SpriteRendererComponent_SetTexture(Entity.ID, value.native, GetType().Name); }
-        // }
+        public Texture2D texture {
+            get {
+                IntPtr texturePtr;
+                unsafe {
+                    texturePtr = (IntPtr)InternalCalls.SpriteRendererComponent_GetTexture(Entity.ID);
+                }
+
+                return new Texture2D(texturePtr);
+            }
+            set {
+                unsafe {
+                    InternalCalls.SpriteRendererComponent_SetTexture(Entity.ID, (int*)value.native);
+                }
+            }
+        }
 
         public float tilingFactor {
             get {

@@ -21,8 +21,12 @@ namespace Shado {
     }
 
     void Project::SetActive(const Ref<Project>& project) {
+        if (s_ActiveProject)
+            ScriptEngine::GetMutable().Shutdown();
+
         s_ActiveProject = project;
-        ScriptEngine::GetMutable().Initialize(s_ActiveProject);
+        if (s_ActiveProject)
+            ScriptEngine::GetMutable().Initialize(s_ActiveProject);
     }
 
     Ref<Project> Project::New() {

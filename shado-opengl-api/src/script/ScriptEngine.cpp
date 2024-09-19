@@ -283,7 +283,7 @@ namespace Shado {
 
                         auto found = std::ranges::find_if(attributes, [](Coral::Attribute& attribute) {
                             Coral::ScopedString name = attribute.GetType().GetFullName();
-                            return name == "Shado.ShowInEditorAttribute";
+                            return name == "Shado.Editor.ShowInEditorAttribute";
                         });
 
                         // Only ignore this field if it's not public AND it doesn't have the ShowInEditor attribute attached to it

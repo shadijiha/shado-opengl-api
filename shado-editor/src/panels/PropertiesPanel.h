@@ -35,22 +35,11 @@ namespace Shado {
     /**
      * Classes used to render different script data types for script component
      */
-    struct ScriptTypeRendererDataRunning {
+    struct ScriptTypeRendererData {
         Ref<Scene> scene;
         Entity& entity;
-        const std::string& fieldName;
-        //Ref<ScriptInstance> scriptInstance;
-        //const std::map<std::string, ScriptField>& scriptClassFields;
-    };
-
-    struct ScriptTypeRendererDataStopped {
-        Ref<Scene> scene;
-        Entity& entity;
-        const std::string& fieldName;
-        //const ScriptField& field;
-        //Ref<ScriptClass> scriptClass;
-        //ScriptFieldMap& scriptModifiedFields;
-        //const std::map<std::string, ScriptField>& scriptClassFields;
+        std::string_view fieldName;
+        FieldStorage& fieldStorage;
     };
 
     class ScriptTypeRenderer {
@@ -61,8 +50,7 @@ namespace Shado {
 
         virtual ~ScriptTypeRenderer() = default;
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) = 0;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) = 0;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) = 0;
 
         inline DataType getType() const { return m_Type; }
 
@@ -76,8 +64,7 @@ namespace Shado {
             : ScriptTypeRenderer(DataType::Float) {
         }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptIntRenderer final : public ScriptTypeRenderer {
@@ -86,8 +73,7 @@ namespace Shado {
             : ScriptTypeRenderer(DataType::Int) {
         }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptBoolRenderer final : public ScriptTypeRenderer {
@@ -96,8 +82,7 @@ namespace Shado {
             : ScriptTypeRenderer(DataType::Bool) {
         }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptVector3Renderer final : public ScriptTypeRenderer {
@@ -106,18 +91,16 @@ namespace Shado {
             : ScriptTypeRenderer(DataType::Vector3) {
         }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
-    class ScriptColourRenderer final : public ScriptTypeRenderer {
+    class ScriptVector4Renderer final : public ScriptTypeRenderer {
     public:
-        ScriptColourRenderer()
+        ScriptVector4Renderer()
             : ScriptTypeRenderer(DataType::Vector4) {
         }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptPrefabRenderer final : public ScriptTypeRenderer {
@@ -131,8 +114,7 @@ namespace Shado {
             uint64_t id;
         };
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     /**
@@ -144,8 +126,7 @@ namespace Shado {
             : ScriptTypeRenderer((DataType)-1) {
         }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     ScriptTypeRenderer& GetRendererForType(DataType type);

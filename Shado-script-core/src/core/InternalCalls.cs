@@ -64,16 +64,20 @@ namespace Shado
         internal static delegate* unmanaged<ulong, Vector4*, void> SpriteRendererComponent_SetColor;
         internal static delegate* unmanaged<ulong, float> SpriteRendererComponent_GetTilingFactor;
         internal static delegate* unmanaged<ulong, float, void> SpriteRendererComponent_SetTilingFactor;
+        internal static delegate* unmanaged<ulong, int*> SpriteRendererComponent_GetTexture;
+        internal static delegate* unmanaged<ulong, int*, void> SpriteRendererComponent_SetTexture;
 
         #endregion
 
         #region RigidBody2DComponent
 
         internal static delegate* unmanaged<ulong, RigidBody2DComponent.BodyType> RigidBody2DComponent_GetBodyType;
-        internal static delegate* unmanaged<ulong, RigidBody2DComponent.BodyType, void> RigidBody2DComponent_SetBodyType;
+
+        internal static delegate* unmanaged<ulong, RigidBody2DComponent.BodyType, void>
+            RigidBody2DComponent_SetBodyType;
 
         #endregion
-        
+
         #region TextComponent
 
         internal static delegate* unmanaged<ulong, NativeString> TextComponent_GetText;
@@ -85,7 +89,7 @@ namespace Shado
 
         #region Texture2D
 
-        internal static delegate* unmanaged<NativeString, int**, bool> Texture2D_Create;
+        internal static delegate* unmanaged<NativeString, IntPtr> Texture2D_Create;
 
         #endregion
 
