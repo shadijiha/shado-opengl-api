@@ -13,14 +13,17 @@ namespace Shado
         }
 
         public static Vector2 GetImGuiWindowSize(string windowName) {
-            Vector2 size = Vector2.zero;
-            //InternalCalls.Application_GetImGuiWindowSize(windowName, out size);
-            return size;
+            unsafe {
+                Vector2 size = Vector2.zero;
+                InternalCalls.Application_GetImGuiWindowSize(windowName, &size);
+                return size;
+            }
         }
 
         public static bool IsImGuiWindowHovered(string windowName) {
-            //return InternalCalls.Application_IsImGuiWindowHovered(windowName);
-            return false;
+            unsafe {
+                return InternalCalls.Application_IsImGuiWindowHovered(windowName);
+            }
         }
     }
 
@@ -28,19 +31,27 @@ namespace Shado
     {
         public Vector2 position {
             get {
-                Vector2 pos = Vector2.zero;
-                //InternalCalls.Window_GetPosition(out pos);
-                return pos;
+                unsafe {
+                    Vector2 pos;
+                    InternalCalls.Window_GetPosition(&pos);
+                    return pos;
+                }
             }
         }
 
         public Vector2 size {
             get {
-                Vector2 size = Vector2.zero;
-                //InternalCalls.Window_GetSize(out size);
-                return size;
+                unsafe {
+                    Vector2 size;
+                    InternalCalls.Window_GetSize(&size);
+                    return size;
+                }
             }
-            set { } //InternalCalls.Window_SetSize(value); }
+            set {
+                unsafe {
+                    InternalCalls.Window_SetSize(&value);
+                }
+            }
         }
 
         public uint width {
@@ -55,37 +66,48 @@ namespace Shado
 
         public WindowMode mode {
             get {
-                //return (WindowMode)InternalCalls.Window_GetMode(); }
-                return WindowMode.Windowed;
+                unsafe {
+                    return (WindowMode)InternalCalls.Window_GetMode();
+                }
             }
             set {
-                //InternalCalls.Window_SetMode((int)value); }
+                unsafe {
+                    InternalCalls.Window_SetMode((int)value);
+                }
             }
         }
 
         public string title {
             get {
-                //return InternalCalls.Window_GetTitle(); }
-                return "";
+                unsafe {
+                    return InternalCalls.Window_GetTitle();
+                }
             }
             set {
-                //InternalCalls.Window_SetTitle(value);
+                unsafe {
+                    InternalCalls.Window_SetTitle(value);
+                }
             }
         }
 
         public bool vsync {
             get {
-                //return InternalCalls.Window_GetVsync();
-                return true;
+                unsafe {
+                    return InternalCalls.Window_GetVsync();
+                }
             }
             set {
-                //InternalCalls.Window_SetVsync(value);
+                unsafe {
+                    InternalCalls.Window_SetVsync(value);
+                }
             }
         }
 
         public float opacity {
             set {
-                //InternalCalls.Window_SetOpacity(value);
+                unsafe {
+                    InternalCalls.Window_SetOpacity(value);
+                }
             }
         }
 

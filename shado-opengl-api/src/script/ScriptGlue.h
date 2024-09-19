@@ -50,6 +50,21 @@ namespace Shado {
         float Application_GetTime();
         uint32_t Application_GetWidth();
         uint32_t Application_GetHeight();
+        void Application_GetImGuiWindowSize(Coral::String name, glm::vec2* outSize);
+        bool Application_IsImGuiWindowHovered(Coral::String windowName);
+#pragma endregion
+
+#pragma region Window
+        void Window_GetPosition(glm::vec2* outPosition);
+        void Window_GetSize(glm::vec2* outSize);
+        void Window_SetSize(glm::vec2* inSize);
+        int Window_GetMode();
+        void Window_SetMode(int mode);
+        Coral::String Window_GetTitle();
+        void Window_SetTitle(Coral::String title);
+        bool Window_GetVSync();
+        void Window_SetVSync(bool enabled);
+        void Window_SetOpacity(float opacity);
 #pragma endregion
 
 #pragma region Entity
@@ -68,6 +83,7 @@ namespace Shado {
 
 #pragma region Scene
         bool Scene_IsEntityValid(uint64_t entityID);
+        Coral::String Scene_LoadScene(Coral::String scenePath);
 #pragma endregion
 
 #pragma region TagComponent

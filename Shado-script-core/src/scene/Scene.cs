@@ -23,8 +23,9 @@ namespace Shado
             if (!sceneName.EndsWith(".shadoscene"))
                 sceneName += ".shadoscene";
 
-            return string.Empty;
-            //return InternalCalls.Scene_LoadScene(sceneName);
+            unsafe {
+                return InternalCalls.Scene_LoadScene(sceneName);
+            }
         }
     }
 }

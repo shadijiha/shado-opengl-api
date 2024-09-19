@@ -13,9 +13,25 @@ namespace Shado
         internal static delegate* unmanaged<float> Application_GetTime;
         internal static delegate* unmanaged<uint> Application_GetWidth;
         internal static delegate* unmanaged<uint> Application_GetHeight;
+        internal static delegate* unmanaged<NativeString, Vector2*, void> Application_GetImGuiWindowSize;
+        internal static delegate* unmanaged<NativeString, bool> Application_IsImGuiWindowHovered;
 
         #endregion
 
+        #region Window
+
+        internal static delegate* unmanaged<Vector2*, void> Window_GetPosition;
+        internal static delegate* unmanaged<Vector2*, void> Window_GetSize;
+        internal static delegate* unmanaged<Vector2*, void> Window_SetSize;
+        internal static delegate* unmanaged<int> Window_GetMode;
+        internal static delegate* unmanaged<int, void> Window_SetMode;
+        internal static delegate* unmanaged<NativeString> Window_GetTitle;
+        internal static delegate* unmanaged<NativeString, void> Window_SetTitle;
+        internal static delegate* unmanaged<bool> Window_GetVsync;
+        internal static delegate* unmanaged<bool, void> Window_SetVsync;
+        internal static delegate* unmanaged<float, void> Window_SetOpacity;
+
+        #endregion
 
         #region Entity
 
@@ -32,6 +48,7 @@ namespace Shado
         #region Scene
 
         internal static delegate* unmanaged<ulong, bool> Scene_IsEntityValid;
+        internal static delegate* unmanaged<NativeString, NativeString> Scene_LoadScene;
 
         #endregion
 

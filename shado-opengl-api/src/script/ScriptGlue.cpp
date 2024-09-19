@@ -119,6 +119,19 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Application_GetTime);
         SHADO_ADD_INTERNAL_CALL(Application_GetWidth);
         SHADO_ADD_INTERNAL_CALL(Application_GetHeight);
+        SHADO_ADD_INTERNAL_CALL(Application_GetImGuiWindowSize);
+        SHADO_ADD_INTERNAL_CALL(Application_IsImGuiWindowHovered);
+
+        SHADO_ADD_INTERNAL_CALL(Window_GetPosition);
+        SHADO_ADD_INTERNAL_CALL(Window_GetSize);
+        SHADO_ADD_INTERNAL_CALL(Window_SetSize);
+        SHADO_ADD_INTERNAL_CALL(Window_GetMode);
+        SHADO_ADD_INTERNAL_CALL(Window_SetMode);
+        SHADO_ADD_INTERNAL_CALL(Window_GetTitle);
+        SHADO_ADD_INTERNAL_CALL(Window_SetTitle);
+        SHADO_ADD_INTERNAL_CALL(Window_GetVSync);
+        SHADO_ADD_INTERNAL_CALL(Window_SetVSync);
+        SHADO_ADD_INTERNAL_CALL(Window_SetOpacity);
 
         SHADO_ADD_INTERNAL_CALL(Entity_GetParent);
         SHADO_ADD_INTERNAL_CALL(Entity_SetParent);
@@ -221,6 +234,74 @@ namespace Shado {
         uint32_t Application_GetWidth() { return ScriptEngine::GetInstance().GetCurrentScene()->getViewport().x; }
         uint32_t Application_GetHeight() { return ScriptEngine::GetInstance().GetCurrentScene()->getViewport().y; }
 
+        void Application_GetImGuiWindowSize(Coral::String name, glm::vec2* outSize) {
+            // Small hack to get around ImGui not having a way to get a given window size
+            ImGuiContext* context = ImGui::GetCurrentContext();
+            ImGuiWindow* currentWin = ImGui::GetCurrentWindow();
+            auto* targetWin = ImGui::FindWindowByName(std::string(name).c_str());
+
+            context->CurrentWindow = targetWin;
+            *outSize = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
+
+            context->CurrentWindow = currentWin;
+        }
+
+        bool Application_IsImGuiWindowHovered(Coral::String windowName) {
+            ImGuiContext* context = ImGui::GetCurrentContext();
+            auto* currentWin = ImGui::GetCurrentWindow();
+            auto* targetWin = ImGui::FindWindowByName(std::string(windowName).c_str());
+
+            context->CurrentWindow = targetWin;
+            bool result = ImGui::IsWindowHovered();
+            context->CurrentWindow = currentWin;
+
+            return result;
+        }
+
+#pragma endregion
+
+#pragma region Window
+        void Window_GetPosition(glm::vec2* outPosition) {
+            *outPosition = {0, 0};
+            outPosition->x = Application::get().getWindow().getPosX();
+            outPosition->y = Application::get().getWindow().getPosY();
+        }
+
+        void Window_GetSize(glm::vec2* outSize) {
+            *outSize = {Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight()};
+        }
+
+        void Window_SetSize(glm::vec2* inSize) {
+            Application::get().getWindow().resize(inSize->x, inSize->y);
+        }
+
+        int Window_GetMode() {
+            return (int)Application::get().getWindow().getMode();
+        }
+
+        void Window_SetMode(int mode) {
+            Application::get().getWindow().setMode((WindowMode)mode);
+        }
+
+        Coral::String Window_GetTitle() {
+            return Coral::String::New(Application::get().getWindow().getTitle().data());
+        }
+
+        void Window_SetTitle(Coral::String title) {
+            Application::get().getWindow().setTitle(title);
+        }
+
+        bool Window_GetVSync() {
+            return Application::get().getWindow().isVSync();
+        }
+
+        void Window_SetVSync(bool enabled) {
+            Application::get().getWindow().setVSync(enabled);
+        }
+
+        void Window_SetOpacity(float opacity) {
+            Application::get().getWindow().setOpacity(opacity);
+        }
 #pragma endregion
 
 #pragma region Entity
@@ -357,6 +438,27 @@ namespace Shado {
         bool Scene_IsEntityValid(uint64_t entityID) {
             auto scene = ScriptEngine::GetInstance().GetCurrentScene();
             return scene->getEntityById(entityID).isValid();
+        }
+
+        Coral::String Scene_LoadScene(Coral::String scenePath) {
+            // Search for the scene in the project directory
+            std::string sceneNameStr = scenePath;
+            const std::filesystem::path projectPath = Project::GetProjectDirectory();
+
+            // Search for the scene in the project directory recursively
+            std::filesystem::path sceneFullPath;
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(projectPath)) {
+                if (entry.is_regular_file() && entry.path().filename().string().find(sceneNameStr) !=
+                    std::string::npos) {
+                    sceneFullPath = entry.path();
+                    break;
+                }
+            }
+
+            // New scene
+            Application::dispatchEvent(SceneChangedEvent(sceneFullPath));
+
+            return Coral::String::New(sceneFullPath.string());
         }
 #pragma endregion
 

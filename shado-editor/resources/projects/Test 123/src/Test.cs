@@ -38,7 +38,6 @@ namespace Sandbox
 
             //texture = Texture2D.Create("Assets/riven2.jpg");
             //GetComponent<SpriteRendererComponent>().tilingFactor = (int)Mathf.Random(2, 10);
-            
         }
 
         protected override void OnUpdate(float dt)
