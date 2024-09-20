@@ -460,6 +460,15 @@ namespace Shado {
 
             return Coral::String::New(sceneFullPath.string());
         }
+
+        Coral::Array<uint64_t> Scene_GetAllEntities() {
+            std::vector<uint64_t> entityIDs;
+            auto scene = ScriptEngine::GetInstance().GetCurrentScene();
+            for (auto& entity : scene->getAllEntities()) {
+                entityIDs.push_back(entity.getUUID());
+            }
+            return Coral::Array<uint64_t>::New(entityIDs);
+        }
 #pragma endregion
 
 #pragma region TagComponent

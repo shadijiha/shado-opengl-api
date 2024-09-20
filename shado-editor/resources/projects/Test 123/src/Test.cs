@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using Shado;
 using Shado.Editor;
 
@@ -38,6 +34,10 @@ namespace Sandbox
 
             //texture = Texture2D.Create("Assets/riven2.jpg");
             //GetComponent<SpriteRendererComponent>().tilingFactor = (int)Mathf.Random(2, 10);
+            
+            OnCollision2DEnterEvent += (info, other) => {
+                Log.Info("Collision with {0}", other.tag);
+            };
         }
 
         protected override void OnUpdate(float dt)
@@ -64,15 +64,6 @@ namespace Sandbox
                GetComponent<RigidBody2DComponent>().ApplyLinearImpulse(Vector2.one, false);
             }
         }
-        void OnCollision2DEnter(Collision2DInfo info, Entity other) { 
-            Log.Info("Collision enter {0} with {1}", info, other.tag);
-            //Destroy(this);
-        }
-
-        /*
-        void OnCollision2DLeave(Collision2DInfo info, Entity other) {
-            Log.Info("Collision leave {0} with {1}", info, other.tag);
-        }*/
     }
 
     public class TestCamera : Entity {

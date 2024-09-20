@@ -65,6 +65,9 @@ Entities:
       Color: [0.999996483, 1, 0.999989986, 1]
       Texture: Assets\Riven_HD.jpg
       TillingFactor: 1
+    RigidBody2DComponent:
+      Type: 0
+      FixedRotation: false
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
@@ -79,7 +82,7 @@ Entities:
         - ID: 4237153936
           Name: maxDelta
           Type: 8
-          Value: 0.0500000007
+          Value: 5
         - ID: 2054882781
           Name: dir
           Type: 8

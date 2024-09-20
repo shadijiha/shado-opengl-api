@@ -93,12 +93,12 @@ namespace Shado
         public bool vsync {
             get {
                 unsafe {
-                    return InternalCalls.Window_GetVsync();
+                    return InternalCalls.Window_GetVSync();
                 }
             }
             set {
                 unsafe {
-                    InternalCalls.Window_SetVsync(value);
+                    InternalCalls.Window_SetVSync(value);
                 }
             }
         }

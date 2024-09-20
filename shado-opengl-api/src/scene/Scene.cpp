@@ -21,7 +21,7 @@ namespace Shado {
      * **********************************
      */
     // This is here to avoid havning to include box2d in header files
-    /*class Physics2DCallback : public b2ContactListener {
+    class Physics2DCallback : public b2ContactListener {
     private:
         struct Points {
             glm::vec2 p1, p2;
@@ -83,70 +83,37 @@ namespace Shado {
             Entity entityB = scene->getEntityById(idB);
 
             // Call the Entity::OnCollision2D in C#
-            if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
-                Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idA);
-                Ref<ScriptClass> klass = instance->GetScriptClass();
+            if (entityA.isValid() && entityB.isValid()) {
+                CSharpObject scriptAInstance = {};
+                CSharpObject scriptBInstance = {};
 
-                auto* method = klass->GetMethod(functionName, 2);
-                if (method) {
-                    auto collisionInfo = buildContactInfoObject(contact);
-                    MonoObject* entityBInstance = ScriptEngine::GetManagedInstance(idB);
+                if (entityA.hasComponent<ScriptComponent>())
+                    scriptAInstance = entityA.getComponent<ScriptComponent>().Instance;
+                if (entityB.hasComponent<ScriptComponent>())
+                    scriptBInstance = entityB.getComponent<ScriptComponent>().Instance;
 
-                    // If No instance was found, then create on with from the default entity class
-                    if (entityBInstance == nullptr) {
-                        ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityB);
-                        entityBInstance = instance.GetManagedObject();
-                    }
-
-                    void* args[] = {
-                        &collisionInfo,
-                        entityBInstance
-                    };
-
-                    klass->InvokeMethod(instance->GetManagedObject(),
-                                        method,
-                                        args
-                    );
+                if (scriptAInstance.IsValid()) {
+                    auto info = buildContactInfoObject(contact);
+                    scriptAInstance.Invoke(functionName, info, idB);
                 }
-            }
 
-            if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
-                Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idB);
-                Ref<ScriptClass> klass = instance->GetScriptClass();
-                auto* method = klass->GetMethod(functionName, 2);
-
-                if (method) {
-                    auto collisionInfo = buildContactInfoObject(contact);
-                    MonoObject* entityAInstance = ScriptEngine::GetManagedInstance(idA);
-
-                    // If No instance was found, then create on with from the default entity class
-                    if (entityAInstance == nullptr) {
-                        ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityA);
-                        entityAInstance = instance.GetManagedObject();
-                    }
-
-                    void* args[] = {
-                        &collisionInfo,
-                        entityAInstance
-                    };
-                    klass->InvokeMethod(instance->GetManagedObject(),
-                                        method,
-                                        args
-                    );
+                if (scriptBInstance.IsValid()) {
+                    auto info = buildContactInfoObject(contact);
+                    scriptBInstance.Invoke(functionName, info, idA);
                 }
             }
         }
 
     private:
         Scene* scene;
-    };*/
+    };
 
     /**
      * **********************************
      ************ SCENE CLASS ***********
      * **********************************
      */
-    //static Physics2DCallback* s_physics2DCallback = nullptr;
+    static Physics2DCallback* s_physics2DCallback = nullptr;
 
     template <typename Component>
     static void CopyComponent(entt::registry& dst, entt::registry& src,
@@ -382,8 +349,8 @@ namespace Shado {
         delete m_World;
         m_World = nullptr;
 
-        //delete s_physics2DCallback;
-        //s_physics2DCallback = nullptr;
+        delete s_physics2DCallback;
+        s_physics2DCallback = nullptr;
     }
 
     void Scene::onUpdateRuntime(TimeStep ts) {
@@ -652,9 +619,9 @@ namespace Shado {
         }
 
         // TODO make the physics adjustable
-        //s_physics2DCallback = snew(Physics2DCallback) Physics2DCallback(this);
+        s_physics2DCallback = snew(Physics2DCallback) Physics2DCallback(this);
         m_World = snew(b2World) b2World({0.0f, -9.8f});
-        //m_World->SetContactListener(s_physics2DCallback);
+        m_World->SetContactListener(s_physics2DCallback);
 
         auto view = m_Registry.view<RigidBody2DComponent>();
         for (auto e : view) {

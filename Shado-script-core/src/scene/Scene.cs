@@ -6,7 +6,15 @@ namespace Shado
     public struct Scene
     {
         public static Entity[] GetAllEntities() {
-            return []; //InternalCalls.Scene_GetAllEntities();
+            unsafe {
+                ulong[] entities = InternalCalls.Scene_GetAllEntities();
+                Entity[] result = new Entity[entities.Length];
+                for (int i = 0; i < entities.Length; i++) {
+                    result[i] = new Entity(entities[i]);
+                }
+
+                return result;
+            }
         }
 
         /// <summary>

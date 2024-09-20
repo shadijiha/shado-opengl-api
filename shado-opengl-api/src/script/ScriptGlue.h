@@ -84,6 +84,7 @@ namespace Shado {
 #pragma region Scene
         bool Scene_IsEntityValid(uint64_t entityID);
         Coral::String Scene_LoadScene(Coral::String scenePath);
+        Coral::Array<uint64_t> Scene_GetAllEntities();
 #pragma endregion
 
 #pragma region TagComponent

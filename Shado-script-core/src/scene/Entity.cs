@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Coral.Managed.Interop;
 
 namespace Shado
 {
@@ -9,6 +10,9 @@ namespace Shado
     {
         private ulong id;
         private Entity? m_Parent;
+
+        public event Action<Collision2DInfo, Entity?> OnCollision2DEnterEvent;
+        public event Action<Collision2DInfo, Entity?> OnCollision2DLeaveEvent;
 
         // IMPORTANT:
         // This constructor is used by the script engine to create entities
@@ -82,6 +86,14 @@ namespace Shado
         protected virtual void OnLateUpdate(float ts) { }
         protected virtual void OnPhysicsUpdate(float ts) { }
         protected virtual void OnDestroy() { }
+
+        internal void OnCollision2DEnter(Collision2DInfo info, ulong otherId) {
+            OnCollision2DEnterEvent?.Invoke(info, new Entity(otherId));
+        }
+
+        internal void OnCollision2DLeave(Collision2DInfo info, ulong otherId) {
+            OnCollision2DLeaveEvent?.Invoke(info, new Entity(otherId));
+        }
 
         public bool HasComponent<T>() where T : Component {
             unsafe {

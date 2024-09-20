@@ -27,8 +27,8 @@ namespace Shado
         internal static delegate* unmanaged<int, void> Window_SetMode;
         internal static delegate* unmanaged<NativeString> Window_GetTitle;
         internal static delegate* unmanaged<NativeString, void> Window_SetTitle;
-        internal static delegate* unmanaged<bool> Window_GetVsync;
-        internal static delegate* unmanaged<bool, void> Window_SetVsync;
+        internal static delegate* unmanaged<bool> Window_GetVSync;
+        internal static delegate* unmanaged<bool, void> Window_SetVSync;
         internal static delegate* unmanaged<float, void> Window_SetOpacity;
 
         #endregion
@@ -49,6 +49,7 @@ namespace Shado
 
         internal static delegate* unmanaged<ulong, bool> Scene_IsEntityValid;
         internal static delegate* unmanaged<NativeString, NativeString> Scene_LoadScene;
+        internal static delegate* unmanaged<NativeArray<ulong>> Scene_GetAllEntities;
 
         #endregion
 
