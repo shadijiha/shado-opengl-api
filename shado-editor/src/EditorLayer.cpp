@@ -442,7 +442,6 @@ namespace Shado {
         scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
         m_EditorScene = scene;
         setActiveScene(m_EditorScene);
-        ScriptEngine::GetMutable().SetCurrentScene(m_EditorScene);
         m_ScenePath = "";
     }
 
@@ -486,7 +485,6 @@ namespace Shado {
         m_SceneState = SceneState::Play;
         auto scene = CreateRef<Scene>(*m_EditorScene.Raw());
         setActiveScene(scene);
-        ScriptEngine::GetMutable().SetCurrentScene(scene);
         m_ActiveScene->onRuntimeStart();
     }
 
@@ -494,7 +492,6 @@ namespace Shado {
         m_SceneState = SceneState::Edit;
         m_ActiveScene->onRuntimeStop();
         setActiveScene(m_EditorScene);
-        ScriptEngine::GetMutable().SetCurrentScene(m_EditorScene);
     }
 
     void EditorLayer::setActiveScene(Ref<Scene> scene) {
@@ -502,6 +499,7 @@ namespace Shado {
         Scene::ActiveScene = m_ActiveScene;
         m_sceneHierarchyPanel.setContext(m_ActiveScene);
         m_SceneInfoPanel.setScene(m_ActiveScene.Raw());
+        ScriptEngine::GetMutable().SetCurrentScene(m_ActiveScene);
     }
 
     // =============================== UI Stuff
