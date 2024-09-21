@@ -90,13 +90,14 @@ namespace Shado {
         }
     }
 
+    static std::mutex s_mutex;
+
     Texture2D::Texture2D(Texture2DSpecification specs) {
         SHADO_PROFILE_FUNCTION();
 
         // For some reason glCreateTextures is crashing on std::async so make this thread safe
-        static std::mutex s_mutex;
         std::lock_guard<std::mutex> lock(s_mutex);
-        
+
         m_InternalFormat = (uint32_t)specs.format;
         m_DataFormat = (uint32_t)specs.dataFormat;
         m_Width = specs.width;

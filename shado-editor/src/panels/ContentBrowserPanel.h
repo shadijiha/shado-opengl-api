@@ -27,6 +27,7 @@ namespace Shado {
         void setDirectory(const std::filesystem::path& path);
         ThumbnailMetadata getThumbnail(const std::filesystem::directory_entry&);
         Ref<Framebuffer> generateSceneThumbnail(const std::filesystem::path& path, uint32_t width);
+        Ref<Framebuffer> generateShaderThumbnail(const std::filesystem::path& path, uint32_t width);
 
     private:
         float m_ThumbnailSize = 100.0f;
@@ -38,7 +39,7 @@ namespace Shado {
         Ref<Texture2D> m_PrefabIcon;
         Ref<Texture2D> m_CSIcon;
         Ref<Texture2D> m_SlnIcon;
-        std::unordered_map<std::string, Ref<Framebuffer>> m_ScenesThumbnails;
+        std::unordered_map<std::string, Ref<Framebuffer>> m_GeneratedThumbnails;
 
         std::vector<std::filesystem::directory_entry> directories;
         uint32_t tick = 1;

@@ -228,11 +228,11 @@ namespace Shado {
         else if (path.extension() == ".shadoscene") {
             //icon = m_SceneIcon;
             Ref<Framebuffer> fb;
-            if (!m_ScenesThumbnails.contains(path.string())) {
+            if (!m_GeneratedThumbnails.contains(path.string())) {
                 fb = generateSceneThumbnail(path, m_ThumbnailSize);
             }
             else {
-                fb = m_ScenesThumbnails[path.string()];
+                fb = m_GeneratedThumbnails[path.string()];
             }
 
             return {
@@ -248,6 +248,22 @@ namespace Shado {
         }
         else if (path.extension() == ".sln") {
             icon = m_SlnIcon;
+        }
+        else if (path.extension() == ".glsl" || path.extension() == ".shader") {
+            // TODO: currently this will keep trying to generate the thumbnail if try catch fails
+            // We do this every frame to keep the shader thumbnail animated
+            try {
+                Ref<Framebuffer> fb = generateShaderThumbnail(path, m_ThumbnailSize);
+
+                return {
+                    fb->getColorAttachmentRendererID(),
+                    (float)fb->getSpecification().Width / (float)fb->getSpecification().Height
+                };
+            }
+            catch (const std::runtime_error& e) {
+                SHADO_CORE_ERROR("Error generating shader thumbnail: {0}", e.what());
+                icon = m_FileIcon;
+            }
         }
         return {icon->getRendererID(), (float)icon->getWidth() / (float)icon->getHeight()};
     }
@@ -277,7 +293,53 @@ namespace Shado {
         scene->onDrawEditor(camera);
         fb->unbind();
 
-        m_ScenesThumbnails[path.string()] = fb;
+        m_GeneratedThumbnails[path.string()] = fb;
+
+        return fb;
+    }
+
+    Ref<Framebuffer> ContentBrowserPanel::generateShaderThumbnail(const std::filesystem::path& path, uint32_t width) {
+        // Cache shaders to animate them
+        static std::unordered_map<std::string, Ref<Shader>> m_CachedShaders;
+
+        Ref<Framebuffer> fb;
+        Ref<Shader> shader;
+        if (!m_GeneratedThumbnails.contains(path.string())) {
+            FramebufferSpecification specs;
+            specs.Attachments = {
+                FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER,
+                FramebufferTextureFormat::DEPTH24STENCIL8
+            };
+            specs.Width = width;
+            specs.Height = width;
+
+            fb = Framebuffer::create(specs);
+            shader = CreateRef<Shader>(path);
+            m_CachedShaders[path.string()] = shader;
+
+            m_GeneratedThumbnails[path.string()] = fb;
+        }
+        else {
+            fb = m_GeneratedThumbnails[path.string()];
+            shader = m_CachedShaders[path.string()];
+        }
+
+        fb->bind();
+        Renderer2D::Clear();
+
+        TransformComponent transform;
+        transform.scale = {10.0f, 10.0f, 10.0f};
+        SpriteRendererComponent spriteRenderer;
+        spriteRenderer.color = {1.0f, 1.0f, 1.0f, 1.0f};
+        spriteRenderer.shader = shader;
+
+        EditorCamera camera;
+        camera.SetViewportSize(fb->getSpecification().Width, fb->getSpecification().Height);
+        camera.setPosition({0, 0, 10});
+        Renderer2D::BeginScene(camera);
+        Renderer2D::DrawSprite(transform.getLocalTransform(), spriteRenderer, -1);
+        Renderer2D::EndScene();
+        fb->unbind();
 
         return fb;
     }
