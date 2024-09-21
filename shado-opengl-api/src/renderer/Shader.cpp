@@ -17,6 +17,10 @@ namespace Shado {
 
     Shader::Shader(const std::filesystem::path& path)
         : filepath(path) {
+        // Shader sometimes crash because of std::async in ContentBrowserPanel, so we'll make it thread safe
+        static std::mutex s_Mutex;
+        std::lock_guard<std::mutex> lock(s_Mutex);
+        
         std::string source = readFile(path);
         auto shaderSources = preProcess(source);
         compile(shaderSources);

@@ -116,6 +116,8 @@ namespace Shado {
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
                 ThumbnailMetadata thumbnailMetadata = getThumbnail(directoryEntry);
+                float diff = m_ThumbnailSize - (m_ThumbnailSize / thumbnailMetadata.aspectRatio); // width - height
+                ImGui::SetCursorPosY(ImGui::GetCursorPosY() + diff); // <-- Make the text aligned
                 ImGui::ImageButton((ImTextureID)thumbnailMetadata.rendererId,
                                    {m_ThumbnailSize, m_ThumbnailSize / thumbnailMetadata.aspectRatio},
                                    {0, 1}, {1, 0});
