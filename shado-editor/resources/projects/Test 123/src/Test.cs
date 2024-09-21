@@ -13,7 +13,7 @@ namespace Sandbox
         //public Texture2D texture;
         //public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
-        //public Prefab linePrefab;
+        public Prefab linePrefab;
         //private ParticuleSystem particuleSystem;
 
         //public ShadoEvent events;
@@ -38,6 +38,9 @@ namespace Sandbox
             OnCollision2DEnterEvent += (info, other) => {
                 Log.Info("Collision with {0}", other.tag);
             };
+
+            Entity e = linePrefab.Instantiate(Vector3.one);
+            e.transform.rotation = new Vector3(0, Mathf.DegToRad(30.0f), 0);
         }
 
         protected override void OnUpdate(float dt)
@@ -114,6 +117,7 @@ namespace Sandbox
     {
         TextComponent? text;
         Entity? square;
+        public float fieldPrefabTest = 0.0f;
 
         protected override void OnCreate() {
             text = GetComponent<TextComponent>();

@@ -65,9 +65,6 @@ Entities:
       Color: [0.999996483, 1, 0.999989986, 1]
       Texture: Assets\Riven_HD.jpg
       TillingFactor: 1
-    RigidBody2DComponent:
-      Type: 0
-      FixedRotation: false
     BoxCollider2DComponent:
       Offset: [0, 0]
       Size: [0.5, 0.5]
@@ -95,6 +92,10 @@ Entities:
           Name: totalDt
           Type: 8
           Value: 0
+        - ID: 1914835392
+          Name: linePrefab
+          Type: 16
+          Value: 10464616447793372418
   - Entity: 1816516960762403436
     TagComponent:
       Tag: Ground
@@ -229,11 +230,11 @@ Entities:
       Friction: 0.5
       Restitution: 0
       RestitutionThreshold: 0.5
-  - Entity: 16695476663163877899
+  - Entity: 13363952811049387826
     TagComponent:
-      Tag: Text test
+      Tag: Text test (2)
     TransformComponent:
-      Translation: [-1.79999995, -1.89999998, 0.400000006]
+      Translation: [-1.39999998, -1.89999998, 0.400000006]
       Rotation: [0, 0, 0]
       Scale: [-0.800000012, -1.5, 1]
       ParentEntityId: 5567411534524352017
@@ -241,13 +242,16 @@ Entities:
       ScriptID: 3407664129
       ScriptName: Sandbox.TextIncrementor
       Fields:
-        []
+        - ID: 3674347169
+          Name: fieldPrefabTest
+          Type: 8
+          Value: 0
     PrefabInstanceComponent:
-      PrefabId: 9272373329109538123
-      PrefabEntityUniqueId: 5941834728084377729
+      PrefabId: 17041683459153382326
+      PrefabEntityUniqueId: 0
     TextRendererComponent:
       Text: "Nate H.\nhehexd"
-      Color: [0.33550483, 0.597244799, 0.934362948, 1]
+      Color: [0.760617733, 0.432869822, 0.346536279, 1]
       LineSpacing: 0
       Kerning: 0
       Font: D:\Code\Projects\shado-opengl-api\shado-editor\resources\projects\Test 123\Assets\OpenSans-Bold.ttf

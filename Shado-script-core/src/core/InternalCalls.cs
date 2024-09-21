@@ -45,6 +45,12 @@ namespace Shado
 
         #endregion
 
+        #region Prefab
+
+        internal static delegate* unmanaged<ulong, Vector3, ulong> Prefab_Instantiate;
+
+        #endregion
+
         #region Scene
 
         internal static delegate* unmanaged<ulong, bool> Scene_IsEntityValid;

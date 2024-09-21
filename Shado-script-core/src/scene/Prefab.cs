@@ -12,17 +12,16 @@ namespace Shado
     {
         internal readonly ulong id;
 
-        public static implicit operator bool(Prefab prefab) => prefab.id != 0;
-    }
-
-    public static class PrefabExt
-    {
-        public static Entity Instantiate(this Prefab prefab, Vector3 position) {
-            ulong entityId = 0; //InternalCalls.PrefabExt_Instantiate(prefab.id, position);
-            if (entityId == 0)
-                throw new InvalidPrefabIdException(prefab);
-            return new Entity(entityId);
+        public Entity Instantiate(Vector3 position) {
+            unsafe {
+                ulong entityId = InternalCalls.Prefab_Instantiate(id, position);
+                if (entityId == 0)
+                    throw new InvalidPrefabIdException(this);
+                return new Entity(entityId);
+            }
         }
+
+        public static implicit operator bool(Prefab prefab) => prefab.id != 0;
     }
 
     public class InvalidPrefabIdException : Exception

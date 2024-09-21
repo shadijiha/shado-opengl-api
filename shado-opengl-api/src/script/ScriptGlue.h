@@ -81,6 +81,10 @@ namespace Shado {
 
 #pragma endregion
 
+#pragma region Prefab
+        uint64_t Prefab_Instantiate(uint64_t prefabID, glm::vec3 position);
+#pragma endregion
+
 #pragma region Scene
         bool Scene_IsEntityValid(uint64_t entityID);
         Coral::String Scene_LoadScene(Coral::String scenePath);

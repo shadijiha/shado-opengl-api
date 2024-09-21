@@ -128,7 +128,7 @@ namespace Shado {
             if (!entity)
                 return;
 
-            SerializeEntity(out, entity);
+            SerializeEntity(out, entity, m_Scene->m_ScriptStorage);
         });
         out << YAML::EndSeq;
         out << YAML::EndMap;
@@ -141,22 +141,22 @@ namespace Shado {
         SHADO_CORE_ASSERT(false, "Not implemented");
     }
 
-    void SceneSerializer::serializePrefabHelper(YAML::Emitter& out, Entity& e, UUID prefabId) {
+    void SceneSerializer::serializePrefabHelper(YAML::Emitter& out, Entity& e, Ref<Prefab> prefab) {
         // Add a unique ID to every entity
         if (!e.hasComponent<PrefabInstanceComponent>()) {
             auto& prefabComponent = e.addComponent<PrefabInstanceComponent>();
-            prefabComponent.prefabId = prefabId;
+            prefabComponent.prefabId = prefab->GetId();
             prefabComponent.prefabEntityUniqueId = UUID();
         }
 
-        SerializeEntity(out, e, false);
+        SerializeEntity(out, e, prefab->GetScriptStorage(), false);
 
         auto children = e.getChildren();
 
         if (!children.empty()) {
             out << YAML::Key << "Children" << YAML::Value << YAML::BeginSeq;
             for (auto& child : children) {
-                serializePrefabHelper(out, child, prefabId);
+                serializePrefabHelper(out, child, prefab);
             }
             out << YAML::EndSeq;
         }
@@ -164,30 +164,30 @@ namespace Shado {
         out << YAML::EndMap;
     }
 
-    UUID SceneSerializer::serializePrefab(Entity entity, UUID prefabId) {
+    UUID SceneSerializer::serializePrefab(Ref<Prefab> prefab) {
         SHADO_PROFILE_FUNCTION();
 
         YAML::Emitter out;
         out << YAML::BeginMap;
 
-        out << YAML::Key << "PrefabId" << YAML::Value << (uint64_t)prefabId;
+        out << YAML::Key << "PrefabId" << YAML::Value << prefab->GetId();
         out << YAML::Key << "Data" << YAML::Value;
 
         // Recursively serialize children
-        serializePrefabHelper(out, entity, prefabId);
+        serializePrefabHelper(out, prefab->root, prefab);
 
         out << YAML::EndMap;
 
         // TODO: Once we have an asset manager, remove the prefab ID from the filename and
         // make this the duty of the asset manager
         std::ofstream fout(
-            Project::GetAssetDirectory() / (std::to_string((uint64_t)prefabId) + ".prefab"));
+            Project::GetAssetDirectory() / (std::to_string(prefab->GetId()) + ".prefab"));
         fout << out.c_str();
 
-        SHADO_CORE_ASSERT(entity.hasComponent<PrefabInstanceComponent>(),
+        SHADO_CORE_ASSERT(prefab->root.hasComponent<PrefabInstanceComponent>(),
                           "Entity must have a PrefabInstanceComponent by now");
 
-        return prefabId;
+        return prefab->GetId();
     }
 
     bool SceneSerializer::deserialize(const std::string& filepath) {
@@ -217,7 +217,7 @@ namespace Shado {
                 for (auto entity : entities) {
                     dererializeEntityHelper(entity, [this](std::string name, UUID uuid) {
                         return m_Scene->createEntityWithUUID(name, uuid);
-                    }, m_Scene);
+                    }, m_Scene, m_Scene->m_ScriptStorage);
                 }
             }
         }
@@ -239,7 +239,7 @@ namespace Shado {
             Entity e = prefab->attachEntity(id);
             e.getComponent<TagComponent>().tag = name;
             return e;
-        }, Scene::ActiveScene);
+        }, Scene::ActiveScene, prefab->GetScriptStorage());
 
         // Deserialize children
         auto children = node["Children"];
@@ -263,6 +263,9 @@ namespace Shado {
 
             prefab->root = deserializePrefabHelper(data["Data"], prefab);
 
+            // Make sure the prefab root component has the correct prefab id
+            prefab->root.getComponent<PrefabInstanceComponent>().prefabId = prefabId;
+
             return prefab;
         }
         catch (const YAML::Exception& e) {
@@ -271,7 +274,8 @@ namespace Shado {
         }
     }
 
-    void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap) {
+    void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity, ScriptStorage& scriptStorageContext,
+                                          bool endmap) {
         SHADO_CORE_ASSERT(entity.hasComponent<IDComponent>(), "No ID component");
 
         out << YAML::BeginMap; // Entity
@@ -477,7 +481,7 @@ namespace Shado {
 
             if (scriptEngine.IsValidScript(sc.ScriptID)) {
                 const auto& scriptMetadata = scriptEngine.GetScriptMetadata(sc.ScriptID);
-                const auto& entityStorage = m_Scene->m_ScriptStorage.EntityStorage.at(entity.getUUID());
+                const auto& entityStorage = scriptStorageContext.EntityStorage.at(entity.getUUID());
 
                 out << YAML::Key << "ScriptID" << YAML::Value << sc.ScriptID;
                 out << YAML::Key << "ScriptName" << YAML::Value << scriptMetadata.FullName;
@@ -718,7 +722,7 @@ namespace Shado {
     Entity SceneSerializer::dererializeEntityHelper(
         const YAML::Node& entity,
         std::function<Entity(std::string, UUID)> entityCreatorFunction,
-        Ref<Scene> scene
+        Ref<Scene> scene, ScriptStorage& scriptStorageContext
     ) {
         uint64_t uuid = entity["Entity"].as<uint64_t>(); // TODO
 
@@ -924,7 +928,7 @@ namespace Shado {
                         ScriptComponent& sc = deserializedEntity.addComponent<ScriptComponent>();
                         sc.ScriptID = scriptID;
 
-                        scene->m_ScriptStorage.InitializeEntityStorage(scriptID, deserializedEntity.getUUID());;
+                        scriptStorageContext.InitializeEntityStorage(scriptID, deserializedEntity.getUUID());;
 
                         auto fieldsArray = scriptComponent["Fields"];
                         for (auto field : fieldsArray) {
@@ -933,7 +937,7 @@ namespace Shado {
 
                             if (scriptMetadata.Fields.contains(fieldID)) {
                                 const auto& fieldMetadata = scriptMetadata.Fields.at(fieldID);
-                                auto& fieldStorage = scene->m_ScriptStorage.EntityStorage.at(
+                                auto& fieldStorage = scriptStorageContext.EntityStorage.at(
                                     deserializedEntity.getUUID()).Fields[fieldID];
 
                                 auto valueNode = field["Value"];

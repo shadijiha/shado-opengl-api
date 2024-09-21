@@ -160,7 +160,7 @@ namespace Shado {
     }
 
     static void CopyAllComponentsHelper(Entity newEntity, Entity source, ScriptStorage& scriptStorage,
-                                        bool copyTransform = true) {
+                                        bool copyTransform = true, bool copyScriptStorage = true) {
         if (copyTransform)
             CopyComponentIfExists<TransformComponent>(newEntity, source);
         CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
@@ -177,25 +177,29 @@ namespace Shado {
         // Script should always be last
         CopyComponentIfExists<ScriptComponent>(newEntity, source);
 
-        if (newEntity.hasComponent<ScriptComponent>()) {
+        if (newEntity.hasComponent<ScriptComponent>() && copyScriptStorage) {
             const auto& scriptComponent = newEntity.getComponent<ScriptComponent>();
             scriptStorage.InitializeEntityStorage(scriptComponent.ScriptID, newEntity.getUUID());
             scriptStorage.CopyEntityStorage(source.getUUID(), newEntity.getUUID(), scriptStorage);
         }
     }
 
-    Entity Scene::duplicateEntity(Entity source, bool modifyTag) {
+    static Entity duplicateEntityWithUUID(Scene& scene, Entity source, UUID id, bool modifyTag,
+                                          bool copyScriptStorage = true) {
         if (!source)
             return {};
 
-        Entity newEntity = createEntity(
+        Entity newEntity = scene.createEntityWithUUID(
             source.getComponent<TagComponent>().tag +
-            (modifyTag ? " (2)" : "")
-        );
+            (modifyTag ? " (2)" : ""), id);
 
-        CopyAllComponentsHelper(newEntity, source, m_ScriptStorage);
+        CopyAllComponentsHelper(newEntity, source, scene.GetScriptStorage(), true, copyScriptStorage);
 
         return newEntity;
+    }
+
+    Entity Scene::duplicateEntity(Entity source, bool modifyTag) {
+        return duplicateEntityWithUUID(*this, source, UUID(), modifyTag);
     }
 
     void Scene::destroyEntity(Entity entity) {
@@ -236,11 +240,27 @@ namespace Shado {
         m_Registry.destroy(entity);
     }
 
-    static Entity instantiatePrefabHelper(Scene& scene, Entity toDuplicate, bool modifyTag = true) {
-        Entity duplicated = scene.duplicateEntity(toDuplicate, modifyTag);
+    static Entity instantiatePrefabHelper(Ref<Prefab> prefab, Scene& scene, Entity toDuplicate, bool modifyTag = true) {
+        UUID instantiatedEntityId = UUID();
+
+        // Copy the script storage from the prefab to the new entity with instantiatedEntityId
+        if (toDuplicate.hasComponent<ScriptComponent>()) {
+            scene.GetScriptStorage().InitializeEntityStorage(toDuplicate.getComponent<ScriptComponent>().ScriptID,
+                                                             instantiatedEntityId);
+            prefab->GetScriptStorage().CopyEntityStorage(toDuplicate.getUUID(), instantiatedEntityId,
+                                                         scene.GetScriptStorage());
+        }
+
+
+        Entity duplicated = duplicateEntityWithUUID(scene,
+                                                    toDuplicate,
+                                                    instantiatedEntityId,
+                                                    modifyTag,
+                                                    false // We already copied script storage no need to copy it again
+        );
 
         for (const auto& oldChild : toDuplicate.getChildren()) {
-            Entity newChild = instantiatePrefabHelper(scene, oldChild, modifyTag);
+            Entity newChild = instantiatePrefabHelper(prefab, scene, oldChild, modifyTag);
             newChild.getComponent<TransformComponent>().setParent(newChild, duplicated);
         }
 
@@ -248,7 +268,7 @@ namespace Shado {
     }
 
     Entity Scene::instantiatePrefab(Ref<Prefab> prefab, bool modifyTag) {
-        return instantiatePrefabHelper(*this, prefab->root, modifyTag);
+        return instantiatePrefabHelper(prefab, *this, prefab->root, modifyTag);
     }
 
     void Scene::propagatePrefabChanges(Ref<Prefab> prefabChanged) {
@@ -269,7 +289,16 @@ namespace Shado {
             if (prefabEntity) {
                 // Make sure to keep the old parent id
                 Entity oldParent = e.getComponent<TransformComponent>().getParent(*this);
-                CopyAllComponentsHelper(e, prefabEntity, m_ScriptStorage, e.isChild(*this));
+
+                // Make sure to copy the script storage
+                if (prefabEntity.hasComponent<ScriptComponent>()) {
+                    m_ScriptStorage.InitializeEntityStorage(prefabEntity.getComponent<ScriptComponent>().ScriptID,
+                                                            e.getUUID());
+                    prefabChanged->GetScriptStorage().CopyEntityStorage(prefabEntity.getUUID(), e.getUUID(),
+                                                                        m_ScriptStorage);
+                }
+
+                CopyAllComponentsHelper(e, prefabEntity, m_ScriptStorage, e.isChild(*this), false);
                 e.getComponent<TransformComponent>().setParent(e, oldParent);
             }
             else
@@ -336,9 +365,9 @@ namespace Shado {
                 continue;
             }
 
-            if (!m_ScriptStorage.EntityStorage.contains(idComponent.id)) {
+            if (!m_ScriptStorage.EntityStorage.contains(idComponent.id) || !scriptComponent.Instance.IsValid()) {
                 // Shouldn't happen
-                SHADO_CORE_ASSERT(false, "");
+                continue;
             }
 
             scriptComponent.Instance.Invoke("OnDestroy");
@@ -396,7 +425,7 @@ namespace Shado {
                 for (auto scriptEntityID : view) {
                     auto& scriptComponent = view.get<ScriptComponent>(scriptEntityID);
 
-                    if (!scriptEngine.IsValidScript(scriptComponent.ScriptID)) {
+                    if (!scriptEngine.IsValidScript(scriptComponent.ScriptID) || !scriptComponent.Instance.IsValid()) {
                         continue;
                     }
 

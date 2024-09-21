@@ -363,6 +363,39 @@ namespace Shado {
     }
 
     void ScriptPrefabRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        PrefabCSMirror data = storage.GetValue<PrefabCSMirror>();
+        if (data.id != 0) {
+            Ref<Prefab> prefab = Prefab::GetPrefabById(data.id);
+            ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), prefab == nullptr);
+            std::string prefabTextValue = prefab
+                                              ? prefab->root.getComponent<TagComponent>().tag
+                                              : std::to_string(data.id);
+            prefabTextValue += " (prefab)";
+
+            UI::InputTextControl(fieldName.data(), prefabTextValue, ImGuiInputTextFlags_ReadOnly);
+        }
+        else {
+            std::string prefabIdStr = "(empty)";
+            UI::InputTextControl(fieldName.data(), prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+        }
+
+        // TODO: refactor duplicate code
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+                const wchar_t* pathStr = (const wchar_t*)payload->Data;
+                auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
+
+                if (Prefab::IsPrefabPath(path)) {
+                    Ref<Prefab> prefab = Prefab::CreateFromPath(path);
+                    if (prefab) {
+                        storage.SetValue(PrefabCSMirror{prefab->GetId()});
+                    }
+                }
+            }
+
+            ImGui::EndDragDropTarget();
+        }
     }
 
     void ScriptArrayRenderer::onImGuiRender(const ScriptTypeRendererData& context) {

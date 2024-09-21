@@ -13,6 +13,7 @@
 #include "ScriptEngine.h"
 #include "Events/input.h"
 #include "project/Project.h"
+#include "scene/Prefab.h"
 #include "util/TypeInfo.h"
 
 namespace Shado {
@@ -140,6 +141,8 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
+
+        SHADO_ADD_INTERNAL_CALL(Prefab_Instantiate);
 
         SHADO_ADD_INTERNAL_CALL(Scene_IsEntityValid);
 
@@ -430,6 +433,21 @@ namespace Shado {
                 return entity.getUUID();
             else
                 return 0;
+        }
+
+#pragma endregion
+
+#pragma region Prefab
+
+        uint64_t Prefab_Instantiate(uint64_t prefabID, glm::vec3 position) {
+            auto scene = ScriptEngine::GetInstance().GetCurrentScene();
+            auto prefab = Prefab::GetPrefabById(prefabID);
+            if (!prefab || !scene)
+                return 0;
+
+            Entity e = scene->instantiatePrefab(prefab);
+            e.getComponent<TransformComponent>().position = position;
+            return e.getUUID();
         }
 
 #pragma endregion
