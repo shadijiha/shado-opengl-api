@@ -69,18 +69,45 @@ namespace Shado {
 
         ScriptStorage& GetScriptStorage() { return scriptStorage; }
 
-        static Ref<Prefab> Create(UUID id) {
-            return CreateRef<Prefab>(id);
+        static Ref<Prefab> CreateFromEntity(Entity entity) {
+            Ref<Prefab> newPrefab = CreateRef<Prefab>(UUID());
+            newPrefab->root = entity;
+
+            // Copy script storage to prefab
+            Scene::ActiveScene->GetScriptStorage().CopyTo(newPrefab->GetScriptStorage());
+
+            SceneSerializer serializer(Scene::ActiveScene);
+            serializer.serializePrefab(newPrefab);
+
+            // Update the entitie's prefab component
+            auto& prefabComponent = entity.addOrReplaceComponent<PrefabInstanceComponent>();
+            prefabComponent.prefabId = newPrefab->GetId();
+            prefabComponent.prefabEntityUniqueId = newPrefab->root.getUUID();
+
+            return newPrefab;
+        }
+
+        static Ref<Prefab> CreateFromPath(const std::filesystem::path& path) {
+            if (IsPrefabPath(path)) {
+                UUID prefabId = std::stoull(path.filename().replace_extension());
+                return GetPrefabById(prefabId);
+            }
+            return nullptr;
         }
 
         static Ref<Prefab> GetPrefabById(UUID id) {
+            static std::mutex mutex;
+
             if (loadedPrefabs.find(id) == loadedPrefabs.end()) {
                 // TODO: once we have an asset manager, offload this duty to it
                 const std::filesystem::path path = Project::GetAssetDirectory() / (std::to_string(id) + ".prefab");
                 if (std::filesystem::exists(path)) {
                     SceneSerializer serializer(Scene::ActiveScene);
                     Ref<Prefab> prefab = serializer.deserializePrefab(path.string());
-                    loadedPrefabs[id] = prefab;
+                    {
+                        std::lock_guard lock(mutex);
+                        loadedPrefabs[id] = prefab;
+                    }
                 }
                 else {
                     return nullptr;
@@ -106,14 +133,6 @@ namespace Shado {
                 return 0;
             }
             return std::stoull(path.filename().replace_extension());
-        }
-
-        static Ref<Prefab> CreateFromPath(const std::filesystem::path& path) {
-            if (IsPrefabPath(path)) {
-                UUID prefabId = std::stoull(path.filename().replace_extension());
-                return GetPrefabById(prefabId);
-            }
-            return nullptr;
         }
 
     public:

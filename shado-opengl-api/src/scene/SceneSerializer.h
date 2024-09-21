@@ -23,9 +23,9 @@ namespace Shado {
         /// @return The UUID of the prefab
         UUID serializePrefab(Ref<Prefab> prefab);
 
-        bool deserialize(const std::string& filepath, std::string& error);
-        bool deserialize(const std::string& filepath);
-        bool deserializeRuntime(const std::string& filepath);
+        bool deserialize(const std::filesystem::path& filepath, std::string& error);
+        bool deserialize(const std::filesystem::path& filepath);
+        bool deserializeRuntime(const std::filesystem::path& filepath);
         Ref<Prefab> deserializePrefab(const std::string& filepath);
 
     private:

@@ -190,17 +190,17 @@ namespace Shado {
         return prefab->GetId();
     }
 
-    bool SceneSerializer::deserialize(const std::string& filepath) {
+    bool SceneSerializer::deserialize(const std::filesystem::path& filepath) {
         std::string ignored;
         return this->deserialize(filepath, ignored);
     }
 
-    bool SceneSerializer::deserialize(const std::string& filepath, std::string& error) {
+    bool SceneSerializer::deserialize(const std::filesystem::path& filepath, std::string& error) {
         SHADO_PROFILE_FUNCTION();
 
         YAML::Node data;
         try {
-            data = YAML::LoadFile(filepath);
+            data = YAML::LoadFile(filepath.string());
 
 
             if (!data["Scene"]) {
@@ -229,7 +229,7 @@ namespace Shado {
         return true;
     }
 
-    bool SceneSerializer::deserializeRuntime(const std::string& filepath) {
+    bool SceneSerializer::deserializeRuntime(const std::filesystem::path& filepath) {
         SHADO_CORE_ASSERT(false, "Not implemented");
         return false;
     }

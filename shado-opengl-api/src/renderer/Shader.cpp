@@ -179,7 +179,8 @@ namespace Shado {
 
                 glDeleteShader(shader);
 
-                std::string errorMessage = "Shader compilation failure: " + std::to_string(type) + infoLog.data();
+                std::string errorMessage = "Shader compilation failure: " + std::to_string(type) + (
+                    !infoLog.empty() ? infoLog.data() : "");
                 throw ShaderCompilationException(errorMessage);
                 break;
             }

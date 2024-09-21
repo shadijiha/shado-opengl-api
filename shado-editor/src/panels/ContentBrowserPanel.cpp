@@ -10,8 +10,10 @@
 #include "util/TimeStep.h"
 #include "project/Project.h"
 #include "SceneHierarchyPanel.h"
+#include "renderer/FrameBuffer.h"
 #include "scene/Components.h"
 #include "scene/Prefab.h"
+#include "util/FileSystem.h"
 
 namespace Shado {
     static bool isImage(const std::filesystem::path& path);
@@ -60,19 +62,7 @@ namespace Shado {
                 UUID childID = *(const UUID*)payload->Data;
                 auto childEntity = Scene::ActiveScene->getEntityById(childID);
 
-                Ref<Prefab> newPrefab = CreateRef<Prefab>(UUID());
-                newPrefab->root = childEntity;
-
-                // Copy script storage to prefab
-                Scene::ActiveScene->GetScriptStorage().CopyTo(newPrefab->GetScriptStorage());
-
-                SceneSerializer serializer(Scene::ActiveScene);
-                serializer.serializePrefab(newPrefab);
-
-                // Update the entitie's prefab component
-                auto& prefabComponent = childEntity.addOrReplaceComponent<PrefabInstanceComponent>();
-                prefabComponent.prefabId = newPrefab->GetId();
-                prefabComponent.prefabEntityUniqueId = newPrefab->root.getUUID();
+                Prefab::CreateFromEntity(childEntity);
 
                 Dialog::alert(
                     std::string("Successfully serialized prefab ") + childEntity.getComponent<TagComponent>().tag,
@@ -106,8 +96,7 @@ namespace Shado {
             }
 
             static float padding = 25.0f;
-            static float thumbnailSize = 100.0f;
-            float cellSize = thumbnailSize + padding;
+            float cellSize = m_ThumbnailSize + padding;
 
             float panelWidth = ImGui::GetContentRegionAvail().x;
             int columnCount = (int)(panelWidth / cellSize);
@@ -126,8 +115,10 @@ namespace Shado {
 
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
-                uint32_t rendererId = getThumbnail(directoryEntry);
-                ImGui::ImageButton((ImTextureID)rendererId, {thumbnailSize, thumbnailSize}, {0, 1}, {1, 0});
+                ThumbnailMetadata thumbnailMetadata = getThumbnail(directoryEntry);
+                ImGui::ImageButton((ImTextureID)thumbnailMetadata.rendererId,
+                                   {m_ThumbnailSize, m_ThumbnailSize / thumbnailMetadata.aspectRatio},
+                                   {0, 1}, {1, 0});
 
                 // Context menu to create 
                 if (ImGui::BeginPopupContextItem()) {
@@ -137,7 +128,8 @@ namespace Shado {
                         Dialog::openPathInExplorer(directoryEntry.is_directory()
                                                        ? path.string()
                                                        : path.parent_path().string());
-
+                    if (ImGui::MenuItem("Delete"))
+                        FileSystem::DeleteFile(path);
                     ImGui::EndPopup();
                 }
 
@@ -149,7 +141,7 @@ namespace Shado {
                     // Drag and drop preview
                     if (isImage(path)) {
                         Ref<Texture2D> text = getTextureCached(imagesThumbnails, path);
-                        ImGui::Image((void*)text->getRendererID(), {thumbnailSize / 2, thumbnailSize / 2}, {0, 1},
+                        ImGui::Image((void*)text->getRendererID(), {m_ThumbnailSize / 2, m_ThumbnailSize / 2}, {0, 1},
                                      {1, 0});
                     }
                     else {
@@ -181,7 +173,9 @@ namespace Shado {
                         filenameString = tag;
                     }
                     else {
-                        // TODO: load the prefab asynchronously
+                        std::async(std::launch::async, [prefabID]() {
+                            Prefab::GetPrefabById(prefabID);
+                        });
                     }
                 }
                 ImGui::TextWrapped(filenameString.c_str());
@@ -220,7 +214,8 @@ namespace Shado {
         });
     }
 
-    uint32_t ContentBrowserPanel::getThumbnail(const std::filesystem::directory_entry& directoryEntry) {
+    ContentBrowserPanel::ThumbnailMetadata ContentBrowserPanel::getThumbnail(
+        const std::filesystem::directory_entry& directoryEntry) {
         Ref<Texture2D> icon = directoryEntry.is_directory() ? m_DirectoryIcon : m_FileIcon;
 
         // If it is an image
@@ -229,7 +224,19 @@ namespace Shado {
             icon = getTextureCached(imagesThumbnails, path);
         }
         else if (path.extension() == ".shadoscene") {
-            icon = m_SceneIcon;
+            //icon = m_SceneIcon;
+            Ref<Framebuffer> fb;
+            if (!m_ScenesThumbnails.contains(path.string())) {
+                fb = generateSceneThumbnail(path, m_ThumbnailSize);
+            }
+            else {
+                fb = m_ScenesThumbnails[path.string()];
+            }
+
+            return {
+                fb->getColorAttachmentRendererID(),
+                (float)fb->getSpecification().Width / (float)fb->getSpecification().Height
+            };
         }
         else if (path.extension() == ".prefab") {
             icon = m_PrefabIcon;
@@ -240,7 +247,37 @@ namespace Shado {
         else if (path.extension() == ".sln") {
             icon = m_SlnIcon;
         }
-        return icon->getRendererID();
+        return {icon->getRendererID(), (float)icon->getWidth() / (float)icon->getHeight()};
+    }
+
+    Ref<Framebuffer> ContentBrowserPanel::generateSceneThumbnail(const std::filesystem::path& path, uint32_t width) {
+        FramebufferSpecification specs;
+        specs.Attachments = {
+            FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER,
+            FramebufferTextureFormat::DEPTH24STENCIL8
+        };
+        specs.Width = width;
+        specs.Height = width / Application::get().getWindow().getAspectRatio();
+
+        auto fb = Framebuffer::create(specs);
+
+        Ref<Scene> scene = CreateRef<Scene>();
+        SceneSerializer serializer(scene);
+        serializer.deserialize(path);
+
+        fb->bind();
+        Renderer2D::Clear();
+
+        EditorCamera camera;
+        camera.SetViewportSize(specs.Width, specs.Height);
+        camera.setPosition({0, 0, 10});
+        scene->onViewportResize(specs.Width, specs.Height);
+        scene->onDrawEditor(camera);
+        fb->unbind();
+
+        m_ScenesThumbnails[path.string()] = fb;
+
+        return fb;
     }
 
     static bool isImage(const std::filesystem::path& path) {

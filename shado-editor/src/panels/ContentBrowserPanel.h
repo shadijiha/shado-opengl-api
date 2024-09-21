@@ -7,31 +7,42 @@
 #include <unordered_map>
 
 namespace Shado {
-	class ContentBrowserPanel {
-	public:
-		ContentBrowserPanel();
-		ContentBrowserPanel(std::optional<std::filesystem::path> path);
+    class Framebuffer;
+}
 
-		void onImGuiRender();
+namespace Shado {
+    class ContentBrowserPanel {
+    public:
+        ContentBrowserPanel();
+        ContentBrowserPanel(std::optional<std::filesystem::path> path);
 
-	private:
-		void setDirectory(const std::filesystem::path& path);
-		uint32_t getThumbnail(const std::filesystem::directory_entry&);
-		
-	private:
-		std::optional<std::filesystem::path> m_CurrentDirectory;
+        void onImGuiRender();
 
-		Ref<Texture2D> m_DirectoryIcon;
-		Ref<Texture2D> m_FileIcon;
-		Ref<Texture2D> m_SceneIcon;
-		Ref<Texture2D> m_PrefabIcon;
-		Ref<Texture2D> m_CSIcon;
-		Ref<Texture2D> m_SlnIcon;
+    private:
+        struct ThumbnailMetadata {
+            uint32_t rendererId;
+            float aspectRatio;
+        };
 
-		std::vector<std::filesystem::directory_entry> directories;
-		uint32_t tick = 1;
+        void setDirectory(const std::filesystem::path& path);
+        ThumbnailMetadata getThumbnail(const std::filesystem::directory_entry&);
+        Ref<Framebuffer> generateSceneThumbnail(const std::filesystem::path& path, uint32_t width);
 
-		std::unordered_map<std::string, Ref<Texture2D>> imagesThumbnails;
-	};
+    private:
+        float m_ThumbnailSize = 100.0f;
+        std::optional<std::filesystem::path> m_CurrentDirectory;
 
+        Ref<Texture2D> m_DirectoryIcon;
+        Ref<Texture2D> m_FileIcon;
+        Ref<Texture2D> m_SceneIcon;
+        Ref<Texture2D> m_PrefabIcon;
+        Ref<Texture2D> m_CSIcon;
+        Ref<Texture2D> m_SlnIcon;
+        std::unordered_map<std::string, Ref<Framebuffer>> m_ScenesThumbnails;
+
+        std::vector<std::filesystem::directory_entry> directories;
+        uint32_t tick = 1;
+
+        std::unordered_map<std::string, Ref<Texture2D>> imagesThumbnails;
+    };
 }

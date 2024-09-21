@@ -39,4 +39,10 @@ namespace Shado {
         }
         return folderPath;
     }
+
+    void FileSystem::DeleteFile(const std::filesystem::path& path) {
+        if (std::filesystem::exists(path)) {
+            std::filesystem::remove(path);
+        }
+    }
 }
