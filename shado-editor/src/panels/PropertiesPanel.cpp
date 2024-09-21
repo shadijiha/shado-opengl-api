@@ -396,6 +396,11 @@ namespace Shado {
 
             ImGui::EndDragDropTarget();
         }
+
+        if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+            if (ImGui::MenuItem("Clear"))
+                storage.SetValue<UUID>(0);
+        }
     }
 
     void ScriptArrayRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
@@ -435,6 +440,13 @@ namespace Shado {
             }
 
             ImGui::EndDragDropTarget();
+        }
+
+        if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+            if (ImGui::MenuItem("Clear"))
+                storage.SetValue<UUID>(0);
+
+            ImGui::EndPopup();
         }
     }
 

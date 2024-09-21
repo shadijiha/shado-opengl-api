@@ -11,6 +11,8 @@
 #include "imgui_internal.h"
 
 namespace Shado {
+    class Texture2D;
+
     class UI {
     public:
         enum class FileChooserType {
@@ -46,7 +48,7 @@ namespace Shado {
             FileChooserType type = FileChooserType::Open
         );
 
-        static void TextureControl(Ref<Shado::Texture2D>& texture);
+        static void TextureControl(Ref<Texture2D>& texture);
 
         static bool InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags = 0,
                                      float columnWidth = 100.0f);

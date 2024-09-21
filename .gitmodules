@@ -25,3 +25,6 @@
 [submodule "shado-opengl-api/vendor/Coral"]
 	path = shado-opengl-api/vendor/Coral
 	url = https://github.com/StudioCherno/Coral.git
+[submodule "shado-opengl-api/vendor/shado-bin-serialization"]
+	path = shado-opengl-api/vendor/shado-bin-serialization
+	url = https://github.com/shadijiha/shado-bin-serialization.git

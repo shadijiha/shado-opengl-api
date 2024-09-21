@@ -35,6 +35,7 @@ project "shado-opengl-api"
         "%{IncludeDir.msdfgen}",
         "%{IncludeDir.msdf_atlas_gen}",
         "%{IncludeDir.Coral}",
+        "%{IncludeDir.shado_bin_serialization}"
     }
 
     links
@@ -49,6 +50,7 @@ project "shado-opengl-api"
         "shcore.lib",
         "msdf-atlas-gen",
         "Coral.Native",
+        "shado-bin-serialization"
     }
 
     filter "system:windows"

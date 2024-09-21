@@ -6,6 +6,7 @@
 #include "Events/input.h"
 #include "project/Project.h"
 #include "scene/utils/SceneUtils.h"
+#include "renderer/Texture2D.h"
 
 namespace Shado {
     void UI::TreeNode(int id, const std::string& label, std::function<void()> ui, ImGuiTreeNodeFlags flags) {
