@@ -60,7 +60,7 @@ uniform float u_Time;
 uniform vec2 u_ScreenResolution;
 
 #define TIME        u_Time
-#define RESOLUTION  u_ScreenResolution
+#define RESOLUTION  vec3(200, 200, 0) //u_ScreenResolution
 
 #define ROT(a)      mat2(cos(a), sin(a), -sin(a), cos(a))
 

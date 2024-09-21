@@ -73,12 +73,12 @@ namespace Sandbox
 
         public float moveDelta = 5.0f;
         private CameraComponent? camera;
-        private Entity? camera2;
+        public Entity camera2;
 
         protected override void OnCreate() { 
             if (HasComponent<CameraComponent>())
                 camera = GetComponent<CameraComponent>();
-            camera2 = FindEntityByName("camera2");
+            //camera2 = FindEntityByName("camera2");
         }
 
         protected override void OnUpdate(float dt) {

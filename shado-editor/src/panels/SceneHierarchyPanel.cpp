@@ -108,7 +108,7 @@ namespace Shado {
             // if a child is selected then expand the parent
             flags |= isChildSelectedRecursively(entity, m_Selected) ? ImGuiTreeNodeFlags_DefaultOpen : 0;
             opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tc.tag.c_str());
-            if (ImGui::IsItemClicked()) {
+            if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(0)) {
                 setSelected(entity);
             }
         }

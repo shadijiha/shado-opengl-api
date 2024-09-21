@@ -81,7 +81,7 @@ const float refr_index    = 0.9;
 
 
 #define TIME        u_Time
-#define RESOLUTION  u_ScreenResolution
+#define RESOLUTION  vec3(200, 200, 0) //u_ScreenResolution
 #define PI          3.141592654
 #define TAU         (2.0*PI)
 

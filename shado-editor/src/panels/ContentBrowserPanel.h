@@ -3,7 +3,6 @@
 #include <optional>
 
 #include "renderer/Texture2D.h"
-#include "util/TimeStep.h"
 #include <unordered_map>
 
 namespace Shado {

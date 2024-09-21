@@ -72,7 +72,7 @@ void main()
 {
 	vec4 texColor = Input.Color;
 	vec2 fragCoord = gl_FragCoord.xy;
-	vec2 iResolution = vec2(1280, 720);
+	vec2 iResolution = vec2(200, 200);
 
 	vec2 uv = fragCoord.xy / iResolution.xy;
     float a = iResolution.x/iResolution.y;

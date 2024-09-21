@@ -110,7 +110,7 @@ namespace Shado {
                 const auto& fieldMetadata = m_ScriptMetadata[entityStorage.ScriptID].Fields[fieldID];
 
                 auto& editorAssignableAttribType = m_CoreAssemblyData->Assembly->GetType(
-                    "Hazel.EditorAssignableAttribute");
+                    "Shado.Editor.EditorAssignableAttribute");
                 if (fieldMetadata.ManagedType->HasAttribute(editorAssignableAttribType)) {
                     Coral::ManagedObject value = fieldMetadata.ManagedType->CreateInstance(
                         fieldStorage.GetValue<uint64_t>());

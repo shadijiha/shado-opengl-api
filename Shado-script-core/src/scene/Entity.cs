@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Coral.Managed.Interop;
+using Shado.Editor;
 
 namespace Shado
 {
+    [EditorAssignable]
     public class Entity
     {
         private ulong id;

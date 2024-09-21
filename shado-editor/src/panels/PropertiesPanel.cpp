@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "imgui.h"
+#include "SceneHierarchyPanel.h"
 #include "box2d/b2_body.h"
 #include "debug/Profile.h"
 #include "Project/Project.h"
@@ -380,7 +381,6 @@ namespace Shado {
             UI::InputTextControl(fieldName.data(), prefabIdStr, ImGuiInputTextFlags_ReadOnly);
         }
 
-        // TODO: refactor duplicate code
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
                 const wchar_t* pathStr = (const wchar_t*)payload->Data;
@@ -410,6 +410,34 @@ namespace Shado {
         // TODO: Implement array rendering
     }
 
+    void ScriptEntityRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        UUID entityId = storage.GetValue<UUID>();
+        if (Entity e = scene->getEntityById(entityId)) {
+            std::string entityName = e.getComponent<TagComponent>().tag + " (entity)";
+            UI::InputTextControl(fieldName.data(), entityName, ImGuiInputTextFlags_ReadOnly);
+        }
+        else {
+            std::string entityName = "(empty)";
+            UI::InputTextControl(fieldName.data(), entityName, ImGuiInputTextFlags_ReadOnly);
+        }
+
+        if (ImGui::BeginDragDropTarget()) {
+            if (
+                const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+                    SceneHierarchyPanel::SceneHeirarchyEntityDragDropId.c_str())
+            ) {
+                UUID* draggedEntityId = (UUID*)payload->Data;
+                Entity draggedEntity = scene->getEntityById(*draggedEntityId);
+                if (draggedEntity) {
+                    storage.SetValue<UUID>(*draggedEntityId);
+                }
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+    }
+
     void ScriptCustomEditorRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
     }
 
@@ -421,6 +449,7 @@ namespace Shado {
             {DataType::Vector3, snew(ScriptVector3Renderer) ScriptVector3Renderer()},
             {DataType::Vector4, snew(ScriptVector4Renderer) ScriptVector4Renderer()},
             {DataType::Prefab, snew(ScriptPrefabRenderer) ScriptPrefabRenderer()},
+            {DataType::Entity, snew(ScriptEntityRenderer) ScriptEntityRenderer()},
         };
         static auto* customEditor = snew(ScriptCustomEditorRenderer) ScriptCustomEditorRenderer();
 
