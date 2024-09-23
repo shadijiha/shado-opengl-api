@@ -63,6 +63,7 @@ namespace Shado {
         void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
         void softResetPhysics();
         // Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
+        b2World& getPhysicsWorld() const { return *m_World; }
 
         bool isRunning() const { return m_IsRunning; }
         ScriptStorage& GetScriptStorage();

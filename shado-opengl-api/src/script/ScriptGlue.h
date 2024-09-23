@@ -214,7 +214,24 @@ namespace Shado {
         void Shader_SetFloat3(uint64_t inHandle, Coral::String inName, glm::vec3 inValue);
         void Shader_SetFloat4(uint64_t inHandle, Coral::String inName, glm::vec4 inValue);
 
+#pragma endregion
 
+#pragma region Physics2D
+        struct RaycastData2D {
+            glm::vec2 Origin;
+            glm::vec2 Direction;
+            float MaxDistance;
+            Coral::Array<Coral::ReflectionType> RequiredComponentTypes;
+        };
+
+        struct ScriptRaycastHit2D {
+            uint64_t EntityID;
+            glm::vec2 Position;
+            glm::vec2 Normal;
+            float Distance;
+        };
+
+        Coral::Array<ScriptRaycastHit2D> Physics2D_Raycast(RaycastData2D* inRaycastData);
 #pragma endregion
 
 #pragma region Log

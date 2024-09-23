@@ -1,8 +1,8 @@
 PrefabId: 13622340184056878492
 Data:
-  Entity: 2620028872084976684
+  Entity: 14170367100180307192
   TagComponent:
-    Tag: Small Riven (2) (2)
+    Tag: Small Riven
   TransformComponent:
     Translation: [2.42814708, 3.47558427, 0]
     Rotation: [0, 0, 0]
@@ -11,7 +11,7 @@ Data:
   SpriteRendererComponent:
     Color: [1, 1, 1, 1]
     TextureHandle: 18014698014252577933
-    TilingFactor: 3
+    TilingFactor: 1.20000005
     ShaderHandle: 0
   RigidBody2DComponent:
     Type: 2

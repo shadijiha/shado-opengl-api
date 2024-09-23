@@ -9,8 +9,8 @@ namespace Shado
         private ulong id;
         private Entity? m_Parent;
 
-        public event Action<Collision2DInfo, Entity?> OnCollision2DEnterEvent;
-        public event Action<Collision2DInfo, Entity?> OnCollision2DLeaveEvent;
+        public event Action<Collision2DInfo, Entity?>? OnCollision2DEnterEvent;
+        public event Action<Collision2DInfo, Entity?>? OnCollision2DLeaveEvent;
 
         // IMPORTANT:
         // This constructor is used by the script engine to create entities
@@ -34,7 +34,7 @@ namespace Shado
             set { transform.position = value; }
         }
 
-        public TransformComponent transform => GetComponent<TransformComponent>();
+        public TransformComponent transform => GetComponent<TransformComponent>()!;
 
         public Entity? Parent {
             get {
@@ -75,8 +75,8 @@ namespace Shado
         /// Tag component of the entity (and its caching)
         /// </summary>
         public string tag {
-            get { return GetComponent<TagComponent>().tag; }
-            set { GetComponent<TagComponent>().tag = value; }
+            get => GetComponent<TagComponent>()!.tag;
+            set => GetComponent<TagComponent>()!.tag = value;
         }
 
         protected virtual void OnCreate() { }
@@ -200,6 +200,13 @@ namespace Shado
         }
 
         public override int GetHashCode() => (int)ID;
+
+        public override bool Equals(object? obj) {
+            if (obj is null || !(obj is Entity))
+                return false;
+            Entity other = (Entity)obj;
+            return this.ID == other.ID;
+        }
 
         public static bool operator ==(Entity? entityA, Entity? entityB) =>
             entityA is null ? entityB is null : entityA.Equals(entityB);

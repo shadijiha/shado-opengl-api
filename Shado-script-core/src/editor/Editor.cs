@@ -2,6 +2,7 @@
 
 namespace Shado.Editor
 {
+#if false
     public abstract class Editor
     {
         private UInt32 monoGCHandle;
@@ -34,4 +35,6 @@ namespace Shado.Editor
             targetType = type;
         }
     }
+
+#endif
 }

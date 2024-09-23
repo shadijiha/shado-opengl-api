@@ -24,7 +24,7 @@ namespace Shado
         public string tag {
             get {
                 unsafe {
-                    return InternalCalls.TagComponent_GetTag(Entity.ID);
+                    return InternalCalls.TagComponent_GetTag(Entity.ID)!;
                 }
             }
             set {
@@ -454,7 +454,7 @@ namespace Shado
         public string text {
             get {
                 unsafe {
-                    return InternalCalls.TextComponent_GetText(Entity.ID);
+                    return InternalCalls.TextComponent_GetText(Entity.ID)!;
                 }
             }
             set {

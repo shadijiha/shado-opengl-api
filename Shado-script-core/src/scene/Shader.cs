@@ -1,13 +1,15 @@
 ﻿using System;
 using System.IO;
+using Shado.Editor;
 using UI = Shado.Editor.UI;
 
 namespace Shado
 {
+    [EditorAssignable]
     public class Shader
     {
         internal ulong handle = 0;
-        public string filepath { get; private set; }
+        public string? filepath { get; }
 
         public Shader(string pathRelativeToProject) {
             unsafe {
@@ -53,6 +55,7 @@ namespace Shado
         }
     }
 
+#if false
     [Editor.EditorTargetType(typeof(Shader))]
     public class ShaderEditor : Editor.Editor
     {
@@ -84,8 +87,8 @@ namespace Shado
                 writer.WriteLine(@"
 // This is an example of a shader file
 // Both vertex and fragment shaders are in the same file
-#type vertex
-#version 450 core
+//#type vertex
+//#version 450 core
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec4 a_Color;
@@ -121,8 +124,8 @@ void main()
 	gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
 }
 
-#type fragment
-#version 450 core
+//#type fragment
+//#version 450 core
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out int o_EntityID;
@@ -155,4 +158,5 @@ void main()
             }
         }
     }
+#endif
 }

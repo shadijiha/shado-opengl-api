@@ -7,7 +7,7 @@ namespace Shado
     [EditorAssignable]
     public class Texture2D
     {
-        public readonly string filepath;
+        public readonly string? filepath;
         internal ulong handle = 0;
 
         public Texture2D(string pathRelativeToProject) {
@@ -34,6 +34,7 @@ namespace Shado
         }
     }
 
+#if false
     [Editor.EditorTargetType(typeof(Texture2D))]
     public class Texture2DEditor : Editor.Editor
     {
@@ -59,4 +60,5 @@ namespace Shado
         //  Log.Info(ref e);
         //}
     }
+#endif
 }

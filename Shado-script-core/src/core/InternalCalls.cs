@@ -184,6 +184,12 @@ namespace Shado
 
         #endregion
 
+        #region Physics2D
+
+        internal static delegate* unmanaged<RaycastData2D*, NativeArray<RaycastHit2D>> Physics2D_Raycast;
+
+        #endregion
+
         #region Log
 
         internal static delegate* unmanaged<Log.LogLevel, NativeString, void> Log_LogMessage;

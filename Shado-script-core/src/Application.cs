@@ -80,7 +80,7 @@ namespace Shado
         public string title {
             get {
                 unsafe {
-                    return InternalCalls.Window_GetTitle();
+                    return InternalCalls.Window_GetTitle()!;
                 }
             }
             set {

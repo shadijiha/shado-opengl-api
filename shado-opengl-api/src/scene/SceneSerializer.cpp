@@ -388,7 +388,7 @@ namespace Shado {
 
             out << YAML::Key << "Color" << YAML::Value << circleRendererComponent.color;
             out << YAML::Key << "TextureHandle" << YAML::Value << circleRendererComponent.texture;
-            out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
+            out << YAML::Key << "TilingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
 
             out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
             out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
@@ -758,6 +758,7 @@ namespace Shado {
         if (spriteRendererComponent) {
             auto& src = deserializedEntity.addComponent<SpriteRendererComponent>();
             src.color = spriteRendererComponent["Color"].as<glm::vec4>();
+            src.tilingFactor = spriteRendererComponent["TilingFactor"].as<float>();
 
             if (spriteRendererComponent["TextureHandle"])
                 src.texture = spriteRendererComponent["TextureHandle"].as<AssetHandle>();
@@ -820,7 +821,7 @@ namespace Shado {
             src.color = circleRendererComponent["Color"].as<glm::vec4>();
             src.thickness = circleRendererComponent["Thickness"].as<float>();
             src.fade = circleRendererComponent["Fade"].as<float>();
-            src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
+            src.tilingFactor = circleRendererComponent["TilingFactor"].as<float>();
 
             if (circleRendererComponent["TextureHandle"])
                 src.texture = circleRendererComponent["TextureHandle"].as<AssetHandle>();

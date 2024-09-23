@@ -32,7 +32,7 @@ namespace Shado
                 sceneName += ".shadoscene";
 
             unsafe {
-                return InternalCalls.Scene_LoadScene(sceneName);
+                return InternalCalls.Scene_LoadScene(sceneName)!;
             }
         }
     }

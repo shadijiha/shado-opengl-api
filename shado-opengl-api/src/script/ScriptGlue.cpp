@@ -223,6 +223,8 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Shader_SetFloat3);
         SHADO_ADD_INTERNAL_CALL(Shader_SetFloat4);
 
+        SHADO_ADD_INTERNAL_CALL(Physics2D_Raycast);
+
         SHADO_ADD_INTERNAL_CALL(Log_LogMessage);
 
         SHADO_ADD_INTERNAL_CALL(Input_IsKeyPressed);
@@ -1119,6 +1121,67 @@ namespace Shado {
             Ref<Shader> shader = AssetManager::GetAsset<Shader>(inHandle);
             if (shader)
                 shader->setFloat4(std::string(inName), inValue);
+        }
+
+#pragma endregion
+
+#pragma region Physics2D
+
+        Coral::Array<ScriptRaycastHit2D> Physics2D_Raycast(RaycastData2D* inRaycastData) {
+            auto scene = ScriptEngine::GetInstance().GetCurrentScene();
+            HZ_ICALL_VALIDATE_PARAM_V(scene, false);
+
+            struct Raycast2DResult {
+                Entity HitEntity;
+                glm::vec2 Point;
+                glm::vec2 Normal;
+                float Distance; // World units
+
+                Raycast2DResult(Entity entity, glm::vec2 point, glm::vec2 normal, float distance)
+                    : HitEntity(entity), Point(point), Normal(normal), Distance(distance) {
+                }
+            };
+
+            class RayCastCallback : public b2RayCastCallback {
+            public:
+                RayCastCallback(Ref<Scene> scene, std::vector<Raycast2DResult>& results, glm::vec2 p0, glm::vec2 p1)
+                    : m_Scene(scene), m_Results(results), m_Point0(p0), m_Point1(p1) {
+                }
+
+                virtual float ReportFixture(b2Fixture* fixture, const b2Vec2& point,
+                                            const b2Vec2& normal, float fraction) {
+                    UUID entityID = *(UUID*)&fixture->GetBody()->GetUserData();
+                    Entity entity = m_Scene->getEntityById(entityID);
+                    float distance = glm::distance(m_Point0, m_Point1) * fraction;
+                    m_Results.emplace_back(entity, glm::vec2(point.x, point.y), glm::vec2(normal.x, normal.y),
+                                           distance);
+                    return 1.0f;
+                }
+
+            private:
+                Ref<Scene> m_Scene;
+                std::vector<Raycast2DResult>& m_Results;
+                glm::vec2 m_Point0, m_Point1;
+            };
+
+            auto point0 = inRaycastData->Origin;
+            auto point1 = inRaycastData->Origin + inRaycastData->Direction * inRaycastData->MaxDistance;
+            auto& b2dWorld = scene->getPhysicsWorld();
+            std::vector<Raycast2DResult> raycastResults;
+            RayCastCallback callback(scene, raycastResults, point0, point1);
+            b2dWorld.RayCast(&callback, {point0.x, point0.y}, {point1.x, point1.y});
+
+            auto result = Coral::Array<ScriptRaycastHit2D>::New(raycastResults.size());
+
+            for (size_t i = 0; i < raycastResults.size(); i++) {
+                result[i] = {
+                    .EntityID = raycastResults[i].HitEntity.getUUID(),
+                    .Position = raycastResults[i].Point,
+                    .Normal = raycastResults[i].Normal,
+                    .Distance = raycastResults[i].Distance,
+                };
+            }
+            return result;
         }
 
 #pragma endregion
