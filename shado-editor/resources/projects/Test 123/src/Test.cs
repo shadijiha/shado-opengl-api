@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Shado;
 using Shado.Editor;
 
@@ -10,7 +11,7 @@ namespace Sandbox
         public float moveRate = 1.0f;
         [ShowInEditor] private float dir = 1;
 
-        //public Texture2D texture;
+        public Texture2D texture;
         //public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
         public Prefab linePrefab;
@@ -32,8 +33,9 @@ namespace Sandbox
                 }
             }
 
-            //texture = Texture2D.Create("Assets/riven2.jpg");
-            //GetComponent<SpriteRendererComponent>().tilingFactor = (int)Mathf.Random(2, 10);
+            texture = new Texture2D("Assets/riven2.jpg");
+            GetComponent<SpriteRendererComponent>().tilingFactor = (int)Mathf.Random(2, 10);
+            GetComponent<SpriteRendererComponent>().texture = texture;
             
             OnCollision2DEnterEvent += (info, other) => {
                 Log.Info("Collision with {0}", other.tag);
@@ -67,6 +69,7 @@ namespace Sandbox
                GetComponent<RigidBody2DComponent>().ApplyLinearImpulse(Vector2.one, false);
             }
         }
+        
     }
 
     public class TestCamera : Entity {
@@ -133,9 +136,9 @@ namespace Sandbox
     
     class GridCell : Entity {
         static readonly Texture2D[] texture = {
-            Texture2D.Create(@"Assets\riven.png"),
-            Texture2D.Create(@"Assets\riven2.jpg"),
-            Texture2D.Create(@"Assets\riven3.png")
+           new(@"Assets\riven.png"),
+           new(@"Assets\riven2.jpg"),
+           new(@"Assets\riven3.png")
         };
         static Random random = new Random();
         static uint collisions = 0;

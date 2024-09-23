@@ -9,6 +9,8 @@
 #include "scene/SceneSerializer.h"
 #include "project/Project.h"
 #include "SceneHierarchyPanel.h"
+#include "asset/AssetManager.h"
+#include "asset/Importer.h"
 #include "renderer/FrameBuffer.h"
 #include "renderer/Renderer2D.h"
 #include "scene/Components.h"
@@ -25,7 +27,7 @@ namespace Shado {
             return cache[str];
         }
 
-        Ref<Texture2D> texture = CreateRef<Texture2D>(path.string());
+        Ref<Texture2D> texture = TextureImporter::LoadTexture2D(path.string());
         cache[str] = texture;
         return texture;
     }
@@ -38,12 +40,12 @@ namespace Shado {
 
     ContentBrowserPanel::ContentBrowserPanel(std::optional<std::filesystem::path> path)
         : m_CurrentDirectory(path) {
-        m_DirectoryIcon = CreateRef<Texture2D>("resources/icons/DirectoryIcon.png");
-        m_FileIcon = CreateRef<Texture2D>("resources/icons/FileIcon.png");
-        m_SceneIcon = CreateRef<Texture2D>("resources/icons/scene.png");
-        m_PrefabIcon = CreateRef<Texture2D>("resources/icons/Prefab.png");
-        m_CSIcon = CreateRef<Texture2D>("resources/icons/CS.png");
-        m_SlnIcon = CreateRef<Texture2D>("resources/icons/sln.png");
+        m_DirectoryIcon = TextureImporter::LoadTexture2D("resources/icons/DirectoryIcon.png");
+        m_FileIcon = TextureImporter::LoadTexture2D("resources/icons/FileIcon.png");
+        m_SceneIcon = TextureImporter::LoadTexture2D("resources/icons/scene.png");
+        m_PrefabIcon = TextureImporter::LoadTexture2D("resources/icons/Prefab.png");
+        m_CSIcon = TextureImporter::LoadTexture2D("resources/icons/CS.png");
+        m_SlnIcon = TextureImporter::LoadTexture2D("resources/icons/sln.png");
 
         if (path.has_value()) {
             setDirectory(path.value());
@@ -62,7 +64,7 @@ namespace Shado {
                 UUID childID = *(const UUID*)payload->Data;
                 auto childEntity = Scene::ActiveScene->getEntityById(childID);
 
-                Prefab::CreateFromEntity(childEntity);
+                Prefab::CreateFromEntity(childEntity, *Scene::ActiveScene);
 
                 Dialog::alert(
                     std::string("Successfully serialized prefab ") + childEntity.getComponent<TagComponent>().tag,
@@ -124,6 +126,11 @@ namespace Shado {
 
                 // Context menu to create 
                 if (ImGui::BeginPopupContextItem()) {
+                    if (ImGui::MenuItem("Import Asset")) {
+                        auto relativePath = std::filesystem::relative(path, Project::GetAssetDirectory());
+                        Project::GetActive()->GetEditorAssetManager()->ImportAsset(relativePath);
+                    }
+
                     if (ImGui::MenuItem("Open..."))
                         Dialog::openPathInExplorer(path.string());
                     if (ImGui::MenuItem("Open in Explorer"))
@@ -251,19 +258,20 @@ namespace Shado {
         }
         else if (path.extension() == ".glsl" || path.extension() == ".shader") {
             // TODO: currently this will keep trying to generate the thumbnail if try catch fails
+            icon = m_FileIcon;
             // We do this every frame to keep the shader thumbnail animated
-            try {
-                Ref<Framebuffer> fb = generateShaderThumbnail(path, m_ThumbnailSize);
-
-                return {
-                    fb->getColorAttachmentRendererID(),
-                    (float)fb->getSpecification().Width / (float)fb->getSpecification().Height
-                };
-            }
-            catch (const std::runtime_error& e) {
-                SHADO_CORE_ERROR("Error generating shader thumbnail: {0}", e.what());
-                icon = m_FileIcon;
-            }
+            // try {
+            //     Ref<Framebuffer> fb = generateShaderThumbnail(path, m_ThumbnailSize);
+            //
+            //     return {
+            //         fb->getColorAttachmentRendererID(),
+            //         (float)fb->getSpecification().Width / (float)fb->getSpecification().Height
+            //     };
+            // }
+            // catch (const std::runtime_error& e) {
+            //     SHADO_CORE_ERROR("Error generating shader thumbnail: {0}", e.what());
+            //     icon = m_FileIcon;
+            // }
         }
         return {icon->getRendererID(), (float)icon->getWidth() / (float)icon->getHeight()};
     }
@@ -298,6 +306,7 @@ namespace Shado {
         return fb;
     }
 
+    // TODO: Fix this after AssetManager was implemented
     Ref<Framebuffer> ContentBrowserPanel::generateShaderThumbnail(const std::filesystem::path& path, uint32_t width) {
         // Cache shaders to animate them
         static std::unordered_map<std::string, Ref<Shader>> m_CachedShaders;
@@ -314,7 +323,7 @@ namespace Shado {
             specs.Height = width;
 
             fb = Framebuffer::create(specs);
-            shader = CreateRef<Shader>(path);
+            shader = ShaderImporter::LoadShader(path);
             m_CachedShaders[path.string()] = shader;
 
             m_GeneratedThumbnails[path.string()] = fb;
@@ -331,7 +340,7 @@ namespace Shado {
         transform.scale = {10.0f, 10.0f, 10.0f};
         SpriteRendererComponent spriteRenderer;
         spriteRenderer.color = {1.0f, 1.0f, 1.0f, 1.0f};
-        spriteRenderer.shader = shader;
+        spriteRenderer.shader = shader->Handle;
 
         EditorCamera camera;
         camera.SetViewportSize(fb->getSpecification().Width, fb->getSpecification().Height);

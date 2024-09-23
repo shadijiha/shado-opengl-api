@@ -12,6 +12,7 @@
 
 #include "math/Hash.h"
 #include "Project/Project.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 
 namespace Shado {
     static std::unordered_map<std::string, DataType> s_DataTypeLookup = {

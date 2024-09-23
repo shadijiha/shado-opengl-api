@@ -1,14 +1,18 @@
 #include "SceneHierarchyPanel.h"
-#include "scene/Components.h"
+
+#include <fstream>
+
 #include <glm/gtc/type_ptr.hpp>
+
+#include "scene/Components.h"
 #include "imgui_internal.h"
 #include "scene/utils/SceneUtils.h"
 #include "debug/Profile.h"
-#include <fstream>
 #include "script/ScriptEngine.h"
 #include "ui/UI.h"
 #include "ui/imnodes.h"
 #include "project/Project.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 #include "scene/Prefab.h"
 
 namespace Shado {
@@ -108,7 +112,7 @@ namespace Shado {
             // if a child is selected then expand the parent
             flags |= isChildSelectedRecursively(entity, m_Selected) ? ImGuiTreeNodeFlags_DefaultOpen : 0;
             opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tc.tag.c_str());
-            if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(0)) {
+            if (ImGui::IsItemClicked()) {
                 setSelected(entity);
             }
         }
@@ -120,7 +124,7 @@ namespace Shado {
                 m_Context->duplicateEntity(m_Selected);
 
             if (ImGui::MenuItem("Make prefab")) {
-                Prefab::CreateFromEntity(m_Selected);
+                Prefab::CreateFromEntity(m_Selected, *m_Context);
             }
 
             if (ImGui::MenuItem("Delete entity"))

@@ -95,8 +95,10 @@ namespace Shado
         internal static delegate* unmanaged<ulong, Vector4*, void> SpriteRendererComponent_SetColor;
         internal static delegate* unmanaged<ulong, float> SpriteRendererComponent_GetTilingFactor;
         internal static delegate* unmanaged<ulong, float, void> SpriteRendererComponent_SetTilingFactor;
-        internal static delegate* unmanaged<ulong, int*> SpriteRendererComponent_GetTexture;
-        internal static delegate* unmanaged<ulong, IntPtr, void> SpriteRendererComponent_SetTexture;
+        internal static delegate* unmanaged<ulong, ulong> SpriteRendererComponent_GetTexture;
+        internal static delegate* unmanaged<ulong, ulong, void> SpriteRendererComponent_SetTexture;
+        internal static delegate* unmanaged<ulong, ulong> SpriteRendererComponent_GetShader;
+        internal static delegate* unmanaged<ulong, ulong, void> SpriteRendererComponent_SetShader;
 
         #endregion
 
@@ -167,7 +169,18 @@ namespace Shado
 
         #region Texture2D
 
-        internal static delegate* unmanaged<NativeString, IntPtr*, void> Texture2D_Create;
+        internal static delegate* unmanaged<NativeString, ulong> Texture2D_Create;
+
+        #endregion
+
+        #region Shader
+
+        internal static delegate* unmanaged<NativeString, ulong> Shader_Create;
+        internal static delegate* unmanaged<ulong, NativeString, int, void> Shader_SetInt;
+        internal static delegate* unmanaged<ulong, NativeString, float, void> Shader_SetFloat;
+        internal static delegate* unmanaged<ulong, NativeString, Vector2, void> Shader_SetFloat2;
+        internal static delegate* unmanaged<ulong, NativeString, Vector3, void> Shader_SetFloat3;
+        internal static delegate* unmanaged<ulong, NativeString, Vector4, void> Shader_SetFloat4;
 
         #endregion
 

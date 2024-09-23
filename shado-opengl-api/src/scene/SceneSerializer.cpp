@@ -5,6 +5,7 @@
 
 #include "Components.h"
 #include "project/Project.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 #include "script/ScriptEngine.h"
 #include "Prefab.h"
 #include "math/Hash.h"
@@ -341,54 +342,42 @@ namespace Shado {
             out << YAML::BeginMap; // SpriteRendererComponent
 
             auto& spriteRendererComponent = entity.getComponent<SpriteRendererComponent>();
-            std::string texturePath = spriteRendererComponent.texture
-                                          ? spriteRendererComponent.texture->getFilePath()
-                                          : "NULL";
-            std::string newPath = getPathAndCopyFileToAssets(texturePath);
             out << YAML::Key << "Color" << YAML::Value << spriteRendererComponent.color;
-            out << YAML::Key << "Texture" << YAML::Value << newPath;
-            out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
+            out << YAML::Key << "TextureHandle" << YAML::Value << spriteRendererComponent.texture;
+            out << YAML::Key << "TilingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
+            out << YAML::Key << "ShaderHandle" << YAML::Value << spriteRendererComponent.shader;
 
-            if (spriteRendererComponent.shader) {
-                out << YAML::Key << "Shader" << YAML::Value << Project::GetActive()->GetRelativePath(
-                    spriteRendererComponent.shader->getFilepath()).string();
-
-                auto& shader = spriteRendererComponent.shader;
-                out << YAML::Key << "ShaderCustomUniforms" << YAML::Value;
-                out << YAML::BeginMap;
-                for (const auto& [name, value] : shader->m_CustomUniforms) {
-                    auto [type, data] = value;
-                    out << YAML::Key << name << YAML::Value;
-                    out << YAML::BeginMap;
-                    out << YAML::Key << "Type" << YAML::Value << (int)type;
-                    switch (type) {
-                    case ShaderDataType::Int:
-                        out << YAML::Key << "Data" << YAML::Value << *(int*)data;
-                        break;
-                    case ShaderDataType::Float:
-                        out << YAML::Key << "Data" << YAML::Value << *(float*)data;
-                        break;
-                    case ShaderDataType::Float2:
-                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec2*)data;
-                        break;
-                    case ShaderDataType::Float3:
-                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec3*)data;
-                        break;
-                    case ShaderDataType::Float4:
-                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec4*)data;
-                        break;
-                    }
-                    out << YAML::EndMap;
-                }
-                out << YAML::EndMap;
-            }
+            //     auto& shader = spriteRendererComponent.shader;
+            //     out << YAML::Key << "ShaderCustomUniforms" << YAML::Value;
+            //     out << YAML::BeginMap;
+            //     for (const auto& [name, value] : shader->m_CustomUniforms) {
+            //         auto [type, data] = value;
+            //         out << YAML::Key << name << YAML::Value;
+            //         out << YAML::BeginMap;
+            //         out << YAML::Key << "Type" << YAML::Value << (int)type;
+            //         switch (type) {
+            //         case ShaderDataType::Int:
+            //             out << YAML::Key << "Data" << YAML::Value << *(int*)data;
+            //             break;
+            //         case ShaderDataType::Float:
+            //             out << YAML::Key << "Data" << YAML::Value << *(float*)data;
+            //             break;
+            //         case ShaderDataType::Float2:
+            //             out << YAML::Key << "Data" << YAML::Value << *(glm::vec2*)data;
+            //             break;
+            //         case ShaderDataType::Float3:
+            //             out << YAML::Key << "Data" << YAML::Value << *(glm::vec3*)data;
+            //             break;
+            //         case ShaderDataType::Float4:
+            //             out << YAML::Key << "Data" << YAML::Value << *(glm::vec4*)data;
+            //             break;
+            //         }
+            //         out << YAML::EndMap;
+            //     }
+            //     out << YAML::EndMap;
+            // }
 
             out << YAML::EndMap; // SpriteRendererComponent
-
-            // if Texture path has changed, then update the component
-            if (newPath != texturePath) {
-                spriteRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
-            }
         }
 
         if (entity.hasComponent<CircleRendererComponent>()) {
@@ -396,28 +385,17 @@ namespace Shado {
             out << YAML::BeginMap; // CircleRendererComponent
 
             auto& circleRendererComponent = entity.getComponent<CircleRendererComponent>();
-            std::string texturePath = circleRendererComponent.texture
-                                          ? circleRendererComponent.texture->getFilePath()
-                                          : "NULL";
-            std::string newPath = getPathAndCopyFileToAssets(texturePath);
 
             out << YAML::Key << "Color" << YAML::Value << circleRendererComponent.color;
-            out << YAML::Key << "Texture" << YAML::Value << getPathAndCopyFileToAssets(texturePath);
+            out << YAML::Key << "TextureHandle" << YAML::Value << circleRendererComponent.texture;
             out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
 
             out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
             out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
 
-            if (circleRendererComponent.shader)
-                out << YAML::Key << "Shader" << YAML::Value << Project::GetActive()->GetRelativePath(
-                    circleRendererComponent.shader->getFilepath()).string();
+            out << YAML::Key << "ShaderHandle" << YAML::Value << circleRendererComponent.shader;
 
             out << YAML::EndMap; // CircleRendererComponent
-
-            // if Texture path has changed, then update the component
-            if (newPath != texturePath) {
-                circleRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
-            }
         }
 
         if (entity.hasComponent<LineRendererComponent>()) {
@@ -779,62 +757,55 @@ namespace Shado {
         auto spriteRendererComponent = entity["SpriteRendererComponent"];
         if (spriteRendererComponent) {
             auto& src = deserializedEntity.addComponent<SpriteRendererComponent>();
-            auto texturePath = spriteRendererComponent["Texture"].as<std::string>();
             src.color = spriteRendererComponent["Color"].as<glm::vec4>();
-            src.texture = texturePath == "NULL" || texturePath == "null"
-                              ? nullptr
-                              : new Texture2D(
-                                  Project::GetActive()
-                                      ? (Project::GetProjectDirectory() / texturePath).string()
-                                      : texturePath
-                              );
-            src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
 
-            if (spriteRendererComponent["Shader"]) {
+            if (spriteRendererComponent["TextureHandle"])
+                src.texture = spriteRendererComponent["TextureHandle"].as<AssetHandle>();
+
+            if (spriteRendererComponent["ShaderHandle"]) {
                 try {
-                    src.shader = CreateRef<Shader>(
-                        Project::GetProjectDirectory() / spriteRendererComponent["Shader"].as<std::string>());
+                    src.shader = spriteRendererComponent["ShaderHandle"].as<AssetHandle>();
 
-                    if (auto shaderCustomUniforms = spriteRendererComponent["ShaderCustomUniforms"]) {
-                        for (auto uniform : shaderCustomUniforms) {
-                            std::string name = uniform.first.as<std::string>();
-                            auto uniformData = uniform.second;
-
-                            ShaderDataType type = (ShaderDataType)uniformData["Type"].as<int>();
-                            switch (type) {
-                            case ShaderDataType::Int: {
-                                int data = uniformData["Data"].as<int>();
-                                src.shader->setInt(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float: {
-                                float data = uniformData["Data"].as<float>();
-                                src.shader->setFloat(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float2: {
-                                auto data = uniformData["Data"].as<glm::vec2>();
-                                src.shader->setFloat2(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float3: {
-                                auto data = uniformData["Data"].as<glm::vec3>();
-                                src.shader->setFloat3(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float4: {
-                                auto data = uniformData["Data"].as<glm::vec4>();
-                                src.shader->setFloat4(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            }
-                        }
-                    }
+                    // if (auto shaderCustomUniforms = spriteRendererComponent["ShaderCustomUniforms"]) {
+                    //     for (auto uniform : shaderCustomUniforms) {
+                    //         std::string name = uniform.first.as<std::string>();
+                    //         auto uniformData = uniform.second;
+                    //
+                    //         ShaderDataType type = (ShaderDataType)uniformData["Type"].as<int>();
+                    //         switch (type) {
+                    //         case ShaderDataType::Int: {
+                    //             int data = uniformData["Data"].as<int>();
+                    //             src.shader->setInt(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float: {
+                    //             float data = uniformData["Data"].as<float>();
+                    //             src.shader->setFloat(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float2: {
+                    //             auto data = uniformData["Data"].as<glm::vec2>();
+                    //             src.shader->setFloat2(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float3: {
+                    //             auto data = uniformData["Data"].as<glm::vec3>();
+                    //             src.shader->setFloat3(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float4: {
+                    //             auto data = uniformData["Data"].as<glm::vec4>();
+                    //             src.shader->setFloat4(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         }
+                    //     }
+                    // }
                 }
                 catch (const std::runtime_error& e) {
                     SHADO_CORE_ERROR("Error loading shader: {0}", e.what());
@@ -849,21 +820,14 @@ namespace Shado {
             src.color = circleRendererComponent["Color"].as<glm::vec4>();
             src.thickness = circleRendererComponent["Thickness"].as<float>();
             src.fade = circleRendererComponent["Fade"].as<float>();
-
-            auto texturePath = circleRendererComponent["Texture"].as<std::string>();
-            src.texture = texturePath == "NULL" || texturePath == "null"
-                              ? nullptr
-                              : new Texture2D(
-                                  Project::GetActive()
-                                      ? (Project::GetProjectDirectory() / texturePath).string()
-                                      : texturePath
-                              );
             src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
 
-            if (circleRendererComponent["Shader"]) {
+            if (circleRendererComponent["TextureHandle"])
+                src.texture = circleRendererComponent["TextureHandle"].as<AssetHandle>();
+
+            if (circleRendererComponent["ShaderHandle"]) {
                 try {
-                    src.shader = CreateRef<Shader>(
-                        Project::GetProjectDirectory() / circleRendererComponent["Shader"].as<std::string>());
+                    src.shader = circleRendererComponent["ShaderHandle"].as<AssetHandle>();
                 }
                 catch (const std::runtime_error& e) {
                     SHADO_CORE_ERROR("Error loading shader: {0}", e.what());

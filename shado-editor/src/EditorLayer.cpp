@@ -12,6 +12,8 @@
 #include "project/Project.h"
 #include "script/ScriptEngine.h"
 #include "../EditorEvents.h"
+#include "asset/AssetManager.h"
+#include "asset/Importer.h"
 #include "renderer/Font.h"
 #include "scene/Prefab.h"
 #include "util/FileSystem.h"
@@ -30,8 +32,8 @@ namespace Shado {
     void EditorLayer::onInit() {
         SHADO_PROFILE_FUNCTION();
 
-        m_IconPlay = CreateRef<Texture2D>("resources/icons/PlayButton.png");
-        m_IconStop = CreateRef<Texture2D>("resources/icons/StopButton.png");
+        m_IconPlay = TextureImporter::LoadTexture2D("resources/icons/PlayButton.png");
+        m_IconStop = TextureImporter::LoadTexture2D("resources/icons/StopButton.png");
 
         FramebufferSpecification specs;
         specs.Attachments = {
@@ -336,10 +338,13 @@ namespace Shado {
                 if (m_SceneState == SceneState::Play)
                     this->onSceneStop();
                 this->openScene(e.sceneToLoadPath);
+                ScriptEngine::GetMutable().SetCurrentScene(this->m_ActiveScene);
                 this->onScenePlay();
             });
             return false;
         });
+
+        dispatcher.dispatch<WindowDropEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onWindowDrop));
     }
 
     // Helpers
@@ -418,6 +423,12 @@ namespace Shado {
             m_sceneHierarchyPanel.setSelected(m_HoveredEntity);
         }
         return false;
+    }
+
+    bool EditorLayer::onWindowDrop(WindowDropEvent& e) {
+        // TODO(Yan): if a project is dropped in, probably open it
+        //AssetManager::ImportAsset();
+        return true;
     }
 
     void EditorLayer::saveScene(const std::optional<std::filesystem::path>& path) {
@@ -563,13 +574,14 @@ namespace Shado {
                 auto extension = path.extension();
 
                 if (extension == ".jpg" || extension == ".png") {
-                    if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>())
-                        m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(
-                            path.string());
-
-                    else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>())
-                        m_HoveredEntity.getComponent<CircleRendererComponent>().texture = CreateRef<Texture2D>(
-                            path.string());
+                    if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>()) {
+                        AssetHandle handle = Project::GetActive()->GetEditorAssetManager()->ImportAsset(path.string());
+                        m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = handle;
+                    }
+                    else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>()) {
+                        AssetHandle handle = Project::GetActive()->GetEditorAssetManager()->ImportAsset(path.string());
+                        m_HoveredEntity.getComponent<CircleRendererComponent>().texture = handle;
+                    }
                 }
                 else if (extension == ".prefab") {
                     // Dumb prefab to scene

@@ -16,7 +16,8 @@
 #undef INFINITE
 #include <FontGeometry.h>
 #include "Events/input.h"
-#include "math/Math.h"
+#include "asset/AssetManager.h"
+#include "asset/Importer.h"
 
 namespace Shado {
     struct QuadVertex {
@@ -218,16 +219,16 @@ namespace Shado {
 
         s_Data.WhiteTexture = snew(Texture2D) Texture2D(1, 1);
         uint32_t whiteTextureData = 0xffffffff;
-        s_Data.WhiteTexture->setData(&whiteTextureData, sizeof(uint32_t));
+        s_Data.WhiteTexture->setData(Buffer(&whiteTextureData, sizeof(uint32_t)));
 
         int32_t samplers[s_Data.MaxTextureSlots];
         for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
             samplers[i] = i;
 
-        s_Data.QuadShader = CreateRef<Shader>("assets/shaders/Renderer2D_Quad.glsl");
-        s_Data.CircleShader = CreateRef<Shader>("assets/shaders/Renderer2D_Circle.glsl");
-        s_Data.LineShader = CreateRef<Shader>("assets/shaders/Renderer2D_Line.glsl");
-        s_Data.TextShader = CreateRef<Shader>("assets/shaders/Renderer2D_Text.glsl");
+        s_Data.QuadShader = ShaderImporter::LoadShader("assets/shaders/Renderer2D_Quad.glsl");
+        s_Data.CircleShader = ShaderImporter::LoadShader("assets/shaders/Renderer2D_Circle.glsl");
+        s_Data.LineShader = ShaderImporter::LoadShader("assets/shaders/Renderer2D_Line.glsl");
+        s_Data.TextShader = ShaderImporter::LoadShader("assets/shaders/Renderer2D_Text.glsl");
 
         // Set first texture slot to 0
         s_Data.TextureSlots[0] = s_Data.WhiteTexture;
@@ -397,17 +398,17 @@ namespace Shado {
         DrawQuad(transform, color);
     }
 
-    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, Ref<Texture2D> texture,
+    void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, AssetHandle textureHandle,
                               float tilingFactor, const glm::vec4& tintColor) {
-        DrawQuad({position.x, position.y, 0.0f}, size, texture, tilingFactor, tintColor);
+        DrawQuad({position.x, position.y, 0.0f}, size, textureHandle, tilingFactor, tintColor);
     }
 
-    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, Ref<Texture2D> texture,
+    void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, AssetHandle textureHandlee,
                               float tilingFactor, const glm::vec4& tintColor) {
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position)
             * glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
-        DrawQuad(transform, texture, tilingFactor, tintColor);
+        DrawQuad(transform, textureHandlee, tilingFactor, tintColor);
     }
 
     void Renderer2D::DrawQuad(const glm::mat4& transform, const glm::vec4& color, int entityID) {
@@ -454,12 +455,13 @@ namespace Shado {
         s_Data.Stats.QuadCount++;
     }
 
-    void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Texture2D> texture, float tilingFactor,
+    void Renderer2D::DrawQuad(const glm::mat4& transform, AssetHandle textureHandle, float tilingFactor,
                               const glm::vec4& tintColor, int entityID) {
         SHADO_PROFILE_FUNCTION();
 
         constexpr size_t quadVertexCount = 4;
         constexpr glm::vec2 textureCoords[] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
+        Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(textureHandle);
 
         if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
             NextBatch();
@@ -496,10 +498,12 @@ namespace Shado {
         s_Data.Stats.QuadCount++;
     }
 
-    void Renderer2D::DrawQuad(const glm::mat4& transform, Shader& shader, const glm::vec4& color, int entityID,
+    void Renderer2D::DrawQuad(const glm::mat4& transform, AssetHandle shaderHandle, const glm::vec4& color,
+                              int entityID,
                               float textureIndex) {
         SHADO_PROFILE_FUNCTION();
-        shader.bind();
+        Ref<Shader> shader = AssetManager::GetAsset<Shader>(shaderHandle);
+        shader->bind();
 
         uint32_t quadIndices[6];
         quadIndices[0] = 0;
@@ -543,20 +547,23 @@ namespace Shado {
             NextBatch();
         }
 
-        shader.bind();
-        shader.setFloat("u_Time", (float)glfwGetTime());
+        shader->bind();
+        shader->setFloat("u_Time", (float)glfwGetTime());
 
         auto res = glm::vec2{Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight()};
-        shader.setFloat2("u_ScreenResolution", res);
-        shader.setFloat2("u_MousePos", {Input::getMouseX(), Input::getMouseY()});
+        shader->setFloat2("u_ScreenResolution", res);
+        shader->setFloat2("u_MousePos", {Input::getMouseX(), Input::getMouseY()});
 
         CmdDrawIndexed(vertexArray, indexBuffer->getCount());
         s_Data.Stats.DrawCalls++;
         s_Data.Stats.QuadCount++;
     }
 
-    void Renderer2D::DrawQuad(const glm::mat4& transform, Ref<Texture2D> texture, Shader& shader,
+    void Renderer2D::DrawQuad(const glm::mat4& transform, AssetHandle textureHandle, AssetHandle shaderHandle,
                               const glm::vec4& color, int entityID) {
+        SHADO_PROFILE_FUNCTION();
+        Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(textureHandle);
+
         float textureIndex = 0.0f;
         for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
             if (*s_Data.TextureSlots[i] == *texture) {
@@ -575,7 +582,7 @@ namespace Shado {
         }
 
         texture->bind(textureIndex);
-        DrawQuad(transform, shader, color, entityID, textureIndex);
+        DrawQuad(transform, shaderHandle, color, entityID, textureIndex);
         texture->unbind();
     }
 
@@ -597,12 +604,12 @@ namespace Shado {
     }
 
     void Renderer2D::DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation,
-                                     Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor) {
-        DrawRotatedQuad({position.x, position.y, 0.0f}, size, rotation, texture, tilingFactor, tintColor);
+                                     AssetHandle textureHandle, float tilingFactor, const glm::vec4& tintColor) {
+        DrawRotatedQuad({position.x, position.y, 0.0f}, size, rotation, textureHandle, tilingFactor, tintColor);
     }
 
     void Renderer2D::DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation,
-                                     Ref<Texture2D> texture, float tilingFactor, const glm::vec4& tintColor) {
+                                     AssetHandle textureHandle, float tilingFactor, const glm::vec4& tintColor) {
         SHADO_PROFILE_FUNCTION();
 
         glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
@@ -610,7 +617,7 @@ namespace Shado {
             * _rotation
             * glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
-        DrawQuad(transform, texture, tilingFactor, tintColor);
+        DrawQuad(transform, textureHandle, tilingFactor, tintColor);
     }
 
     void Renderer2D::DrawCircle(const glm::mat4& transform, const glm::vec4& color, float thickness /*= 1.0f*/,
@@ -639,11 +646,13 @@ namespace Shado {
         s_Data.Stats.QuadCount++;
     }
 
-    void Renderer2D::DrawCircle(const glm::mat4& transform, Ref<Texture2D> texture, float tilingFactor,
+    void Renderer2D::DrawCircle(const glm::mat4& transform, AssetHandle textureHandle, float tilingFactor,
                                 const glm::vec4& tintColor, float thickness, float fade, int entityID) {
         SHADO_PROFILE_FUNCTION();
 
         constexpr glm::vec2 textureCoords[] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
+        Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(textureHandle);
+
 
         float textureIndex = 0.0f;
         for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
@@ -726,14 +735,16 @@ namespace Shado {
 
     void Renderer2D::DrawSprite(const glm::mat4& transform, SpriteRendererComponent& src, int entityID) {
         if (src.shader) {
-            if (src.texture)
-                DrawQuad(transform, *src.shader, src.color, entityID, src.texture);
+            if (src.texture) {
+                DrawQuad(transform, src.texture, src.shader, src.color, entityID);
+            }
             else
-                DrawQuad(transform, *src.shader, src.color, entityID);
+                DrawQuad(transform, src.shader, src.color, entityID);
         }
         else {
-            if (src.texture)
+            if (src.texture) {
                 DrawQuad(transform, src.texture, src.tilingFactor, src.color, entityID);
+            }
             else
                 DrawQuad(transform, src.color, entityID);
         }

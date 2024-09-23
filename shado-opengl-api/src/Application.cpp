@@ -3,11 +3,9 @@
 #include "GL/glew.h"
 #include "renderer/Renderer2D.h"
 #include <algorithm>
-#include "cameras/OrthoCamera.h"
 #include "Events/ApplicationEvent.h"
-#include "Events/KeyEvent.h"
-#include "Events/MouseEvent.h"
 #include "project/Project.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 #include "scene/Scene.h"
 #include "script/ScriptEngine.h"
 #include "util/Random.h"
@@ -141,7 +139,7 @@ namespace Shado {
 #ifdef SHADO_DEBUG
                 "[Debug]" +
 #elif SHADO_RELEASE
-				"[Release] " +
+                "[Release] " +
 #elif SHADO_DIST
 				"[Dist] " +
 #else

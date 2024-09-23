@@ -142,16 +142,26 @@ namespace Shado
 
         public Texture2D texture {
             get {
-                IntPtr texturePtr;
                 unsafe {
-                    texturePtr = (IntPtr)InternalCalls.SpriteRendererComponent_GetTexture(Entity.ID);
+                    return new Texture2D(InternalCalls.SpriteRendererComponent_GetTexture(Entity.ID));
                 }
-
-                return new Texture2D(texturePtr);
             }
             set {
                 unsafe {
-                    InternalCalls.SpriteRendererComponent_SetTexture(Entity.ID, value.native);
+                    InternalCalls.SpriteRendererComponent_SetTexture(Entity.ID, value.handle);
+                }
+            }
+        }
+
+        public Shader shader {
+            get {
+                unsafe {
+                    return new Shader(InternalCalls.SpriteRendererComponent_GetShader(Entity.ID));
+                }
+            }
+            set {
+                unsafe {
+                    InternalCalls.SpriteRendererComponent_SetShader(Entity.ID, value.handle);
                 }
             }
         }

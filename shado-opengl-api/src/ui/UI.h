@@ -5,14 +5,12 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <iterator>
 
 #include "Application.h"
 #include "imgui_internal.h"
+#include "asset/Asset.h"
 
 namespace Shado {
-    class Texture2D;
-
     class UI {
     public:
         enum class FileChooserType {
@@ -48,7 +46,7 @@ namespace Shado {
             FileChooserType type = FileChooserType::Open
         );
 
-        static void TextureControl(Ref<Texture2D>& texture);
+        static void TextureControl(AssetHandle& assetHandle);
 
         static bool InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags = 0,
                                      float columnWidth = 100.0f);

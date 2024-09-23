@@ -30,6 +30,7 @@ namespace Shado {
         Ref<Scene> m_Context;
         Entity m_Selected;
         std::string m_Title;
+        bool m_Locked = false;
     };
 
     /**

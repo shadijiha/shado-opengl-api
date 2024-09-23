@@ -4,6 +4,7 @@
 
 #include "Application.h"
 #include "ProjectSerializer.h"
+#include "asset/AssetManager.h"
 #include "script/ScriptEngine.h"
 #include "util/FileSystem.h"
 #include "scene/Scene.h"
@@ -11,6 +12,18 @@
 namespace Shado {
     std::filesystem::path Project::GetRelativePath(const std::filesystem::path& path) {
         return std::filesystem::relative(path, m_ProjectDirectory);
+    }
+
+    std::shared_ptr<AssetManagerBase> Project::GetAssetManager() const {
+        return m_AssetManager;
+    }
+
+    std::shared_ptr<RuntimeAssetManager> Project::GetRuntimeAssetManager() const {
+        return std::static_pointer_cast<RuntimeAssetManager>(m_AssetManager);
+    }
+
+    std::shared_ptr<EditorAssetManager> Project::GetEditorAssetManager() const {
+        return std::static_pointer_cast<EditorAssetManager>(m_AssetManager);
     }
 
     void Project::ReloadScriptEngine() {
@@ -42,6 +55,10 @@ namespace Shado {
         if (serializer.Deserialize(path)) {
             project->m_ProjectDirectory = path.parent_path();
             SetActive(project);
+
+            std::shared_ptr<EditorAssetManager> editorAssetManager = std::make_shared<EditorAssetManager>();
+            s_ActiveProject->m_AssetManager = editorAssetManager;
+            editorAssetManager->DeserializeAssetRegistry();
 
             Application::dispatchEvent(ProjectChangedEvent(s_ActiveProject));
             return s_ActiveProject;

@@ -1,0 +1,40 @@
+AssetRegistry:
+  - Handle: 1297794839041289592
+    FilePath: Assets/Iterations  inversion 2.glsl
+    Type: AssetType::Shader
+  - Handle: 3134207795021375177
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+  - Handle: 3972737739094736351
+    FilePath: Assets/Iterations  inversion 2.glsl
+    Type: AssetType::Shader
+  - Handle: 4904762162081262061
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+  - Handle: 5441022443313108851
+    FilePath: Assets/glass.glsl
+    Type: AssetType::Shader
+  - Handle: 6664581295654238386
+    FilePath: Assets/Iterations  inversion 2.glsl
+    Type: AssetType::Shader
+  - Handle: 9118746671848534789
+    FilePath: Assets/TranscodedWallpaper.jpg
+    Type: AssetType::Texture2D
+  - Handle: 13381066831825461701
+    FilePath: Assets/glass.glsl
+    Type: AssetType::Shader
+  - Handle: 15449853075736280499
+    FilePath: Assets/cool blob.glsl
+    Type: AssetType::Shader
+  - Handle: 15883776055983858069
+    FilePath: Assets/Riven_HD.jpg
+    Type: AssetType::Texture2D
+  - Handle: 16306501128989744395
+    FilePath: Assets/glass.glsl
+    Type: AssetType::Shader
+  - Handle: 18014698014252577933
+    FilePath: Assets/riven3.png
+    Type: AssetType::Texture2D
+  - Handle: 18078777031608217494
+    FilePath: Assets/glass.glsl
+    Type: AssetType::Shader

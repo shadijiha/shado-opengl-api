@@ -69,9 +69,9 @@ namespace Shado {
 
         ScriptStorage& GetScriptStorage() { return scriptStorage; }
 
-        static Ref<Prefab> CreateFromEntity(Entity entity) {
+        static Ref<Prefab> CreateFromEntity(Entity entity, Scene& scene) {
             Ref<Prefab> newPrefab = CreateRef<Prefab>(UUID());
-            newPrefab->root = entity;
+            newPrefab->root = scene.duplicateEntity(entity);
 
             // Copy script storage to prefab
             Scene::ActiveScene->GetScriptStorage().CopyTo(newPrefab->GetScriptStorage());

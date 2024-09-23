@@ -2,13 +2,15 @@
 
 #include <vector>
 
-#include "imgui.h"
-#include "box2d/b2_body.h"
+#include <imgui.h>
+#include <box2d/b2_body.h>
+
 #include "scene/Components.h"
 #include "scene/Entity.h"
 #include "scene/Prefab.h"
 #include "script/ScriptEngine.h"
 #include "ui/UI.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 
 #define INDENTED(block) { ImGui::Indent(); block; ImGui::Unindent(); }
 

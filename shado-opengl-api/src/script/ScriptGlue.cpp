@@ -11,6 +11,7 @@
 #include <Coral/HostInstance.hpp>
 
 #include "ScriptEngine.h"
+#include "asset/AssetManager.h"
 #include "Events/input.h"
 #include "project/Project.h"
 #include "scene/Prefab.h"
@@ -166,6 +167,8 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTilingFactor);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetTexture);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetTexture);
+        SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetShader);
+        SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetShader);
 
         SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_GetColor);
         SHADO_ADD_INTERNAL_CALL(CircleRendererComponent_SetColor);
@@ -212,6 +215,13 @@ namespace Shado {
         //============================================================================================
 
         SHADO_ADD_INTERNAL_CALL(Texture2D_Create);
+
+        SHADO_ADD_INTERNAL_CALL(Shader_Create);
+        SHADO_ADD_INTERNAL_CALL(Shader_SetInt);
+        SHADO_ADD_INTERNAL_CALL(Shader_SetFloat);
+        SHADO_ADD_INTERNAL_CALL(Shader_SetFloat2);
+        SHADO_ADD_INTERNAL_CALL(Shader_SetFloat3);
+        SHADO_ADD_INTERNAL_CALL(Shader_SetFloat4);
 
         SHADO_ADD_INTERNAL_CALL(Log_LogMessage);
 
@@ -669,19 +679,34 @@ namespace Shado {
             entity.getComponent<SpriteRendererComponent>().tilingFactor = tilingFactor;
         }
 
-        intptr_t SpriteRendererComponent_GetTexture(uint64_t entityID) {
+        uint64_t SpriteRendererComponent_GetTexture(uint64_t entityID) {
             auto entity = GetEntity(entityID);
             HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
             HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<SpriteRendererComponent>());
-            return (intptr_t)entity.getComponent<SpriteRendererComponent>().texture.Raw();
+            return entity.getComponent<SpriteRendererComponent>().texture;
         }
 
-        void SpriteRendererComponent_SetTexture(uint64_t entityID, intptr_t inTexture) {
+        void SpriteRendererComponent_SetTexture(uint64_t entityID, AssetHandle textureHandle) {
             auto entity = GetEntity(entityID);
             HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
             HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<SpriteRendererComponent>());
-            Texture2D* texture = (Texture2D*)inTexture;
-            entity.getComponent<SpriteRendererComponent>().texture = Ref<Texture2D>(texture);
+
+            entity.getComponent<SpriteRendererComponent>().texture = textureHandle;
+        }
+
+        uint64_t SpriteRendererComponent_GetShader(uint64_t entityID) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<SpriteRendererComponent>());
+            return entity.getComponent<SpriteRendererComponent>().texture;
+        }
+
+        void SpriteRendererComponent_SetShader(uint64_t entityID, AssetHandle inShader) {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<SpriteRendererComponent>());
+
+            entity.getComponent<SpriteRendererComponent>().shader = inShader;
         }
 
 #pragma endregion
@@ -1048,14 +1073,53 @@ namespace Shado {
 
 #pragma region Texture2D
 
-        bool Texture2D_Create(Coral::String inPath, OutParam<intptr_t> outHandle) {
-            std::filesystem::path path = std::string(inPath);
-            path = Project::GetProjectDirectory() / path; // TODO: Replace with asset manager
-            Texture2D* texture = snew(Texture2D) Texture2D(path.string());
-            *outHandle = (intptr_t)texture;
-            return true;
+        uint64_t Texture2D_Create(Coral::String inPath) {
+            // See if the texture is in registry
+            if (!Project::GetActive()->GetAssetManager()->IsPathInRegistry(std::string(inPath))) {
+                return Project::GetActive()->GetEditorAssetManager()->ImportAsset(std::string(inPath));
+            }
+            return Project::GetActive()->GetAssetManager()->GetHandleFromPath(std::string(inPath));
+        }
+#pragma endregion
+
+#pragma region Shader
+        uint64_t Shader_Create(Coral::String pathRelativeToProject) {
+            // See if the texture is in registry
+            if (!Project::GetActive()->GetAssetManager()->IsPathInRegistry(std::string(pathRelativeToProject))) {
+                return Project::GetActive()->GetEditorAssetManager()->ImportAsset(std::string(pathRelativeToProject));
+            }
+            return Project::GetActive()->GetAssetManager()->GetHandleFromPath(std::string(pathRelativeToProject));
         }
 
+        void Shader_SetInt(uint64_t inHandle, Coral::String inName, int inValue) {
+            Ref<Shader> shader = AssetManager::GetAsset<Shader>(inHandle);
+            if (shader)
+                shader->setInt(std::string(inName), inValue);
+        }
+
+        void Shader_SetFloat(uint64_t inHandle, Coral::String inName, float inValue) {
+            Ref<Shader> shader = AssetManager::GetAsset<Shader>(inHandle);
+            if (shader)
+                shader->setFloat(std::string(inName), inValue);
+        }
+
+        void Shader_SetFloat2(uint64_t inHandle, Coral::String inName, glm::vec2 inValue) {
+            Ref<Shader> shader = AssetManager::GetAsset<Shader>(inHandle);
+            if (shader)
+                shader->setFloat2(std::string(inName), inValue);
+        }
+
+        void Shader_SetFloat3(uint64_t inHandle, Coral::String inName, glm::vec3 inValue) {
+            Ref<Shader> shader = AssetManager::GetAsset<Shader>(inHandle);
+            if (shader)
+                shader->setFloat3(std::string(inName), inValue);
+        }
+
+        void Shader_SetFloat4(uint64_t inHandle, Coral::String inName, glm::vec4 inValue) {
+            Ref<Shader> shader = AssetManager::GetAsset<Shader>(inHandle);
+            if (shader)
+                shader->setFloat4(std::string(inName), inValue);
+        }
 
 #pragma endregion
 

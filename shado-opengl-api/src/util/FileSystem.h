@@ -3,6 +3,8 @@
 #include "Buffer.h"
 #include <filesystem>
 
+#undef DeleteFile   // Windows.h macro BS
+
 namespace Shado {
     class FileSystem {
     public:

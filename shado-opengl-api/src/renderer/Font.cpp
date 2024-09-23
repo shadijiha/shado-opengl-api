@@ -7,7 +7,6 @@
 #include "debug/Debug.h"
 
 namespace Shado {
-
     template <typename T, typename S, int N, msdf_atlas::GeneratorFunction<S, N> GenFunc>
     static Ref<Texture2D> CreateAndCacheAtlas(const std::string& fontName, float fontSize,
                                               const std::vector<msdf_atlas::GlyphGeometry>& glyphs,
@@ -33,7 +32,7 @@ namespace Shado {
         spec.generateMips = false;
 
         Ref<Texture2D> texture = CreateRef<Texture2D>(spec);
-        texture->setData((void*)bitmap.pixels, bitmap.width * bitmap.height * 3);
+        texture->setData(Buffer((void*)bitmap.pixels, bitmap.width * bitmap.height * 3));
         return texture;
     }
 

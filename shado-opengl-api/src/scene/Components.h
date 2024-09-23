@@ -80,9 +80,9 @@ namespace Shado {
 
     struct SpriteRendererComponent {
         glm::vec4 color = {1, 1, 1, 1};
-        Ref<Texture2D> texture = nullptr;
+        AssetHandle texture = 0;
         float tilingFactor = 1.0f;
-        Ref<Shader> shader = nullptr;
+        AssetHandle shader = 0;
 
 
         SpriteRendererComponent() = default;
@@ -94,11 +94,12 @@ namespace Shado {
         //~SpriteRendererComponent() { delete texture; }
     };
 
+    /// IMPORTANT!!! Must have the same layout as SpriteRendererComponent because of drawTextureControl in PropertiesPanel.cpp
     struct CircleRendererComponent {
         glm::vec4 color = {1, 1, 1, 1};
-        Ref<Texture2D> texture = nullptr;
+        AssetHandle texture = 0;
         float tilingFactor = 1.0f;
-        Ref<Shader> shader = nullptr;
+        AssetHandle shader = 0;
         float thickness = 1.0f;
         float fade = 0.005f;
 

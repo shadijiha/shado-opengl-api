@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "asset/AssetManager.h"
 #include "debug/Debug.h"
 #include "Events/input.h"
 #include "project/Project.h"
@@ -247,23 +248,19 @@ namespace Shado {
             onChange(filepath);
     }
 
-    void UI::TextureControl(Ref<Shado::Texture2D>& texture) {
+    void UI::TextureControl(AssetHandle& assetHandle) {
         // =========== Texture
-        std::string texturePath = texture ? texture->getFilePath().c_str() : "No Texture";
+        std::string texturePath = assetHandle ? AssetManager::GetPathFromHandle(assetHandle).string() : "No Texture";
 
-        InputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(texture).hash_code(),
+        InputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(Texture2D).hash_code(),
                                 [&](std::string path) {
-                                    Ref<Shado::Texture2D> text = CreateRef<Shado::Texture2D>(path);
-                                    if (text->isLoaded())
-                                        texture = text;
-                                    else
-                                        SHADO_CORE_WARN("Could not load texture %s", path.c_str());
-                                    SHADO_CORE_INFO("Loaded texture %s", path.c_str());
+                                    assetHandle = Project::GetActive()->GetEditorAssetManager()->ImportAsset(path);
                                 }
         );
 
         // Image
-        if (texture) {
+        if (assetHandle) {
+            Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(assetHandle);
             ImGui::Image((void*)texture->getRendererID(), {60, 60}, ImVec2(0, 1), ImVec2(1, 0));
         }
 

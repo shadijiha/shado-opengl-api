@@ -3,6 +3,7 @@
 #include "SceneHierarchyPanel.h"
 #include "scene/Entity.h"
 #include "scene/Prefab.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 #include "scene/SceneSerializer.h"
 #include "util/TimeStep.h"
 

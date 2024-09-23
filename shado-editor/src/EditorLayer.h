@@ -31,6 +31,7 @@ namespace Shado {
     private:
         bool onKeyPressed(KeyPressedEvent& e);
         bool onMouseButtonPressed(MouseButtonPressedEvent& e);
+        bool onWindowDrop(WindowDropEvent& e);
 
         void saveScene(const std::optional<std::filesystem::path>& path);
         void newScene();

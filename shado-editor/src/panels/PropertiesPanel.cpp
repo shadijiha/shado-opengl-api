@@ -5,6 +5,8 @@
 
 #include "imgui.h"
 #include "SceneHierarchyPanel.h"
+#include "asset/AssetManager.h"
+#include "asset/Importer.h"
 #include "box2d/b2_body.h"
 #include "debug/Profile.h"
 #include "Project/Project.h"
@@ -35,6 +37,12 @@ namespace Shado {
 
     void PropertiesPanel::onImGuiRender() {
         ImGui::Begin(m_Title.c_str());
+        if (ImGui::Button(m_Locked ? "Unlock Selection" : "Lock Selection")) {
+            m_Locked = !m_Locked;
+        }
+
+        ImGui::NewLine();
+
         if (m_Selected) {
             drawComponents(m_Selected);
         }
@@ -46,6 +54,8 @@ namespace Shado {
     }
 
     void PropertiesPanel::setSelected(Entity entity) {
+        if (m_Locked)
+            return;
         m_Selected = entity;
     }
 
@@ -400,6 +410,7 @@ namespace Shado {
         if (ImGui::BeginPopupContextWindow(0, 1, false)) {
             if (ImGui::MenuItem("Clear"))
                 storage.SetValue<UUID>(0);
+            ImGui::EndPopup();
         }
     }
 
@@ -657,26 +668,25 @@ namespace Shado {
         SpriteRendererComponent& sprite = *(SpriteRendererComponent*)spriteData;
 
         // =========== Texture
-        std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
-
+        std::string texturePath = sprite.texture
+                                      ? AssetManager::GetPathFromHandle(sprite.texture).string()
+                                      : "No Texture";
         UI::InputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(sprite.texture).hash_code(),
                                     [&](std::string path) {
-                                        Ref<Texture2D> texture = CreateRef<Texture2D>(path);
-                                        if (texture->isLoaded())
-                                            sprite.texture = texture;
-                                        else
-                                            SHADO_CORE_WARN("Could not load texture {0}", path);
-                                        SHADO_CORE_INFO("Loaded texture {0}", path.c_str());
+                                        AssetHandle textureHandle = Project::GetActive()->GetEditorAssetManager()->
+                                            ImportAsset(path);
+                                        sprite.texture = textureHandle;
                                     }
         );
 
         // Image
         if (sprite.texture) {
-            ImGui::Image((void*)sprite.texture->getRendererID(), {60, 60}, ImVec2(0, 1), ImVec2(1, 0));
+            Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(sprite.texture);
+            ImGui::Image((void*)texture->getRendererID(), {60, 60}, ImVec2(0, 1), ImVec2(1, 0));
 
             UI::SameLine();
             if (UI::ButtonControl("X")) {
-                sprite.texture = nullptr;
+                sprite.texture = 0;
             }
         }
 
@@ -687,18 +697,19 @@ namespace Shado {
 
         // =========== Shader
         std::string shaderPath = sprite.shader
-                                     ? Project::GetActive()->GetRelativePath(sprite.shader->getFilepath()).string().
-                                                             c_str()
+                                     ? AssetManager::GetPathFromHandle(sprite.shader).string()
                                      : "Default Shader";
-        UI::InputTextWithChooseFile("Shader", shaderPath, {".glsl", ".shader"}, typeid(sprite.shader).hash_code(),
+        UI::InputTextWithChooseFile("Shader", shaderPath, {".glsl", ".shader"}, typeid(Shader).hash_code(),
                                     [&](std::string path) {
-                                        sprite.shader = CreateRef<Shader>(path);
+                                        AssetHandle shader = Project::GetActive()->GetEditorAssetManager()->ImportAsset(
+                                            path);
+                                        sprite.shader = shader;
                                     }
         );
 
         UI::SameLine();
         if (UI::ButtonControl("x")) {
-            sprite.shader = nullptr;
+            sprite.shader = 0;
         }
 
         if (UI::ButtonControl("+")) {
@@ -709,7 +720,8 @@ namespace Shado {
 
                 // Create shader
                 try {
-                    sprite.shader = CreateRef<Shader>(path);
+                    AssetHandle shader = Project::GetActive()->GetEditorAssetManager()->ImportAsset(path);
+                    sprite.shader = shader;
                 }
                 catch (const ShaderCompilationException& e) {
                     SHADO_CORE_ERROR("Failed to compile shader: {0}", e.what());
@@ -721,7 +733,11 @@ namespace Shado {
         if (UI::ButtonControl("Recompile")) {
             if (sprite.shader) {
                 try {
-                    sprite.shader = CreateRef<Shader>(*sprite.shader);
+                    // TODO: introduce AssetManager::ReloadAsset
+                    Ref<Shader> shader = AssetManager::GetAsset<Shader>(sprite.shader);
+                    std::filesystem::path shaderPath = AssetManager::GetPathFromHandle(sprite.shader);
+                    AssetHandle newShader = Project::GetActive()->GetEditorAssetManager()->ImportAsset(shaderPath);
+                    sprite.shader = newShader;
                 }
                 catch (const ShaderCompilationException& e) {
                     SHADO_CORE_ERROR("Failed to recompile shader: {0}", e.what());
@@ -731,8 +747,8 @@ namespace Shado {
 
         // Draw shader uniforms
         if (sprite.shader) {
-            auto& shader = sprite.shader;
-            auto uniforms = sprite.shader->getActiveUniforms();
+            auto shader = AssetManager::GetAsset<Shader>(sprite.shader);
+            auto uniforms = shader->getActiveUniforms();
 
             UI::NewLine();
             UI::Text("Shader active uniforms");

@@ -1,44 +1,36 @@
 ﻿using System;
+using Shado.Editor;
 using UI = Shado.Editor.UI;
 
 namespace Shado
 {
+    [EditorAssignable]
     public class Texture2D
     {
         public readonly string filepath;
-        internal IntPtr native;
+        internal ulong handle = 0;
 
-        internal Texture2D(string filepath) {
-            this.filepath = filepath;
+        public Texture2D(string pathRelativeToProject) {
+            filepath = pathRelativeToProject;
             unsafe {
-                fixed (IntPtr* ptr = &this.native) {
-                    InternalCalls.Texture2D_Create(filepath, ptr);
-                }
+                handle = InternalCalls.Texture2D_Create(filepath);
             }
         }
 
-        internal Texture2D(IntPtr native) {
-            this.native = native;
+        internal Texture2D(ulong handle) {
+            this.handle = handle;
         }
 
         ~Texture2D() {
             //InternalCalls.Texture2D_Destroy(native);
         }
 
-        public static Texture2D Create(string filepath) {
-            if (string.IsNullOrEmpty(filepath))
-                return null;
-            return new Texture2D(filepath);
-        }
-
-        internal void Reset(string filepath) {
-            IntPtr newHandle = IntPtr.Zero;
-            //InternalCalls.Texture2D_Reset(native, filepath, out newHandle);
-            native = newHandle;
-        }
-
         public override string ToString() {
-            return $"Texture2D({filepath}, {native})";
+            return $"Texture2D({filepath}, {handle})";
+        }
+
+        public static implicit operator bool(Texture2D? texture) {
+            return texture is not null && texture.handle != 0;
         }
     }
 
@@ -57,7 +49,7 @@ namespace Shado
             Texture2D texture = (Texture2D)target;
             UI.InputTextFileChoose(fieldName, texture.filepath, textureExtension, path => {
                 Log.Info(path);
-                texture.Reset(path);
+                //texture.Reset(path);
             });
             //UI.SameLine();
             UI.Image(texture, new Vector2(60, 60));
