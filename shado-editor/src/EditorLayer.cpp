@@ -192,12 +192,16 @@ namespace Shado {
                             const ProjectConfig& config = ProjectUtils::GenerateNewProject(path);
 
                             // Create empty scene and save it
-                            newScene();
-                            saveScene(config.AssetDirectory / config.StartScene);
+                            try {
+                                newScene();
+                                saveScene(config.AssetDirectory / config.StartScene);
 
-                            // TODO: Make it so the C# dll is reloaded
-
-                            m_ContentPanel = ContentBrowserPanel();
+                                // TODO: Make it so the C# dll is reloaded
+                                m_ContentPanel = ContentBrowserPanel();
+                            }
+                            catch (const std::runtime_error& e) {
+                                Dialog::alert(e.what(), "Error creating project", Dialog::DialogIcon::ERROR_ICON);
+                            }
                         }
                     }
 

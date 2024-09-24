@@ -12,12 +12,12 @@ namespace Shado
 
         public static Vector3 zero {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return new Vector3(0f); }
+            get => new(0f);
         }
 
         public static Vector3 one {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return new Vector3(1f); }
+            get => new(1f);
         }
 
         public Vector3(float scalar) {
@@ -49,90 +49,84 @@ namespace Shado
 
         public Vector3 normalized {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return new Vector3(x / magnitude, y / magnitude, z / magnitude); }
+            get => new(x / magnitude, y / magnitude, z / magnitude);
         }
 
         public float magnitude {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return (float)Math.Sqrt(magnitudeSquared); }
+            get => (float)Math.Sqrt(magnitudeSquared);
         }
 
         public float magnitudeSquared {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return x * x + y * y + z * z; }
+            get => x * x + y * y + z * z;
         }
 
         public static float Distance(Vector3 a, Vector3 b) {
             return (float)Math.Sqrt(Math.Pow(b.x - a.x, 2) + Math.Pow(b.y - a.y, 2) + Math.Pow(b.z - a.z, 2));
         }
-
-        static Random random = new Random();
-
-        public static Vector3 Random(float min, float max) {
+        
+        // Linearly interpolates between two vectors.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
+        {
+            t = Mathf.Clamp01(t);
             return new Vector3(
-                (float)random.NextDouble() * (max - min) + min,
-                (float)random.NextDouble() * (max - min) + min,
-                (float)random.NextDouble() * (max - min) + min);
+                a.x + (b.x - a.x) * t,
+                a.y + (b.y - a.y) * t,
+                a.z + (b.z - a.z) * t
+            );
         }
 
+        // Cross Product of two vectors.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Cross(Vector3 lhs, Vector3 rhs)
+        {
+            return new Vector3(
+                lhs.y * rhs.z - lhs.z * rhs.y,
+                lhs.z * rhs.x - lhs.x * rhs.z,
+                lhs.x * rhs.y - lhs.y * rhs.x);
+        }
+        
         #region Operators
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator +(Vector3 a, Vector3 b) {
-            return new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
-        }
+        public static Vector3 operator +(Vector3 a, Vector3 b) =>  new(a.x + b.x, a.y + b.y, a.z + b.z);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator -(Vector3 a, Vector3 b) {
-            return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
-        }
+        public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(Vector3 vector, float scalar) {
-            return new Vector3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
-        }
+        public static Vector3 operator *(Vector3 vector, float scalar) => new(vector.x * scalar, vector.y * scalar, vector.z * scalar);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator /(Vector3 vector, float scalar) {
-            return new Vector3(vector.x / scalar, vector.y / scalar, vector.z / scalar);
-        }
+        public static Vector3 operator /(Vector3 vector, float scalar) => new(vector.x / scalar, vector.y / scalar, vector.z / scalar);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(Vector3 a, Vector3 b) {
-            return Mathf.Approx(a.magnitudeSquared - b.magnitudeSquared, 0f);
-        }
+        public static bool operator ==(Vector3 a, Vector3 b) =>
+            Mathf.Approx(a.magnitudeSquared - b.magnitudeSquared, 0f);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(Vector3 a, Vector3 b) {
-            return !(a == b);
-        }
+        public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator -(Vector3 a) {
-            return new Vector3(-a.x, -a.y, -a.z);
-        }
+        public static Vector3 operator -(Vector3 a) => new(-a.x, -a.y, -a.z);
 
-        public static bool operator >(Vector3 a, Vector3 b) {
-            return a.magnitude > b.magnitude;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(Vector3 a, Vector3 b)  => a.magnitude > b.magnitude;
 
-        public static bool operator <(Vector3 a, Vector3 b) {
-            return a.magnitude < b.magnitude;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(Vector3 a, Vector3 b) => a.magnitude < b.magnitude;
 
-        public static bool operator >=(Vector3 a, Vector3 b) {
-            return a.magnitude >= b.magnitude;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(Vector3 a, Vector3 b) => a.magnitude >= b.magnitude;
 
-        public static bool operator <=(Vector3 a, Vector3 b) {
-            return a.magnitude <= b.magnitude;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(Vector3 a, Vector3 b) => a.magnitude <= b.magnitude;
 
+        public static explicit operator Vector2(Vector3 vector) => vector.xy;
+        
         #endregion
-
-        public static explicit operator Vector2(Vector3 vector) {
-            return vector.xy;
-        }
 
         public override bool Equals(object? obj) {
             return obj is Vector3 other && Equals(other);
@@ -157,15 +151,13 @@ namespace Shado
 
             if (magnitudeDiff > 0)
                 return 1;
-            else if (magnitudeDiff < 0)
+            if (magnitudeDiff < 0)
                 return -1;
-            else
-                return 0;
+            return 0;
         }
 
         public string ToString(string? format, IFormatProvider? formatProvider) {
-            if (formatProvider == null)
-                formatProvider = CultureInfo.CurrentCulture;
+            formatProvider ??= CultureInfo.CurrentCulture;
 
             string formattedX = x.ToString(format, formatProvider);
             string formattedY = y.ToString(format, formatProvider);
@@ -175,7 +167,7 @@ namespace Shado
         }
 
         public override string ToString() {
-            return $"Vec3({x}, {y}, {z})";
+            return ToString(null, null);
         }
     }
 }

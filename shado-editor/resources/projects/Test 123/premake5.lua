@@ -15,7 +15,6 @@ workspace "Test123"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 group "Shado"
-	--include(RootDir .. "Shado-script-core")
 	include(RootDir .. "shado-opengl-api/vendor/Coral/Coral.Managed")
  	include(RootDir .. "Shado-script-core")
 group ""

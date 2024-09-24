@@ -85,7 +85,6 @@ namespace Sandbox
         }
 
         protected override void OnUpdate(float dt) {
-            
             Vector3 pos = translation;
             if (Input.IsKeyDown(KeyCode.W)) {
                 pos.y += moveDelta * dt;

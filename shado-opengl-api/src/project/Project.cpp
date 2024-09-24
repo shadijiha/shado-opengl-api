@@ -91,7 +91,7 @@ namespace Shado {
     const ProjectConfig& ProjectUtils::GenerateNewProject(const std::filesystem::path& fullpathToSProjFile) {
         const auto& path = fullpathToSProjFile;
 
-        Ref<Project> project = Project::New();
+        Ref<Project> project = CreateRef<Project>();
         std::string projectName = std::filesystem::path(path).filename().replace_extension().string();
         std::filesystem::path projectPath = std::filesystem::path(path).parent_path() / projectName;
 
@@ -110,7 +110,12 @@ namespace Shado {
         //FileSystem::NewDirectory(project->GetConfig().ScriptModulePath.parent_path());
         FileSystem::NewDirectory(projectPath / "src");
 
-        Project::SetActive(project);
+        try {
+            Project::SetActive(project);
+        }
+        catch (const std::runtime_error& e) {
+            SHADO_CORE_ERROR("Failed to set active project: {0}", e.what());
+        }
         Project::SaveActive(projectPath / (projectName + ".sproj"));
 
         // Copy premake file
@@ -143,16 +148,23 @@ namespace Shado {
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 group "Shado"
-	include(RootDir .. "Shado-script-core")
+	include(RootDir .. "shado-opengl-api/vendor/Coral/Coral.Managed")
+ 	include(RootDir .. "Shado-script-core")
 group ""
 )" +
                 "project \"" + projectName + "\"\n" +
                 R"(
 	kind "SharedLib"
 	language "C#"
+	dotnetframework "net8.0"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	propertytags {
+        { "AppendTargetFrameworkToOutputPath", "false" },
+        { "Nullable", "enable" },
+    }
 
 	configurations
 	{
@@ -161,7 +173,9 @@ group ""
 	
 	links
 	{
-		"Shado-script-core"
+		RootDir .. "shado-editor/ScriptCore/Shado-script-core.dll",
+		RootDir .. "shado-editor/DotNet/Coral.Managed.dll",
+		
 	}
 
 	files
@@ -188,37 +202,31 @@ using Shado.Editor;
 
 namespace )" + projectName + R"( {
 	public class SampleClass : Entity {
-		void OnCreate() {
+		protected override void OnCreate() {
 		}
 
-		void OnUpdate(float ts) {
-		}
-
-		void OnDestroy() {
-		}
-
-		void OnEvent(ref Event e) {
-		}
-
-		void OnDraw() {
-		}
-
-		void OnCollision2DEnter(Collision2DInfo info, Entity other) {
-		}
-
-		void OnCollision2DLeave(Collision2DInfo info, Entity other) {
+		protected override void OnUpdate(float ts) {
 		}
 	}
 
+#if false
 	[EditorTargetType(typeof(SampleClass))]
 	public class SampleClassEditor : Editor {
 		protected override void OnEditorDraw() {
 		}
 	}
+#endif
 }
 )";
             sampleClass.close();
         }
+
+        // Run the bat file
+        //std::system((projectPath / "GenerateSolution.bat").string().c_str());
+
+        // TODO: Run MSBuild
+
+
         return project->GetConfig();
     }
 }
