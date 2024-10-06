@@ -69,6 +69,8 @@ namespace Shado {
         ScriptStorage& GetScriptStorage();
 
         inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
+    private:
+        Entity instantiatePrefabHelper(Ref<Prefab> prefab, Entity toDuplicate, bool modifyTag = true);
 
     private:
         entt::registry m_Registry;

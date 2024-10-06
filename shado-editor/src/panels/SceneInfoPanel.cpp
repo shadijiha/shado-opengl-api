@@ -121,87 +121,52 @@ namespace Shado {
                 }
             );
         });
-#if 0
-        drawSection("Script Engine:", [this](const auto& name) {
-            const ScriptEngineData& data = ScriptEngine::GetData();
-            if (!&data) {
-                UI::Text("No script engine data");
+
+        drawSection("Script Engine:", [](const auto& name) {
+            auto& scriptEngine = ScriptEngine::GetInstance();
+            auto scene = scriptEngine.GetCurrentScene();
+            if (!scene) {
+                UI::Text("No scene selected");
                 return;
             }
 
-            UI::Text("Root:");
-            INDENTED({
+            auto view = scene->getRegistry().view<ScriptComponent>();
+            UI::Table("World bodies", view.begin(), view.end(), {
+                          {
+                              "Entity", [&scene](const entt::entity& entity, int i) {
+                                  Entity e(entity, scene.Raw());
+                                  auto& tc = e.getComponent<TagComponent>();
+                                  UI::Text("%s", tc.tag.c_str());
+                              }
+                          },
+                          {
+                              "Script id", [view](const entt::entity& entity, int i) {
+                                  auto& sc = view.get<const ScriptComponent>(entity);
+                                  UI::Text("%llu", sc.ScriptID);
+                              }
+                          },
+                          {
+                              "Script Name", [view, &scriptEngine](const entt::entity& entity, int i) {
+                                  auto& sc = view.get<const ScriptComponent>(entity);
+                                  if (!scriptEngine.IsValidScript(sc.ScriptID)) {
+                                      UI::Text("(Invalid)");
+                                      return;
+                                  }
+                                  auto name = scriptEngine.GetScriptMetadata(sc.ScriptID).FullName;
+                                  UI::Text("%s", name.c_str());
+                              }
+                          },
+                          {
+                              "Instance valid?", [view](const entt::entity& entity, int i) {
+                                  auto& sc = view.get<const ScriptComponent>(entity);
+                                  bool valid = sc.Instance.IsValid();
+                                  UI::Checkbox("##valid", valid);
+                              }
+                          },
 
-                //UI::Text("Root domain: %s", mono_domain_get_friendly_name(data.RootDomain));
-                //UI::Text("Core image filename: %s", mono_image_get_filename(data.CoreAssemblyImage));
-                UI::Text("Core assembly filepath: %s", data.CoreAssemblyFilepath.string().c_str());
-            });
-
-            UI::Text("App:");
-            INDENTED({
-                //UI::Text("App domain: %s", mono_domain_get_friendly_name(data.AppDomain));            
-                //UI::Text("App image name: %s", mono_image_get_filename(data.AppAssemblyImage));
-                UI::Text("Core assembly filepath: %s", data.AppAssemblyFilepath.string().c_str());
-            });
-
-            drawSection("Entity Classes:", [this, &data](const auto& name) {
-                INDENTED(
-                    for (auto& [klassName, klassRef] : data.EntityClasses) {
-                        UI::Text("%s", klassRef->GetClassFullName().c_str());
-                    }
-                );
-            });
-
-            drawSection("Entity Instances:", [this, &data](const auto& name) {
-                INDENTED(
-                    UI::Table("##Entity Instances", data.EntityInstances.begin(), data.EntityInstances.end(), {
-                        {"Entity", [this](const std::pair<UUID, Ref<ScriptInstance>>& key, int i) {
-                            auto& [entityId, instance] = key;
-                            auto entity = m_Scene->getEntityById(entityId);
-                            if (!entity) {
-                                UI::Text("Invalid entity (%llu)", entityId);
-                                return;
-                            }
-                            UI::Text("%s (%llu)", entity.getComponent<TagComponent>().tag.c_str(), entityId);
-                        }},
-                        {"Class fullname", [](const std::pair<UUID, Ref<ScriptInstance>>& key, int i) {
-                            auto& [entityId, instance] = key;
-                            UI::Text("Script: %s", instance->GetScriptClass()->GetClassFullName().c_str());
-                        }},
-                        {"MonoObject alive?", [](const std::pair<UUID, Ref<ScriptInstance>>& key, int i) {
-                            auto& [entityId, instance] = key;
-                            UI::Text("%s", instance->GetManagedObject() ? "true" : "false");
-                        }},
-                    }, tableFlags);
-                );
-            });
-
-            // drawSection("Entity Script fields editor", [this, &data](const auto& name) {
-            //     INDENTED(
-            //         for (auto& [entityId, fieldMap] : data.EntityScriptFields) {
-            //             Entity e = m_Scene->getEntityById(entityId);
-            //             if (!e) {
-            //                 UI::Text("Invalid entity (%llu)", entityId);
-            //                 continue;
-            //             }
-            //             
-            //             UI::Text("Entity: %s (%llu)", e.getComponent<TransformComponent>(), entityId);
-            //             INDENTED(
-            //                 for (auto& [fieldName, fieldInstance] : fieldMap) {
-            //                     UI::Text("%s: ", fieldName.c_str());
-            //                     ImGui::SameLine();
-            //                     
-            //                     double value = fieldInstance.GetValue<double>();                                
-            //                     UI::Text("%s: %f", fieldName.c_str(), value);
-            //
-            //                     
-            //                 }
-            //             );
-            //         }
-            //     );
-            // });
+                      }, tableFlags);
         });
-#endif
+
         ImGui::End();
     }
 

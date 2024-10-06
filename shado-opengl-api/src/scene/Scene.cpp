@@ -241,7 +241,8 @@ namespace Shado {
         m_Registry.destroy(entity);
     }
 
-    static Entity instantiatePrefabHelper(Ref<Prefab> prefab, Scene& scene, Entity toDuplicate, bool modifyTag = true) {
+    Entity Scene::instantiatePrefabHelper(Ref<Prefab> prefab, Entity toDuplicate, bool modifyTag) {
+        Scene& scene = *this;
         UUID instantiatedEntityId = UUID();
 
         // Copy the script storage from the prefab to the new entity with instantiatedEntityId
@@ -250,6 +251,12 @@ namespace Shado {
                                                              instantiatedEntityId);
             prefab->GetScriptStorage().CopyEntityStorage(toDuplicate.getUUID(), instantiatedEntityId,
                                                          scene.GetScriptStorage());
+
+            if (scene.isRunning()) {
+                toDuplicate.getComponent<ScriptComponent>().Instance = ScriptEngine::GetMutable().Instantiate(
+                    instantiatedEntityId, scene.GetScriptStorage(),
+                    uint64_t(instantiatedEntityId));
+            }
         }
 
 
@@ -261,7 +268,7 @@ namespace Shado {
         );
 
         for (const auto& oldChild : toDuplicate.getChildren()) {
-            Entity newChild = instantiatePrefabHelper(prefab, scene, oldChild, modifyTag);
+            Entity newChild = instantiatePrefabHelper(prefab, oldChild, modifyTag);
             newChild.getComponent<TransformComponent>().setParent(newChild, duplicated);
         }
 
@@ -269,7 +276,7 @@ namespace Shado {
     }
 
     Entity Scene::instantiatePrefab(Ref<Prefab> prefab, bool modifyTag) {
-        return instantiatePrefabHelper(prefab, *this, prefab->root, modifyTag);
+        return instantiatePrefabHelper(prefab, prefab->root, modifyTag);
     }
 
     void Scene::propagatePrefabChanges(Ref<Prefab> prefabChanged) {

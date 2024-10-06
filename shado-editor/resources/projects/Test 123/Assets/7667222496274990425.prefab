@@ -1,0 +1,53 @@
+PrefabId: 7667222496274990425
+Data:
+  Entity: 12713372958978598472
+  TagComponent:
+    Tag: Square (2)
+  TransformComponent:
+    Translation: [-0.179572046, 1.52056217, 0]
+    Rotation: [0, 0, 0]
+    Scale: [2, 2.5, 1]
+    ParentEntityId: 0
+  SpriteRendererComponent:
+    Color: [1, 1, 1, 1]
+    TextureHandle: 15883776055983858069
+    TilingFactor: 1
+    ShaderHandle: 0
+  BoxCollider2DComponent:
+    Offset: [0, 0]
+    Size: [0.5, 0.5]
+    Density: 1
+    Friction: 0.5
+    Restitution: 0
+    RestitutionThreshold: 0.5
+  ScriptComponent:
+    ScriptID: 3572598034
+    ScriptName: Sandbox.Test
+    Fields:
+      - ID: 49257961
+        Name: texture
+        Type: 20
+        Value: 1838504811568
+      - ID: 2054882781
+        Name: dir
+        Type: 8
+        Value: 1
+      - ID: 4237153936
+        Name: maxDelta
+        Type: 8
+        Value: 5
+      - ID: 1435041189
+        Name: moveRate
+        Type: 8
+        Value: 2
+      - ID: 1338514742
+        Name: totalDt
+        Type: 8
+        Value: 0
+      - ID: 1914835392
+        Name: linePrefab
+        Type: 16
+        Value: 13622340184056878492
+  PrefabInstanceComponent:
+    PrefabId: 7667222496274990425
+    PrefabEntityUniqueId: 13822079337910520558
