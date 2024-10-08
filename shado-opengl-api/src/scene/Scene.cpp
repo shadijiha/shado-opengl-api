@@ -232,10 +232,20 @@ namespace Shado {
             }
         }
 
-
         // Destroy children
         for (const auto& child : entity.getChildren()) {
             destroyEntity(child);
+        }
+
+        // Call OnDestroy for scripts
+        if (isRunning()) {
+            if (entity.hasComponent<ScriptComponent>()) {
+                auto& scriptComponent = entity.getComponent<ScriptComponent>();
+                if (scriptComponent.Instance.IsValid()) {
+                    scriptComponent.Instance.Invoke("OnDestroy");
+                    ScriptEngine::GetMutable().DestroyInstance(entity.getUUID(), m_ScriptStorage);
+                }
+            }
         }
 
         m_Registry.destroy(entity);
@@ -247,15 +257,21 @@ namespace Shado {
 
         // Copy the script storage from the prefab to the new entity with instantiatedEntityId
         if (toDuplicate.hasComponent<ScriptComponent>()) {
-            scene.GetScriptStorage().InitializeEntityStorage(toDuplicate.getComponent<ScriptComponent>().ScriptID,
+            auto& scriptComponent = toDuplicate.getComponent<ScriptComponent>();
+            scene.GetScriptStorage().InitializeEntityStorage(scriptComponent.ScriptID,
                                                              instantiatedEntityId);
             prefab->GetScriptStorage().CopyEntityStorage(toDuplicate.getUUID(), instantiatedEntityId,
                                                          scene.GetScriptStorage());
 
             if (scene.isRunning()) {
-                toDuplicate.getComponent<ScriptComponent>().Instance = ScriptEngine::GetMutable().Instantiate(
+                scriptComponent.Instance = ScriptEngine::GetMutable().Instantiate(
                     instantiatedEntityId, scene.GetScriptStorage(),
                     uint64_t(instantiatedEntityId));
+
+                // For some reason we need to delay the call to OnCreate
+                Application::get().SubmitToMainThread([this, &scriptComponent]() {
+                    scriptComponent.Instance.Invoke("OnCreate");
+                });
             }
         }
 
@@ -466,7 +482,7 @@ namespace Shado {
         }
 
         // After world has update delete all entities that need to be deleted
-        if (toDestroy.size() > 0) {
+        if (!toDestroy.empty()) {
             for (auto& to_delete : toDestroy) {
                 destroyEntity(to_delete);
             }

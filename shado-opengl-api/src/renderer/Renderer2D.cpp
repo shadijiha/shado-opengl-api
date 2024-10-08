@@ -483,18 +483,36 @@ namespace Shado {
             s_Data.TextureSlotIndex++;
         }
 
+        QuadVertex temp[quadVertexCount];
         for (size_t i = 0; i < quadVertexCount; i++) {
-            s_Data.QuadVertexBufferPtr->Position = transform * s_Data.QuadVertexPositions[i];
-            s_Data.QuadVertexBufferPtr->Color = tintColor;
-            s_Data.QuadVertexBufferPtr->TexCoord = textureCoords[i];
-            s_Data.QuadVertexBufferPtr->TexIndex = textureIndex;
-            s_Data.QuadVertexBufferPtr->TilingFactor = tilingFactor;
-            s_Data.QuadVertexBufferPtr->EntityID = entityID;
-            s_Data.QuadVertexBufferPtr++;
+            temp[i].Position = transform * s_Data.QuadVertexPositions[i];
+            temp[i].Color = tintColor;
+            temp[i].TexCoord = textureCoords[i];
+            temp[i].TexIndex = textureIndex;
+            temp[i].TilingFactor = tilingFactor;
+            temp[i].EntityID = entityID;
+        }
+
+        // If entity is transparent, Draw it later
+        QuadFace face;
+        for (size_t i = 0; i < quadVertexCount; i++) {
+            if (CPUAlphaZSorting && tintColor.a < 1.0f) {
+                face.vertices.push_back(temp[i]);
+            }
+            else {
+                *s_Data.QuadVertexBufferPtr = temp[i];
+                s_Data.QuadVertexBufferPtr++;
+            }
+        }
+
+        // Again check if there's an alpha
+        // if yes, don't add the quad now, wait until the Flush so the alpha quads are drawn on top of everything
+        if (CPUAlphaZSorting && tintColor.a < 1.0f) {
+            face.zBuffer = transform[3].z;
+            s_Data.transparentQuads.push_back(face);
         }
 
         s_Data.QuadIndexCount += 6;
-
         s_Data.Stats.QuadCount++;
     }
 

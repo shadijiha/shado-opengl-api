@@ -42,6 +42,7 @@ namespace Shado
         internal static delegate* unmanaged<ulong, ReflectionType, bool> Entity_HasComponent;
         internal static delegate* unmanaged<ulong, ReflectionType, bool> Entity_RemoveComponent;
         internal static delegate* unmanaged<NativeString, ulong> Entity_FindEntityByName;
+        internal static delegate* unmanaged<ulong, void> Entity_Destroy;
 
         #endregion
 

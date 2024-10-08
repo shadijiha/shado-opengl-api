@@ -50,6 +50,9 @@ AssetRegistry:
   - Handle: 16306501128989744395
     FilePath: Assets/glass.glsl
     Type: AssetType::Shader
+  - Handle: 17945560713062088898
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
   - Handle: 18014698014252577933
     FilePath: Assets/riven3.png
     Type: AssetType::Texture2D

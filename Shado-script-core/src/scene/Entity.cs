@@ -134,7 +134,11 @@ namespace Shado
         }
 
 
-        //public void Destroy() => Scene.DestroyEntity(this);
+        public void Destroy() {
+            unsafe {
+                InternalCalls.Entity_Destroy(id);
+            }
+        }
 
         /// <summary>
         /// Checks if this entity is a script entity of type T

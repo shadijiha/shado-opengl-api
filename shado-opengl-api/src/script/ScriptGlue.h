@@ -78,6 +78,7 @@ namespace Shado {
         bool Entity_HasComponent(uint64_t entityID, Coral::ReflectionType componentType);
         bool Entity_RemoveComponent(uint64_t entityID, Coral::ReflectionType componentType);
         uint64_t Entity_FindEntityByName(Coral::String name);
+        void Entity_Destroy(uint64_t entityID);
 
 #pragma endregion
 

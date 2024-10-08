@@ -142,10 +142,13 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
+        SHADO_ADD_INTERNAL_CALL(Entity_Destroy);
 
         SHADO_ADD_INTERNAL_CALL(Prefab_Instantiate);
 
         SHADO_ADD_INTERNAL_CALL(Scene_IsEntityValid);
+        SHADO_ADD_INTERNAL_CALL(Scene_LoadScene);
+        SHADO_ADD_INTERNAL_CALL(Scene_GetAllEntities);
 
         SHADO_ADD_INTERNAL_CALL(TagComponent_GetTag);
         SHADO_ADD_INTERNAL_CALL(TagComponent_SetTag);
@@ -445,6 +448,14 @@ namespace Shado {
                 return entity.getUUID();
             else
                 return 0;
+        }
+
+        void Entity_Destroy(uint64_t entityID) {
+            auto scene = ScriptEngine::GetInstance().GetCurrentScene();
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+
+            scene->destroyEntity(entity);
         }
 
 #pragma endregion
