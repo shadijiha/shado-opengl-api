@@ -1,7 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Shado;
 using Shado.Editor;
+using System.Drawing.Imaging;
+using System.Threading;
+using System.Web;
 
 namespace Sandbox
 { 
@@ -15,11 +25,15 @@ namespace Sandbox
         //public Shader shader = Shader.Create("Assets/empty.glsl");
         public float totalDt = 0.0f;
         public Prefab linePrefab;
+
+        private volatile string? textureToLoad = null;
         //private ParticuleSystem particuleSystem;
 
         //public ShadoEvent events;
 
-        protected override void OnCreate() {
+        protected override void OnCreate()
+        {
+            //fetchCait();
             const float max = 0.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
@@ -68,8 +82,107 @@ namespace Sandbox
             if (Input.IsKeyDown(KeyCode.C)) {
                GetComponent<RigidBody2DComponent>().ApplyLinearImpulse(Vector2.one, false);
             }
+
+            if (textureToLoad is not null)
+            {
+                GetComponent<SpriteRendererComponent>().texture = new Texture2D(textureToLoad);
+                Log.Info(GetComponent<SpriteRendererComponent>().texture.ToString());
+                textureToLoad = null;
+            }
+        }
+
+        static CookieContainer cookieContainer = new CookieContainer();
+        static HttpClientHandler handler = new HttpClientHandler
+        {
+            CookieContainer = cookieContainer,
+            UseCookies = true, // Enable cookies
+            //AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate, // Optional: handle compressed responses
+            ServerCertificateCustomValidationCallback = (message, certificate, chain, sslPolicyErrors) => true
+        };
+        static HttpClient httpClient = new HttpClient(handler);
+        static Random random = new Random();
+        
+        private async Task makeRequest<T>(string url, string method, T? body = null, Func<HttpContent, Task>? callback = null) where T : class
+        {
+            Log.Info("Requesting {0}", url);
+            var requestUrl = $"https://cloud.shadijiha.com/apinest/{url}"; // Replace with the desired URL
+            string jsonBody = JsonSerializer.Serialize(body);
+            var bodyStr = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = null;
+            switch (method)
+            {
+                case "post":
+                    response = await httpClient.PostAsync(requestUrl, bodyStr);
+                    break;
+                case "get":
+                    response = await httpClient.GetAsync(requestUrl);
+                    break;
+                default:
+                    throw new Exception();
+            }
+            
+            response.EnsureSuccessStatusCode();
+
+            if (callback is not null)
+                await callback(response.Content);
         }
         
+        record DirListResponse
+        {
+            public string status { get; set; }
+            public string parent { get; set; }
+            public Data[] data {get; set; }
+            
+            public record Data
+            {
+                public string name { get; set; }
+                public string path { get; set; }
+                public bool is_dir { get; set; }
+                
+                public string extension { get; set; }
+            }
+        }
+        private async void fetchCait()
+        {
+            await makeRequest("auth/login", "post", new
+            {
+                email = "example@shado.com",
+                password = "*******"
+            });
+            
+            await makeRequest("directory/list/Cait", "get", "", callback: async (content) =>
+            {
+                
+                // Output the response content
+                string responseContent = await content.ReadAsStringAsync();
+                DirListResponse json = JsonSerializer.Deserialize<DirListResponse>(responseContent);
+                List<DirListResponse.Data> files = new ();
+                foreach (DirListResponse.Data entry in json.data.Where(e => !e.is_dir && (e.extension == ".png" || e.extension == ".jpg")))
+                {
+                    files.Add(entry);
+                }
+                
+                // random 1
+                var chosen = files[random.Next(files.Count)];
+                await makeRequest($"file/{HttpUtility.UrlEncode(chosen.path).Replace("+", "%20")}", "get", "", callback: async (content) =>
+                {
+                    byte[] buffer = await content.ReadAsByteArrayAsync();
+                    File.WriteAllBytes("D:\\Code\\Projects\\shado-opengl-api\\shado-editor\\resources\\projects\\Test 123\\Assets\\cait_temp" + chosen.extension, buffer);
+                    textureToLoad = $"Assets/cait_temp{chosen.extension}";
+                    //GetComponent<SpriteRendererComponent>().texture = new Texture2D($"Assets/cait_temp{chosen.extension}");
+                    //Log.Info(GetComponent<SpriteRendererComponent>().texture.ToString());
+                });
+            });
+            
+            // // Access the cookies
+            // var cookies = cookieContainer.GetCookies(new Uri(requestUrl));
+            // Console.WriteLine("\nStored Cookies:");
+            // foreach (Cookie cookie in cookies)
+            // {
+            //     Console.WriteLine($"{cookie.Name} = {cookie.Value}");
+            // }
+        }
     }
 
     public class TestCamera : Entity {
