@@ -248,6 +248,31 @@ namespace Shado {
         glDepthFunc(GL_LESS);
         glEnable(GL_ALPHA_TEST);
         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+
+        /*
+         * Debug
+         */
+#if SHADO_DEBUG || SHADO_RELEASE
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // Ensures the callback is executed immediately
+        glDebugMessageCallback([](GLenum source, GLenum type, GLuint id,
+                                    GLenum severity, GLsizei length,
+                                    const GLchar *message, const void* userParam) {
+                std::string severityString;
+                switch (severity) {
+                    case GL_DEBUG_SEVERITY_HIGH:
+                        severityString = "SEVERE ERROR";
+                        break;
+                    case GL_DEBUG_SEVERITY_MEDIUM:
+                        severityString = "Medium severity";
+                        break;
+                    default:
+                        return;
+                }
+                SHADO_CORE_ERROR("[OpenGL Error] {} ({}): {}", severityString, id, message);
+            }, nullptr);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#endif
     }
 
     void Renderer2D::Shutdown() {
@@ -581,7 +606,7 @@ namespace Shado {
                               const glm::vec4& color, int entityID) {
         SHADO_PROFILE_FUNCTION();
         Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(textureHandle);
-
+        
         float textureIndex = 0.0f;
         for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {
             if (*s_Data.TextureSlots[i] == *texture) {
@@ -670,7 +695,6 @@ namespace Shado {
 
         constexpr glm::vec2 textureCoords[] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
         Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(textureHandle);
-
 
         float textureIndex = 0.0f;
         for (uint32_t i = 1; i < s_Data.TextureSlotIndex; i++) {

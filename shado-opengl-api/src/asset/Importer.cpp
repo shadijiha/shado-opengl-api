@@ -10,7 +10,6 @@
 #include "renderer/Texture2D.h"
 #include "renderer/Shader.h"
 #include "util/Buffer.h"
-#include "asset/AssetManager.h"
 
 namespace Shado {
     using AssetImportFunction = std::function<Ref<Asset>(AssetHandle, const AssetMetadata&)>;
@@ -36,6 +35,7 @@ namespace Shado {
 
     Ref<Texture2D> TextureImporter::LoadTexture2D(const std::filesystem::path& path) {
         SHADO_PROFILE_FUNCTION();
+        SHADO_CORE_TRACE("Importing Texture2D {0}", path.string());
 
         int width, height, channels;
         stbi_set_flip_vertically_on_load(1);
@@ -53,13 +53,13 @@ namespace Shado {
             return nullptr;
         }
 
-
         // TODO: think about this
         data.Size = width * height * channels;
 
         Texture2DSpecification spec;
         spec.width = width;
         spec.height = height;
+        spec.path = path;
         switch (channels) {
         case 3:
             spec.format = Texture2DChannelFormat::RGB8;
@@ -70,8 +70,9 @@ namespace Shado {
             spec.dataFormat = Texture2DDataFormat::RGBA;
             break;
         }
-
+        
         Ref<Texture2D> texture = CreateRef<Texture2D>(spec, data);
+        SHADO_CORE_TRACE("Created texture Ref {}x{}@{} (RendererId: {})", width, height, channels, texture->getRendererID());
         data.Release();
         return texture;
     }

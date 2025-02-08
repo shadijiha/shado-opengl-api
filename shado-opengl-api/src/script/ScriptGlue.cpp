@@ -1089,7 +1089,9 @@ namespace Shado {
         uint64_t Texture2D_Create(Coral::String inPath) {
             // See if the texture is in registry
             if (!Project::GetActive()->GetAssetManager()->IsPathInRegistry(std::string(inPath))) {
-                return Project::GetActive()->GetEditorAssetManager()->ImportAsset(std::string(inPath));
+                AssetHandle handle = Project::GetActive()->GetEditorAssetManager()->ImportAsset(std::string(inPath), false);
+                SHADO_CORE_ASSERT(Project::GetActive()->GetAssetManager()->IsAssetLoaded(handle), "Failed to load asset {}", std::string(inPath));
+                return handle;
             }
             return Project::GetActive()->GetAssetManager()->GetHandleFromPath(std::string(inPath));
         }

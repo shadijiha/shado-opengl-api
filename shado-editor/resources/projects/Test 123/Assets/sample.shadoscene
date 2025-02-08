@@ -134,7 +134,7 @@ Entities:
       ParentEntityId: 0
     SpriteRendererComponent:
       Color: [1, 1, 1, 1]
-      TextureHandle: 15883776055983858069
+      TextureHandle: 8781077704414820895
       TilingFactor: 1
       ShaderHandle: 0
     BoxCollider2DComponent:

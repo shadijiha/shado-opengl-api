@@ -28,6 +28,7 @@ namespace Shado {
     struct AssetMetadata {
         AssetType Type = AssetType::None;
         std::filesystem::path FilePath;
+        uint64_t DateModified = 0;
         operator bool() const { return Type != AssetType::None; }
     };
 }

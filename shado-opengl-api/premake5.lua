@@ -102,3 +102,7 @@ project "shado-opengl-api"
 		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Dist/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
         }
 
+    -- needed for ##__VA_ARGS__ in macros
+    filter "action:vs*"
+        buildoptions { "/Zc:preprocessor" }
+

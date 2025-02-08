@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <imgui.h>
+#include <regex>
 #include <box2d/b2_body.h>
 
 #include "scene/Components.h"
@@ -167,6 +168,59 @@ namespace Shado {
                       }, tableFlags);
         });
 
+        drawSection("Asset registry:", [](const auto& name)
+        {
+            if (!Project::GetActive() || !Project::GetActive()->GetEditorAssetManager())
+            {
+                UI::Text("No project and/or asset registry loaded");
+                return;
+            }
+
+            static std::string searchValue = "";
+            UI::InputTextControl("Handle regex", searchValue);
+            
+            AssetRegistry assetMap = Project::GetActive()->GetEditorAssetManager()->GetAssetRegistry();
+            if (!searchValue.empty())
+            {
+                AssetRegistry filteredMap;
+                std::regex pattern(searchValue);
+                std::copy_if(assetMap.begin(), assetMap.end(), std::inserter(filteredMap, filteredMap.end()),
+                 [pattern](const auto& pair)
+                 {
+                     return std::regex_match(std::to_string(pair.first), pattern);
+                 });
+                assetMap = filteredMap;
+            }
+            
+            UI::Table("Assets", assetMap.begin(), assetMap.end(),
+               {
+                        {"Handle", [](const auto& asset, int i)
+                                    {
+                                        UI::Text("%llu", asset.first);
+                                        if (asset.second.Type == AssetType::Texture2D && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)) {
+                                            if (auto texture = AssetManager::GetAsset<Texture2D>(asset.first)) {
+                                                ImGui::BeginTooltip();
+                                                const float aspectRatio = (float)texture->getHeight() / (float)texture->getWidth();
+                                                ImGui::Image((ImTextureID)(texture->getRendererID()), {150.0f , 150.0f * aspectRatio}, { 0, 1 }, { 1, 0 });
+                                                ImGui::EndTooltip();
+                                            }
+                                        }
+                                    }
+                        },
+                        { "Type", [](const auto& asset, int i)
+                                    {
+                                        UI::Text("%s", AssetTypeToString(asset.second.Type).data());
+                                    }
+                        },
+                        { "Path", [](const auto& asset, int i)
+                                    {
+                                        UI::Text("%s", Project::GetActive()->GetEditorAssetManager()->GetPathFromHandle(asset.first).filename().string().c_str());
+                                    }
+                        }
+               } 
+            ); 
+        });
+        
         ImGui::End();
     }
 

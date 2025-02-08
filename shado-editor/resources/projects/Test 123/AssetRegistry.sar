@@ -1,61 +1,263 @@
+Version: 0.0.1
+CreationDate: 1739003759860
 AssetRegistry:
+  - Handle: 35664321811634348
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 361863724697512369
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 580042439128894910
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 1270288536782247405
+    FilePath: Assets/riven.png
+    Type: AssetType::Texture2D
+    DateModified: 1709334925600
   - Handle: 1297794839041289592
     FilePath: Assets/Iterations  inversion 2.glsl
     Type: AssetType::Shader
+    DateModified: 0
+  - Handle: 1786067367746106683
+    FilePath: Assets/cait_temp.png
+    Type: AssetType::Texture2D
+    DateModified: 1738990160919
+  - Handle: 2100066724720774487
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 2218039846434267199
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1738990170115
+  - Handle: 2472509272235928882
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 2925972611826760796
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 3134207795021375177
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 3432510494560186117
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 3575343489803578509
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 3972737739094736351
     FilePath: Assets/Iterations  inversion 2.glsl
     Type: AssetType::Shader
+    DateModified: 0
+  - Handle: 4768692101832668840
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 4867264882026357167
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 4904762162081262061
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 5008999352554915064
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 5441022443313108851
     FilePath: Assets/glass.glsl
     Type: AssetType::Shader
+    DateModified: 0
+  - Handle: 5632009792179988651
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 5888397514412968268
+    FilePath: cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 6662532500618522026
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 6664581295654238386
     FilePath: Assets/Iterations  inversion 2.glsl
     Type: AssetType::Shader
+    DateModified: 0
+  - Handle: 7436809221784494902
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 7599696771498338291
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 7885180025997058439
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 8091165309950514268
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 8535762204291486581
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 8543246540818334987
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 8781077704414820895
+    FilePath: Assets/Riven_HD.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1709334925579
   - Handle: 9118746671848534789
     FilePath: Assets/TranscodedWallpaper.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 9195759022517762333
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 9718941093683880670
+    FilePath: cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 9890310436673862894
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1709334925617
+  - Handle: 10249953490590004087
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1738990093211
+  - Handle: 10518541990471694147
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 10550553705852516655
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 10646099748731309411
+    FilePath: Assets/cait_temp.png
+    Type: AssetType::Texture2D
+    DateModified: 1738990073511
+  - Handle: 10948356613276187200
+    FilePath: Assets/cait_temp.png
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 11829320607078295835
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 12367714226039988667
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 12535523823327419226
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 12673147420325432644
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 13381066831825461701
     FilePath: Assets/glass.glsl
     Type: AssetType::Shader
+    DateModified: 0
   - Handle: 13645751397909729872
     FilePath: Assets/riven.png
     Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 14573750143154789147
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1738991307480
+  - Handle: 14632002203833844080
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 14841178861229505860
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 14931033771917622237
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 14969361606207292723
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 15056645048193503586
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 15287599578997810433
+    FilePath: Assets/Riven_HD.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1709334925579
   - Handle: 15449853075736280499
     FilePath: Assets/cool blob.glsl
     Type: AssetType::Shader
+    DateModified: 0
+  - Handle: 15709534791792203152
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 15733013599283217316
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 15883776055983858069
     FilePath: Assets/Riven_HD.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 16306501128989744395
     FilePath: Assets/glass.glsl
     Type: AssetType::Shader
+    DateModified: 0
+  - Handle: 16482795953836881012
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 17040842250444654640
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 17505999434519280946
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 17647177294827653344
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
+  - Handle: 17823271171257387729
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 17945560713062088898
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 18014698014252577933
     FilePath: Assets/riven3.png
     Type: AssetType::Texture2D
+    DateModified: 0
   - Handle: 18078777031608217494
     FilePath: Assets/glass.glsl
     Type: AssetType::Shader
+    DateModified: 0

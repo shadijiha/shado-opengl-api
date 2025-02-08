@@ -25,6 +25,9 @@ namespace Shado {
         Texture2DChannelFormat format = Texture2DChannelFormat::RGBA8;
         Texture2DDataFormat dataFormat = Texture2DDataFormat::RGBA;
         bool generateMips = true;
+
+        /* Optional but useful for debugging */
+        std::filesystem::path path;
     };
 
     class Texture2D : public Asset {

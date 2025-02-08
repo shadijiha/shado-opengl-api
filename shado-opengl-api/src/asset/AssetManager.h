@@ -5,6 +5,8 @@
 #include "project/Project.h"
 #include "util/Memory.h"
 
+#define SHADO_ASSET_MANAGER_VERSION "0.0.1"
+
 namespace Shado {
     using AssetMap = std::map<AssetHandle, Ref<Asset>>;
 
@@ -57,9 +59,15 @@ namespace Shado {
 
         virtual bool IsAssetHandleValid(AssetHandle handle) const override;
         virtual bool IsAssetLoaded(AssetHandle handle) const override;
+
+        /**
+         * Checks if provided filepath is in the asset registry AND if its date modified matches the registry
+         * @param path 
+         * @return 
+         */
         virtual bool IsPathInRegistry(const std::filesystem::path& path) const override;
 
-        AssetHandle ImportAsset(const std::filesystem::path& filepath);
+        AssetHandle ImportAsset(const std::filesystem::path& filepath, bool serializeToRegistry = true);
 
 
         void SerializeAssetRegistry();

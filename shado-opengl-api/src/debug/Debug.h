@@ -51,7 +51,12 @@ inline OStream& operator<<(OStream& os, glm::qua<T, Q> quaternion)
 
 #ifdef SHADO_ENABLE_ASSERTS
 #define SHADO_ASSERT(x, ...) { if(!(x)) { SHADO_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
-#define SHADO_CORE_ASSERT(x, ...) { if(!(x)) { SHADO_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+#define SHADO_CORE_ASSERT(Cond, ...) {\
+	if(!(Cond)) {\
+		SHADO_CORE_ERROR("Assertion Failed: {}", ##__VA_ARGS__);\
+		__debugbreak();\
+	}\
+}
 #else
 #define SHADO_ASSERT(x, ...)
 #define SHADO_CORE_ASSERT(x, ...)
