@@ -23,7 +23,7 @@ workspace "Hazel-ScriptCore"
 	project "Hazel-ScriptCore"
 		kind "SharedLib"
 		language "C#"
-		dotnetframework "net8.0"
+		dotnetframework "net9.0"
 		clr "Unsafe"
 		targetdir ("../Hazelnut/Resources/Scripts")
 		objdir ("../Hazelnut/Resources/Scripts/Intermediates")

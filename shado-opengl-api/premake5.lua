@@ -74,7 +74,8 @@ project "shado-opengl-api"
 
         postbuildcommands
         {
-            '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Coral.Managed/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
+            '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
 		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
 		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
 		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
@@ -85,7 +86,8 @@ project "shado-opengl-api"
         optimize "On"
 
         postbuildcommands {
-            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Coral.Managed/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
+            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
 		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
 		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
 		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',

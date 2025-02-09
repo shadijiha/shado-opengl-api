@@ -4,7 +4,7 @@ project "Shado-script-core"
 	kind "SharedLib"
 	language "C#"
 	clr "Unsafe"
-	dotnetframework "net8.0"
+	dotnetframework "net9.0"
 
 	targetdir ("../shado-editor/ScriptCore")
 	objdir ("../shado-editor/ScriptCore/Intermediates")

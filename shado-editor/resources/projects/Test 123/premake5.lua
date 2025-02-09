@@ -22,7 +22,7 @@ group ""
 project "Test123"
 	kind "SharedLib"
 	language "C#"
-	dotnetframework "net8.0"
+	dotnetframework "net9.0"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
