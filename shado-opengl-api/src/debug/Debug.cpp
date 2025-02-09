@@ -3,6 +3,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/ringbuffer_sink.h>
 #include <deque>
+#include <filesystem>
 
 // ******************** Debug Class ********************
 namespace Shado {
@@ -93,16 +94,17 @@ namespace Shado {
 	{
 		// For the editor console
 		s_Console_sink = std::make_shared<no_duplicate_log_sink>(100);
+		std::filesystem::path fileSinkPath = std::filesystem::absolute("Shado.log");
 
 		std::vector<spdlog::sink_ptr> logSinks;
 		logSinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-		logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("Shado.log", true));
+		logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(fileSinkPath.string(), true));
 		logSinks.emplace_back(s_Console_sink);
 
 		s_ConsoleFormatter = std::make_shared<spdlog::pattern_formatter>("%^[%T.%e] %n: %v%$");
 
 		logSinks[0]->set_formatter(s_ConsoleFormatter->clone());
-		logSinks[1]->set_pattern("[%T] [%l] %n: %v");
+		logSinks[1]->set_pattern("[%Y-%m-%d %T] [%l] %n: %v");
 		logSinks[2]->set_formatter(s_ConsoleFormatter->clone());
 
 		s_CoreLogger = std::make_shared<spdlog::logger>("SHADO", begin(logSinks), end(logSinks));
@@ -115,6 +117,7 @@ namespace Shado {
 		s_ClientLogger->set_level(spdlog::level::trace);
 		s_ClientLogger->flush_on(spdlog::level::err);
 
+		SHADO_CORE_INFO("Logging initialized. Log file: {}", fileSinkPath.string());
 	}
 
 	std::shared_ptr<spdlog::logger>& Log::getCoreLogger()	{

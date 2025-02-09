@@ -17,6 +17,7 @@ project "shado-editor"
 
     includedirs
     {
+        "src",
         "%{IncludeDir.GLFW}", -- For some reason I need this and cherno doesn't
         "%{IncludeDir.GLEW}", -- For some reason I need this and cherno doesn't
         "%{IncludeDir.imgui}",

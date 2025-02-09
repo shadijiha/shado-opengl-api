@@ -12,9 +12,6 @@
 
 namespace Shado {
     // =========================== APPLICATION CLASS ===========================
-
-    Application* Application::singleton = snew(Application) Application();
-
     Application::Application(unsigned width, unsigned height, const std::string& title)
         : window(snew(Window) Window(width, height, title)), uiScene(snew(ImguiLayer) ImguiLayer) {
         Log::init();
@@ -43,6 +40,16 @@ namespace Shado {
         Project::SetActive(nullptr);
 
         glfwTerminate();
+    }
+
+    Application& Application::get()
+    {
+        static Application* instance = nullptr;
+        if (!instance)    {
+            instance = snew(Application) Application();
+            return *instance;
+        }
+        return *instance;
     }
 
     void Application::run() {
@@ -176,21 +183,21 @@ namespace Shado {
     void Application::destroy() {
         SHADO_PROFILE_FUNCTION();
 
-        for (Layer*& layer : singleton->layers) {
+        for (Layer*& layer : get().layers) {
             layer->onDestroy();
             sdelete(layer);
             layer = nullptr;
         }
-        singleton->uiScene->onDestroy();
+        get().uiScene->onDestroy();
 
-        singleton->m_Running = false;
+        get().m_Running = false;
 
         Renderer2D::Shutdown();
-        sdelete(singleton);
+        sdelete(&get());
     }
 
     void Application::close() {
-        singleton->m_Running = false;
+        get().m_Running = false;
     }
 
     float Application::getTime() const {

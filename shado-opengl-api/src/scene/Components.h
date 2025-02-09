@@ -8,12 +8,11 @@
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
-#include "../../../shado-editor/EditorEvents.h"
+#include "EditorEvents.h"
 #include "renderer/Font.h"
 #include "renderer/Shader.h"
 #include "renderer/Texture2D.h"
 #include "script/CSharpObject.h"
-//#include "script/ScriptManager.h"
 
 namespace Shado {
     struct IDComponent {

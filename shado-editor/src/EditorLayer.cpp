@@ -11,7 +11,7 @@
 #include "ui/UI.h"
 #include "project/Project.h"
 #include "script/ScriptEngine.h"
-#include "../EditorEvents.h"
+#include "EditorEvents.h"
 #include "asset/AssetManager.h"
 #include "asset/Importer.h"
 #include "renderer/Font.h"

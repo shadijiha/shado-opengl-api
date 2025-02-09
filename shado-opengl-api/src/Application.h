@@ -14,7 +14,7 @@ namespace Shado {
         Application();
         ~Application();
 
-        static Application& get() { return *singleton; }
+        static Application& get();
         static void destroy();
 
         static void close();
@@ -53,7 +53,5 @@ namespace Shado {
 
         std::vector<std::function<void()>> m_MainThreadQueue;
         std::mutex m_MainThreadQueueMutex;
-
-        static Application* singleton;
     };
 }

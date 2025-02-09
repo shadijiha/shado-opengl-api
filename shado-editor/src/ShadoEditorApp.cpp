@@ -12,14 +12,14 @@ int WINAPI WinMain( HINSTANCE hInstance,    // HANDLE TO AN INSTANCE.  This is t
 int main(int argc, const char** argv)
 #endif
 {
+	std::filesystem::current_path(std::filesystem::path(__argv[0]).parent_path());
+	
 	SHADO_PROFILE_BEGIN_SESSION("Startup", "ShadoProfile-Startup.json");
 	
-	std::filesystem::current_path(std::filesystem::path(__argv[0]).parent_path());
-	SHADO_CORE_INFO("Setting current dir to: {0}", std::filesystem::current_path().string());
-	
-	auto& application = Application::get();
+	auto& application = Application::get();	// <--- Log is init here, don't call any logs functions before it
 	application.getWindow().resize(1920, 1080);
 	application.submit(snew(EditorLayer) EditorLayer);
+	SHADO_CORE_INFO("fs current dir was set to: {0}", std::filesystem::current_path().string());
 	SHADO_PROFILE_END_SESSION();
 
 

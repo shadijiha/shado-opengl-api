@@ -22,6 +22,7 @@ project "shado-opengl-api"
     includedirs
     {
         "src",
+        "%{wks.location}/shado-editor/src",
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.GLEW}",
         "%{IncludeDir.imgui}",
