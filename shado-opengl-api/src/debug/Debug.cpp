@@ -71,7 +71,8 @@ namespace Shado {
 				msg.thread_id == previous_log_.thread_id &&
 				msg.logger_name == previous_log_.logger_name &&
 				msg.source.filename == previous_log_.source.filename &&
-				msg.source.line == previous_log_.source.line)
+				msg.source.line == previous_log_.source.line &&
+				!sink_.empty())
 			{
 				const auto& sink_back_new_count = sink_.back().count + 1;
 				sink_.back() = log_msg_buffer_with_count(msg, sink_back_new_count);	// Update it (to update timestamp)
