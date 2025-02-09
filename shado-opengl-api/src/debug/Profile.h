@@ -230,7 +230,7 @@ namespace Shado {
 #if defined(SHADO_PROFILE) || FORCE_PROFILE
 #define SHADO_PROFILE_BEGIN_SESSION(name, filepath)	::Shado::Instrumentor::Get().BeginSession(name, filepath);
 #define SHADO_PROFILE_END_SESSION()					::Shado::Instrumentor::Get().EndSession();
-#define SHADO_PROFILE_SCOPE(name, ...)		::Shado::InstrumentationTimer timer##__LINE__(std::format(name, ##__VA_ARGS__));
+#define SHADO_PROFILE_SCOPE(name, ...)		::Shado::InstrumentationTimer timer##__LINE__(std::format(name, ##__VA_ARGS__).c_str());
 #define SHADO_PROFILE_FUNCTION()					SHADO_PROFILE_SCOPE(__FUNCSIG__)
 #else
 #define SHADO_PROFILE_BEGIN_SESSION(name, filepath)

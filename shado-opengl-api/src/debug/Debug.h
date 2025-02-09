@@ -14,20 +14,25 @@
 
 namespace Shado {
 
+	class no_duplicate_log_sink;
+	
 	class Log
 	{
 	public:
 		static void init();
 
-		static std::shared_ptr<spdlog::logger>& getCoreLogger() { return s_CoreLogger; }
-		static std::shared_ptr<spdlog::logger>& getClientLogger() { return s_ClientLogger; }
+		static std::shared_ptr<spdlog::logger>& getCoreLogger();
+		static std::shared_ptr<spdlog::logger>& getClientLogger();
 
-		static std::vector<std::string> getMessages() { return ringbuffer_sink->last_formatted(); }
-		static void clearMessages() { ringbuffer_sink->clear(); }
+		static std::vector<std::string> getMessages();
+		static void clearMessages();
+
+		static std::shared_ptr<spdlog::formatter> getConsoleFormatter();
 	private:
 		static std::shared_ptr<spdlog::logger> s_CoreLogger;
 		static std::shared_ptr<spdlog::logger> s_ClientLogger;
-		inline static std::shared_ptr<spdlog::sinks::ringbuffer_sink_mt> ringbuffer_sink = nullptr;
+		static std::shared_ptr<no_duplicate_log_sink> s_Console_sink;
+		static std::shared_ptr<spdlog::formatter> s_ConsoleFormatter;
 	};
 }
 
