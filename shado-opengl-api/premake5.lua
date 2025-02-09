@@ -98,10 +98,10 @@ project "shado-opengl-api"
         optimize "Full"
 
         postbuildcommands {
-            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Coral.Managed/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Dist/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Dist/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Dist/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
+            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
         }
 
     -- needed for ##__VA_ARGS__ in macros
