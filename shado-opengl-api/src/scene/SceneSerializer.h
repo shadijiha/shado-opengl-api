@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Scene.h"
 
+#define SHADO_SCENE_VERSION "0.0.2"
+
 namespace YAML {
     class Emitter;
     class Node;

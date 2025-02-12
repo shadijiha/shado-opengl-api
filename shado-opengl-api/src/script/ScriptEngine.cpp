@@ -151,7 +151,7 @@ namespace Shado {
 #if defined(SHADO_PLATFORM_WINDOWS)
             int response = MessageBoxA(nullptr,
                                        message.c_str(),
-                                       "Hazel C# Scripting Engine Initialization Failure", MB_OK | MB_ICONERROR
+                                       "Shado C# Scripting Engine Initialization Failure", MB_OK | MB_ICONERROR
             );
 #else
             SHADO_CORE_ERROR("Hazel C# Scripting Engine Initialization Failure: {}", message);
@@ -172,15 +172,15 @@ namespace Shado {
         case Coral::CoralInitStatus::DotNetNotFound: {
 #if defined(SHADO_PLATFORM_WINDOWS)
             int response = MessageBoxA(nullptr,
-                                       "Shado requires .NET 8 or higher!\n\n"
+                                       "Shado requires .NET 9 or higher!\n\n"
                                        "Please make sure you have the appropriate .NET Runtime installed. Installers for all platforms can be found here: https://dotnet.microsoft.com/en-us/download/dotnet\n\n"
-                                       "Would you like to download the latest .NET 8 Runtime installer?",
+                                       "Would you like to download the latest .NET 9 Runtime installer?",
                                        "Shado C# Scripting Engine Initialization Failure",
                                        MB_YESNO | MB_ICONERROR
             );
 
             if (response == IDYES) {
-                system("start https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe");
+                system("start https://aka.ms/dotnet/9.0/windowsdesktop-runtime-win-x64.exe");
             }
 #else
             SHADO_CORE_ERROR(

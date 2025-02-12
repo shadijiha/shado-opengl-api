@@ -1,4 +1,5 @@
 Scene: Untitled
+Version: 0.0.2
 Entities:
   - Entity: 9294293121758322774
     TagComponent:

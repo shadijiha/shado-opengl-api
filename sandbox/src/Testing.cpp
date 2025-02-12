@@ -3,8 +3,6 @@
 
 using namespace Shado;
 
-extern const std::filesystem::path Shado::g_AssetsPath = "assets";
-
 class TestLayer : public Layer {
 public:
 	TestLayer() :
@@ -92,12 +90,9 @@ public:
 	}
 
 private:
-	Ref<Texture2D> riven1 = CreateRef<Texture2D>("assets/riven3.png");
-	Ref<Texture2D> riven2 = CreateRef<Texture2D>("assets/riven2.jpg");
-
 	OrbitCameraController camera;
 	OrthoCameraController orthoCamera;
-	Color color = { 1, 1, 1 };
+	glm::vec3 color = { 1, 1, 1 };
 	int tileFactor = 1;
 
 	//Ref<Framebuffer> buffer;

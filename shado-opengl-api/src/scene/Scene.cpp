@@ -539,7 +539,7 @@ namespace Shado {
                 auto view = m_Registry.view<TransformComponent, LineRendererComponent>();
                 for (auto entity : view) {
                     auto [transform, line] = view.get<TransformComponent, LineRendererComponent>(entity);
-                    Renderer2D::DrawLine(transform.position, line.target, line.color, (int)entity);
+                    Renderer2D::DrawLine(transform.getPosition(*this), line.target, line.color, (int)entity);
                 }
             }
 
@@ -589,7 +589,7 @@ namespace Shado {
             auto view = m_Registry.view<TransformComponent, LineRendererComponent>();
             for (auto entity : view) {
                 auto [transform, line] = view.get<TransformComponent, LineRendererComponent>(entity);
-                Renderer2D::DrawLine(transform.position, line.target, line.color, (int)entity);
+                Renderer2D::DrawLine(transform.getPosition(*this), line.target, line.color, (int)entity);
             }
         }
 

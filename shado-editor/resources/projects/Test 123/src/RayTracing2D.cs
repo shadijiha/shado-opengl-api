@@ -11,6 +11,7 @@ namespace Sandbox
         public float velocity = 1.0f;
         public float angleStep = 1.0f;
         public List<Ray> rays = new List<Ray>();
+        public Prefab linePrefab;
         
         // TODO: find why these crash
         //public int[] arr = new int[10];
@@ -19,13 +20,27 @@ namespace Sandbox
         protected override void OnCreate() {
             eventHandler += Queen;
             eventHandler += (a, b) => { Log.Info("{0} XD", 1); };
+ 
             for (float i = 0; i < 360; i += angleStep) {
-                // TODO: Change it to prefab once it is supported
-                // var ray = Create<Ray>(() => new Ray(this, 
-                //     new Vector2(Mathf.Cos(Mathf.DegToRad(i)), Mathf.Sin(Mathf.DegToRad(i))))
-                // );
-                //ray.tag = "Ray " + i;
-                //rays.Add(ray);
+                if (linePrefab)
+                {
+                    Entity e = linePrefab.Instantiate(Vector3.zero);
+                    e.Parent = this;
+                    if (e.Is<Ray>())
+                    {
+                        Ray ray = e.As<Ray>();
+                        ray.dir = new Vector2(Mathf.Cos(Mathf.DegToRad(i)), Mathf.Sin(Mathf.DegToRad(i)));
+                        ray.tag = "Ray " + i;
+                        ray.OnCreateForward();
+                        rays.Add(ray);
+                        
+                        Log.Info($"Ray {ray.tag}. Parent ID: {ray.Parent?.ID ?? 0}");
+                    }
+                    else
+                    {
+                        Log.Error("Expected entity {} to have a script component with Ray class attached", e.tag);
+                    }
+                }
             }
         }
 
@@ -116,50 +131,48 @@ namespace Sandbox
     {
         public Vector2 dir;
         public LineRendererComponent lineRenderer;
-        public Entity parent;
 
         public Ray() { }
-        public Ray(Entity parent, Vector2 dir) {
-            this.dir = dir;
-            this.parent = parent;
-        }
 
+        public void OnCreateForward() => OnCreate();
+        
         protected override void OnCreate() {
-            lineRenderer = AddComponent<LineRendererComponent>();
+            lineRenderer = GetComponent<LineRendererComponent>()!;
         }
 
-        protected override void OnUpdate(float dt) {
-            this.transform.position = parent.transform.position;
+        protected override void OnUpdate(float dt)
+        {
+            //this.transform.position = Parent.transform.position;
             lineRenderer.target = dir * 10.0f;
         }
 
         public bool Cast(Boundary wall, out Vector2 intersection) {
-                    var x1 = wall.transform.position.x;
-                    var y1 = wall.transform.position.y;
-                    var x2 = wall.lineRenderer.target.x;
-                    var y2 = wall.lineRenderer.target.y;
+            var x1 = wall.transform.position.x;
+            var y1 = wall.transform.position.y;
+            var x2 = wall.lineRenderer.target.x;
+            var y2 = wall.lineRenderer.target.y;
 
-                    var x3 = this.transform.position.x;
-                    var y3 = this.transform.position.y;
-                    var x4 = lineRenderer.target.x;
-                    var y4 = lineRenderer.target.y;
+            var x3 = this.transform.position.x;
+            var y3 = this.transform.position.y;
+            var x4 = lineRenderer.target.x;
+            var y4 = lineRenderer.target.y;
 
-                    var den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-                    if (den == 0) {
-                        intersection = default;
-                        return false;
-                    }
+            var den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (den == 0) {
+                intersection = default;
+                return false;
+            }
 
-                    var t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
-                    var u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+            var t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+            var u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
 
-                    if (t > 0 && t < 1 && u > 0) {
-                        intersection = new Vector2(x1 + t * (x2 - x1), y1 + t * (y2 - y1));
-                        return true;
-                    }
-                    
-                    intersection = default;
-                    return false;
+            if (t > 0 && t < 1 && u > 0) {
+                intersection = new Vector2(x1 + t * (x2 - x1), y1 + t * (y2 - y1));
+                return true;
+            }
+            
+            intersection = default;
+            return false;
         }
     }
 }

@@ -41,6 +41,11 @@ namespace Shado {
         TransformComponent(const glm::vec3& position) : position(position) {
         }
 
+        /**
+         * Fetches the total transform of the entity. Meaning localtransform + parent transform recursively
+         * @param scene The scene where the entity was created
+         * @return Returns the transform matrix of the entity
+         */
         glm::mat4 getTransform(Scene& scene) const {
             glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
             glm::mat4 localTransform = glm::translate(glm::mat4(1.0f), position) * _rotation * glm::scale(
@@ -52,6 +57,21 @@ namespace Shado {
             }
             else {
                 return localTransform;
+            }
+        }
+
+        /**
+         * Fetches the total position of the entity. Meaning localPosition + parent position recursively
+         * @param scene The scene where the entity was created 
+         * @return Returns the position matrix of the entity
+         */
+        glm::vec3 getPosition(Scene& scene) const {
+            Entity parent = getParent(scene);
+            if (parent.isValid()) {
+                return parent.getComponent<TransformComponent>().getPosition(scene) + position;
+            }
+            else {
+                return position;
             }
         }
 
@@ -68,8 +88,11 @@ namespace Shado {
             // Change entity parent
             if (parent)
                 this->parentId = parent.getUUID();
-            else
+            else {
+                SHADO_CORE_WARN("setParent was called with invalid parent entity");
                 this->parentId = 0;
+            }
+                
         }
 
         Entity getParent(Scene& sceneToLookup) const {

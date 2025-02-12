@@ -1,5 +1,5 @@
 Version: 0.0.1
-CreationDate: 1739003759860
+CreationDate: 1739248715683
 AssetRegistry:
   - Handle: 35664321811634348
     FilePath: Assets/riven2.jpg
@@ -73,6 +73,10 @@ AssetRegistry:
     FilePath: Assets/riven2.jpg
     Type: AssetType::Texture2D
     DateModified: 0
+  - Handle: 5313665882423601114
+    FilePath: Assets/riven2.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1709334925617
   - Handle: 5441022443313108851
     FilePath: Assets/glass.glsl
     Type: AssetType::Shader
@@ -141,6 +145,10 @@ AssetRegistry:
     FilePath: Assets/cait_temp.jpg
     Type: AssetType::Texture2D
     DateModified: 1738990093211
+  - Handle: 10502653445272689659
+    FilePath: Assets/cait_temp.jpg
+    Type: AssetType::Texture2D
+    DateModified: 1739248705256
   - Handle: 10518541990471694147
     FilePath: Assets/cait_temp.jpg
     Type: AssetType::Texture2D

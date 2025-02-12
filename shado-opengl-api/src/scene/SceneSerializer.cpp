@@ -123,6 +123,7 @@ namespace Shado {
         YAML::Emitter out;
         out << YAML::BeginMap;
         out << YAML::Key << "Scene" << YAML::Value << m_Scene->name;
+        out << YAML::Key << "Version" << YAML::Value << SHADO_SCENE_VERSION;
         out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
         m_Scene->m_Registry.each([&](auto entityID) {
             Entity entity = {entityID, m_Scene.Raw()};
@@ -212,6 +213,9 @@ namespace Shado {
             std::string sceneName = data["Scene"].as<std::string>();
             SHADO_CORE_TRACE("Deserializing scene '{0}'", sceneName);
             m_Scene->name = sceneName;
+
+            std::string version = data["Version"].as<std::string>();
+            SHADO_CORE_ASSERT(version == SHADO_SCENE_VERSION, "Scene version mismatch. Expected {} got {}", SHADO_SCENE_VERSION, version);
 
             auto entities = data["Entities"];
             if (entities) {

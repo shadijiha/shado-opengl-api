@@ -1,0 +1,24 @@
+PrefabId: 2246234066200837971
+Data:
+  Entity: 8442395437281358890
+  TagComponent:
+    Tag: Line (2)
+  TransformComponent:
+    Translation: [0, 0, 0]
+    Rotation: [0, 0, 0]
+    Scale: [1, 1, 1]
+    ParentEntityId: 0
+  LineRendererComponent:
+    Color: [1, 1, 1, 1]
+    Target: [0, 0, 0]
+  ScriptComponent:
+    ScriptID: 3334330262
+    ScriptName: Sandbox.Ray
+    Fields:
+      - ID: 1742147537
+        Name: dir
+        Type: 10
+        Value: [0, 0]
+  PrefabInstanceComponent:
+    PrefabId: 2246234066200837971
+    PrefabEntityUniqueId: 9384559114273425214
