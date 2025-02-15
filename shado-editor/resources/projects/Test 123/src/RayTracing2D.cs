@@ -63,14 +63,9 @@ namespace Sandbox
                 float record = float.MaxValue;
                 Vector2? recordPoint = null;
                 
-                foreach (var wall in Boundary.walls) {
-                    if (ray.Cast(wall, out Vector2 intersection)) {
-                        var d = Vector2.Distance(ray.transform.position.xy, intersection);
-                        if (d < record) {
-                            record = d;
-                            recordPoint = intersection;
-                        }
-                    }
+                foreach (var wall in Boundary.walls)
+                {
+                    ray.Cast(wall);
                 }
                 
                 if (recordPoint.HasValue) {
@@ -143,36 +138,51 @@ namespace Sandbox
         protected override void OnUpdate(float dt)
         {
             //this.transform.position = Parent.transform.position;
-            lineRenderer.target = dir * 10.0f;
+            
         }
 
-        public bool Cast(Boundary wall, out Vector2 intersection) {
-            var x1 = wall.transform.position.x;
-            var y1 = wall.transform.position.y;
-            var x2 = wall.lineRenderer.target.x;
-            var y2 = wall.lineRenderer.target.y;
-
-            var x3 = this.transform.position.x;
-            var y3 = this.transform.position.y;
-            var x4 = lineRenderer.target.x;
-            var y4 = lineRenderer.target.y;
-
-            var den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-            if (den == 0) {
-                intersection = default;
-                return false;
-            }
-
-            var t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
-            var u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
-
-            if (t > 0 && t < 1 && u > 0) {
-                intersection = new Vector2(x1 + t * (x2 - x1), y1 + t * (y2 - y1));
-                return true;
+        public void Cast(Boundary wall)
+        {
+            lineRenderer.target = dir * 10.0f;
+            
+            RaycastData2D raycastData = new RaycastData2D
+            {
+                Direction = dir,
+                Origin = transform.position.xy,
+                MaxDistance = float.MaxValue,
+            };
+            var data = Physics2D.Raycast(raycastData);
+            if (data.Length < 1)
+            {
+                lineRenderer.target = data[0].Position;
             }
             
-            intersection = default;
-            return false;
+            // var x1 = wall.transform.position.x;
+            // var y1 = wall.transform.position.y;
+            // var x2 = wall.lineRenderer.target.x;
+            // var y2 = wall.lineRenderer.target.y;
+            //
+            // var x3 = this.transform.position.x;
+            // var y3 = this.transform.position.y;
+            // var x4 = lineRenderer.target.x;
+            // var y4 = lineRenderer.target.y;
+            //
+            // var den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            // if (den == 0) {
+            //     intersection = default;
+            //     return false;
+            // }
+            //
+            // var t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+            // var u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+            //
+            // if (t > 0 && t < 1 && u > 0) {
+            //     intersection = new Vector2(x1 + t * (x2 - x1), y1 + t * (y2 - y1));
+            //     return true;
+            // }
+            //
+            // intersection = default;
+            // return false;
         }
     }
 }

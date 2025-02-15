@@ -235,9 +235,12 @@ namespace Shado {
             }
 
             // Check if the path is inside the project directory
-            if (filepath.find(Project::GetProjectDirectory().string()) == std::string::npos)
-                Dialog::alert("The file is not inside the project directory", "Error", Dialog::DialogIcon::WARNING);
-            else
+            if (filepath.find(Project::GetProjectDirectory().string()) == std::string::npos) {
+                SHADO_CORE_WARN("File {} is not inside the project directory", filepath);
+                std::filesystem::path copyToPath = Project::GetAssetDirectory() / std::filesystem::path(filepath).filename();
+                std::filesystem::copy_file(filepath, copyToPath);
+                filepath = copyToPath.string();
+            } else
                 filepath = std::filesystem::relative(filepath, Project::GetProjectDirectory()).string();
 
             filepathHasChanged = true;
