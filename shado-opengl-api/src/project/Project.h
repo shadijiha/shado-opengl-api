@@ -2,11 +2,16 @@
 
 #include <string>
 #include <filesystem>
+
 #include "debug/Debug.h"
 #include "Events/Event.h"
 #include "util/Memory.h"
 
 namespace Shado {
+    class EditorAssetManager;
+    class RuntimeAssetManager;
+    class AssetManagerBase;
+
     struct ProjectConfig {
         std::string Name = "Untitled";
 
@@ -14,6 +19,7 @@ namespace Shado {
 
         std::filesystem::path AssetDirectory;
         std::filesystem::path ScriptModulePath;
+        std::filesystem::path AssetRegistryPath = "AssetRegistry.sar"; // Relative to ProjectDirectory
     };
 
     class Project : public RefCounted {
@@ -34,14 +40,23 @@ namespace Shado {
             return GetAssetDirectory() / path;
         }
 
+        static std::filesystem::path GetAssetRegistryPath() {
+            SHADO_CORE_ASSERT(s_ActiveProject, "Cannot get asset registry path without an active project");
+            return GetProjectDirectory() / s_ActiveProject->m_Config.AssetRegistryPath;
+        }
+
         std::filesystem::path GetRelativePath(const std::filesystem::path& path);
+        std::shared_ptr<AssetManagerBase> GetAssetManager() const;
+        std::shared_ptr<RuntimeAssetManager> GetRuntimeAssetManager() const;
+        std::shared_ptr<EditorAssetManager> GetEditorAssetManager() const;
 
         ProjectConfig& GetConfig() { return m_Config; }
         const ProjectConfig& GetConfig() const { return m_Config; }
+        void ReloadScriptEngine();
 
 
         static Ref<Project> GetActive() { return s_ActiveProject; }
-        static void SetActive(const Ref<Project>& project) { s_ActiveProject = project; }
+        static void SetActive(const Ref<Project>& project);
 
         static Ref<Project> New();
         static Ref<Project> Load(const std::filesystem::path& path);
@@ -50,6 +65,7 @@ namespace Shado {
     private:
         ProjectConfig m_Config;
         std::filesystem::path m_ProjectDirectory;
+        std::shared_ptr<AssetManagerBase> m_AssetManager;
 
         inline static Ref<Project> s_ActiveProject;
     };

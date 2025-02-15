@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Scene.h"
 
+#define SHADO_SCENE_VERSION "0.0.2"
+
 namespace YAML {
     class Emitter;
     class Node;
@@ -19,25 +21,31 @@ namespace Shado {
 
         /// Saves prefab to disk. If prefabId is not provided, a new UUID is generated
         /// otherwise old prefab is overwritten
-        /// @param entity The root entity of the prefab
-        /// @param prefabId The UUID of the prefab
+        /// @param prefab
         /// @return The UUID of the prefab
-        UUID serializePrefab(Entity entity, UUID prefabId = UUID());
+        UUID serializePrefab(Ref<Prefab> prefab);
 
-        bool deserialize(const std::string& filepath, std::string& error);
-        bool deserialize(const std::string& filepath);
-        bool deserializeRuntime(const std::string& filepath);
+        bool deserialize(const std::filesystem::path& filepath, std::string& error);
+        bool deserialize(const std::filesystem::path& filepath);
+        bool deserializeRuntime(const std::filesystem::path& filepath);
         Ref<Prefab> deserializePrefab(const std::string& filepath);
 
     private:
-        void SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap = true);
-        void serializePrefabHelper(YAML::Emitter& out, Entity& e, UUID prefabId);
+        /// 
+        /// @param out 
+        /// @param entity 
+        /// @param scriptStorageContext This param is needed to serialize prefabs or scene
+        /// @param endmap 
+        void SerializeEntity(YAML::Emitter& out, Entity entity, ScriptStorage& scriptStorageContext,
+                             bool endmap = true);
+        void serializePrefabHelper(YAML::Emitter& out, Entity& e, Ref<Prefab> prefab);
 
         Entity deserializePrefabHelper(YAML::Node node, Ref<Prefab> prefab);
         Entity dererializeEntityHelper(
             const YAML::Node& entity,
             std::function<Entity(std::string, UUID)> entityCreatorFunction,
-            Ref<Scene> scene
+            Ref<Scene> scene,
+            ScriptStorage& scriptStorageContext
         );
 
     private:

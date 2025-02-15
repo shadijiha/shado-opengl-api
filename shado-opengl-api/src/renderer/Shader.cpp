@@ -15,20 +15,14 @@ namespace Shado {
         return 0;
     }
 
-    Shader::Shader(const std::filesystem::path& path)
-        : filepath(path) {
-        std::string source = readFile(path);
+    Shader::Shader(const std::string& fileContent) {
+        // Shader sometimes crash because of std::async in ContentBrowserPanel, so we'll make it thread safe
+        static std::mutex s_Mutex;
+        std::lock_guard<std::mutex> lock(s_Mutex);
+
+        const std::string& source = fileContent;
         auto shaderSources = preProcess(source);
         compile(shaderSources);
-
-        // Extract name from filepath
-        std::string filepath = path.string();
-        auto lastSlash = filepath.find_last_of("/\\");
-        lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
-        auto lastDot = filepath.rfind('.');
-        auto count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
-        m_Name = filepath.substr(lastSlash, count);
-
 
         // See if the vertex Shader constains the basic uniforms	
         std::vector<std::string> requiredUniforms{"u_ViewProjection", "u_Transform", "a_Position"};
@@ -40,52 +34,11 @@ namespace Shado {
         }
     }
 
-    Shader::Shader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
-        : m_Name(name) {
+    Shader::Shader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc) {
         std::unordered_map<GLenum, std::string> sources;
         sources[GL_VERTEX_SHADER] = vertexSrc;
         sources[GL_FRAGMENT_SHADER] = fragmentSrc;
         compile(sources);
-    }
-
-    Shader::Shader(const Shader& other)
-        : Shader(other.filepath) {
-        // Copy custom uniforms
-        for (auto& [name, value] : other.m_CustomUniforms) {
-            auto [type, buffer] = value;
-            switch (type) {
-            case ShaderDataType::Int: {
-                auto data = *(int*)buffer;
-                setInt(name, data);
-                saveCustomUniformValue(name, type, data);
-                break;
-            }
-            case ShaderDataType::Float: {
-                auto data = *(float*)buffer;
-                setFloat(name, data);
-                saveCustomUniformValue(name, type, data);
-                break;
-            }
-            case ShaderDataType::Float2: {
-                auto data = *(glm::vec2*)buffer;
-                setFloat2(name, data);
-                saveCustomUniformValue(name, type, data);
-                break;
-            }
-            case ShaderDataType::Float3: {
-                auto data = *(glm::vec3*)buffer;
-                setFloat3(name, data);
-                saveCustomUniformValue(name, type, data);
-                break;
-            }
-            case ShaderDataType::Float4: {
-                auto data = *(glm::vec4*)buffer;
-                setFloat4(name, data);
-                saveCustomUniformValue(name, type, data);
-                break;
-            }
-            }
-        }
     }
 
     Shader::~Shader() {
@@ -179,7 +132,8 @@ namespace Shado {
 
                 glDeleteShader(shader);
 
-                std::string errorMessage = "Shader compilation failure: " + std::to_string(type) + infoLog.data();
+                std::string errorMessage = "Shader compilation failure: " + std::to_string(type) + (
+                    !infoLog.empty() ? infoLog.data() : "");
                 throw ShaderCompilationException(errorMessage);
                 break;
             }
@@ -232,6 +186,47 @@ namespace Shado {
 
     void Shader::unbind() const {
         glUseProgram(0);
+    }
+
+    void Shader::copyCustomUniformsTo(Ref<Shader>& target) const {
+        for (auto& [name, value] : this->m_CustomUniforms) {
+            auto [type, buffer] = value;
+            switch (type) {
+            case ShaderDataType::Int: {
+                auto data = *(int*)buffer;
+                target->setInt(name, data);
+                target->saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float: {
+                auto data = *(float*)buffer;
+                target->setFloat(name, data);
+                target->saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float2: {
+                auto data = *(glm::vec2*)buffer;
+                target->setFloat2(name, data);
+                target->saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float3: {
+                auto data = *(glm::vec3*)buffer;
+                target->setFloat3(name, data);
+                target->saveCustomUniformValue(name, type, data);
+                break;
+            }
+            case ShaderDataType::Float4: {
+                auto data = *(glm::vec4*)buffer;
+                target->setFloat4(name, data);
+                target->saveCustomUniformValue(name, type, data);
+                break;
+            }
+            default:
+                SHADO_CORE_WARN("Custom uniform type not supported");
+                break;
+            }
+        }
     }
 
     void Shader::setInt(const std::string& name, int value) {

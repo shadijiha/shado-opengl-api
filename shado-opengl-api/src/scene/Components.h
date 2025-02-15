@@ -8,8 +8,11 @@
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
-#include "../../../shado-editor/EditorEvents.h"
-//#include "script/ScriptManager.h"
+#include "EditorEvents.h"
+#include "renderer/Font.h"
+#include "renderer/Shader.h"
+#include "renderer/Texture2D.h"
+#include "script/CSharpObject.h"
 
 namespace Shado {
     struct IDComponent {
@@ -38,6 +41,11 @@ namespace Shado {
         TransformComponent(const glm::vec3& position) : position(position) {
         }
 
+        /**
+         * Fetches the total transform of the entity. Meaning localtransform + parent transform recursively
+         * @param scene The scene where the entity was created
+         * @return Returns the transform matrix of the entity
+         */
         glm::mat4 getTransform(Scene& scene) const {
             glm::mat4 _rotation = glm::toMat4(glm::quat(rotation));
             glm::mat4 localTransform = glm::translate(glm::mat4(1.0f), position) * _rotation * glm::scale(
@@ -49,6 +57,21 @@ namespace Shado {
             }
             else {
                 return localTransform;
+            }
+        }
+
+        /**
+         * Fetches the total position of the entity. Meaning localPosition + parent position recursively
+         * @param scene The scene where the entity was created 
+         * @return Returns the position matrix of the entity
+         */
+        glm::vec3 getPosition(Scene& scene) const {
+            Entity parent = getParent(scene);
+            if (parent.isValid()) {
+                return parent.getComponent<TransformComponent>().getPosition(scene) + position;
+            }
+            else {
+                return position;
             }
         }
 
@@ -65,8 +88,11 @@ namespace Shado {
             // Change entity parent
             if (parent)
                 this->parentId = parent.getUUID();
-            else
+            else {
+                SHADO_CORE_WARN("setParent was called with invalid parent entity");
                 this->parentId = 0;
+            }
+                
         }
 
         Entity getParent(Scene& sceneToLookup) const {
@@ -76,9 +102,9 @@ namespace Shado {
 
     struct SpriteRendererComponent {
         glm::vec4 color = {1, 1, 1, 1};
-        Ref<Texture2D> texture = nullptr;
+        AssetHandle texture = 0;
         float tilingFactor = 1.0f;
-        Ref<Shader> shader = nullptr;
+        AssetHandle shader = 0;
 
 
         SpriteRendererComponent() = default;
@@ -90,11 +116,12 @@ namespace Shado {
         //~SpriteRendererComponent() { delete texture; }
     };
 
+    /// IMPORTANT!!! Must have the same layout as SpriteRendererComponent because of drawTextureControl in PropertiesPanel.cpp
     struct CircleRendererComponent {
         glm::vec4 color = {1, 1, 1, 1};
-        Ref<Texture2D> texture = nullptr;
+        AssetHandle texture = 0;
         float tilingFactor = 1.0f;
-        Ref<Shader> shader = nullptr;
+        AssetHandle shader = 0;
         float thickness = 1.0f;
         float fade = 0.005f;
 
@@ -205,12 +232,12 @@ namespace Shado {
     };
 
     struct ScriptComponent {
-        std::string ClassName;
+        UUID ScriptID = 0;
+        CSharpObject Instance;
+        std::vector<uint32_t> FieldIDs;
 
-        ScriptComponent() {
-        }
-
-        ScriptComponent(const ScriptComponent&) = default;
+        // NOTE(Peter): Gets set to true when OnCreate has been called for this entity
+        bool IsRuntimeInitialized = false;
     };
 
     // Physics

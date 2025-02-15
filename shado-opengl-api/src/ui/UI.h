@@ -5,10 +5,10 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <iterator>
 
 #include "Application.h"
 #include "imgui_internal.h"
+#include "asset/Asset.h"
 
 namespace Shado {
     class UI {
@@ -32,7 +32,8 @@ namespace Shado {
                                 float columnWidth = 100.0f);
 
         template <typename T> requires std::is_same_v<T, float> || std::is_same_v<T, int>
-        static bool Vec1Control(const std::string& label, T& value, T resetValue = 0.0f, float columnWidth = 100.0f);
+        static bool Vec1Control(const std::string& label, T& value, T resetValue = 0.0f, float columnWidth = 100.0f,
+                                ImGuiSliderFlags flags = 0);
 
         static bool Checkbox(const std::string& label, bool& data, float columnWidth = 100.0f);
 
@@ -45,7 +46,7 @@ namespace Shado {
             FileChooserType type = FileChooserType::Open
         );
 
-        static void TextureControl(Ref<Shado::Texture2D>& texture);
+        static void TextureControl(AssetHandle& assetHandle);
 
         static bool InputTextControl(const std::string& tag, std::string& value, ImGuiInputTextFlags flags = 0,
                                      float columnWidth = 100.0f);
@@ -70,7 +71,7 @@ namespace Shado {
     };
 
     template <typename T> requires std::is_same_v<T, float> || std::is_same_v<T, int>
-    bool UI::Vec1Control(const std::string& label, T& value, T resetValue, float columnWidth) {
+    bool UI::Vec1Control(const std::string& label, T& value, T resetValue, float columnWidth, ImGuiSliderFlags flags) {
         ImGuiIO& io = ImGui::GetIO();
         auto boldFont = io.Fonts->Fonts[0];
 
@@ -104,9 +105,10 @@ namespace Shado {
         ImGui::SameLine();
 
         if constexpr (std::is_same_v<T, float>)
-            modified = modified || ImGui::DragFloat(("##V" + label).c_str(), (float*)&value, 0.01f, 0, 0, "%.2f");
+            modified = modified ||
+                ImGui::DragFloat(("##V" + label).c_str(), (float*)&value, 0.01f, 0, 0, "%.2f", flags);
         else if constexpr (std::is_same_v<T, int>)
-            modified = modified || ImGui::DragInt(("##V" + label).c_str(), (int*)&value);
+            modified = modified || ImGui::DragInt(("##V" + label).c_str(), (int*)&value, 1, 0, 0, "%d", flags);
         else {
             static_assert(false, "Vec1Control only supports float and int types");
         }

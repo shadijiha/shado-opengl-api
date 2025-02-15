@@ -1,92 +1,109 @@
 #pragma once
 
-#include <stdint.h>
-#include <cstring>
-#include "util/Memory.h"
+#include "Memory.h"
+#include "debug/Debug.h"
 
 namespace Shado {
+    using byte = uint8_t;
 
-	// Non-owning raw buffer class
-	struct Buffer
-	{
-		uint8_t* Data = nullptr;
-		uint64_t Size = 0;
+    struct Buffer {
+        void* Data = nullptr;
+        uint64_t Size = 0;
 
-		Buffer() = default;
+        Buffer() = default;
 
-		Buffer(uint64_t size)
-		{
-			Allocate(size);
-		}
+        Buffer(const void* data, uint64_t size = 0)
+            : Data((void*)data), Size(size) {
+        }
 
-		Buffer(const Buffer&) = default;
+        static Buffer Copy(const Buffer& other) {
+            Buffer buffer;
+            buffer.Allocate(other.Size);
+            memcpy(buffer.Data, other.Data, other.Size);
+            return buffer;
+        }
 
-		static Buffer Copy(Buffer other)
-		{
-			Buffer result(other.Size);
-			memcpy(result.Data, other.Data, other.Size);
-			return result;
-		}
+        static Buffer Copy(const void* data, uint64_t size) {
+            Buffer buffer;
+            buffer.Allocate(size);
+            if (size) memcpy(buffer.Data, data, size);
+            return buffer;
+        }
 
-		void Allocate(uint64_t size)
-		{
-			Release();
+        void Allocate(uint64_t size) {
+            delete[] (byte*)Data;
+            Data = nullptr;
+            Size = size;
 
-			//Data = new uint8_t[size];
-			Data = Memory::Heap<uint8_t>(size);
-			std::memset(Data, 0, size * sizeof(uint8_t));
-			Size = size;
-		}
+            if (size == 0)
+                return;
 
-		void Release()
-		{
-			//delete[] Data;
-			Memory::Free(Data, true);
-			Data = nullptr;
-			Size = 0;
-		}
+            Data = Memory::Heap<byte>(size);
+        }
 
-		template<typename T>
-		T* As()
-		{
-			return (T*)Data;
-		}
+        void Release() {
+            Memory::Free<byte>((byte*)Data, true);
+            Data = nullptr;
+            Size = 0;
+        }
 
-		operator bool() const
-		{
-			return (bool)Data;
-		}
+        void ZeroInitialize() {
+            if (Data)
+                memset(Data, 0, Size);
+        }
 
-	};
+        template <typename T>
+        T& Read(uint64_t offset = 0) {
+            return *(T*)((byte*)Data + offset);
+        }
 
-	struct ScopedBuffer
-	{
-		ScopedBuffer(Buffer buffer)
-			: m_Buffer(buffer)
-		{
-		}
+        template <typename T>
+        const T& Read(uint64_t offset = 0) const {
+            return *(T*)((byte*)Data + offset);
+        }
 
-		ScopedBuffer(uint64_t size)
-			: m_Buffer(size)
-		{
-		}
+        byte* ReadBytes(uint64_t size, uint64_t offset) const {
+            SHADO_CORE_ASSERT(offset + size <= Size, "Buffer overflow!");
+            byte* buffer = Memory::Heap<byte>(size);
+            memcpy(buffer, (byte*)Data + offset, size);
+            return buffer;
+        }
 
-		~ScopedBuffer()
-		{
-			m_Buffer.Release();
-		}
+        void Write(const void* data, uint64_t size, uint64_t offset = 0) {
+            SHADO_CORE_ASSERT(offset + size <= Size, "Buffer overflow!");
+            memcpy((byte*)Data + offset, data, size);
+        }
 
-		uint8_t* Data() { return m_Buffer.Data; }
-		uint64_t Size() { return m_Buffer.Size; }
+        operator bool() const {
+            return (bool)Data;
+        }
 
-		template<typename T>
-		T* As()
-		{
-			return m_Buffer.As<T>();
-		}
+        byte& operator[](int index) {
+            return ((byte*)Data)[index];
+        }
 
-		operator bool() const { return m_Buffer; }
-	private:
-		Buffer m_Buffer;
-	};
+        byte operator[](int index) const {
+            return ((byte*)Data)[index];
+        }
+
+        template <typename T>
+        T* As() const {
+            return (T*)Data;
+        }
+
+        inline uint64_t GetSize() const { return Size; }
+    };
+
+    struct BufferSafe : public Buffer {
+        ~BufferSafe() {
+            Release();
+        }
+
+        static BufferSafe Copy(const void* data, uint64_t size) {
+            BufferSafe buffer;
+            buffer.Allocate(size);
+            memcpy(buffer.Data, data, size);
+            return buffer;
+        }
+    };
 }

@@ -8,7 +8,6 @@
 #include "cameras/OrthoCamera.h"
 #include "Shader.h"
 #include "VertexArray.h"
-#include "Texture2D.h"
 
 namespace Shado {
     struct SpriteRendererComponent;
@@ -33,17 +32,18 @@ namespace Shado {
         // Primitives
         static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
         static void DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color);
-        static void DrawQuad(const glm::vec2& position, const glm::vec2& size, Ref<Texture2D> texture,
+        static void DrawQuad(const glm::vec2& position, const glm::vec2& size, AssetHandle textureHandle,
                              float tilingFactor = 1.0f, const glm::vec4& tintColor = glm::vec4(1.0f));
-        static void DrawQuad(const glm::vec3& position, const glm::vec2& size, Ref<Texture2D> texture,
+        static void DrawQuad(const glm::vec3& position, const glm::vec2& size, AssetHandle textureHandle,
                              float tilingFactor = 1.0f, const glm::vec4& tintColor = glm::vec4(1.0f));
 
         static void DrawQuad(const glm::mat4& transform, const glm::vec4& color, int entityID = -1);
-        static void DrawQuad(const glm::mat4& transform, Ref<Texture2D> texture, float tilingFactor = 1.0f,
+        static void DrawQuad(const glm::mat4& transform, AssetHandle textureHandle, float tilingFactor = 1.0f,
                              const glm::vec4& tintColor = glm::vec4(1.0f), int entityID = -1);
-        static void DrawQuad(const glm::mat4& transform, Shader& shader, const glm::vec4& color = {1, 1, 1, 1},
+        static void DrawQuad(const glm::mat4& transform, AssetHandle shaderHandle,
+                             const glm::vec4& color = {1, 1, 1, 1},
                              int entityID = -1, float textureIndex = 0.0f);
-        static void DrawQuad(const glm::mat4& transform, Ref<Texture2D> texture, Shader& shader,
+        static void DrawQuad(const glm::mat4& transform, AssetHandle textureHandle, AssetHandle shaderHandle,
                              const glm::vec4& color = {1, 1, 1, 1}, int entityID = -1);
 
         static void DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation,
@@ -51,15 +51,15 @@ namespace Shado {
         static void DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation,
                                     const glm::vec4& color);
         static void DrawRotatedQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec3& rotation,
-                                    Ref<Texture2D> texture, float tilingFactor = 1.0f,
+                                    AssetHandle textureHandle, float tilingFactor = 1.0f,
                                     const glm::vec4& tintColor = glm::vec4(1.0f));
         static void DrawRotatedQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec3& rotation,
-                                    Ref<Texture2D> texture, float tilingFactor = 1.0f,
+                                    AssetHandle textureHandle, float tilingFactor = 1.0f,
                                     const glm::vec4& tintColor = glm::vec4(1.0f));
 
         static void DrawCircle(const glm::mat4& transform, const glm::vec4& color, float thickness = 1.0f,
                                float fade = 0.005f, int entityID = -1);
-        static void DrawCircle(const glm::mat4& transform, Ref<Texture2D> texture, float tilingFactor = 1.0f,
+        static void DrawCircle(const glm::mat4& transform, AssetHandle textureHandle, float tilingFactor = 1.0f,
                                const glm::vec4& tintColor = glm::vec4(1.0f), float thickness = 1.0f,
                                float fade = 0.005f, int entityID = -1);
         static void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, int entityID = -1);

@@ -3,208 +3,211 @@
 #include "GL/glew.h"
 #include "renderer/Renderer2D.h"
 #include <algorithm>
-#include "cameras/OrthoCamera.h"
 #include "Events/ApplicationEvent.h"
-#include "Events/KeyEvent.h"
-#include "Events/MouseEvent.h"
 #include "project/Project.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
+#include "scene/Scene.h"
+#include "script/ScriptEngine.h"
 #include "util/Random.h"
 
 namespace Shado {
+    // =========================== APPLICATION CLASS ===========================
+    Application::Application(unsigned width, unsigned height, const std::string& title)
+        : window(snew(Window) Window(width, height, title)), uiScene(snew(ImguiLayer) ImguiLayer) {
+        Log::init();
+        Random::init();
+        ScriptEngine::GetMutable().InitializeHost();
 
-	// =========================== APPLICATION CLASS ===========================
+        /* Initialize the library */
+        // TODO: Might want to un comment this if application crashes
+        //window = std::make_unique<Window>(width, height, title);
+    }
 
-	Application* Application::singleton = snew(Application) Application();
+    Application::Application()
+        : Application(1280, 720, "Shado OpenGL simple Rendering engine") {
+    }
 
-	Application::Application(unsigned width, unsigned height, const std::string& title)
-		: window(snew(Window) Window(width, height, title)), uiScene(snew(ImguiLayer) ImguiLayer)
-	{
-		Log::init();
-		Random::init();
+    Application::~Application() {
+        ScriptEngine::GetMutable().ShutdownHost();
 
-		
+        for (Layer* layer : layers) {
+            if (layer == nullptr)
+                continue;
+            layer->onDestroy();
+            sdelete(layer);
+        }
 
-		/* Initialize the library */
-		// TODO: Might want to un comment this if application crashes
-		//window = std::make_unique<Window>(width, height, title);
-	}
+        Project::SetActive(nullptr);
 
-	Application::Application()
-		: Application(1280, 720, "Shado OpenGL simple Rendering engine")
-	{
-	}
+        glfwTerminate();
+    }
 
-	Application::~Application() {
+    Application& Application::get()
+    {
+        static Application* instance = nullptr;
+        if (!instance)    {
+            instance = snew(Application) Application();
+            return *instance;
+        }
+        return *instance;
+    }
 
-		for (Layer* layer : layers) {
-			if (layer == nullptr)
-				continue;
-			layer->onDestroy();
-			sdelete(layer);
-		}
+    void Application::run() {
+        // Init Renderer if it hasn't been done
+        Init();
 
-		glfwTerminate();
-	}
-
-	void Application::run() {
-
-		// Init Renderer if it hasn't been done
-		Init();
-
-		if (layers.size() == 0)
-			SHADO_CORE_WARN("No layers to draw");
+        if (layers.size() == 0)
+            SHADO_CORE_WARN("No layers to draw");
 
 
-		/* Loop until the user closes the window */
-		while (m_Running) {
+        /* Loop until the user closes the window */
+        while (m_Running) {
+            float time = (float)glfwGetTime(); // TODO: put it in platform specific
+            float timestep = time - m_LastFrameTime;
+            m_LastFrameTime = time;
 
-			float time = (float)glfwGetTime();	// TODO: put it in platform specific
-			float timestep = time - m_LastFrameTime;
-			m_LastFrameTime = time;
+            // Execute main thread Queue
+            {
+                std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
 
-			// Execute main thread Queue
-			{
-				std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+                for (auto& func : m_MainThreadQueue)
+                    func();
 
-				for (auto& func : m_MainThreadQueue)
-					func();
+                m_MainThreadQueue.clear();
+            }
 
-				m_MainThreadQueue.clear();
-			}
+            if (!m_minimized) {
+                /* Render here */
+                // Draw scenes here
+                for (Layer* layer : layers) {
+                    if (layer == nullptr) {
+                        continue;
+                    }
 
-			if (!m_minimized) {
-				/* Render here */
-				// Draw scenes here
-				for (Layer* layer : layers) {
-					if (layer == nullptr) {
-						continue;
-					}
+                    layer->onUpdate(timestep);
+                    layer->onDraw();
+                }
+                uiScene->onUpdate(timestep);
+                uiScene->onDraw();
 
-					layer->onUpdate(timestep);
-					layer->onDraw();
-				}
-				uiScene->onUpdate(timestep);
-				uiScene->onDraw();
+                // Render UI
+                uiScene->begin();
+                for (Layer* layer : layers) {
+                    if (layer != nullptr)
+                        layer->onImGuiRender();
+                }
+                uiScene->onImGuiRender();
+                uiScene->end();
+            }
 
-				// Render UI
-				uiScene->begin();
-				for (Layer* layer : layers) {
-					if (layer != nullptr)
-						layer->onImGuiRender();
-				}
-				uiScene->onImGuiRender();
-				uiScene->end();
-			}
+            /* Swap front and back buffers */
+            /* Poll for and process events */
+            window->onUpdate();
+        }
+    }
 
-			/* Swap front and back buffers */
-			/* Poll for and process events */
-			window->onUpdate();
-		}
-	}
+    void Application::submit(Layer* layer) {
+        // Init Renderer if it hasn't been done
+        Init();
 
-	void Application::submit(Layer* layer) {
+        // Init all layers
+        layer->onInit();
+        layers.push_back(layer);
 
-		// Init Renderer if it hasn't been done
-		Init();
+        // Reverse sorting
+        /*std::sort(allScenes.begin(), allScenes.end(), [](Scene* a, Scene* b) {
+            return a->getZIndex() < b->getZIndex();
+            });*/
+    }
 
-		// Init all layers
-		layer->onInit();
-		layers.push_back(layer);
+    void Application::onEvent(Event& e) {
+        Init();
 
-		// Reverse sorting
-		/*std::sort(allScenes.begin(), allScenes.end(), [](Scene* a, Scene* b) {
-			return a->getZIndex() < b->getZIndex();
-			});*/
-	}
+        EventDispatcher dispatcher(e);
+        dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& evt) {
+            int width = evt.getWidth(), height = evt.getHeight();
+            if (width == 0 || height == 0) {
+                m_minimized = true;
+                return false;
+            }
+            m_minimized = false;
+            glViewport(0, 0, width, height);
 
-	void Application::onEvent(Event& e) {
-		Init();
+            return false;
+        });
 
-		EventDispatcher dispatcher(e);
-		dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& evt) {
-			int width = evt.getWidth(), height = evt.getHeight();
-			if (width == 0 || height == 0)
-			{
-				m_minimized = true;
-				return false;
-			}
-			m_minimized = false;
-			glViewport(0, 0, width, height);
+        dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& evt) {
+            m_Running = false;
+            return true;
+        });
 
-			return false;
-		});
-
-		dispatcher.dispatch<WindowCloseEvent>([this](WindowCloseEvent& evt) {
-			m_Running = false;
-			return true;
-		});
-
-		dispatcher.dispatch<ProjectChangedEvent>([this](ProjectChangedEvent& evt) {
-			this->getWindow().setTitle(
+        dispatcher.dispatch<ProjectChangedEvent>([this](ProjectChangedEvent& evt) {
+            this->getWindow().setTitle(
 #ifdef SHADO_DEBUG
-				"[Debug]" +
+                "[Debug]" +
 #elif SHADO_RELEASE
-				"[Release] " +
+                "[Release] " +
 #elif SHADO_DIST
 				"[Dist] " +
 #else
 				"[Unknown build config] " +
-#endif				
-				evt.getProject()->GetConfig().Name + " - " + evt.getProject()->GetProjectDirectory().string()
-			);
-			return false;
-		});
+#endif
+                evt.getProject()->GetConfig().Name + " - " + evt.getProject()->GetProjectDirectory().string()
+            );
+            return false;
+        });
 
-		// Distaptch the event and excute the required code
-		// Pass Events to layer
+        // Distaptch the event and excute the required code
+        // Pass Events to layer
 
-		uiScene->onEvent(e);
-		if (e.isHandled())
-			return;
+        uiScene->onEvent(e);
+        if (e.isHandled())
+            return;
 
-		for (auto it = layers.end(); it != layers.begin(); )
-		{
-			Layer* layer = (*--it);
-			if (layer != nullptr) {
-				layer->onEvent(e);
-				if (e.isHandled())
-					break;
-			}			
-		}
-	}
+        for (auto it = layers.end(); it != layers.begin();) {
+            Layer* layer = (*--it);
+            if (layer != nullptr) {
+                layer->onEvent(e);
+                if (e.isHandled())
+                    break;
+            }
+        }
+    }
 
-	void Application::SubmitToMainThread(const std::function<void()>& function)
-	{
-		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+    void Application::SubmitToMainThread(const std::function<void()>& function) {
+        std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
 
-		m_MainThreadQueue.emplace_back(function);
-	}
-	
-	void Application::destroy() {
-		SHADO_PROFILE_FUNCTION();
+        m_MainThreadQueue.emplace_back(function);
+    }
 
-		for (Layer*& layer : singleton->layers) {
-			layer->onDestroy();
-			sdelete(layer);
-			layer = nullptr;
-		}
-		singleton->uiScene->onDestroy();
+    void Application::destroy() {
+        SHADO_PROFILE_FUNCTION();
 
-		singleton->m_Running = false;
+        for (Layer*& layer : get().layers) {
+            layer->onDestroy();
+            sdelete(layer);
+            layer = nullptr;
+        }
+        get().uiScene->onDestroy();
 
-		Renderer2D::Shutdown();
-		sdelete( singleton);
-	}
+        get().m_Running = false;
 
-	void Application::close() {
-		singleton->m_Running = false;
-	}
+        Renderer2D::Shutdown();
+        sdelete(&get());
+    }
 
-	void Application::Init() {
-		if (!Renderer2D::hasInitialized()) {
-			Renderer2D::Init();
-			uiScene->onInit();
-		}
-	}
+    void Application::close() {
+        get().m_Running = false;
+    }
 
+    float Application::getTime() const {
+        return glfwGetTime();
+    }
+
+    void Application::Init() {
+        if (!Renderer2D::hasInitialized()) {
+            Renderer2D::Init();
+            uiScene->onInit();
+        }
+    }
 }

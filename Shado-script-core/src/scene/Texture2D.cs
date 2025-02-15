@@ -1,41 +1,40 @@
 ﻿using System;
+using Shado.Editor;
 using UI = Shado.Editor.UI;
 
 namespace Shado
 {
+    [EditorAssignable]
     public class Texture2D
     {
-        public readonly string filepath;
-        internal IntPtr native;
+        public readonly string? filepath;
+        internal ulong handle = 0;
 
-        internal Texture2D(string filepath) { 
-            this.filepath = filepath;
-            InternalCalls.Texture2D_Create(filepath, out this.native);
+        public Texture2D(string pathRelativeToProject) {
+            filepath = pathRelativeToProject;
+            unsafe {
+                handle = InternalCalls.Texture2D_Create(filepath);
+            }
+        }
+
+        internal Texture2D(ulong handle) {
+            this.handle = handle;
         }
 
         ~Texture2D() {
-            InternalCalls.Texture2D_Destroy(native);
+            //InternalCalls.Texture2D_Destroy(native);
         }
 
-        public static Texture2D Create(string filepath) {
-            if (string.IsNullOrEmpty(filepath))
-                return null;
-            return new Texture2D(filepath);
+        public override string ToString() {
+            return $"Texture2D({filepath}, {handle})";
         }
 
-        internal void Reset(string filepath)
-        {
-            IntPtr newHandle;
-            InternalCalls.Texture2D_Reset(native, filepath, out newHandle);
-            native = newHandle;
-        }
-
-        public override string ToString()
-        {
-            return $"Texture2D({filepath}, {native})";
+        public static implicit operator bool(Texture2D? texture) {
+            return texture is not null && texture.handle != 0;
         }
     }
 
+#if false
     [Editor.EditorTargetType(typeof(Texture2D))]
     public class Texture2DEditor : Editor.Editor
     {
@@ -43,19 +42,17 @@ namespace Shado
             ".jpg", ".png"
         };
 
-        protected override void OnEditorDraw()
-        {
-            if (target is null)
-            {
+        protected override void OnEditorDraw() {
+            if (target is null) {
                 return;
             }
 
             Texture2D texture = (Texture2D)target;
             UI.InputTextFileChoose(fieldName, texture.filepath, textureExtension, path => {
                 Log.Info(path);
-                texture.Reset(path);
+                //texture.Reset(path);
             });
-            UI.SameLine();
+            //UI.SameLine();
             UI.Image(texture, new Vector2(60, 60));
         }
 
@@ -63,4 +60,5 @@ namespace Shado
         //  Log.Info(ref e);
         //}
     }
+#endif
 }

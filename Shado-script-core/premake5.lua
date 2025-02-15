@@ -1,14 +1,27 @@
+include "../shado-opengl-api/vendor/Coral/Premake/CSExtensions.lua"
+
 project "Shado-script-core"
 	kind "SharedLib"
 	language "C#"
 	clr "Unsafe"
+	dotnetframework "net9.0"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+	targetdir ("../shado-editor/ScriptCore")
+	objdir ("../shado-editor/ScriptCore/Intermediates")
 
 	configurations
 	{
 		"Release"
+	}
+
+	propertytags {
+		{ "AppendTargetFrameworkToOutputPath", "false" },
+		{ "Nullable", "enable" },
+	}
+
+	links
+	{
+		"Coral.Managed"
 	}
 
 	files

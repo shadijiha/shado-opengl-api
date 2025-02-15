@@ -5,23 +5,24 @@ using Shado.Editor;
 
 namespace Shado
 {
-    public class ShadoEvent 
+    public class ShadoEvent
     {
         internal List<Action<object, object>> funcs = new List<Action<object, object>>();
-        
+
         public static ShadoEvent operator +(ShadoEvent a, Action<object, object> b) {
             if (a is null) a = new ShadoEvent();
             a.funcs.Add(b);
             return a;
         }
-        
+
         public void InvokeAll(object sender, object args) {
             foreach (var func in funcs) {
                 func.Invoke(sender, args);
             }
         }
     }
-    
+
+#if false
     [EditorTargetType(typeof(ShadoEvent))]
     public class ShadoEventEditor : Editor.Editor
     {
@@ -39,18 +40,18 @@ namespace Shado
             foreach (var methodInfo in handler.funcs) {
                 UI.Text(methodInfo.Method.ToString());
             }
-
+        
             UI.EndChild();
             UI.NewLine();
         }
-
+        
         private void DrawClassesMenu() {
             if (UI.BeginMenu("+##ClassesMenu" + GetHashCode())) {
                 var entities = Scene.GetAllEntities();
-
+        
                 if (entities != null) {
                     foreach (var entity in entities) {
-
+        
                         if (UI.BeginMenu($"{entity.tag} ({entity.GetType().Name})")) {
                             var methods = entity.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
                             foreach (var method in methods) {
@@ -62,15 +63,19 @@ namespace Shado
                                     }
                                 }
                             }
-
+        
                             UI.EndMenu();
                         }
                     }
                 }
-
+        
                 UI.EndMenu();
             }
             
         }
+        protected override void OnEditorDraw() {
+            throw new NotImplementedException();
+        }
     }
+#endif
 }

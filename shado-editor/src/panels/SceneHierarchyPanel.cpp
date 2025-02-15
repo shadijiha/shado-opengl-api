@@ -1,14 +1,19 @@
 #include "SceneHierarchyPanel.h"
-#include "scene/Components.h"
+
+#include <fstream>
+
 #include <glm/gtc/type_ptr.hpp>
+
+#include "scene/Components.h"
 #include "imgui_internal.h"
 #include "scene/utils/SceneUtils.h"
 #include "debug/Profile.h"
-#include <fstream>
 #include "script/ScriptEngine.h"
 #include "ui/UI.h"
 #include "ui/imnodes.h"
 #include "project/Project.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
+#include "scene/Prefab.h"
 
 namespace Shado {
     SceneHierarchyPanel::SceneHierarchyPanel(const std::string& title, const std::string& propertiesPanelTitle)
@@ -68,7 +73,7 @@ namespace Shado {
 
     void SceneHierarchyPanel::onEvent(Event& e) {
         if (m_Context->isRunning()) {
-            ScriptEngine::InvokeCustomEditorEvents(e);
+            //ScriptEngine::InvokeCustomEditorEvents(e);
         }
 
         m_PropertiesPanel.onEvent(e);
@@ -90,6 +95,7 @@ namespace Shado {
 
         return false;
     };
+
     void SceneHierarchyPanel::drawEntityNode(Entity entity) {
         SHADO_PROFILE_FUNCTION();
 
@@ -98,23 +104,30 @@ namespace Shado {
         auto flags = ImGuiTreeNodeFlags_OpenOnArrow | (m_Selected == entity ? ImGuiTreeNodeFlags_Selected : 0);
         flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 
-        ScopedStyleColor textColor(ImGuiCol_Text, {163 / 255.0f, 199 / 255.0f, 245 / 255.0f, 1.0f},
-                                   entity.hasComponent<PrefabInstanceComponent>());
+        bool opened;
+        {
+            ScopedStyleColor textColor(ImGuiCol_Text, {163 / 255.0f, 199 / 255.0f, 245 / 255.0f, 1.0f},
+                                       entity.hasComponent<PrefabInstanceComponent>());
 
-        // if a child is selected then expand the parent
-        flags |= isChildSelectedRecursively(entity, m_Selected) ? ImGuiTreeNodeFlags_DefaultOpen : 0;
-        bool opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tc.tag.c_str());
-        if (ImGui::IsItemClicked()) {
-            setSelected(entity);
+            // if a child is selected then expand the parent
+            flags |= isChildSelectedRecursively(entity, m_Selected) ? ImGuiTreeNodeFlags_DefaultOpen : 0;
+            opened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, tc.tag.c_str());
+            if (ImGui::IsItemClicked()) {
+                setSelected(entity);
+            }
         }
 
         // Context menu item
         bool deleteEntity = false;
         if (ImGui::BeginPopupContextItem()) {
-            if (ImGui::MenuItem("Duplicate Entity"))
+            if (ImGui::MenuItem("Duplicate entity"))
                 m_Context->duplicateEntity(m_Selected);
 
-            if (ImGui::MenuItem("Delete Entity"))
+            if (ImGui::MenuItem("Make prefab")) {
+                Prefab::CreateFromEntity(m_Selected, *m_Context);
+            }
+
+            if (ImGui::MenuItem("Delete entity"))
                 deleteEntity = true;
 
             if (ImGui::MenuItem("Reset parent"))

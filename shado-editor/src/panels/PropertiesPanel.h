@@ -10,7 +10,7 @@ namespace Shado {
 
     class PropertiesPanel {
     public:
-        PropertiesPanel( const std::string& title = "Properties");
+        PropertiesPanel(const std::string& title = "Properties");
         PropertiesPanel(const Ref<Scene>& scene, const std::string& title = "Properties");
 
         void setContext(const Ref<Scene>& scene);
@@ -22,107 +22,118 @@ namespace Shado {
 
         Entity getSelected() const { return m_Selected; }
         void resetSelection();
-		
+
     private:
         void drawComponents(Entity e);
+
     private:
         Ref<Scene> m_Context;
         Entity m_Selected;
         std::string m_Title;
+        bool m_Locked = false;
     };
 
     /**
      * Classes used to render different script data types for script component
      */
-    struct ScriptTypeRendererDataRunning {
+    struct ScriptTypeRendererData {
         Ref<Scene> scene;
         Entity& entity;
-        const std::string& fieldName;
-        Ref<ScriptInstance> scriptInstance;
-        const std::map<std::string, ScriptField>& scriptClassFields;
+        std::string_view fieldName;
+        FieldStorage& fieldStorage;
     };
 
-    struct ScriptTypeRendererDataStopped {
-        Ref<Scene> scene;
-        Entity& entity;
-        const std::string& fieldName;
-        const ScriptField& field;
-        Ref<ScriptClass> scriptClass;
-        ScriptFieldMap& scriptModifiedFields;
-        const std::map<std::string, ScriptField>& scriptClassFields;
-    };
-    
     class ScriptTypeRenderer {
     public:
-        ScriptTypeRenderer(ScriptFieldType type)
-            : m_Type(type) {}
-        virtual ~ScriptTypeRenderer() = default;
-        
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) = 0;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) = 0;
+        ScriptTypeRenderer(DataType type)
+            : m_Type(type) {
+        }
 
-        inline ScriptFieldType getType() const { return m_Type; }
+        virtual ~ScriptTypeRenderer() = default;
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) = 0;
+
+        inline DataType getType() const { return m_Type; }
+
     protected:
-        ScriptFieldType m_Type;
+        DataType m_Type;
     };
 
     class ScriptFloatRenderer final : public ScriptTypeRenderer {
     public:
         ScriptFloatRenderer()
-            : ScriptTypeRenderer(ScriptFieldType::Float) {}
-        
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+            : ScriptTypeRenderer(DataType::Float) {
+        }
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptIntRenderer final : public ScriptTypeRenderer {
     public:
         ScriptIntRenderer()
-            : ScriptTypeRenderer(ScriptFieldType::Int) {}
-        
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+            : ScriptTypeRenderer(DataType::Int) {
+        }
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptBoolRenderer final : public ScriptTypeRenderer {
     public:
         ScriptBoolRenderer()
-            : ScriptTypeRenderer(ScriptFieldType::Bool) {}
-        
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+            : ScriptTypeRenderer(DataType::Bool) {
+        }
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptVector3Renderer final : public ScriptTypeRenderer {
     public:
         ScriptVector3Renderer()
-            : ScriptTypeRenderer(ScriptFieldType::Vector3) {}
-        
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+            : ScriptTypeRenderer(DataType::Vector3) {
+        }
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
-    class ScriptColourRenderer final : public ScriptTypeRenderer {
+    class ScriptVector4Renderer final : public ScriptTypeRenderer {
     public:
-        ScriptColourRenderer()
-            : ScriptTypeRenderer(ScriptFieldType::Colour) {}
+        ScriptVector4Renderer()
+            : ScriptTypeRenderer(DataType::Vector4) {
+        }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     class ScriptPrefabRenderer final : public ScriptTypeRenderer {
     public:
         ScriptPrefabRenderer()
-            : ScriptTypeRenderer(ScriptFieldType::Prefab) {}
-        
+            : ScriptTypeRenderer(DataType::Prefab) {
+        }
+
         // TODO: Find a better way to organize this code
         struct PrefabCSMirror {
             uint64_t id;
         };
-        
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
+    };
+
+    class ScriptArrayRenderer final : public ScriptTypeRenderer {
+    public:
+        ScriptArrayRenderer()
+            : ScriptTypeRenderer((DataType)-1) {
+        }
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
+    };
+
+    class ScriptEntityRenderer final : public ScriptTypeRenderer {
+    public:
+        ScriptEntityRenderer()
+            : ScriptTypeRenderer(DataType::Entity) {
+        }
+
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
 
     /**
@@ -131,11 +142,11 @@ namespace Shado {
     class ScriptCustomEditorRenderer final : public ScriptTypeRenderer {
     public:
         ScriptCustomEditorRenderer()
-            : ScriptTypeRenderer((ScriptFieldType)-1) {}
+            : ScriptTypeRenderer((DataType)-1) {
+        }
 
-        virtual void onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) override;
-        virtual void onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) override;
+        virtual void onImGuiRender(const ScriptTypeRendererData& context) override;
     };
-    
-    ScriptTypeRenderer& GetRendererForType(ScriptFieldType type);
+
+    ScriptTypeRenderer& GetRendererForType(DataType type);
 }

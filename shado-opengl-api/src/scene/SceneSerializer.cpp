@@ -5,8 +5,10 @@
 
 #include "Components.h"
 #include "project/Project.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 #include "script/ScriptEngine.h"
 #include "Prefab.h"
+#include "math/Hash.h"
 
 namespace YAML {
     template <>
@@ -91,19 +93,6 @@ namespace YAML {
 }
 
 namespace Shado {
-#define WRITE_SCRIPT_FIELD(FieldType, Type)           \
-			case ScriptFieldType::FieldType:          \
-				out << scriptField.GetValue<Type>();  \
-				break
-
-#define READ_SCRIPT_FIELD(FieldType, Type)             \
-	case ScriptFieldType::FieldType:                   \
-	{                                                  \
-		Type data = scriptField["Data"].as<Type>();    \
-		fieldInstance.SetValue(data);                  \
-		break;                                         \
-	}
-
     YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v) {
         out << YAML::Flow;
         out << YAML::BeginSeq << v.x << v.y << YAML::EndSeq;
@@ -134,13 +123,14 @@ namespace Shado {
         YAML::Emitter out;
         out << YAML::BeginMap;
         out << YAML::Key << "Scene" << YAML::Value << m_Scene->name;
+        out << YAML::Key << "Version" << YAML::Value << SHADO_SCENE_VERSION;
         out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
         m_Scene->m_Registry.each([&](auto entityID) {
             Entity entity = {entityID, m_Scene.Raw()};
             if (!entity)
                 return;
 
-            SerializeEntity(out, entity);
+            SerializeEntity(out, entity, m_Scene->m_ScriptStorage);
         });
         out << YAML::EndSeq;
         out << YAML::EndMap;
@@ -153,22 +143,22 @@ namespace Shado {
         SHADO_CORE_ASSERT(false, "Not implemented");
     }
 
-    void SceneSerializer::serializePrefabHelper(YAML::Emitter& out, Entity& e, UUID prefabId) {
+    void SceneSerializer::serializePrefabHelper(YAML::Emitter& out, Entity& e, Ref<Prefab> prefab) {
         // Add a unique ID to every entity
         if (!e.hasComponent<PrefabInstanceComponent>()) {
             auto& prefabComponent = e.addComponent<PrefabInstanceComponent>();
-            prefabComponent.prefabId = prefabId;
+            prefabComponent.prefabId = prefab->GetId();
             prefabComponent.prefabEntityUniqueId = UUID();
         }
 
-        SerializeEntity(out, e, false);
+        SerializeEntity(out, e, prefab->GetScriptStorage(), false);
 
         auto children = e.getChildren();
 
         if (!children.empty()) {
             out << YAML::Key << "Children" << YAML::Value << YAML::BeginSeq;
             for (auto& child : children) {
-                serializePrefabHelper(out, child, prefabId);
+                serializePrefabHelper(out, child, prefab);
             }
             out << YAML::EndSeq;
         }
@@ -176,43 +166,43 @@ namespace Shado {
         out << YAML::EndMap;
     }
 
-    UUID SceneSerializer::serializePrefab(Entity entity, UUID prefabId) {
+    UUID SceneSerializer::serializePrefab(Ref<Prefab> prefab) {
         SHADO_PROFILE_FUNCTION();
 
         YAML::Emitter out;
         out << YAML::BeginMap;
 
-        out << YAML::Key << "PrefabId" << YAML::Value << (uint64_t)prefabId;
+        out << YAML::Key << "PrefabId" << YAML::Value << prefab->GetId();
         out << YAML::Key << "Data" << YAML::Value;
 
         // Recursively serialize children
-        serializePrefabHelper(out, entity, prefabId);
+        serializePrefabHelper(out, prefab->root, prefab);
 
         out << YAML::EndMap;
 
         // TODO: Once we have an asset manager, remove the prefab ID from the filename and
         // make this the duty of the asset manager
         std::ofstream fout(
-            Project::GetAssetDirectory() / (std::to_string((uint64_t)prefabId) + ".prefab"));
+            Project::GetAssetDirectory() / (std::to_string(prefab->GetId()) + ".prefab"));
         fout << out.c_str();
 
-        SHADO_CORE_ASSERT(entity.hasComponent<PrefabInstanceComponent>(),
+        SHADO_CORE_ASSERT(prefab->root.hasComponent<PrefabInstanceComponent>(),
                           "Entity must have a PrefabInstanceComponent by now");
 
-        return prefabId;
+        return prefab->GetId();
     }
 
-    bool SceneSerializer::deserialize(const std::string& filepath) {
+    bool SceneSerializer::deserialize(const std::filesystem::path& filepath) {
         std::string ignored;
         return this->deserialize(filepath, ignored);
     }
 
-    bool SceneSerializer::deserialize(const std::string& filepath, std::string& error) {
+    bool SceneSerializer::deserialize(const std::filesystem::path& filepath, std::string& error) {
         SHADO_PROFILE_FUNCTION();
 
         YAML::Node data;
         try {
-            data = YAML::LoadFile(filepath);
+            data = YAML::LoadFile(filepath.string());
 
 
             if (!data["Scene"]) {
@@ -224,12 +214,15 @@ namespace Shado {
             SHADO_CORE_TRACE("Deserializing scene '{0}'", sceneName);
             m_Scene->name = sceneName;
 
+            std::string version = data["Version"].as<std::string>();
+            SHADO_CORE_ASSERT(version == SHADO_SCENE_VERSION, "Scene version mismatch. Expected {} got {}", SHADO_SCENE_VERSION, version);
+
             auto entities = data["Entities"];
             if (entities) {
                 for (auto entity : entities) {
                     dererializeEntityHelper(entity, [this](std::string name, UUID uuid) {
                         return m_Scene->createEntityWithUUID(name, uuid);
-                    }, m_Scene);
+                    }, m_Scene, m_Scene->m_ScriptStorage);
                 }
             }
         }
@@ -241,7 +234,7 @@ namespace Shado {
         return true;
     }
 
-    bool SceneSerializer::deserializeRuntime(const std::string& filepath) {
+    bool SceneSerializer::deserializeRuntime(const std::filesystem::path& filepath) {
         SHADO_CORE_ASSERT(false, "Not implemented");
         return false;
     }
@@ -251,7 +244,7 @@ namespace Shado {
             Entity e = prefab->attachEntity(id);
             e.getComponent<TagComponent>().tag = name;
             return e;
-        }, Scene::ActiveScene);
+        }, Scene::ActiveScene, prefab->GetScriptStorage());
 
         // Deserialize children
         auto children = node["Children"];
@@ -275,6 +268,9 @@ namespace Shado {
 
             prefab->root = deserializePrefabHelper(data["Data"], prefab);
 
+            // Make sure the prefab root component has the correct prefab id
+            prefab->root.getComponent<PrefabInstanceComponent>().prefabId = prefabId;
+
             return prefab;
         }
         catch (const YAML::Exception& e) {
@@ -283,7 +279,8 @@ namespace Shado {
         }
     }
 
-    void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity, bool endmap) {
+    void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity, ScriptStorage& scriptStorageContext,
+                                          bool endmap) {
         SHADO_CORE_ASSERT(entity.hasComponent<IDComponent>(), "No ID component");
 
         out << YAML::BeginMap; // Entity
@@ -349,54 +346,42 @@ namespace Shado {
             out << YAML::BeginMap; // SpriteRendererComponent
 
             auto& spriteRendererComponent = entity.getComponent<SpriteRendererComponent>();
-            std::string texturePath = spriteRendererComponent.texture
-                                          ? spriteRendererComponent.texture->getFilePath()
-                                          : "NULL";
-            std::string newPath = getPathAndCopyFileToAssets(texturePath);
             out << YAML::Key << "Color" << YAML::Value << spriteRendererComponent.color;
-            out << YAML::Key << "Texture" << YAML::Value << newPath;
-            out << YAML::Key << "TillingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
+            out << YAML::Key << "TextureHandle" << YAML::Value << spriteRendererComponent.texture;
+            out << YAML::Key << "TilingFactor" << YAML::Value << spriteRendererComponent.tilingFactor;
+            out << YAML::Key << "ShaderHandle" << YAML::Value << spriteRendererComponent.shader;
 
-            if (spriteRendererComponent.shader) {
-                out << YAML::Key << "Shader" << YAML::Value << Project::GetActive()->GetRelativePath(
-                    spriteRendererComponent.shader->getFilepath()).string();
-
-                auto& shader = spriteRendererComponent.shader;
-                out << YAML::Key << "ShaderCustomUniforms" << YAML::Value;
-                out << YAML::BeginMap;
-                for (const auto& [name, value] : shader->m_CustomUniforms) {
-                    auto [type, data] = value;
-                    out << YAML::Key << name << YAML::Value;
-                    out << YAML::BeginMap;
-                    out << YAML::Key << "Type" << YAML::Value << (int)type;
-                    switch (type) {
-                    case ShaderDataType::Int:
-                        out << YAML::Key << "Data" << YAML::Value << *(int*)data;
-                        break;
-                    case ShaderDataType::Float:
-                        out << YAML::Key << "Data" << YAML::Value << *(float*)data;
-                        break;
-                    case ShaderDataType::Float2:
-                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec2*)data;
-                        break;
-                    case ShaderDataType::Float3:
-                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec3*)data;
-                        break;
-                    case ShaderDataType::Float4:
-                        out << YAML::Key << "Data" << YAML::Value << *(glm::vec4*)data;
-                        break;
-                    }
-                    out << YAML::EndMap;
-                }
-                out << YAML::EndMap;
-            }
+            //     auto& shader = spriteRendererComponent.shader;
+            //     out << YAML::Key << "ShaderCustomUniforms" << YAML::Value;
+            //     out << YAML::BeginMap;
+            //     for (const auto& [name, value] : shader->m_CustomUniforms) {
+            //         auto [type, data] = value;
+            //         out << YAML::Key << name << YAML::Value;
+            //         out << YAML::BeginMap;
+            //         out << YAML::Key << "Type" << YAML::Value << (int)type;
+            //         switch (type) {
+            //         case ShaderDataType::Int:
+            //             out << YAML::Key << "Data" << YAML::Value << *(int*)data;
+            //             break;
+            //         case ShaderDataType::Float:
+            //             out << YAML::Key << "Data" << YAML::Value << *(float*)data;
+            //             break;
+            //         case ShaderDataType::Float2:
+            //             out << YAML::Key << "Data" << YAML::Value << *(glm::vec2*)data;
+            //             break;
+            //         case ShaderDataType::Float3:
+            //             out << YAML::Key << "Data" << YAML::Value << *(glm::vec3*)data;
+            //             break;
+            //         case ShaderDataType::Float4:
+            //             out << YAML::Key << "Data" << YAML::Value << *(glm::vec4*)data;
+            //             break;
+            //         }
+            //         out << YAML::EndMap;
+            //     }
+            //     out << YAML::EndMap;
+            // }
 
             out << YAML::EndMap; // SpriteRendererComponent
-
-            // if Texture path has changed, then update the component
-            if (newPath != texturePath) {
-                spriteRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
-            }
         }
 
         if (entity.hasComponent<CircleRendererComponent>()) {
@@ -404,28 +389,17 @@ namespace Shado {
             out << YAML::BeginMap; // CircleRendererComponent
 
             auto& circleRendererComponent = entity.getComponent<CircleRendererComponent>();
-            std::string texturePath = circleRendererComponent.texture
-                                          ? circleRendererComponent.texture->getFilePath()
-                                          : "NULL";
-            std::string newPath = getPathAndCopyFileToAssets(texturePath);
 
             out << YAML::Key << "Color" << YAML::Value << circleRendererComponent.color;
-            out << YAML::Key << "Texture" << YAML::Value << getPathAndCopyFileToAssets(texturePath);
-            out << YAML::Key << "TillingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
+            out << YAML::Key << "TextureHandle" << YAML::Value << circleRendererComponent.texture;
+            out << YAML::Key << "TilingFactor" << YAML::Value << circleRendererComponent.tilingFactor;
 
             out << YAML::Key << "Thickness" << YAML::Value << circleRendererComponent.thickness;
             out << YAML::Key << "Fade" << YAML::Value << circleRendererComponent.fade;
 
-            if (circleRendererComponent.shader)
-                out << YAML::Key << "Shader" << YAML::Value << Project::GetActive()->GetRelativePath(
-                    circleRendererComponent.shader->getFilepath()).string();
+            out << YAML::Key << "ShaderHandle" << YAML::Value << circleRendererComponent.shader;
 
             out << YAML::EndMap; // CircleRendererComponent
-
-            // if Texture path has changed, then update the component
-            if (newPath != texturePath) {
-                circleRendererComponent.texture = Texture2D::create(Project::GetProjectDirectory() / newPath);
-            }
         }
 
         if (entity.hasComponent<LineRendererComponent>()) {
@@ -481,56 +455,187 @@ namespace Shado {
         }
 
         if (entity.hasComponent<ScriptComponent>()) {
-            auto& scriptComponent = entity.getComponent<ScriptComponent>();
-
             out << YAML::Key << "ScriptComponent";
             out << YAML::BeginMap; // ScriptComponent
-            out << YAML::Key << "ClassName" << YAML::Value << scriptComponent.ClassName;
 
-            // Fields
-            Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(scriptComponent.ClassName);
-            if (entityClass) {
-                const auto& fields = entityClass->GetFields();
-                if (!fields.empty()) {
-                    out << YAML::Key << "ScriptFields" << YAML::Value;
-                    auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
-                    out << YAML::BeginSeq;
-                    for (const auto& [name, field] : fields) {
-                        if (entityFields.find(name) == entityFields.end())
-                            continue;
+            const auto& scriptEngine = ScriptEngine::GetInstance();
+            const auto& sc = entity.getComponent<ScriptComponent>();
 
-                        out << YAML::BeginMap; // ScriptField
-                        out << YAML::Key << "Name" << YAML::Value << name;
-                        out << YAML::Key << "Type" << YAML::Value << Utils::ScriptFieldTypeToString(field.Type);
+            if (scriptEngine.IsValidScript(sc.ScriptID)) {
+                const auto& scriptMetadata = scriptEngine.GetScriptMetadata(sc.ScriptID);
+                const auto& entityStorage = scriptStorageContext.EntityStorage.at(entity.getUUID());
 
-                        out << YAML::Key << "Data" << YAML::Value;
-                        ScriptFieldInstance& scriptField = entityFields.at(name);
+                out << YAML::Key << "ScriptID" << YAML::Value << sc.ScriptID;
+                out << YAML::Key << "ScriptName" << YAML::Value << scriptMetadata.FullName;
 
-                        switch (field.Type) {
-                        WRITE_SCRIPT_FIELD(Float, float);
-                        WRITE_SCRIPT_FIELD(Double, double);
-                        WRITE_SCRIPT_FIELD(Bool, bool);
-                        WRITE_SCRIPT_FIELD(Char, char);
-                        WRITE_SCRIPT_FIELD(Byte, int8_t);
-                        WRITE_SCRIPT_FIELD(Short, int16_t);
-                        WRITE_SCRIPT_FIELD(Int, int32_t);
-                        WRITE_SCRIPT_FIELD(Long, int64_t);
-                        WRITE_SCRIPT_FIELD(UByte, uint8_t);
-                        WRITE_SCRIPT_FIELD(UShort, uint16_t);
-                        WRITE_SCRIPT_FIELD(UInt, uint32_t);
-                        WRITE_SCRIPT_FIELD(ULong, uint64_t);
-                        WRITE_SCRIPT_FIELD(Vector2, glm::vec2);
-                        WRITE_SCRIPT_FIELD(Vector3, glm::vec3);
-                        WRITE_SCRIPT_FIELD(Vector4, glm::vec4);
-                        WRITE_SCRIPT_FIELD(Colour, glm::vec4);
-                        WRITE_SCRIPT_FIELD(Entity, UUID);
-                        WRITE_SCRIPT_FIELD(Prefab, UUID);
+                out << YAML::Key << "Fields" << YAML::Value << YAML::BeginSeq;
+                for (const auto& [fieldID, fieldStorage] : entityStorage.Fields) {
+                    const auto& fieldMetadata = scriptMetadata.Fields.at(fieldID);
+
+                    out << YAML::BeginMap;
+                    out << YAML::Key << "ID" << YAML::Value << fieldID;
+                    out << YAML::Key << "Name" << YAML::Value << fieldMetadata.Name;
+                    out << YAML::Key << "Type" << YAML::Value << (int)fieldMetadata.Type;
+                    //std::string(magic_enum::enum_name(fieldMetadata.Type));
+                    out << YAML::Key << "Value" << YAML::Value;
+
+                    if (fieldStorage.IsArray()) {
+                        out << YAML::BeginSeq;
+
+                        for (int32_t i = 0; i < fieldStorage.GetLength(); i++) {
+                            switch (fieldMetadata.Type) {
+                            case DataType::Bool:
+                                out << fieldStorage.GetValue<bool>(i);
+                                break;
+                            case DataType::SByte:
+                                out << fieldStorage.GetValue<int8_t>(i);
+                                break;
+                            case DataType::Byte:
+                                out << fieldStorage.GetValue<uint8_t>(i);
+                                break;
+                            case DataType::Short:
+                                out << fieldStorage.GetValue<int16_t>(i);
+                                break;
+                            case DataType::UShort:
+                                out << fieldStorage.GetValue<uint16_t>(i);
+                                break;
+                            case DataType::Int:
+                                out << fieldStorage.GetValue<int32_t>(i);
+                                break;
+                            case DataType::UInt:
+                                out << fieldStorage.GetValue<uint32_t>(i);
+                                break;
+                            case DataType::Long:
+                                out << fieldStorage.GetValue<int64_t>(i);
+                                break;
+                            case DataType::ULong:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            case DataType::Float:
+                                out << fieldStorage.GetValue<float>(i);
+                                break;
+                            case DataType::Double:
+                                out << fieldStorage.GetValue<double>(i);
+                                break;
+                            case DataType::Vector2:
+                                out << fieldStorage.GetValue<glm::vec2>(i);
+                                break;
+                            case DataType::Vector3:
+                                out << fieldStorage.GetValue<glm::vec3>(i);
+                                break;
+                            case DataType::Vector4:
+                                out << fieldStorage.GetValue<glm::vec4>(i);
+                                break;
+                            case DataType::String:
+                                out << fieldStorage.GetValue<std::string>(i);
+                                break;
+                            case DataType::Entity:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            case DataType::Prefab:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            case DataType::Mesh:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            case DataType::StaticMesh:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            case DataType::Material:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            case DataType::Texture2D:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            case DataType::Scene:
+                                out << fieldStorage.GetValue<uint64_t>(i);
+                                break;
+                            default:
+                                break;
+                            }
                         }
-                        out << YAML::EndMap; // ScriptFields
+
+                        out << YAML::EndSeq;
                     }
-                    out << YAML::EndSeq;
+                    else {
+                        switch (fieldMetadata.Type) {
+                        case DataType::Bool:
+                            out << fieldStorage.GetValue<bool>();
+                            break;
+                        case DataType::SByte:
+                            out << fieldStorage.GetValue<int8_t>();
+                            break;
+                        case DataType::Byte:
+                            out << fieldStorage.GetValue<uint8_t>();
+                            break;
+                        case DataType::Short:
+                            out << fieldStorage.GetValue<int16_t>();
+                            break;
+                        case DataType::UShort:
+                            out << fieldStorage.GetValue<uint16_t>();
+                            break;
+                        case DataType::Int:
+                            out << fieldStorage.GetValue<int32_t>();
+                            break;
+                        case DataType::UInt:
+                            out << fieldStorage.GetValue<uint32_t>();
+                            break;
+                        case DataType::Long:
+                            out << fieldStorage.GetValue<int64_t>();
+                            break;
+                        case DataType::ULong:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        case DataType::Float:
+                            out << fieldStorage.GetValue<float>();
+                            break;
+                        case DataType::Double:
+                            out << fieldStorage.GetValue<double>();
+                            break;
+                        case DataType::Vector2:
+                            out << fieldStorage.GetValue<glm::vec2>();
+                            break;
+                        case DataType::Vector3:
+                            out << fieldStorage.GetValue<glm::vec3>();
+                            break;
+                        case DataType::Vector4:
+                            out << fieldStorage.GetValue<glm::vec4>();
+                            break;
+                        // TODO(Emily): This appears to write a spurious `\x00`
+                        case DataType::String:
+                            out << fieldStorage.GetValue<std::string>();
+                            break;
+                        case DataType::Entity:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        case DataType::Prefab:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        case DataType::Mesh:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        case DataType::StaticMesh:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        case DataType::Material:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        case DataType::Texture2D:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        case DataType::Scene:
+                            out << fieldStorage.GetValue<uint64_t>();
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+
+                    out << YAML::EndMap;
                 }
+                out << YAML::EndSeq;
             }
+
             out << YAML::EndMap; // ScriptComponent
         }
 
@@ -599,7 +704,7 @@ namespace Shado {
     Entity SceneSerializer::dererializeEntityHelper(
         const YAML::Node& entity,
         std::function<Entity(std::string, UUID)> entityCreatorFunction,
-        Ref<Scene> scene
+        Ref<Scene> scene, ScriptStorage& scriptStorageContext
     ) {
         uint64_t uuid = entity["Entity"].as<uint64_t>(); // TODO
 
@@ -656,62 +761,56 @@ namespace Shado {
         auto spriteRendererComponent = entity["SpriteRendererComponent"];
         if (spriteRendererComponent) {
             auto& src = deserializedEntity.addComponent<SpriteRendererComponent>();
-            auto texturePath = spriteRendererComponent["Texture"].as<std::string>();
             src.color = spriteRendererComponent["Color"].as<glm::vec4>();
-            src.texture = texturePath == "NULL" || texturePath == "null"
-                              ? nullptr
-                              : new Texture2D(
-                                  Project::GetActive()
-                                      ? (Project::GetProjectDirectory() / texturePath).string()
-                                      : texturePath
-                              );
-            src.tilingFactor = spriteRendererComponent["TillingFactor"].as<float>();
+            src.tilingFactor = spriteRendererComponent["TilingFactor"].as<float>();
 
-            if (spriteRendererComponent["Shader"]) {
+            if (spriteRendererComponent["TextureHandle"])
+                src.texture = spriteRendererComponent["TextureHandle"].as<AssetHandle>();
+
+            if (spriteRendererComponent["ShaderHandle"]) {
                 try {
-                    src.shader = CreateRef<Shader>(
-                        Project::GetProjectDirectory() / spriteRendererComponent["Shader"].as<std::string>());
+                    src.shader = spriteRendererComponent["ShaderHandle"].as<AssetHandle>();
 
-                    if (auto shaderCustomUniforms = spriteRendererComponent["ShaderCustomUniforms"]) {
-                        for (auto uniform : shaderCustomUniforms) {
-                            std::string name = uniform.first.as<std::string>();
-                            auto uniformData = uniform.second;
-
-                            ShaderDataType type = (ShaderDataType)uniformData["Type"].as<int>();
-                            switch (type) {
-                            case ShaderDataType::Int: {
-                                int data = uniformData["Data"].as<int>();
-                                src.shader->setInt(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float: {
-                                float data = uniformData["Data"].as<float>();
-                                src.shader->setFloat(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float2: {
-                                auto data = uniformData["Data"].as<glm::vec2>();
-                                src.shader->setFloat2(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float3: {
-                                auto data = uniformData["Data"].as<glm::vec3>();
-                                src.shader->setFloat3(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            case ShaderDataType::Float4: {
-                                auto data = uniformData["Data"].as<glm::vec4>();
-                                src.shader->setFloat4(name, data);
-                                src.shader->saveCustomUniformValue(name, type, data);
-                                break;
-                            }
-                            }
-                        }
-                    }
+                    // if (auto shaderCustomUniforms = spriteRendererComponent["ShaderCustomUniforms"]) {
+                    //     for (auto uniform : shaderCustomUniforms) {
+                    //         std::string name = uniform.first.as<std::string>();
+                    //         auto uniformData = uniform.second;
+                    //
+                    //         ShaderDataType type = (ShaderDataType)uniformData["Type"].as<int>();
+                    //         switch (type) {
+                    //         case ShaderDataType::Int: {
+                    //             int data = uniformData["Data"].as<int>();
+                    //             src.shader->setInt(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float: {
+                    //             float data = uniformData["Data"].as<float>();
+                    //             src.shader->setFloat(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float2: {
+                    //             auto data = uniformData["Data"].as<glm::vec2>();
+                    //             src.shader->setFloat2(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float3: {
+                    //             auto data = uniformData["Data"].as<glm::vec3>();
+                    //             src.shader->setFloat3(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         case ShaderDataType::Float4: {
+                    //             auto data = uniformData["Data"].as<glm::vec4>();
+                    //             src.shader->setFloat4(name, data);
+                    //             src.shader->saveCustomUniformValue(name, type, data);
+                    //             break;
+                    //         }
+                    //         }
+                    //     }
+                    // }
                 }
                 catch (const std::runtime_error& e) {
                     SHADO_CORE_ERROR("Error loading shader: {0}", e.what());
@@ -726,21 +825,14 @@ namespace Shado {
             src.color = circleRendererComponent["Color"].as<glm::vec4>();
             src.thickness = circleRendererComponent["Thickness"].as<float>();
             src.fade = circleRendererComponent["Fade"].as<float>();
+            src.tilingFactor = circleRendererComponent["TilingFactor"].as<float>();
 
-            auto texturePath = circleRendererComponent["Texture"].as<std::string>();
-            src.texture = texturePath == "NULL" || texturePath == "null"
-                              ? nullptr
-                              : new Texture2D(
-                                  Project::GetActive()
-                                      ? (Project::GetProjectDirectory() / texturePath).string()
-                                      : texturePath
-                              );
-            src.tilingFactor = circleRendererComponent["TillingFactor"].as<float>();
+            if (circleRendererComponent["TextureHandle"])
+                src.texture = circleRendererComponent["TextureHandle"].as<AssetHandle>();
 
-            if (circleRendererComponent["Shader"]) {
+            if (circleRendererComponent["ShaderHandle"]) {
                 try {
-                    src.shader = CreateRef<Shader>(
-                        Project::GetProjectDirectory() / circleRendererComponent["Shader"].as<std::string>());
+                    src.shader = circleRendererComponent["ShaderHandle"].as<AssetHandle>();
                 }
                 catch (const std::runtime_error& e) {
                     SHADO_CORE_ERROR("Error loading shader: {0}", e.what());
@@ -789,53 +881,242 @@ namespace Shado {
 
         auto scriptComponent = entity["ScriptComponent"];
         if (scriptComponent) {
-            auto& sc = deserializedEntity.addComponent<ScriptComponent>();
-            sc.ClassName = scriptComponent["ClassName"].as<std::string>();
+            try {
+                uint64_t scriptID = scriptComponent["ScriptID"].as<uint64_t>(0);
 
-            auto scriptFields = scriptComponent["ScriptFields"];
-            if (scriptFields) {
-                Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(sc.ClassName);
-                if (entityClass) {
-                    const auto& fields = entityClass->GetFields();
-                    auto& entityFields = ScriptEngine::GetScriptFieldMap(deserializedEntity);
+                if (scriptID == 0) {
+                    scriptID = scriptComponent["ClassHandle"].as<uint64_t>(0);
+                }
 
-                    for (auto scriptField : scriptFields) {
-                        std::string name = scriptField["Name"].as<std::string>();
-                        std::string typeString = scriptField["Type"].as<std::string>();
-                        ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+                if (scriptID != 0) {
+                    auto& scriptEngine = ScriptEngine::GetMutable();
 
-                        ScriptFieldInstance& fieldInstance = entityFields[name];
+                    if (scriptEngine.IsValidScript(scriptID)) {
+                        const auto& scriptMetadata = scriptEngine.GetScriptMetadata(scriptID);
 
-                        SHADO_CORE_WARN("Could not find field {0} in script class {1}",
-                                        name, sc.ClassName);
+                        ScriptComponent& sc = deserializedEntity.addComponent<ScriptComponent>();
+                        sc.ScriptID = scriptID;
 
-                        if (fields.find(name) == fields.end())
-                            continue;
+                        scriptStorageContext.InitializeEntityStorage(scriptID, deserializedEntity.getUUID());;
 
-                        fieldInstance.Field = fields.at(name);
+                        auto fieldsArray = scriptComponent["Fields"];
+                        for (auto field : fieldsArray) {
+                            uint32_t fieldID = field["ID"].as<uint32_t>(0);
+                            auto fieldName = field["Name"].as<std::string>("");
 
-                        switch (type) {
-                        READ_SCRIPT_FIELD(Float, float);
-                        READ_SCRIPT_FIELD(Double, double);
-                        READ_SCRIPT_FIELD(Bool, bool);
-                        READ_SCRIPT_FIELD(Char, char);
-                        READ_SCRIPT_FIELD(Byte, int8_t);
-                        READ_SCRIPT_FIELD(Short, int16_t);
-                        READ_SCRIPT_FIELD(Int, int32_t);
-                        READ_SCRIPT_FIELD(Long, int64_t);
-                        READ_SCRIPT_FIELD(UByte, uint8_t);
-                        READ_SCRIPT_FIELD(UShort, uint16_t);
-                        READ_SCRIPT_FIELD(UInt, uint32_t);
-                        READ_SCRIPT_FIELD(ULong, uint64_t);
-                        READ_SCRIPT_FIELD(Vector2, glm::vec2);
-                        READ_SCRIPT_FIELD(Vector3, glm::vec3);
-                        READ_SCRIPT_FIELD(Vector4, glm::vec4);
-                        READ_SCRIPT_FIELD(Colour, glm::vec4);
-                        READ_SCRIPT_FIELD(Entity, UUID);
-                        READ_SCRIPT_FIELD(Prefab, uint64_t);
+                            if (scriptMetadata.Fields.contains(fieldID)) {
+                                const auto& fieldMetadata = scriptMetadata.Fields.at(fieldID);
+                                auto& fieldStorage = scriptStorageContext.EntityStorage.at(
+                                    deserializedEntity.getUUID()).Fields[fieldID];
+
+                                auto valueNode = field["Value"];
+
+                                if (fieldStorage.IsArray()) {
+                                    SHADO_CORE_ASSERT(valueNode.IsSequence(), "");
+                                    fieldStorage.Resize(valueNode.size());
+
+                                    for (int32_t i = 0; i < valueNode.size(); i++) {
+                                        switch (fieldMetadata.Type) {
+                                        case DataType::Bool: {
+                                            fieldStorage.SetValue(valueNode[i].as<bool>());
+                                            break;
+                                        }
+                                        case DataType::SByte: {
+                                            fieldStorage.SetValue(valueNode[i].as<int8_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Byte: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint8_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Short: {
+                                            fieldStorage.SetValue(valueNode[i].as<int16_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::UShort: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint16_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Int: {
+                                            fieldStorage.SetValue(valueNode[i].as<int32_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::UInt: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint32_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Long: {
+                                            fieldStorage.SetValue(valueNode[i].as<int64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::ULong: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Float: {
+                                            fieldStorage.SetValue(valueNode[i].as<float>(), i);
+                                            break;
+                                        }
+                                        case DataType::Double: {
+                                            fieldStorage.SetValue(valueNode[i].as<double>(), i);
+                                            break;
+                                        }
+                                        case DataType::Vector2: {
+                                            fieldStorage.SetValue(valueNode[i].as<glm::vec2>(), i);
+                                            break;
+                                        }
+                                        case DataType::Vector3: {
+                                            fieldStorage.SetValue(valueNode[i].as<glm::vec3>(), i);
+                                            break;
+                                        }
+                                        case DataType::Vector4: {
+                                            fieldStorage.SetValue(valueNode[i].as<glm::vec4>(), i);
+                                            break;
+                                        }
+                                        case DataType::String: {
+                                            fieldStorage.SetValue(valueNode[i].as<std::string>(), i);
+                                            break;
+                                        }
+                                        case DataType::Entity: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Prefab: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Mesh: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::StaticMesh: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Material: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Texture2D: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        case DataType::Scene: {
+                                            fieldStorage.SetValue(valueNode[i].as<uint64_t>(), i);
+                                            break;
+                                        }
+                                        default:
+                                            break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    switch (fieldMetadata.Type) {
+                                    case DataType::Bool: {
+                                        fieldStorage.SetValue(valueNode.as<bool>());
+                                        break;
+                                    }
+                                    case DataType::SByte: {
+                                        fieldStorage.SetValue(valueNode.as<int8_t>());
+                                        break;
+                                    }
+                                    case DataType::Byte: {
+                                        fieldStorage.SetValue(valueNode.as<uint8_t>());
+                                        break;
+                                    }
+                                    case DataType::Short: {
+                                        fieldStorage.SetValue(valueNode.as<int16_t>());
+                                        break;
+                                    }
+                                    case DataType::UShort: {
+                                        fieldStorage.SetValue(valueNode.as<uint16_t>());
+                                        break;
+                                    }
+                                    case DataType::Int: {
+                                        fieldStorage.SetValue(valueNode.as<int32_t>());
+                                        break;
+                                    }
+                                    case DataType::UInt: {
+                                        fieldStorage.SetValue(valueNode.as<uint32_t>());
+                                        break;
+                                    }
+                                    case DataType::Long: {
+                                        fieldStorage.SetValue(valueNode.as<int64_t>());
+                                        break;
+                                    }
+                                    case DataType::ULong: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    case DataType::Float: {
+                                        fieldStorage.SetValue(valueNode.as<float>());
+                                        break;
+                                    }
+                                    case DataType::Double: {
+                                        fieldStorage.SetValue(valueNode.as<double>());
+                                        break;
+                                    }
+                                    case DataType::Vector2: {
+                                        fieldStorage.SetValue(valueNode.as<glm::vec2>());
+                                        break;
+                                    }
+                                    case DataType::Vector3: {
+                                        fieldStorage.SetValue(valueNode.as<glm::vec3>());
+                                        break;
+                                    }
+                                    case DataType::Vector4: {
+                                        fieldStorage.SetValue(valueNode.as<glm::vec4>());
+                                        break;
+                                    }
+                                    case DataType::String: {
+                                        fieldStorage.SetValue(valueNode.as<std::string>());
+                                        break;
+                                    }
+                                    case DataType::Entity: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    case DataType::Prefab: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    case DataType::Mesh: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    case DataType::StaticMesh: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    case DataType::Material: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    case DataType::Texture2D: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    case DataType::Scene: {
+                                        fieldStorage.SetValue(valueNode.as<uint64_t>());
+                                        break;
+                                    }
+                                    default:
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+                else {
+                    SHADO_CORE_ERROR(
+                        "Failed to deserialize ScriptComponent on entity '{}', script id of 0 is not valid.",
+                        uuid);
+                }
+            }
+            catch (const std::exception& e) {
+                SHADO_CORE_ERROR("Failed to deserialize ScriptComponent on entity '{}' : {}", uuid,
+                                 e.what());
             }
         }
 

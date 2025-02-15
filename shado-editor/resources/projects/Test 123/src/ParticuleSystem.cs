@@ -3,6 +3,7 @@ using Shado;
 
 namespace Sandbox
 {
+    #if false
     public class ParticuleSystem : Entity
     {
         public int numberOfParticles = 10;
@@ -60,4 +61,5 @@ namespace Sandbox
             return particleColors[randomIndex];
         }
     }
+#endif
 }

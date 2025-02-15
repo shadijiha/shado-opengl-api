@@ -1,19 +1,19 @@
 #include "Scene.h"
+
+#include <box2d/b2_world.h>
+#include <box2d/b2_body.h>
+#include <box2d/b2_fixture.h>
+#include <box2d/b2_polygon_shape.h>
+#include <box2d/b2_circle_shape.h>
+#include <box2d/b2_contact.h>
+
 #include "Components.h"
 #include "renderer/Renderer2D.h"
 #include "Entity.h"
-#include <box2d/b2_world.h>
-#include <mono/metadata/appdomain.h>
-#include <mono/metadata/object.h>
-
-#include "box2d/b2_body.h"
-#include "box2d/b2_fixture.h"
-#include "box2d/b2_polygon_shape.h"
-#include "box2d/b2_circle_shape.h"
-#include "box2d/b2_contact.h"
-
 #include "script/ScriptEngine.h"
 #include "Prefab.h"
+#include "debug/Profile.h"
+#include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 
 namespace Shado {
     /**
@@ -84,56 +84,23 @@ namespace Shado {
             Entity entityB = scene->getEntityById(idB);
 
             // Call the Entity::OnCollision2D in C#
-            if (entityA.isValid() && entityA.hasComponent<ScriptComponent>()) {
-                Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idA);
-                Ref<ScriptClass> klass = instance->GetScriptClass();
+            if (entityA.isValid() && entityB.isValid()) {
+                CSharpObject scriptAInstance = {};
+                CSharpObject scriptBInstance = {};
 
-                auto* method = klass->GetMethod(functionName, 2);
-                if (method) {
-                    auto collisionInfo = buildContactInfoObject(contact);
-                    MonoObject* entityBInstance = ScriptEngine::GetManagedInstance(idB);
+                if (entityA.hasComponent<ScriptComponent>())
+                    scriptAInstance = entityA.getComponent<ScriptComponent>().Instance;
+                if (entityB.hasComponent<ScriptComponent>())
+                    scriptBInstance = entityB.getComponent<ScriptComponent>().Instance;
 
-                    // If No instance was found, then create on with from the default entity class
-                    if (entityBInstance == nullptr) {
-                        ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityB);
-                        entityBInstance = instance.GetManagedObject();
-                    }
-
-                    void* args[] = {
-                        &collisionInfo,
-                        entityBInstance
-                    };
-
-                    klass->InvokeMethod(instance->GetManagedObject(),
-                                        method,
-                                        args
-                    );
+                if (scriptAInstance.IsValid()) {
+                    auto info = buildContactInfoObject(contact);
+                    scriptAInstance.Invoke(functionName, info, idB);
                 }
-            }
 
-            if (entityB.isValid() && entityB.hasComponent<ScriptComponent>()) {
-                Ref<ScriptInstance> instance = ScriptEngine::GetEntityScriptInstance(idB);
-                Ref<ScriptClass> klass = instance->GetScriptClass();
-                auto* method = klass->GetMethod(functionName, 2);
-
-                if (method) {
-                    auto collisionInfo = buildContactInfoObject(contact);
-                    MonoObject* entityAInstance = ScriptEngine::GetManagedInstance(idA);
-
-                    // If No instance was found, then create on with from the default entity class
-                    if (entityAInstance == nullptr) {
-                        ScriptInstance instance(CreateRef<ScriptClass>("Shado", "Entity", true), entityA);
-                        entityAInstance = instance.GetManagedObject();
-                    }
-
-                    void* args[] = {
-                        &collisionInfo,
-                        entityAInstance
-                    };
-                    klass->InvokeMethod(instance->GetManagedObject(),
-                                        method,
-                                        args
-                    );
+                if (scriptBInstance.IsValid()) {
+                    auto info = buildContactInfoObject(contact);
+                    scriptBInstance.Invoke(functionName, info, idA);
                 }
             }
         }
@@ -154,8 +121,6 @@ namespace Shado {
                               const std::unordered_map<UUID, entt::entity>& enttMap);
     template <typename Component>
     static void CopyComponentIfExists(Entity dst, Entity src);
-    template <>
-    static void CopyComponentIfExists<ScriptComponent>(Entity dst, Entity src);
 
     Scene::Scene() {
     }
@@ -171,6 +136,8 @@ namespace Shado {
         CopyRegistries(srcSceneRegistry, dstSceneRegistry, [this](const auto& tag, auto uuid) {
             return this->createEntityWithUUID(tag, uuid);
         });
+
+        other.m_ScriptStorage.CopyTo(this->m_ScriptStorage);
     }
 
     Scene::~Scene() {
@@ -193,7 +160,8 @@ namespace Shado {
         return entity;
     }
 
-    static void CopyAllComponentsHelper(Entity newEntity, Entity source, bool copyTransform = true) {
+    static void CopyAllComponentsHelper(Entity newEntity, Entity source, ScriptStorage& scriptStorage,
+                                        bool copyTransform = true, bool copyScriptStorage = true) {
         if (copyTransform)
             CopyComponentIfExists<TransformComponent>(newEntity, source);
         CopyComponentIfExists<SpriteRendererComponent>(newEntity, source);
@@ -209,20 +177,30 @@ namespace Shado {
 
         // Script should always be last
         CopyComponentIfExists<ScriptComponent>(newEntity, source);
+
+        if (newEntity.hasComponent<ScriptComponent>() && copyScriptStorage) {
+            const auto& scriptComponent = newEntity.getComponent<ScriptComponent>();
+            scriptStorage.InitializeEntityStorage(scriptComponent.ScriptID, newEntity.getUUID());
+            scriptStorage.CopyEntityStorage(source.getUUID(), newEntity.getUUID(), scriptStorage);
+        }
     }
 
-    Entity Scene::duplicateEntity(Entity source, bool modifyTag) {
+    static Entity duplicateEntityWithUUID(Scene& scene, Entity source, UUID id, bool modifyTag,
+                                          bool copyScriptStorage = true) {
         if (!source)
             return {};
 
-        Entity newEntity = createEntity(
+        Entity newEntity = scene.createEntityWithUUID(
             source.getComponent<TagComponent>().tag +
-            (modifyTag ? " (2)" : "")
-        );
+            (modifyTag ? " (2)" : ""), id);
 
-        CopyAllComponentsHelper(newEntity, source);
+        CopyAllComponentsHelper(newEntity, source, scene.GetScriptStorage(), true, copyScriptStorage);
 
         return newEntity;
+    }
+
+    Entity Scene::duplicateEntity(Entity source, bool modifyTag) {
+        return duplicateEntityWithUUID(*this, source, UUID(), modifyTag);
     }
 
     void Scene::destroyEntity(Entity entity) {
@@ -254,20 +232,59 @@ namespace Shado {
             }
         }
 
-
         // Destroy children
         for (const auto& child : entity.getChildren()) {
             destroyEntity(child);
         }
 
+        // Call OnDestroy for scripts
+        if (isRunning()) {
+            if (entity.hasComponent<ScriptComponent>()) {
+                auto& scriptComponent = entity.getComponent<ScriptComponent>();
+                if (scriptComponent.Instance.IsValid()) {
+                    scriptComponent.Instance.Invoke("OnDestroy");
+                    ScriptEngine::GetMutable().DestroyInstance(entity.getUUID(), m_ScriptStorage);
+                }
+            }
+        }
+
         m_Registry.destroy(entity);
     }
 
-    static Entity instantiatePrefabHelper(Scene& scene, Entity toDuplicate, bool modifyTag = true) {
-        Entity duplicated = scene.duplicateEntity(toDuplicate, modifyTag);
+    Entity Scene::instantiatePrefabHelper(Ref<Prefab> prefab, Entity toDuplicate, bool modifyTag) {
+        Scene& scene = *this;
+        UUID instantiatedEntityId = UUID();
+
+        // Copy the script storage from the prefab to the new entity with instantiatedEntityId
+        if (toDuplicate.hasComponent<ScriptComponent>()) {
+            auto& scriptComponent = toDuplicate.getComponent<ScriptComponent>();
+            scene.GetScriptStorage().InitializeEntityStorage(scriptComponent.ScriptID,
+                                                             instantiatedEntityId);
+            prefab->GetScriptStorage().CopyEntityStorage(toDuplicate.getUUID(), instantiatedEntityId,
+                                                         scene.GetScriptStorage());
+
+            if (scene.isRunning()) {
+                scriptComponent.Instance = ScriptEngine::GetMutable().Instantiate(
+                    instantiatedEntityId, scene.GetScriptStorage(),
+                    uint64_t(instantiatedEntityId));
+
+                // For some reason we need to delay the call to OnCreate
+                Application::get().SubmitToMainThread([this, &scriptComponent]() {
+                    scriptComponent.Instance.Invoke("OnCreate");
+                });
+            }
+        }
+
+
+        Entity duplicated = duplicateEntityWithUUID(scene,
+                                                    toDuplicate,
+                                                    instantiatedEntityId,
+                                                    modifyTag,
+                                                    false // We already copied script storage no need to copy it again
+        );
 
         for (const auto& oldChild : toDuplicate.getChildren()) {
-            Entity newChild = instantiatePrefabHelper(scene, oldChild, modifyTag);
+            Entity newChild = instantiatePrefabHelper(prefab, oldChild, modifyTag);
             newChild.getComponent<TransformComponent>().setParent(newChild, duplicated);
         }
 
@@ -275,7 +292,7 @@ namespace Shado {
     }
 
     Entity Scene::instantiatePrefab(Ref<Prefab> prefab, bool modifyTag) {
-        return instantiatePrefabHelper(*this, prefab->root, modifyTag);
+        return instantiatePrefabHelper(prefab, prefab->root, modifyTag);
     }
 
     void Scene::propagatePrefabChanges(Ref<Prefab> prefabChanged) {
@@ -296,7 +313,16 @@ namespace Shado {
             if (prefabEntity) {
                 // Make sure to keep the old parent id
                 Entity oldParent = e.getComponent<TransformComponent>().getParent(*this);
-                CopyAllComponentsHelper(e, prefabEntity, e.isChild(*this));
+
+                // Make sure to copy the script storage
+                if (prefabEntity.hasComponent<ScriptComponent>()) {
+                    m_ScriptStorage.InitializeEntityStorage(prefabEntity.getComponent<ScriptComponent>().ScriptID,
+                                                            e.getUUID());
+                    prefabChanged->GetScriptStorage().CopyEntityStorage(prefabEntity.getUUID(), e.getUUID(),
+                                                                        m_ScriptStorage);
+                }
+
+                CopyAllComponentsHelper(e, prefabEntity, m_ScriptStorage, e.isChild(*this), false);
                 e.getComponent<TransformComponent>().setParent(e, oldParent);
             }
             else
@@ -307,17 +333,41 @@ namespace Shado {
     void Scene::onRuntimeStart() {
         m_IsRunning = true;
 
+        Ref<Scene> _this = this;
         // Scripting
         {
-            ScriptEngine::OnRuntimeStart(this);
+            auto& scriptEngine = ScriptEngine::GetMutable();
+            scriptEngine.SetCurrentScene(_this);
 
-            // TODO: Add Awake function like Unity
+            auto view = m_Registry.view<IDComponent, ScriptComponent>();
+            for (auto scriptEntityID : view) {
+                const auto& idComponent = view.get<IDComponent>(scriptEntityID);
+                auto& scriptComponent = view.get<ScriptComponent>(scriptEntityID);
 
-            // Instantiate all script entities
-            auto view = m_Registry.view<ScriptComponent>();
-            for (auto e : view) {
-                Entity entity = {e, this};
-                ScriptEngine::OnCreateEntity(entity);
+                if (!scriptEngine.IsValidScript(scriptComponent.ScriptID)) {
+                    SHADO_CORE_WARN("Entity '{}' has an invalid script id '{}'", idComponent.id,
+                                    scriptComponent.ScriptID);
+                    continue;
+                }
+
+                if (!m_ScriptStorage.EntityStorage.contains(idComponent.id)) {
+                    SHADO_CORE_ERROR("Entity {} isn't in script storage", Entity{scriptEntityID,
+                                     this}.getComponent<TagComponent>().tag);
+                    SHADO_CORE_ASSERT(false, "");
+                }
+
+                scriptComponent.Instance = scriptEngine.Instantiate(idComponent.id, m_ScriptStorage,
+                                                                    uint64_t(idComponent.id));
+            }
+
+            for (auto scriptEntityID : view) {
+                auto& scriptComponent = view.get<ScriptComponent>(scriptEntityID);
+
+                if (!scriptEngine.IsValidScript(scriptComponent.ScriptID)) {
+                    continue;
+                }
+
+                scriptComponent.Instance.Invoke("OnCreate");
             }
         }
 
@@ -328,7 +378,26 @@ namespace Shado {
     void Scene::onRuntimeStop() {
         m_IsRunning = false;
 
-        ScriptEngine::OnRuntimeStop();
+        Ref<Scene> _this = this;
+        auto& scriptEngine = ScriptEngine::GetMutable();
+        auto view = m_Registry.view<IDComponent, ScriptComponent>();
+        for (auto scriptEntityID : view) {
+            const auto& idComponent = view.get<IDComponent>(scriptEntityID);
+            auto& scriptComponent = view.get<ScriptComponent>(scriptEntityID);
+
+            if (!scriptEngine.IsValidScript(scriptComponent.ScriptID)) {
+                continue;
+            }
+
+            if (!m_ScriptStorage.EntityStorage.contains(idComponent.id) || !scriptComponent.Instance.IsValid()) {
+                // Shouldn't happen
+                continue;
+            }
+
+            scriptComponent.Instance.Invoke("OnDestroy");
+
+            scriptEngine.DestroyInstance(idComponent.id, m_ScriptStorage);
+        }
 
         delete m_World;
         m_World = nullptr;
@@ -355,11 +424,37 @@ namespace Shado {
 
         // Update scripts
         {
-            // C# Entity OnUpdate
             auto view = m_Registry.view<ScriptComponent>();
-            for (auto e : view) {
-                Entity entity = {e, this};
-                ScriptEngine::OnUpdateEntity(entity, ts);
+            const auto& scriptEngine = ScriptEngine::GetInstance();
+            {
+                SHADO_PROFILE_FUNCTION();
+
+                for (auto scriptEntityID : view) {
+                    auto& scriptComponent = view.get<ScriptComponent>(scriptEntityID);
+
+                    if (!scriptEngine.IsValidScript(scriptComponent.ScriptID) || !scriptComponent.Instance.IsValid()) {
+                        SHADO_CORE_ERROR("Entity {} has invalid script!",
+                                         Entity(scriptEntityID, this).getComponent<TagComponent>().tag);
+                        continue;
+                    }
+
+                    scriptComponent.Instance.Invoke<float>("OnUpdate", ts);
+                }
+            }
+
+            {
+                SHADO_PROFILE_FUNCTION();
+                Timer timer;
+
+                for (auto scriptEntityID : view) {
+                    auto& scriptComponent = view.get<ScriptComponent>(scriptEntityID);
+
+                    if (!scriptEngine.IsValidScript(scriptComponent.ScriptID) || !scriptComponent.Instance.IsValid()) {
+                        continue;
+                    }
+
+                    scriptComponent.Instance.Invoke<float>("OnLateUpdate", ts);
+                }
             }
         }
 
@@ -387,7 +482,7 @@ namespace Shado {
         }
 
         // After world has update delete all entities that need to be deleted
-        if (toDestroy.size() > 0) {
+        if (!toDestroy.empty()) {
             for (auto& to_delete : toDestroy) {
                 destroyEntity(to_delete);
             }
@@ -444,7 +539,7 @@ namespace Shado {
                 auto view = m_Registry.view<TransformComponent, LineRendererComponent>();
                 for (auto entity : view) {
                     auto [transform, line] = view.get<TransformComponent, LineRendererComponent>(entity);
-                    Renderer2D::DrawLine(transform.position, line.target, line.color, (int)entity);
+                    Renderer2D::DrawLine(transform.getPosition(*this), line.target, line.color, (int)entity);
                 }
             }
 
@@ -457,14 +552,6 @@ namespace Shado {
                 }
             }
 
-            {
-                // C# Entity OnDraw
-                auto view = m_Registry.view<ScriptComponent>();
-                for (auto e : view) {
-                    Entity entity = {e, this};
-                    ScriptEngine::OnDrawEntity(entity);
-                }
-            }
             Renderer2D::EndScene();
         }
     }
@@ -502,7 +589,7 @@ namespace Shado {
             auto view = m_Registry.view<TransformComponent, LineRendererComponent>();
             for (auto entity : view) {
                 auto [transform, line] = view.get<TransformComponent, LineRendererComponent>(entity);
-                Renderer2D::DrawLine(transform.position, line.target, line.color, (int)entity);
+                Renderer2D::DrawLine(transform.getPosition(*this), line.target, line.color, (int)entity);
             }
         }
 
@@ -647,6 +734,10 @@ namespace Shado {
         }
     }
 
+    ScriptStorage& Scene::GetScriptStorage() {
+        return m_ScriptStorage;
+    }
+
     void CopyRegistries(entt::registry& srcSceneRegistry, entt::registry& dstSceneRegistry,
                         std::function<Entity(const std::string&, UUID)> entityCreatorFunction) {
         std::unordered_map<UUID, entt::entity> enttMap;
@@ -694,43 +785,5 @@ namespace Shado {
     static void CopyComponentIfExists(Entity dst, Entity src) {
         if (src.hasComponent<Component>())
             dst.addOrReplaceComponent<Component>(src.getComponent<Component>());
-    }
-
-    template <>
-    static void CopyComponentIfExists<ScriptComponent>(Entity dst, Entity src) {
-        if (src.hasComponent<ScriptComponent>()) {
-            dst.addOrReplaceComponent<ScriptComponent>(src.getComponent<ScriptComponent>());
-        }
-        else {
-            return;
-        }
-
-        auto& srcComponent = src.getComponent<ScriptComponent>();
-        auto& dstComponent = dst.getComponent<ScriptComponent>();
-        bool scriptClassExists = ScriptEngine::EntityClassExists(srcComponent.ClassName);
-
-        if (scriptClassExists) {
-            Ref<ScriptClass> klass = ScriptEngine::GetEntityClass(srcComponent.ClassName);
-            const auto& srcFields = klass->GetFields();
-
-            if (klass) {
-                auto& srcFieldMap = ScriptEngine::GetScriptFieldMap(src);
-                auto& dstFieldMap = ScriptEngine::GetScriptFieldMap(dst);
-
-                // Copy fields 
-                for (const auto& [name, field] : srcFields) {
-                    if (srcFieldMap.find(name) != srcFieldMap.end()) {
-                        dstFieldMap[name] = srcFieldMap[name];
-                    }
-                }
-            }
-        }
-
-        if (
-            (&src.getScene() && src.getScene().isRunning()) ||
-            (&dst.getScene() && dst.getScene().isRunning())
-        ) {
-            ScriptEngine::OnCreateEntity(dst);
-        }
     }
 }

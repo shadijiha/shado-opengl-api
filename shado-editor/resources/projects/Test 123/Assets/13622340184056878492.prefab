@@ -1,0 +1,28 @@
+PrefabId: 13622340184056878492
+Data:
+  Entity: 14170367100180307192
+  TagComponent:
+    Tag: Small Riven
+  TransformComponent:
+    Translation: [2.42814708, 3.47558427, 0]
+    Rotation: [0, 0, 0]
+    Scale: [1, 1, 1]
+    ParentEntityId: 0
+  SpriteRendererComponent:
+    Color: [1, 1, 1, 1]
+    TextureHandle: 18014698014252577933
+    TilingFactor: 1.20000005
+    ShaderHandle: 0
+  RigidBody2DComponent:
+    Type: 2
+    FixedRotation: false
+  BoxCollider2DComponent:
+    Offset: [0, 0]
+    Size: [0.5, 0.5]
+    Density: 1
+    Friction: 0.5
+    Restitution: 1
+    RestitutionThreshold: 0.5
+  PrefabInstanceComponent:
+    PrefabId: 13622340184056878492
+    PrefabEntityUniqueId: 8287227290003258444

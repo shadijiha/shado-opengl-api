@@ -1,4 +1,5 @@
 Scene: Untitled
+Version: 0.0.2
 Entities:
   - Entity: 15108338217384973561
     TagComponent:
@@ -12,8 +13,9 @@ Entities:
       Color: [1, 1, 1, 1]
       Target: [0.400000006, 2.0999999, 0]
     ScriptComponent:
-      ClassName: Sandbox.Boundary
-      ScriptFields:
+      ScriptID: 2069278108
+      ScriptName: Sandbox.Boundary
+      Fields:
         []
   - Entity: 14704666501876920994
     TagComponent:
@@ -27,8 +29,9 @@ Entities:
       Color: [1, 1, 1, 1]
       Target: [1.60000002, 1.10000002, 0]
     ScriptComponent:
-      ClassName: Sandbox.Boundary
-      ScriptFields:
+      ScriptID: 2069278108
+      ScriptName: Sandbox.Boundary
+      Fields:
         []
   - Entity: 16511831124876557525
     TagComponent:
@@ -40,16 +43,27 @@ Entities:
       ParentEntityId: 0
     CircleRendererComponent:
       Color: [0.474509805, 0.619607866, 0.929411769, 1]
-      Texture: "NULL"
-      TillingFactor: 1
+      TextureHandle: 0
+      TilingFactor: 1
       Thickness: 1
       Fade: 0.00499999989
+      ShaderHandle: 0
     ScriptComponent:
-      ClassName: Sandbox.RayTracing2D
-      ScriptFields:
-        - Name: angleStep
-          Type: Float
-          Data: 360
+      ScriptID: 166083050
+      ScriptName: Sandbox.RayTracing2D
+      Fields:
+        - ID: 1062369033
+          Name: velocity
+          Type: 8
+          Value: 1
+        - ID: 2508725603
+          Name: angleStep
+          Type: 8
+          Value: 10
+        - ID: 280961672
+          Name: linePrefab
+          Type: 16
+          Value: 2246234066200837971
   - Entity: 13401263389545556633
     TagComponent:
       Tag: Camera
@@ -75,9 +89,10 @@ Entities:
       Scale: [9.80000019, 6.80000019, 1]
       ParentEntityId: 0
     SpriteRendererComponent:
-      Color: [9.99999997e-07, 9.99989993e-07, 9.99989993e-07, 1]
-      Texture: "NULL"
-      TillingFactor: 1
+      Color: [0.68725872, 0.440482408, 0.440482408, 1]
+      TextureHandle: 0
+      TilingFactor: 1
+      ShaderHandle: 0
   - Entity: 8726415708878521573
     TagComponent:
       Tag: Boundary
@@ -90,6 +105,7 @@ Entities:
       Color: [1, 1, 1, 1]
       Target: [1.5, 1.20000005, 0]
     ScriptComponent:
-      ClassName: Sandbox.Boundary
-      ScriptFields:
+      ScriptID: 2069278108
+      ScriptName: Sandbox.Boundary
+      Fields:
         []

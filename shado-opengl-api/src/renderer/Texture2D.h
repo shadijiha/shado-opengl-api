@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include <filesystem>
 
+#include "asset/Asset.h"
+#include "util/Buffer.h"
 #include "util/Memory.h"
 
 
@@ -23,25 +25,21 @@ namespace Shado {
         Texture2DChannelFormat format = Texture2DChannelFormat::RGBA8;
         Texture2DDataFormat dataFormat = Texture2DDataFormat::RGBA;
         bool generateMips = true;
+
+        /* Optional but useful for debugging */
+        std::filesystem::path path;
     };
 
-    class Texture2D : public RefCounted {
+    class Texture2D : public Asset {
     public:
         /**
          * Use the create function instead of Texture2D for caching
          */
         Texture2D(uint32_t width, uint32_t height);
-        Texture2D(const std::string& path);
-        Texture2D(Texture2DSpecification specs);
+        Texture2D(Texture2DSpecification specs, Buffer data = Buffer());
         ~Texture2D();
 
-        static Texture2D* create(const std::string& path);
-
-        static Texture2D* create(const std::filesystem::path& path) {
-            return create(path.string());
-        }
-
-        void setData(void* data, uint32_t size);
+        void setData(Buffer data);
 
         void bind(uint32_t slot = 0) const;
         void unbind() const;
@@ -51,11 +49,13 @@ namespace Shado {
         int getWidth() const { return m_Width; }
         int getHeight() const { return m_Height; }
         uint32_t getRendererID() const { return m_RendererID; }
-        std::string getFilePath() const { return m_FilePath; }
         int getDataFormat() const { return m_DataFormat; }
         int getInternalFormat() const { return m_InternalFormat; }
 
         bool operator==(const Texture2D& other) const;
+
+        static AssetType GetStaticType() { return AssetType::Texture2D; }
+        AssetType GetType() const override { return GetStaticType(); }
 
     private:
         uint32_t m_RendererID;
@@ -64,7 +64,6 @@ namespace Shado {
         unsigned int m_InternalFormat;
         unsigned int m_DataFormat;
 
-        std::string m_FilePath;
         bool m_IsLoaded = false;
 
         // Cache texture

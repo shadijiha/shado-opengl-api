@@ -4,6 +4,7 @@ project "shado-opengl-api"
     language "C++"
     staticruntime "off"
     cppdialect "C++20"
+    dependson "Coral.Managed"
 
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -21,6 +22,7 @@ project "shado-opengl-api"
     includedirs
     {
         "src",
+        "%{wks.location}/shado-editor/src",
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.GLEW}",
         "%{IncludeDir.imgui}",
@@ -30,10 +32,11 @@ project "shado-opengl-api"
         "%{IncludeDir.box2d}",
         "%{IncludeDir.yaml_cpp}",
         "%{IncludeDir.ImGuizmo}",
-        "%{IncludeDir.mono}",
         "%{IncludeDir.filewatch}",
         "%{IncludeDir.msdfgen}",
-        "%{IncludeDir.msdf_atlas_gen}"
+        "%{IncludeDir.msdf_atlas_gen}",
+        "%{IncludeDir.Coral}",
+        "%{IncludeDir.shado_bin_serialization}"
     }
 
     links
@@ -46,9 +49,9 @@ project "shado-opengl-api"
         "box2d",
         "yaml-cpp",
         "shcore.lib",
-        "%{wks.location}/mono/mono-2.0-sgen.lib",
-        "msdf-atlas-gen"
-        --"mono/mono-2.0-sgen.dll",
+        "msdf-atlas-gen",
+        "Coral.Native",
+        "shado-bin-serialization"
     }
 
     filter "system:windows"
@@ -60,12 +63,6 @@ project "shado-opengl-api"
             "SHADO_PLATFORM_WINDOWS", "GLEW_STATIC", "SHADO_ENABLE_ASSERTS"
         }
 
-        postbuildcommands
-        {
-            --("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/shado-editor"),
-            --("{COPY} ../mono/mono-2.0-sgen.dll ../bin/" ..outputdir .. "/sandbox"),
-
-        }
 
     defines 
     {
@@ -76,11 +73,39 @@ project "shado-opengl-api"
         defines {"SHADO_DEBUG", "SHADO_PROFILE"}
         symbols "On"
 
+        postbuildcommands
+        {
+            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
+            '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
+		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
+		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
+        }
+
     filter "configurations:Release"
         defines "SHADO_RELEASE"
         optimize "On"
 
+        postbuildcommands {
+            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
+            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
+        }
+
     filter "configurations:Dist"
         defines "SHADO_DIST"
         optimize "Full"
+
+        postbuildcommands {
+            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
+		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
+        }
+
+    -- needed for ##__VA_ARGS__ in macros
+    filter "action:vs*"
+        buildoptions { "/Zc:preprocessor" }
 

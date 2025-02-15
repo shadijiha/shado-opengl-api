@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "cameras/EditorCamera.h"
+#include "script/ScriptEntityStorage.hpp"
 #include "ui/UUID.h"
 #include "util/TimeStep.h"
 
@@ -62,10 +63,14 @@ namespace Shado {
         void enablePhysics(bool cond) { m_PhysicsEnabled = cond; }
         void softResetPhysics();
         // Mainly used so if you use gizmos while playing the scene, it retains the position during the runtime
+        b2World& getPhysicsWorld() const { return *m_World; }
 
         bool isRunning() const { return m_IsRunning; }
+        ScriptStorage& GetScriptStorage();
 
         inline static Ref<Scene> ActiveScene = nullptr; // TODO: remove this
+    private:
+        Entity instantiatePrefabHelper(Ref<Prefab> prefab, Entity toDuplicate, bool modifyTag = true);
 
     private:
         entt::registry m_Registry;
@@ -79,6 +84,7 @@ namespace Shado {
         bool m_PhysicsEnabled = true;
 
         bool m_IsRunning = false;
+        ScriptStorage m_ScriptStorage;
 
         friend class Entity;
         friend class SceneSerializer;

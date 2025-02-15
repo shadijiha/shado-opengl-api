@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include <string>
 #include <vector>
-#include "renderer/Renderer2D.h"
+#include <mutex>
+#include "util/Memory.h"
 #include "Events/Event.h"
 #include "Window.h"
 #include "ui/ImguiScene.h"
@@ -13,7 +14,7 @@ namespace Shado {
         Application();
         ~Application();
 
-        static Application& get() { return *singleton; }
+        static Application& get();
         static void destroy();
 
         static void close();
@@ -37,6 +38,7 @@ namespace Shado {
 
         Window& getWindow() { return *window; }
         ImguiLayer* getUILayer() { return uiScene; }
+        float getTime() const;
 
     private:
         void Init();
@@ -51,7 +53,5 @@ namespace Shado {
 
         std::vector<std::function<void()>> m_MainThreadQueue;
         std::mutex m_MainThreadQueueMutex;
-
-        static Application* singleton;
     };
 }

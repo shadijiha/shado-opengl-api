@@ -1,72 +1,84 @@
 ﻿using System;
 using System.IO;
+using Shado.Editor;
 using UI = Shado.Editor.UI;
 
 namespace Shado
 {
+    [EditorAssignable]
     public class Shader
     {
-        internal IntPtr native;
-        public string filepath { get; private set; }
-        internal Shader(string filepath) {
-            this.filepath = filepath;
-            InternalCalls.Shader_CreateShader(filepath, out native);
+        internal ulong handle = 0;
+        public string? filepath { get; }
+
+        public Shader(string pathRelativeToProject) {
+            unsafe {
+                this.filepath = filepath;
+                handle = InternalCalls.Shader_Create(pathRelativeToProject);
+            }
+        }
+
+        internal Shader(ulong handle) {
+            this.handle = handle;
         }
 
         ~Shader() {
-            InternalCalls.Shader_Destroy(native);
+            //InternalCalls.Shader_Destroy(native);
         }
 
         public void SetInt(string name, int value) {
-            InternalCalls.Shader_SetInt(native, name, ref value);
+            unsafe {
+                InternalCalls.Shader_SetInt(handle, name, value);
+            }
         }
-        
-        public void SetIntArray(string name, int[] values) {
-            InternalCalls.Shader_SetIntArray(native, name, values);
-        }
+
+        // public void SetIntArray(string name, int[] values) {
+        //     InternalCalls.Shader_SetIntArray(handle, name, values);
+        // }
+
         public void SetFloat(string name, float value) {
-            InternalCalls.Shader_SetFloat(native, name, ref value);
+            unsafe {
+                InternalCalls.Shader_SetFloat(handle, name, value);
+            }
         }
+
         public void SetFloat3(string name, Vector3 value) {
-            InternalCalls.Shader_SetFloat3(native, name, ref value);
+            unsafe {
+                InternalCalls.Shader_SetFloat3(handle, name, value);
+            }
         }
+
         public void SetFloat4(string name, Vector4 value) {
-            InternalCalls.Shader_SetFloat4(native, name, ref value);
-        }
-
-        public static Shader Create(string filepath) { 
-            return new Shader(filepath);
-        }
-
-        public void Reset(string filepath) {
-            InternalCalls.Shader_Reset(native, filepath, out native);
+            unsafe {
+                InternalCalls.Shader_SetFloat4(handle, name, value);
+            }
         }
     }
 
+#if false
     [Editor.EditorTargetType(typeof(Shader))]
     public class ShaderEditor : Editor.Editor
     {
         static string[] shaderExtension = {
             ".shader", ".glsl"
         };
-        protected override void OnEditorDraw()
-        {
+
+        protected override void OnEditorDraw() {
             if (target is null)
                 return;
 
             Shader shader = (Shader)target;
             UI.Separator();
-            UI.InputTextFileChoose(fieldName, shader.filepath, shaderExtension, path => {
-                shader.Reset(path);
-            });
+            //UI.InputTextFileChoose(fieldName, shader.filepath, shaderExtension, path => { shader.Reset(path); });
 
             if (UI.Button("+")) {
                 string path = UI.OpenFileDialog(shaderExtension, UI.FileChooserType.Save);
                 if (path != null)
-                    GenerateFile(path);                
+                    GenerateFile(path);
             }
-            if (UI.Button("Recompile"))
-                shader.Reset(shader.filepath);
+
+            //if (UI.Button("Recompile"))
+            //    shader.Reset(shader.filepath);
             UI.Separator();
         }
 
@@ -75,8 +87,8 @@ namespace Shado
                 writer.WriteLine(@"
 // This is an example of a shader file
 // Both vertex and fragment shaders are in the same file
-#type vertex
-#version 450 core
+//#type vertex
+//#version 450 core
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec4 a_Color;
@@ -112,8 +124,8 @@ void main()
 	gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
 }
 
-#type fragment
-#version 450 core
+//#type fragment
+//#version 450 core
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out int o_EntityID;
@@ -146,4 +158,5 @@ void main()
             }
         }
     }
+#endif
 }

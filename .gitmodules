@@ -22,3 +22,9 @@
 [submodule "shado-opengl-api/vendor/msdf-atlas-gen"]
 	path = shado-opengl-api/vendor/msdf-atlas-gen
 	url = https://github.com/TheCherno/msdf-atlas-gen.git
+[submodule "shado-opengl-api/vendor/Coral"]
+	path = shado-opengl-api/vendor/Coral
+	url = https://github.com/StudioCherno/Coral.git
+[submodule "shado-opengl-api/vendor/shado-bin-serialization"]
+	path = shado-opengl-api/vendor/shado-bin-serialization
+	url = https://github.com/shadijiha/shado-bin-serialization.git

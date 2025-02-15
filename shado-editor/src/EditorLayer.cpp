@@ -11,7 +11,9 @@
 #include "ui/UI.h"
 #include "project/Project.h"
 #include "script/ScriptEngine.h"
-#include "../EditorEvents.h"
+#include "EditorEvents.h"
+#include "asset/AssetManager.h"
+#include "asset/Importer.h"
 #include "renderer/Font.h"
 #include "scene/Prefab.h"
 #include "util/FileSystem.h"
@@ -30,8 +32,8 @@ namespace Shado {
     void EditorLayer::onInit() {
         SHADO_PROFILE_FUNCTION();
 
-        m_IconPlay = CreateRef<Texture2D>("resources/icons/PlayButton.png");
-        m_IconStop = CreateRef<Texture2D>("resources/icons/StopButton.png");
+        m_IconPlay = TextureImporter::LoadTexture2D("resources/icons/PlayButton.png");
+        m_IconStop = TextureImporter::LoadTexture2D("resources/icons/StopButton.png");
 
         FramebufferSpecification specs;
         specs.Attachments = {
@@ -54,8 +56,12 @@ namespace Shado {
 
     void EditorLayer::onUpdate(TimeStep dt) {
         lastDt = dt;
-
         SHADO_PROFILE_FUNCTION();
+
+        if (m_ShouldReloadCSharp) {
+            ReloadCSharp();
+            m_ShouldReloadCSharp = false;
+        }
 
         // If viewports don't match recreate frame buffer
         if (m_ViewportSize != *((glm::vec2*)&m_viewportPanelSize) && m_viewportPanelSize.x > 0 && m_viewportPanelSize.y
@@ -186,11 +192,16 @@ namespace Shado {
                             const ProjectConfig& config = ProjectUtils::GenerateNewProject(path);
 
                             // Create empty scene and save it
-                            ScriptEngine::Init();
-                            newScene();
-                            saveScene(config.AssetDirectory / config.StartScene);
+                            try {
+                                newScene();
+                                saveScene(config.AssetDirectory / config.StartScene);
 
-                            m_ContentPanel = ContentBrowserPanel();
+                                // TODO: Make it so the C# dll is reloaded
+                                m_ContentPanel = ContentBrowserPanel();
+                            }
+                            catch (const std::runtime_error& e) {
+                                Dialog::alert(e.what(), "Error creating project", Dialog::DialogIcon::ERROR_ICON);
+                            }
                         }
                     }
 
@@ -198,12 +209,30 @@ namespace Shado {
                         std::string path = FileDialogs::openFile("Shado Project (*.sproj)\0*.sproj\0");
 
                         if (!path.empty() && Project::Load(path)) {
-                            ScriptEngine::Init();
+                            auto appAssemblyPath = Project::GetActive()->GetConfig().ScriptModulePath;
+                            if (!appAssemblyPath.empty()) {
+                                ScriptEngine::GetMutable().LoadProjectAssembly();
+                            }
 
                             auto startScenePath = Project::GetAssetFileSystemPath(
                                 Project::GetActive()->GetConfig().StartScene);
                             openScene(startScenePath);
                             m_ContentPanel = ContentBrowserPanel();
+
+                            m_ScriptFileWatcher = CreateScoped<filewatch::FileWatch<std::string>>(
+                                (Project::GetProjectDirectory() / Project::GetActive()->GetConfig().ScriptModulePath).
+                                string(),
+                                filewatch::ChangeLastWrite,
+                                [this](const auto& file, filewatch::Event eventType) {
+                                    std::filesystem::path filePath = file;
+                                    if (eventType != filewatch::Event::modified)
+                                        return;
+
+                                    if (filePath.extension().string() != ".dll")
+                                        return;
+
+                                    m_ShouldReloadCSharp = true;
+                                });
                         }
                     }
 
@@ -313,10 +342,13 @@ namespace Shado {
                 if (m_SceneState == SceneState::Play)
                     this->onSceneStop();
                 this->openScene(e.sceneToLoadPath);
+                ScriptEngine::GetMutable().SetCurrentScene(this->m_ActiveScene);
                 this->onScenePlay();
             });
             return false;
         });
+
+        dispatcher.dispatch<WindowDropEvent>(SHADO_BIND_EVENT_FN(EditorLayer::onWindowDrop));
     }
 
     // Helpers
@@ -397,6 +429,12 @@ namespace Shado {
         return false;
     }
 
+    bool EditorLayer::onWindowDrop(WindowDropEvent& e) {
+        // TODO(Yan): if a project is dropped in, probably open it
+        //AssetManager::ImportAsset();
+        return true;
+    }
+
     void EditorLayer::saveScene(const std::optional<std::filesystem::path>& path) {
         if (m_SceneState == SceneState::Play) {
             Dialog::alert("Cannot save a scene while playing", "Save Error");
@@ -440,6 +478,7 @@ namespace Shado {
             return;
         }
 
+        ScriptEngine::GetMutable().SetCurrentScene(nullptr);
         Ref<Scene> scene = CreateRef<Scene>();
         scene->onViewportResize(m_ViewportSize.x, m_ViewportSize.y);
 
@@ -475,6 +514,7 @@ namespace Shado {
         Scene::ActiveScene = m_ActiveScene;
         m_sceneHierarchyPanel.setContext(m_ActiveScene);
         m_SceneInfoPanel.setScene(m_ActiveScene.Raw());
+        ScriptEngine::GetMutable().SetCurrentScene(m_ActiveScene);
     }
 
     // =============================== UI Stuff
@@ -538,13 +578,14 @@ namespace Shado {
                 auto extension = path.extension();
 
                 if (extension == ".jpg" || extension == ".png") {
-                    if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>())
-                        m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = CreateRef<Texture2D>(
-                            path.string());
-
-                    else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>())
-                        m_HoveredEntity.getComponent<CircleRendererComponent>().texture = CreateRef<Texture2D>(
-                            path.string());
+                    if (m_HoveredEntity && m_HoveredEntity.hasComponent<SpriteRendererComponent>()) {
+                        AssetHandle handle = Project::GetActive()->GetEditorAssetManager()->ImportAsset(path.string());
+                        m_HoveredEntity.getComponent<SpriteRendererComponent>().texture = handle;
+                    }
+                    else if (m_HoveredEntity && m_HoveredEntity.hasComponent<CircleRendererComponent>()) {
+                        AssetHandle handle = Project::GetActive()->GetEditorAssetManager()->ImportAsset(path.string());
+                        m_HoveredEntity.getComponent<CircleRendererComponent>().texture = handle;
+                    }
                 }
                 else if (extension == ".prefab") {
                     // Dumb prefab to scene
@@ -687,5 +728,20 @@ namespace Shado {
             Application::get().getWindow().setOpacity(windowOpacity);
 
         ImGui::End();
+    }
+
+    void EditorLayer::ReloadCSharp() {
+        ScriptStorage tempStorage;
+
+        auto& scriptStorage = m_ActiveScene->GetScriptStorage();
+        scriptStorage.CopyTo(tempStorage);
+        scriptStorage.Clear();
+
+        Project::GetActive()->ReloadScriptEngine();
+
+        tempStorage.CopyTo(scriptStorage);
+        tempStorage.Clear();
+
+        scriptStorage.SynchronizeStorage();
     }
 }

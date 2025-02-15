@@ -1,6 +1,7 @@
 project "sandbox"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++20"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -22,9 +23,11 @@ project "sandbox"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.box2d}",
-		"%{IncludeDir.mono}",	-- TODO : remove this
+        "%{IncludeDir.Coral}",
+        "%{IncludeDir.CoralSrc}",
 		"%{wks.location}/shado-opengl-api/src",
-		"%{wks.location}/shado-opengl-api/vendor"
+		"%{wks.location}/shado-opengl-api/vendor",
+		"%{wks.location}/shado-editor/src",
 	}
 
 	links
@@ -33,7 +36,6 @@ project "sandbox"
 	}
 
 	filter "system:windows"
-	cppdialect "C++17"
 	staticruntime "Off"
 	systemversion "latest"
 

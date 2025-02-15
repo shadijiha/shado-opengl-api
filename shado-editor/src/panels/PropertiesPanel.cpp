@@ -4,6 +4,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "imgui.h"
+#include "SceneHierarchyPanel.h"
+#include "asset/AssetManager.h"
+#include "asset/Importer.h"
 #include "box2d/b2_body.h"
 #include "debug/Profile.h"
 #include "Project/Project.h"
@@ -34,6 +37,12 @@ namespace Shado {
 
     void PropertiesPanel::onImGuiRender() {
         ImGui::Begin(m_Title.c_str());
+        if (ImGui::Button(m_Locked ? "Unlock Selection" : "Lock Selection")) {
+            m_Locked = !m_Locked;
+        }
+
+        ImGui::NewLine();
+
         if (m_Selected) {
             drawComponents(m_Selected);
         }
@@ -45,6 +54,8 @@ namespace Shado {
     }
 
     void PropertiesPanel::setSelected(Entity entity) {
+        if (m_Locked)
+            return;
         m_Selected = entity;
     }
 
@@ -236,24 +247,32 @@ namespace Shado {
         });
 
         drawComponent<ScriptComponent>("Script", entity, [entity, scene = m_Context](auto& component) mutable {
-            bool scriptClassExists = ScriptEngine::EntityClassExists(component.ClassName);
+            bool scriptClassExists = ScriptEngine::GetMutable().IsValidScript(component.ScriptID);
 
             ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), !scriptClassExists);
 
-            std::string currentItem = component.ClassName;
-            std::vector<std::string> hints;
-            for (auto& [name, scriptClass] : ScriptEngine::GetEntityClasses())
-                hints.push_back(name);
-            // Sort the hints
-            std::sort(hints.begin(), hints.end());
+            UUID oldScriptID = component.ScriptID;
+            UUID currentItem = component.ScriptID;
+            std::map<UUID, std::string> hints;
+            for (auto& [id, scriptClass] : ScriptEngine::GetMutable().GetAllScripts())
+                hints[id] = scriptClass.FullName;
 
-            if (ImGui::BeginCombo("Class", currentItem.c_str())) {
-                for (std::size_t n = 0; n < hints.size(); n++) {
-                    bool is_selected = (currentItem == hints[n]);
+            // TODO handle script invalid script ID
+            if (ImGui::BeginCombo("Class", hints.find(currentItem) != hints.end()
+                                               ? hints[currentItem].c_str()
+                                               : "")) {
+                for (auto& [id, hintValue] : hints) {
+                    bool is_selected = (currentItem == id);
                     // You can store your selection however you want, outside or inside your objects
-                    if (ImGui::Selectable(hints[n].c_str(), is_selected)) {
-                        currentItem = hints[n];
-                        component.ClassName = currentItem;
+                    if (ImGui::Selectable(hintValue.c_str(), is_selected)) {
+                        currentItem = id;
+                        component.ScriptID = id;
+
+                        if (component.ScriptID != oldScriptID) {
+                            if (oldScriptID)
+                                scene->GetScriptStorage().ShutdownEntityStorage(oldScriptID, entity.getUUID());
+                            scene->GetScriptStorage().InitializeEntityStorage(component.ScriptID, entity.getUUID());
+                        }
                     }
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
@@ -265,45 +284,29 @@ namespace Shado {
             }
 
             // Fields
-            bool sceneRunning = scene->isRunning();
-            Ref<ScriptInstance> scriptInstance = ScriptEngine::GetEntityScriptInstance(entity.getUUID());
-
-            const std::map<std::string, ScriptField>* fields = nullptr;
-            if (sceneRunning && scriptInstance)
-                fields = &scriptInstance->GetScriptClass()->GetFields();
-            else if (scriptClassExists) {
-                Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-                fields = &entityClass->GetFields();
-            }
-
-            if (fields) {
-                for (const auto& [name, field] : *fields) {
-                    if (sceneRunning && scriptInstance) {
-                        ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
-                        ScriptTypeRendererDataRunning context = {
+            auto& scriptStorage = scene->GetScriptStorage();
+            if (scriptStorage.EntityStorage.contains(entity.getUUID())) {
+                auto& entityStorage = scriptStorage.EntityStorage.at(entity.getUUID());
+                for (auto& [fieldID, fieldStorage] : entityStorage.Fields) {
+                    if (fieldStorage.IsArray()) {
+                        static ScriptArrayRenderer renderer;
+                        ScriptTypeRendererData context = {
                             scene,
                             entity,
-                            name,
-                            scriptInstance,
-                            *fields
+                            fieldStorage.GetName(),
+                            fieldStorage
                         };
-                        renderer.onRenderSceneRunning(context);
+                        renderer.onImGuiRender(context);
                     }
-                    else if (scriptClassExists) {
-                        Ref<ScriptClass> entityClass = ScriptEngine::GetEntityClass(component.ClassName);
-                        auto& entityFields = ScriptEngine::GetScriptFieldMap(entity);
-
-                        ScriptTypeRenderer& renderer = GetRendererForType(field.Type);
-                        ScriptTypeRendererDataStopped context = {
+                    else {
+                        ScriptTypeRenderer& renderer = GetRendererForType(fieldStorage.GetType());
+                        ScriptTypeRendererData context = {
                             scene,
                             entity,
-                            name,
-                            field,
-                            entityClass,
-                            entityFields,
-                            *fields
+                            fieldStorage.GetName(),
+                            fieldStorage
                         };
-                        renderer.onRenderSceneStopped(context);
+                        renderer.onImGuiRender(context);
                     }
                 }
             }
@@ -330,269 +333,146 @@ namespace Shado {
         });
     }
 
-    void ScriptFloatRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene, entity, fieldName, field, scriptClass, scriptModifiedFields, scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            float data = scriptField.GetValue<float>();
-            if (UI::Vec1Control(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            float data = 0.0f;
-            if (UI::Vec1Control(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
+    void ScriptFloatRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        float value = storage.GetValue<float>();
+        if (UI::Vec1Control(fieldName.data(), value)) {
+            storage.SetValue(value);
         }
     }
 
-    void ScriptFloatRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-
-        float data = scriptInstance->GetFieldValue<float>(fieldName);
-        if (UI::Vec1Control(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
+    void ScriptIntRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        int32_t value = storage.GetValue<int32_t>();
+        if (UI::Vec1Control(fieldName.data(), value)) {
+            storage.SetValue(value);
         }
     }
 
-    void ScriptIntRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene, entity, fieldName, field, scriptClass, scriptModifiedFields, scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            int data = scriptField.GetValue<int>();
-            if (UI::Vec1Control(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            int data = 0;
-            if (UI::Vec1Control(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
+    void ScriptBoolRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        bool value = storage.GetValue<bool>();
+        if (UI::Checkbox(fieldName.data(), value)) {
+            storage.SetValue(value);
         }
     }
 
-    void ScriptIntRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-
-        int data = scriptInstance->GetFieldValue<int>(fieldName);
-        if (UI::Vec1Control(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
+    void ScriptVector3Renderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        glm::vec3 value = storage.GetValue<glm::vec3>();
+        if (UI::Vec3Control(fieldName.data(), value)) {
+            storage.SetValue(value);
         }
     }
 
-    void ScriptBoolRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene, entity, fieldName, field, scriptClass, scriptModifiedFields, scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            bool data = scriptField.GetValue<bool>();
-            if (UI::Checkbox(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            bool data = false;
-            if (UI::Checkbox(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
+    void ScriptVector4Renderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        glm::vec4 value = storage.GetValue<glm::vec4>();
+        if (UI::ColorControl(fieldName.data(), value)) {
+            storage.SetValue(value);
         }
     }
 
-    void ScriptBoolRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-
-        bool data = scriptInstance->GetFieldValue<bool>(fieldName);
-        if (UI::Checkbox(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
-    }
-
-    void ScriptVector3Renderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
-
-        // Field has been set in editor
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-            glm::vec3 data = scriptField.GetValue<glm::vec3>();
-            if (UI::Vec3Control(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            glm::vec3 data = {0, 0, 0};
-            if (UI::Vec3Control(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
-        }
-    }
-
-    void ScriptVector3Renderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-        glm::vec3 data = scriptInstance->GetFieldValue<glm::vec3>(fieldName);
-        if (UI::Vec3Control(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
-    }
-
-    void ScriptColourRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
-
-        // Field has been set in editor
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-
-            glm::vec4 data = scriptField.GetValue<glm::vec4>();
-            if (UI::ColorControl(fieldName, data))
-                scriptField.SetValue(data);
-        }
-        else {
-            glm::vec4 data = {0, 0, 0, 1.0f};
-            if (UI::ColorControl(fieldName, data)) {
-                ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                fieldInstance.Field = field;
-                fieldInstance.SetValue(data);
-            }
-        }
-    }
-
-    void ScriptColourRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-        glm::vec4 data = scriptInstance->GetFieldValue<glm::vec4>(fieldName);
-        if (UI::ColorControl(fieldName, data)) {
-            scriptInstance->SetFieldValue(fieldName, data);
-        }
-    }
-
-    void ScriptPrefabRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
-
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            ScriptFieldInstance& scriptField = scriptModifiedFields.at(fieldName);
-
-            PrefabCSMirror data = scriptField.GetValue<PrefabCSMirror>();
-            if (data.id != 0) {
-                Ref<Prefab> prefab = Prefab::GetPrefabById(data.id);
-                ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), prefab == nullptr);
-                std::string prefabTextValue = prefab
-                                                  ? prefab->root.getComponent<TagComponent>().tag
-                                                  : std::to_string(data.id);
-                prefabTextValue += " (prefab)";
-
-                UI::InputTextControl(fieldName, prefabTextValue, ImGuiInputTextFlags_ReadOnly);
-            }
-            else {
-                std::string prefabIdStr = "(empty)";
-                UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
-            }
-
-            // TODO: refactor duplicate code
-            if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                    const wchar_t* pathStr = (const wchar_t*)payload->Data;
-                    auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
-
-                    if (Prefab::IsPrefabPath(path)) {
-                        Ref<Prefab> prefab = Prefab::CreateFromPath(path);
-                        ScriptFieldInstance& fieldInstance = scriptField;
-                        fieldInstance.Field = field;
-                        fieldInstance.SetValue(PrefabCSMirror{prefab->GetId()});
-                    }
-                }
-
-                ImGui::EndDragDropTarget();
-            }
-        }
-        else {
-            // TODO: Make it so you can drag and drop prefab from content plane or scene hiarchy
-            UUID prefabId = 0;
-            std::string prefabIdStr = prefabId == 0 ? "(empty)" : std::to_string(prefabId);
-
-            UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
-
-            // TODO: refactor duplicate code
-            if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                    const wchar_t* pathStr = (const wchar_t*)payload->Data;
-                    auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
-
-                    if (Prefab::IsPrefabPath(path)) {
-                        Ref<Prefab> prefab = Prefab::CreateFromPath(path);
-                        ScriptFieldInstance& fieldInstance = scriptModifiedFields[fieldName];
-                        fieldInstance.Field = field;
-                        fieldInstance.SetValue(PrefabCSMirror{prefab->GetId()});
-                    }
-                }
-
-                ImGui::EndDragDropTarget();
-            }
-        }
-    }
-
-    void ScriptPrefabRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto [scene, entity, fieldName, scriptInstance, scriptClassFields] = context;
-        PrefabCSMirror data = scriptInstance->GetFieldValue<PrefabCSMirror>(fieldName);
+    void ScriptPrefabRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        PrefabCSMirror data = storage.GetValue<PrefabCSMirror>();
         if (data.id != 0) {
-            std::string prefabIdStr = std::to_string(data.id);
-            UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+            Ref<Prefab> prefab = Prefab::GetPrefabById(data.id);
+            ScopedStyleColor textColor(ImGuiCol_Text, ImVec4(0.9f, 0.2f, 0.3f, 1.0f), prefab == nullptr);
+            std::string prefabTextValue = prefab
+                                              ? prefab->root.getComponent<TagComponent>().tag
+                                              : std::to_string(data.id);
+            prefabTextValue += " (prefab)";
+
+            UI::InputTextControl(fieldName.data(), prefabTextValue, ImGuiInputTextFlags_ReadOnly);
         }
         else {
             std::string prefabIdStr = "(empty)";
-            UI::InputTextControl(fieldName, prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+            UI::InputTextControl(fieldName.data(), prefabIdStr, ImGuiInputTextFlags_ReadOnly);
+        }
+
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
+                const wchar_t* pathStr = (const wchar_t*)payload->Data;
+                auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
+
+                if (Prefab::IsPrefabPath(path)) {
+                    Ref<Prefab> prefab = Prefab::CreateFromPath(path);
+                    if (prefab) {
+                        storage.SetValue(PrefabCSMirror{prefab->GetId()});
+                    }
+                }
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+
+        if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+            if (ImGui::MenuItem("Clear"))
+                storage.SetValue<UUID>(0);
+            ImGui::EndPopup();
         }
     }
 
-    void ScriptCustomEditorRenderer::onRenderSceneStopped(const ScriptTypeRendererDataStopped& context) {
-        auto [scene,
-            entity,
-            fieldName,
-            field,
-            scriptClass,
-            scriptModifiedFields,
-            scriptClassFields] = context;
+    void ScriptArrayRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
 
-        if (scriptModifiedFields.find(fieldName) != scriptModifiedFields.end()) {
-            // TODO: How should we deal with complex types when seralizing?
-            ScriptEngine::DrawCustomEditorForFieldStopped(fieldName, field, entity, scriptClass, true);
+        int length = storage.GetLength();
+        if (UI::Vec1Control("Length", length, 1, 100)) {
+            storage.Resize(length);
+            length = storage.GetLength();
+        }
+
+        // TODO: Implement array rendering
+    }
+
+    void ScriptEntityRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+        auto [scene, entity, fieldName, storage] = context;
+        UUID entityId = storage.GetValue<UUID>();
+        if (Entity e = scene->getEntityById(entityId)) {
+            std::string entityName = e.getComponent<TagComponent>().tag + " (entity)";
+            UI::InputTextControl(fieldName.data(), entityName, ImGuiInputTextFlags_ReadOnly);
         }
         else {
-            ScriptEngine::DrawCustomEditorForFieldStopped(fieldName, field, entity, scriptClass, false);
+            std::string entityName = "(empty)";
+            UI::InputTextControl(fieldName.data(), entityName, ImGuiInputTextFlags_ReadOnly);
+        }
+
+        if (ImGui::BeginDragDropTarget()) {
+            if (
+                const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(
+                    SceneHierarchyPanel::SceneHeirarchyEntityDragDropId.c_str())
+            ) {
+                UUID* draggedEntityId = (UUID*)payload->Data;
+                Entity draggedEntity = scene->getEntityById(*draggedEntityId);
+                if (draggedEntity) {
+                    storage.SetValue<UUID>(*draggedEntityId);
+                }
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+
+        if (ImGui::BeginPopupContextWindow(0, 1, false)) {
+            if (ImGui::MenuItem("Clear"))
+                storage.SetValue<UUID>(0);
+
+            ImGui::EndPopup();
         }
     }
 
-    ScriptTypeRenderer& GetRendererForType(ScriptFieldType type) {
-        static std::unordered_map<ScriptFieldType, ScriptTypeRenderer*> s_Renderers = {
-            {ScriptFieldType::Float, snew(ScriptFloatRenderer) ScriptFloatRenderer()},
-            {ScriptFieldType::Int, snew(ScriptIntRenderer) ScriptIntRenderer()},
-            {ScriptFieldType::Bool, snew(ScriptBoolRenderer) ScriptBoolRenderer()},
-            {ScriptFieldType::Vector3, snew(ScriptVector3Renderer) ScriptVector3Renderer()},
-            {ScriptFieldType::Colour, snew(ScriptColourRenderer) ScriptColourRenderer()},
-            {ScriptFieldType::Prefab, snew(ScriptPrefabRenderer) ScriptPrefabRenderer()},
+    void ScriptCustomEditorRenderer::onImGuiRender(const ScriptTypeRendererData& context) {
+    }
+
+    ScriptTypeRenderer& GetRendererForType(DataType type) {
+        static std::unordered_map<DataType, ScriptTypeRenderer*> s_Renderers = {
+            {DataType::Float, snew(ScriptFloatRenderer) ScriptFloatRenderer()},
+            {DataType::Int, snew(ScriptIntRenderer) ScriptIntRenderer()},
+            {DataType::Bool, snew(ScriptBoolRenderer) ScriptBoolRenderer()},
+            {DataType::Vector3, snew(ScriptVector3Renderer) ScriptVector3Renderer()},
+            {DataType::Vector4, snew(ScriptVector4Renderer) ScriptVector4Renderer()},
+            {DataType::Prefab, snew(ScriptPrefabRenderer) ScriptPrefabRenderer()},
+            {DataType::Entity, snew(ScriptEntityRenderer) ScriptEntityRenderer()},
         };
         static auto* customEditor = snew(ScriptCustomEditorRenderer) ScriptCustomEditorRenderer();
 
@@ -600,11 +480,6 @@ namespace Shado {
             return *s_Renderers[type];
         else
             return *customEditor;
-    }
-
-    void ScriptCustomEditorRenderer::onRenderSceneRunning(const ScriptTypeRendererDataRunning& context) {
-        auto& field = context.scriptClassFields.at(context.fieldName);
-        ScriptEngine::DrawCustomEditorForFieldRunning(field, context.scriptInstance, context.fieldName);
     }
 
     template <typename T>
@@ -793,26 +668,25 @@ namespace Shado {
         SpriteRendererComponent& sprite = *(SpriteRendererComponent*)spriteData;
 
         // =========== Texture
-        std::string texturePath = sprite.texture ? sprite.texture->getFilePath().c_str() : "No Texture";
-
+        std::string texturePath = sprite.texture
+                                      ? AssetManager::GetPathFromHandle(sprite.texture).string()
+                                      : "No Texture";
         UI::InputTextWithChooseFile("Texture", texturePath, {".jpg", ".png"}, typeid(sprite.texture).hash_code(),
                                     [&](std::string path) {
-                                        Ref<Texture2D> texture = CreateRef<Texture2D>(path);
-                                        if (texture->isLoaded())
-                                            sprite.texture = texture;
-                                        else
-                                            SHADO_CORE_WARN("Could not load texture {0}", path);
-                                        SHADO_CORE_INFO("Loaded texture {0}", path.c_str());
+                                        AssetHandle textureHandle = Project::GetActive()->GetEditorAssetManager()->
+                                            ImportAsset(path);
+                                        sprite.texture = textureHandle;
                                     }
         );
 
         // Image
         if (sprite.texture) {
-            ImGui::Image((void*)sprite.texture->getRendererID(), {60, 60}, ImVec2(0, 1), ImVec2(1, 0));
+            Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(sprite.texture);
+            ImGui::Image((void*)texture->getRendererID(), {60, 60}, ImVec2(0, 1), ImVec2(1, 0));
 
             UI::SameLine();
             if (UI::ButtonControl("X")) {
-                sprite.texture = nullptr;
+                sprite.texture = 0;
             }
         }
 
@@ -823,18 +697,19 @@ namespace Shado {
 
         // =========== Shader
         std::string shaderPath = sprite.shader
-                                     ? Project::GetActive()->GetRelativePath(sprite.shader->getFilepath()).string().
-                                                             c_str()
+                                     ? AssetManager::GetPathFromHandle(sprite.shader).string()
                                      : "Default Shader";
-        UI::InputTextWithChooseFile("Shader", shaderPath, {".glsl", ".shader"}, typeid(sprite.shader).hash_code(),
+        UI::InputTextWithChooseFile("Shader", shaderPath, {".glsl", ".shader"}, typeid(Shader).hash_code(),
                                     [&](std::string path) {
-                                        sprite.shader = CreateRef<Shader>(path);
+                                        AssetHandle shader = Project::GetActive()->GetEditorAssetManager()->ImportAsset(
+                                            path);
+                                        sprite.shader = shader;
                                     }
         );
 
         UI::SameLine();
         if (UI::ButtonControl("x")) {
-            sprite.shader = nullptr;
+            sprite.shader = 0;
         }
 
         if (UI::ButtonControl("+")) {
@@ -845,7 +720,8 @@ namespace Shado {
 
                 // Create shader
                 try {
-                    sprite.shader = CreateRef<Shader>(path);
+                    AssetHandle shader = Project::GetActive()->GetEditorAssetManager()->ImportAsset(path);
+                    sprite.shader = shader;
                 }
                 catch (const ShaderCompilationException& e) {
                     SHADO_CORE_ERROR("Failed to compile shader: {0}", e.what());
@@ -857,7 +733,11 @@ namespace Shado {
         if (UI::ButtonControl("Recompile")) {
             if (sprite.shader) {
                 try {
-                    sprite.shader = CreateRef<Shader>(*sprite.shader);
+                    // TODO: introduce AssetManager::ReloadAsset
+                    Ref<Shader> shader = AssetManager::GetAsset<Shader>(sprite.shader);
+                    std::filesystem::path shaderPath = AssetManager::GetPathFromHandle(sprite.shader);
+                    AssetHandle newShader = Project::GetActive()->GetEditorAssetManager()->ImportAsset(shaderPath);
+                    sprite.shader = newShader;
                 }
                 catch (const ShaderCompilationException& e) {
                     SHADO_CORE_ERROR("Failed to recompile shader: {0}", e.what());
@@ -867,8 +747,8 @@ namespace Shado {
 
         // Draw shader uniforms
         if (sprite.shader) {
-            auto& shader = sprite.shader;
-            auto uniforms = sprite.shader->getActiveUniforms();
+            auto shader = AssetManager::GetAsset<Shader>(sprite.shader);
+            auto uniforms = shader->getActiveUniforms();
 
             UI::NewLine();
             UI::Text("Shader active uniforms");
