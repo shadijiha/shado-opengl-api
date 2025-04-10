@@ -50,8 +50,18 @@ namespace Shado {
         }
 
         const std::vector<std::filesystem::path>& GetPaths() const { return m_Paths; }
+        
         EVENT_CLASS_TYPE(WindowDrop)
         EVENT_CLASS_CATEGORY(EventCategoryApplication)
+
+        std::string toString() const override {
+            std::stringstream ss;
+            ss << Event::toString();
+            for (const auto& path : m_Paths) {
+                ss << ", " << path;
+            }
+            return ss.str();
+        }
 
     private:
         std::vector<std::filesystem::path> m_Paths;

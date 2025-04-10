@@ -5,6 +5,7 @@
 #include "util/Memory.h"
 #include "Events/Event.h"
 #include "Window.h"
+#include "debug/Debug.h"
 #include "ui/ImguiScene.h"
 
 namespace Shado {
@@ -21,6 +22,7 @@ namespace Shado {
 
         template <typename T> requires std::is_base_of_v<Event, T>
         static void dispatchEvent(T& event) {
+            SHADO_CORE_TRACE("Dispatched event {}", event.toString());
             Application& app = get();
             app.onEvent(event);
         }

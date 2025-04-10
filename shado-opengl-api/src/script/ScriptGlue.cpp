@@ -142,6 +142,7 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Entity_HasComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_RemoveComponent);
         SHADO_ADD_INTERNAL_CALL(Entity_FindEntityByName);
+        SHADO_ADD_INTERNAL_CALL(Entity_CreateEmptyEntity);
         SHADO_ADD_INTERNAL_CALL(Entity_Destroy);
 
         SHADO_ADD_INTERNAL_CALL(Prefab_Instantiate);
@@ -450,6 +451,12 @@ namespace Shado {
                 return 0;
         }
 
+        uint64_t Entity_CreateEmptyEntity() {
+            auto scene = ScriptEngine::GetInstance().GetCurrentScene();
+            auto entity = scene->createEntity();
+            return entity.getUUID();
+        }
+        
         void Entity_Destroy(uint64_t entityID) {
             auto scene = ScriptEngine::GetInstance().GetCurrentScene();
             auto entity = GetEntity(entityID);
@@ -833,6 +840,10 @@ namespace Shado {
             HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<RigidBody2DComponent>());
             auto& rb2d = entity.getComponent<RigidBody2DComponent>();
             b2Body* body = (b2Body*)rb2d.runtimeBody;
+            if (!body) {
+                SHADO_CORE_WARN("Cannot call physics related function in OnCreate. Physics body is nullptr");
+                return;
+            }
             body->ApplyLinearImpulse(b2Vec2(impulse.x, impulse.y), b2Vec2(worldPosition.x, worldPosition.y), wake);
         }
 
@@ -842,6 +853,10 @@ namespace Shado {
             HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<RigidBody2DComponent>());
             auto& rb2d = entity.getComponent<RigidBody2DComponent>();
             b2Body* body = (b2Body*)rb2d.runtimeBody;
+            if (!body) {
+                SHADO_CORE_WARN("Cannot call physics related function in OnCreate. Physics body is nullptr");
+                return;
+            }
             body->ApplyLinearImpulseToCenter(b2Vec2(impulse.x, impulse.y), wake);
         }
 

@@ -15,12 +15,8 @@ namespace Sandbox
         
         // TODO: find why these crash
         //public int[] arr = new int[10];
-        public ShadoEvent eventHandler = new ShadoEvent();
 
         protected override void OnCreate() {
-            eventHandler += Queen;
-            eventHandler += (a, b) => { Log.Info("{0} XD", 1); };
- 
             for (float i = 0; i < 360; i += angleStep) {
                 if (linePrefab)
                 {
@@ -75,10 +71,6 @@ namespace Sandbox
                     ray.lineRenderer.colour = Colour.White;
                 }
             }
-        }
-        
-        public void Queen(object sender, object args) {
-            
         }
     }
 

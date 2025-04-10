@@ -157,6 +157,11 @@ namespace Shado {
         EVENT_CLASS_TYPE(PrefabEditorContextChanged);
         EVENT_CLASS_CATEGORY(EventCategoryEditor);
 
+        std::string toString() const override
+        {
+            return Event::toString() + " => PrefabId: " + std::to_string(m_Prefab->GetId());
+        }
+        
         Ref<Prefab> m_Prefab;
     };
 }

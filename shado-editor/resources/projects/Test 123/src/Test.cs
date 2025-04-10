@@ -27,14 +27,14 @@ namespace Sandbox
         public Prefab linePrefab;
 
         private volatile string? textureToLoad = null;
-        //private ParticuleSystem particuleSystem;
 
-        //public ShadoEvent events;
+        private List<GridCell> cells = new();
+
 
         protected override void OnCreate()
         {
             //fetchCait();
-            const float max = 0.0f;
+            const float max = 5.0f;
             for (float y = -5.0f; y < max; y += 0.5f)
             {
                 for (float x = -5.0f; x < max; x += 0.5f)
@@ -44,6 +44,9 @@ namespace Sandbox
                     // The reason for that is because right now it is not possible to invode 
                     // internal methods such as AddComponent in the .ctor
                     //GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
+                    Entity entity = CreateEmptyEntity();
+                    cells.Add(new GridCell(entity, x, y));
+                    cells[^1].OnCreate();
                 }
             }
 
@@ -88,6 +91,11 @@ namespace Sandbox
                 GetComponent<SpriteRendererComponent>().texture = new Texture2D(textureToLoad);
                 Log.Info(GetComponent<SpriteRendererComponent>().texture.ToString());
                 textureToLoad = null;
+            }
+
+            foreach (var cell in cells)
+            {
+                cell.OnUpdate(dt);
             }
         }
 
@@ -246,7 +254,7 @@ namespace Sandbox
         
     }
     
-    class GridCell : Entity {
+    class GridCell {
         static readonly Texture2D[] texture = {
            new(@"Assets\riven.png"),
            new(@"Assets\riven2.jpg"),
@@ -259,35 +267,50 @@ namespace Sandbox
         internal Entity parent;
         float angle = 0.01f;
 
-        public GridCell() { }
         public GridCell(Entity parent, float x, float y) { 
             this.x = x;
             this.y = y;
             this.parent = parent;
         }
 
-        protected override void OnCreate() {
-            var script = GetComponent<ScriptComponent>();
+        public void OnCreate() {
+            var script = parent.GetComponent<ScriptComponent>();
             //Log.Info("Class: {0}, ID: {1}", script.ClassName, this.ID);
-            transform.position = parent.transform.position + new Vector3(x, y, 0);
-            transform.scale = new Vector3(0.45f, 0.45f, 0);
-            tag = $"Grid cell {x}, {y}";
+            parent.transform.position = parent.transform.position + new Vector3(x, y, 0);
+            parent.transform.scale = new Vector3(0.45f, 0.45f, 0);
+            parent.tag = $"Grid cell {x}, {y}";
 
-            var sprite = AddComponent<SpriteRendererComponent>();
-            //sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
-            sprite.colour = Colour.Random();
+            var sprite = parent.AddComponent<CircleRendererComponent>();
+            sprite.colour = new Vector4((x + 5.0f) / 10.0f, 0.4f, (y + 5.0f) / 10.0f, 0.7f);
+            //sprite.colour = Colour.Random();
             //sprite.texture = texture[random.Next(texture.Length)];
  
-            var rb = AddComponent<RigidBody2DComponent>();
-            AddComponent<BoxCollider2DComponent>();
+            var rb = parent.AddComponent<RigidBody2DComponent>();
+            parent.AddComponent<BoxCollider2DComponent>();
             rb.type = RigidBody2DComponent.BodyType.Dynamic;
         }
 
-        protected override void OnUpdate(float dt)
+        private volatile bool canJump = true;
+        private async Task Jump()
+        {
+            if (canJump is false)   
+                return;
+            canJump = false;
+            parent.GetComponent<RigidBody2DComponent>().ApplyLinearImpulse(Vector2.up * 3.0f, false);
+            await Task.Delay(2000);
+            canJump = true;
+        }
+
+        public void OnUpdate(float dt)
         {
             
             //GetComponent<SpriteRendererComponent>().colour = Colour.FromHSL(angle % 360, 100, 100);
             angle += dt;
+
+            if (Input.IsKeyDown(KeyCode.Space))
+            {
+                Jump();
+            }
         }
 
         // This is not working because when creating an Entiy the script is not assigned

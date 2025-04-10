@@ -39,4 +39,8 @@ namespace Shado {
 		return int(Double() * double(max - min) + (double)min);
 	}
 
+	void Random::SetSeed(uint64_t seed)
+	{
+		s_RandomEngine.seed(seed);
+	}
 }

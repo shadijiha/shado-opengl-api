@@ -22,6 +22,12 @@ namespace Shado {
 
         EVENT_CLASS_TYPE(SceneChanged);
         EVENT_CLASS_CATEGORY(EventCategoryScene);
+
+        std::string toString() const override
+        {
+            return Event::toString() + " => Path: " + sceneToLoadPath.string();
+        }
+        
         const std::filesystem::path sceneToLoadPath;
     };
 

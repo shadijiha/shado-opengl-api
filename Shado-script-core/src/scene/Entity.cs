@@ -140,6 +140,13 @@ namespace Shado
             }
         }
 
+        public static Entity CreateEmptyEntity() {
+            unsafe
+            {
+                return new Entity(InternalCalls.Entity_CreateEmptyEntity());
+            }
+        }
+
         /// <summary>
         /// Checks if this entity is a script entity of type T
         /// </summary>
@@ -165,15 +172,7 @@ namespace Shado
             var sc = GetComponent<ScriptComponent>();
             return sc?.Instance.Get() as T;
         }
-
-        // public static Entity FindEntityByName(string name) {
-        //     ulong entityID = InternalCalls.Entity_FindEntityByName(name);
-        //     if (entityID == 0)
-        //         return null;
-        //
-        //     return new Entity(entityID);
-        // }
-
+        
         public static Entity? FindEntityByName(string name) {
             unsafe {
                 ulong entityID = InternalCalls.Entity_FindEntityByName(name);

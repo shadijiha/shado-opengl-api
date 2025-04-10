@@ -5,6 +5,7 @@ using Shado.Editor;
 
 namespace Shado
 {
+#if false
     public class ShadoEvent
     {
         internal List<Action<object, object>> funcs = new List<Action<object, object>>();
@@ -22,7 +23,7 @@ namespace Shado
         }
     }
 
-#if false
+
     [EditorTargetType(typeof(ShadoEvent))]
     public class ShadoEventEditor : Editor.Editor
     {

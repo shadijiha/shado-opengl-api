@@ -17,10 +17,6 @@ namespace Shado {
         Log::init();
         Random::init();
         ScriptEngine::GetMutable().InitializeHost();
-
-        /* Initialize the library */
-        // TODO: Might want to un comment this if application crashes
-        //window = std::make_unique<Window>(width, height, title);
     }
 
     Application::Application()
@@ -28,6 +24,8 @@ namespace Shado {
     }
 
     Application::~Application() {
+        SHADO_PROFILE_FUNCTION();
+        
         ScriptEngine::GetMutable().ShutdownHost();
 
         for (Layer* layer : layers) {
@@ -56,13 +54,13 @@ namespace Shado {
         // Init Renderer if it hasn't been done
         Init();
 
-        if (layers.size() == 0)
+        if (layers.empty())
             SHADO_CORE_WARN("No layers to draw");
 
 
         /* Loop until the user closes the window */
         while (m_Running) {
-            float time = (float)glfwGetTime(); // TODO: put it in platform specific
+            float time = static_cast<float>(glfwGetTime()); // TODO: put it in platform specific
             float timestep = time - m_LastFrameTime;
             m_LastFrameTime = time;
 
@@ -121,7 +119,11 @@ namespace Shado {
     }
 
     void Application::onEvent(Event& e) {
+        SHADO_PROFILE_FUNCTION();
+        
         Init();
+
+        //SHADO_CORE_TRACE("App received event {}", e.toString());
 
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent& evt) {
@@ -157,26 +159,29 @@ namespace Shado {
             return false;
         });
 
-        // Distaptch the event and excute the required code
+        // Distaptch the event and execute the required code
         // Pass Events to layer
 
         uiScene->onEvent(e);
-        if (e.isHandled())
+        if (e.isHandled()) {
+            //SHADO_CORE_TRACE("UI layer handled event.");
             return;
+        }
 
         for (auto it = layers.end(); it != layers.begin();) {
             Layer* layer = (*--it);
             if (layer != nullptr) {
                 layer->onEvent(e);
-                if (e.isHandled())
+                if (e.isHandled()) {
+                    SHADO_CORE_TRACE("Layer {} handled event.", layer->getName());   
                     break;
+                }
             }
         }
     }
 
     void Application::SubmitToMainThread(const std::function<void()>& function) {
-        std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
-
+        std::scoped_lock lock(m_MainThreadQueueMutex);
         m_MainThreadQueue.emplace_back(function);
     }
 
@@ -205,6 +210,7 @@ namespace Shado {
     }
 
     void Application::Init() {
+        SHADO_PROFILE_FUNCTION();
         if (!Renderer2D::hasInitialized()) {
             Renderer2D::Init();
             uiScene->onInit();

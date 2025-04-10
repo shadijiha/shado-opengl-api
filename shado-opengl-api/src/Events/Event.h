@@ -1,5 +1,6 @@
 #ifndef EVENT_H
 #define EVENT_H
+#include <format>
 #include <functional>
 #include <ostream>
 
@@ -37,7 +38,8 @@ namespace Shado {
 								virtual EventType getEventType() const override { return getStaticType(); }\
 								virtual const char* getName() const override { return #type; }
 
-#define EVENT_CLASS_CATEGORY(category) virtual int getCategoryFlags() const override { return category; }
+#define EVENT_CLASS_CATEGORY(category) virtual int getCategoryFlags() const override { return category; }\
+                                       virtual std::string getCategoryFlagsAsStr() const override { return #category; }
 
     // Event class
     class Event {
@@ -48,7 +50,8 @@ namespace Shado {
         virtual EventType getEventType() const = 0;
         virtual const char* getName() const = 0;
         virtual int getCategoryFlags() const = 0;
-        virtual std::string toString() const { return getName(); }
+        virtual std::string getCategoryFlagsAsStr() const = 0;
+        virtual std::string toString() const { return std::format("{}({})", getName(), getCategoryFlagsAsStr()); }
 
         inline bool isInCategory(EventCategory category) {
             return getCategoryFlags() & category;

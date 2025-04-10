@@ -14,12 +14,6 @@ namespace Shado {
 
 		inline const glm::mat4& getTransform() const { return m_Transform; }
 
-		std::string toString() const override {
-			std::stringstream ss;
-			ss << "EditorGuizmosStart";
-			return ss.str();
-		}
-
 		EVENT_CLASS_TYPE(EditorGuizmosStart)
 		EVENT_CLASS_CATEGORY(EventCategoryEditor)
 

@@ -79,6 +79,9 @@ namespace Shado {
 
         const Ref<Project>& getProject() const { return m_Project; }
 
+        std::string toString() const override {
+            return std::format("{} => Name: {}, Path: {}", Event::toString(), m_Project->GetConfig().Name, m_Project->GetProjectDirectory().string());
+        }
     private:
         const Ref<Project>& m_Project;
     };
