@@ -268,5 +268,14 @@ namespace Shado {
 
 
 #pragma endregion
+
+#pragma region Project
+
+        Coral::String Project_GetAssetDirectory();
+
+        Coral::String Project_GetProjectDirectory();
+
+        Coral::String Project_GetRelativePath(Coral::String path);
+#pragma endregion 
     }
 }

@@ -234,6 +234,10 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Input_IsKeyPressed);
         SHADO_ADD_INTERNAL_CALL(Input_IsMouseButtonPressed);
         SHADO_ADD_INTERNAL_CALL(Input_GetMousePosition);
+
+        SHADO_ADD_INTERNAL_CALL(Project_GetAssetDirectory);
+        SHADO_ADD_INTERNAL_CALL(Project_GetProjectDirectory);
+        SHADO_ADD_INTERNAL_CALL(Project_GetRelativePath);
     }
 
     namespace InternalCalls {
@@ -1271,5 +1275,27 @@ namespace Shado {
 
 
 #pragma endregion
+
+#pragma region Project
+
+        Coral::String Project_GetAssetDirectory() {
+            if (Project::GetActive()) {
+                return Coral::String::New(Project::GetAssetDirectory().lexically_normal().string());               
+            }
+            return Coral::String::New("");
+        }
+
+        Coral::String Project_GetProjectDirectory() {
+            if (Project::GetActive()) {
+                return Coral::String::New(Project::GetProjectDirectory().lexically_normal().string());               
+            }
+            return Coral::String::New("");            
+        }
+
+        Coral::String Project_GetRelativePath(Coral::String path) {
+            SHADO_CORE_ASSERT(Project::GetActive(), "No active project!");
+            return Coral::String::New(Project::GetActive()->GetRelativePath(std::string(path)).lexically_normal().string());
+        }
+#pragma endregion 
     }
 }

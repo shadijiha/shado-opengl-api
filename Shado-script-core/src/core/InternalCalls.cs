@@ -206,6 +206,14 @@ namespace Shado
 
         #endregion
 
+        #region Project
+
+        internal static delegate* unmanaged<NativeString> Project_GetAssetDirectory;
+        internal static delegate* unmanaged<NativeString> Project_GetProjectDirectory;
+        internal static delegate* unmanaged<NativeString, NativeString> Project_GetRelativePath;
+
+        #endregion
+
 #pragma warning restore CS0649
     }
 }

@@ -17,6 +17,8 @@ namespace Sandbox
 { 
     public class Test : Entity
     {
+        static Random random = new Random();
+        
         public float maxDelta = 3.0f;
         public float moveRate = 1.0f;
         [ShowInEditor] private float dir = 1;
@@ -33,29 +35,24 @@ namespace Sandbox
 
         protected override void OnCreate()
         {
-            //fetchCait();
+            FetchRandomCaitImage();
             const float max = 5.0f;
-            for (float y = -5.0f; y < max; y += 0.5f)
-            {
-                for (float x = -5.0f; x < max; x += 0.5f)
-                {
-                    // TODO: Change the Entity.Create to following signature
-                    // Create<T>(param object[] ctorArgs)
-                    // The reason for that is because right now it is not possible to invode 
-                    // internal methods such as AddComponent in the .ctor
-                    //GridCell gridCell = Create<GridCell>(() => new GridCell(this, x ,y));
-                    Entity entity = CreateEmptyEntity();
-                    cells.Add(new GridCell(entity, x, y));
-                    cells[^1].OnCreate();
-                }
-            }
+            // for (float y = -5.0f; y < max; y += 0.5f)
+            // {
+            //     for (float x = -5.0f; x < max; x += 0.5f)
+            //     {
+            //         Entity entity = CreateEmptyEntity();
+            //         cells.Add(new GridCell(entity, x, y));
+            //         cells[^1].OnCreate();
+            //     }
+            // }
 
             texture = new Texture2D("Assets/riven2.jpg");
-            GetComponent<SpriteRendererComponent>().tilingFactor = (int)Mathf.Random(2, 10);
-            GetComponent<SpriteRendererComponent>().texture = texture;
+            GetComponent<SpriteRendererComponent>()!.tilingFactor = (int)Mathf.Random(2, 10);
+            GetComponent<SpriteRendererComponent>()!.texture = texture;
             
             OnCollision2DEnterEvent += (info, other) => {
-                Log.Info("Collision with {0}", other.tag);
+                Log.Info("Collision with {0}", other?.tag);
             };
 
             Entity e = linePrefab.Instantiate(Vector3.one);
@@ -99,44 +96,10 @@ namespace Sandbox
             }
         }
 
-        static CookieContainer cookieContainer = new CookieContainer();
-        static HttpClientHandler handler = new HttpClientHandler
-        {
-            CookieContainer = cookieContainer,
-            UseCookies = true, // Enable cookies
-            //AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate, // Optional: handle compressed responses
-            ServerCertificateCustomValidationCallback = (message, certificate, chain, sslPolicyErrors) => true
-        };
-        static HttpClient httpClient = new HttpClient(handler);
-        static Random random = new Random();
-        
-        private async Task makeRequest<T>(string url, string method, T? body = null, Func<HttpContent, Task>? callback = null) where T : class
-        {
-            Log.Info("Requesting {0}", url);
-            var requestUrl = $"https://cloud.shadijiha.com/apinest/{url}"; // Replace with the desired URL
-            string jsonBody = JsonSerializer.Serialize(body);
-            var bodyStr = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = null;
-            switch (method)
-            {
-                case "post":
-                    response = await httpClient.PostAsync(requestUrl, bodyStr);
-                    break;
-                case "get":
-                    response = await httpClient.GetAsync(requestUrl);
-                    break;
-                default:
-                    throw new Exception();
-            }
-            
-            response.EnsureSuccessStatusCode();
-
-            if (callback is not null)
-                await callback(response.Content);
-        }
+        private WebRequestHelper web = new();
         
-        record DirListResponse
+        record struct DirListResponse
         {
             public string status { get; set; }
             public string parent { get; set; }
@@ -151,45 +114,35 @@ namespace Sandbox
                 public string extension { get; set; }
             }
         }
-        private async void fetchCait()
+        
+        private async void FetchRandomCaitImage()
         {
-            await makeRequest("auth/login", "post", new
+            await web.MakeRequest("auth/login", WebRequestHelper.RequestMethod.Post, new
             {
-                email = "example@shado.com",
-                password = "*******"
+                email = "admin@shado.com",
+                password = "*********"
             });
             
-            await makeRequest("directory/list/Cait", "get", "", callback: async (content) =>
+            await web.MakeRequest("directory/list/Cait", WebRequestHelper.RequestMethod.Get, "", callback: async (content) =>
             {
-                
                 // Output the response content
                 string responseContent = await content.ReadAsStringAsync();
-                DirListResponse json = JsonSerializer.Deserialize<DirListResponse>(responseContent);
+                DirListResponse? json = JsonSerializer.Deserialize<DirListResponse>(responseContent);
                 List<DirListResponse.Data> files = new ();
-                foreach (DirListResponse.Data entry in json.data.Where(e => !e.is_dir && (e.extension == ".png" || e.extension == ".jpg")))
+                foreach (DirListResponse.Data entry in json?.data.Where(e => !e.is_dir && (e.extension == ".png" || e.extension == ".jpg")) ?? [])
                 {
                     files.Add(entry);
                 }
                 
                 // random 1
                 var chosen = files[random.Next(files.Count)];
-                await makeRequest($"file/{HttpUtility.UrlEncode(chosen.path).Replace("+", "%20")}", "get", "", callback: async (content) =>
+                await web.MakeRequest($"file/{web.EncodeUrl(chosen.path)}", WebRequestHelper.RequestMethod.Get, "", callback: async (content) =>
                 {
                     byte[] buffer = await content.ReadAsByteArrayAsync();
-                    File.WriteAllBytes("D:\\Code\\Projects\\shado-opengl-api\\shado-editor\\resources\\projects\\Test 123\\Assets\\cait_temp" + chosen.extension, buffer);
+                    await File.WriteAllBytesAsync($"{Project.current.assetDirectory}/cait_temp" + chosen.extension, buffer);
                     textureToLoad = $"Assets/cait_temp{chosen.extension}";
-                    //GetComponent<SpriteRendererComponent>().texture = new Texture2D($"Assets/cait_temp{chosen.extension}");
-                    //Log.Info(GetComponent<SpriteRendererComponent>().texture.ToString());
                 });
             });
-            
-            // // Access the cookies
-            // var cookies = cookieContainer.GetCookies(new Uri(requestUrl));
-            // Console.WriteLine("\nStored Cookies:");
-            // foreach (Cookie cookie in cookies)
-            // {
-            //     Console.WriteLine($"{cookie.Name} = {cookie.Value}");
-            // }
         }
     }
 
@@ -335,4 +288,48 @@ namespace Sandbox
         }
     }
 
+    class WebRequestHelper
+    {
+        public enum RequestMethod
+        {
+            Get, Post
+        }
+        
+        private CookieContainer cookieContainer = new();
+        private HttpClientHandler handler;
+        private HttpClient httpClient;
+
+        public WebRequestHelper()
+        {
+            handler = new HttpClientHandler
+            {
+                CookieContainer = cookieContainer,
+                UseCookies = true,
+                ServerCertificateCustomValidationCallback = (message, certificate, chain, sslPolicyErrors) => true
+            };
+            httpClient = new HttpClient(handler);
+        }
+        
+        public async Task MakeRequest<T>(string url, RequestMethod method, T? body = null, Func<HttpContent, Task>? callback = null) where T : class
+        {
+            Log.Info("Requesting {0}", url);
+            var requestUrl = $"https://cloud.shadijiha.com/apinest/{url}"; // Replace with the desired URL
+            string jsonBody = JsonSerializer.Serialize(body);
+            var bodyStr = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = method switch
+            {
+                RequestMethod.Get => await httpClient.GetAsync(requestUrl),
+                RequestMethod.Post => await httpClient.PostAsync(requestUrl, bodyStr),
+                _ => throw new Exception(),
+            };
+            
+            response.EnsureSuccessStatusCode();
+
+            if (callback is not null)
+                await callback(response.Content);
+        }
+
+        public string EncodeUrl(string url) => HttpUtility.UrlEncode(url).Replace("+", "%20");
+    }
 }
