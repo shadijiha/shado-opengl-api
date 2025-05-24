@@ -48,6 +48,10 @@ namespace Shado {
         void UI_RendererStats();
         void UI_Settings();
 
+        // Actions
+        void undo();
+        void duplicateEntity();
+
         void ReloadCSharp();
 
     private:

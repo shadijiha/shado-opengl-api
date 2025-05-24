@@ -1,10 +1,11 @@
 #pragma once
-#include <cstdint>
 #include <atomic>
-#include <unordered_map>
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <unordered_map>
 
-#define snew(Type) new(Shado::Memory::Heap<Type>())
+#define snew(Type) new(Shado::Memory::Heap<Type>(std::string("Engine - ") + typeid(Type).name()))
 #define sdelete(ptr) Shado::Memory::Free(ptr)
 
 extern "C" {
@@ -15,97 +16,46 @@ namespace Shado {
     class Memory {
     public:
         template <typename T>
-        static T* Heap(const char* label = "Engine") {
-            total_allocated += sizeof(T);
-            total_alive += sizeof(T);
-            memory_history.emplace_back(glfwGetTime(), total_alive);
-            memory_labels[label] += sizeof(T);
-            return static_cast<T*>(malloc(sizeof(T)));
+        inline static T* Heap(const std::string& label = "Engine") {
+            return static_cast<T*>(HeapRaw(sizeof(T), label));
         }
 
         template <typename T>
-        static T* Heap(uint32_t count, const char* label = "Engine") {
-            total_allocated += sizeof(T) * count;
-            total_alive += sizeof(T) * count;
-            T* ptr = static_cast<T*>(std::malloc(sizeof(T) * count));
-            live_array_refs[ptr] = count;
-            memory_labels[label] += sizeof(T) * count;
-            return ptr;
+        inline static T* Heap(uint64_t count, const std::string& label = "Engine") {
+            return static_cast<T*>(HeapRaw(sizeof(T) * count, label));
         }
 
-        static void* HeapRaw(size_t size, const char* label = "Engine") {
-            total_allocated += size;
-            total_alive += size;
-            void* ptr = std::malloc(size);
-            live_array_refs[ptr] = size;
-            memory_history.emplace_back(glfwGetTime(), total_alive);
-            memory_labels[label] += size;
-            return ptr;
-        }
+        static void* HeapRaw(size_t size, const std::string& label = "Engine");
 
-        static void* ReallocRaw(void* block, size_t size, const char* label = "Engine") {
-            uint32_t old_block_size = live_array_refs.contains(block) ? live_array_refs[block] : 0;
-            total_allocated += size;
-            total_alive += size - old_block_size;
-            memory_history.emplace_back(glfwGetTime(), total_alive);
-            void* ptr = std::realloc(block, size);
-            live_array_refs.erase(block);
-            live_array_refs[ptr] = size;
-            memory_labels[label] += size - old_block_size;
-            return ptr;
-        }
+        static void* ReallocRaw(void* block, size_t size, const std::string& label = "Engine");
 
         template <typename T>
-        static void Free(T* ptr, bool array = false) {
-            if (array) {
-                uint32_t count =
-                    live_array_refs.contains(ptr) ? live_array_refs[ptr] : 1;
-                live_array_refs.erase(ptr);
-                total_alive -= sizeof(T) * count;
-                delete[] ptr;
-            }
-            else {
-                total_alive -= sizeof(T);
-                delete ptr;
-            }
-            memory_history.emplace_back(glfwGetTime(), total_alive);
+        inline static void Free(T* ptr, const std::string& label = "Engine") {
+            FreeRaw(static_cast<void*>(ptr), label);
         }
 
-        static void FreeRaw(void* ptr, const char* label = "Engine") {
-            size_t size = live_array_refs.contains(ptr) ? live_array_refs[ptr] : 0;
-            live_array_refs.erase(ptr);
-            total_alive -= size;
-            free(ptr);
-            memory_history.emplace_back(glfwGetTime(), total_alive);
-        }
+        static void FreeRaw(void* ptr, const std::string& label = "Engine");
 
-        static void* CallocRaw(size_t count, size_t size, const char* label = "Engine") {
-            return std::calloc(count, size);
-        }
+        static void* CallocRaw(size_t count, size_t size, const std::string& label = "Engine");
 
         template <typename T>
-        static T* Stack() {
+        inline static T* Stack() {
             return static_cast<T*>(alloca(sizeof(T)));
         }
 
         static size_t GetTotalAllocated() { return total_allocated; }
         static size_t GetTotalAlive() { return total_alive; }
 
-        static const std::vector<std::pair<float, size_t>>& GetMemoryHistory() {
-            // If more than 50 entries, remove until 50
-            if (memory_history.size() > 50)
-                memory_history.erase(memory_history.begin(), memory_history.begin() + (memory_history.size() - 50));
-            return memory_history;
-        }
+        static const std::vector<std::pair<float, size_t>>& GetMemoryHistory();
 
-        static const std::unordered_map<const char*, size_t>& GetMemoryLabels() { return memory_labels; }
+        static const std::unordered_map<std::string, size_t>& GetMemoryLabels();
 
     private:
         inline static size_t total_allocated = 0;
         inline static size_t total_alive = 0;
-        inline static std::unordered_map<void*, uint32_t> live_array_refs;
+        inline static std::unordered_map<void*, size_t> live_array_refs;
         inline static std::vector<std::pair<float, size_t>> memory_history;
-        inline static std::unordered_map<const char*, size_t> memory_labels;
+        inline static std::unordered_map<std::string, size_t> memory_labels;
     };
 
     class RefCounted {
@@ -126,7 +76,9 @@ namespace Shado {
 
     namespace RefUtils {
         void AddToLiveReferences(void* instance);
+
         void RemoveFromLiveReferences(void* instance);
+
         bool IsLive(void* instance);
     }
 
@@ -134,12 +86,10 @@ namespace Shado {
     class Ref {
     public:
         Ref()
-            : m_Instance(nullptr) {
-        }
+            : m_Instance(nullptr) {}
 
         Ref(std::nullptr_t n)
-            : m_Instance(nullptr) {
-        }
+            : m_Instance(nullptr) {}
 
         Ref(T* instance)
             : m_Instance(instance) {

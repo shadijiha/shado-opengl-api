@@ -4,42 +4,44 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
+#include "EditorEvents.h"
 #include "Entity.h"
 #include "cameras/Camera.h"
 #include "cameras/OrbitCamera.h"
 #include "cameras/OrthoCamera.h"
-#include "EditorEvents.h"
 #include "renderer/Font.h"
 #include "renderer/Shader.h"
 #include "renderer/Texture2D.h"
 #include "script/CSharpObject.h"
 
 namespace Shado {
-    struct IDComponent {
+    struct Component {};
+
+    struct IDComponent : Component {
         UUID id;
     };
 
-    struct TagComponent {
+    struct TagComponent : Component {
         std::string tag;
 
         TagComponent() = default;
+
         TagComponent(const TagComponent&) = default;
 
-        TagComponent(const std::string& tag) : tag(tag) {
-        }
+        TagComponent(const std::string& tag) : tag(tag) {}
     };
 
-    struct TransformComponent {
+    struct TransformComponent : Component {
         glm::vec3 position = {0, 0, 0};
         glm::vec3 rotation = {0, 0, 0};
         glm::vec3 scale = {1.0f, 1.0f, 1.0f};
         UUID parentId = 0;
 
         TransformComponent() = default;
+
         TransformComponent(const TransformComponent&) = default;
 
-        TransformComponent(const glm::vec3& position) : position(position) {
-        }
+        TransformComponent(const glm::vec3& position) : position(position) {}
 
         /**
          * Fetches the total transform of the entity. Meaning localtransform + parent transform recursively
@@ -54,8 +56,7 @@ namespace Shado {
             Entity parent = getParent(scene);
             if (parent.isValid()) {
                 return parent.getComponent<TransformComponent>().getTransform(scene) + localTransform;
-            }
-            else {
+            } else {
                 return localTransform;
             }
         }
@@ -69,8 +70,7 @@ namespace Shado {
             Entity parent = getParent(scene);
             if (parent.isValid()) {
                 return parent.getComponent<TransformComponent>().getPosition(scene) + position;
-            }
-            else {
+            } else {
                 return position;
             }
         }
@@ -92,7 +92,6 @@ namespace Shado {
                 SHADO_CORE_WARN("setParent was called with invalid parent entity");
                 this->parentId = 0;
             }
-                
         }
 
         Entity getParent(Scene& sceneToLookup) const {
@@ -100,7 +99,7 @@ namespace Shado {
         }
     };
 
-    struct SpriteRendererComponent {
+    struct SpriteRendererComponent : Component {
         glm::vec4 color = {1, 1, 1, 1};
         AssetHandle texture = 0;
         float tilingFactor = 1.0f;
@@ -108,16 +107,16 @@ namespace Shado {
 
 
         SpriteRendererComponent() = default;
+
         SpriteRendererComponent(const SpriteRendererComponent&) = default;
 
-        SpriteRendererComponent(const glm::vec4& color) : color(color) {
-        }
+        SpriteRendererComponent(const glm::vec4& color) : color(color) {}
 
         //~SpriteRendererComponent() { delete texture; }
     };
 
     /// IMPORTANT!!! Must have the same layout as SpriteRendererComponent because of drawTextureControl in PropertiesPanel.cpp
-    struct CircleRendererComponent {
+    struct CircleRendererComponent : Component {
         glm::vec4 color = {1, 1, 1, 1};
         AssetHandle texture = 0;
         float tilingFactor = 1.0f;
@@ -126,15 +125,16 @@ namespace Shado {
         float fade = 0.005f;
 
         CircleRendererComponent() = default;
+
         //~CircleRendererComponent() { delete texture; }
     };
 
-    struct LineRendererComponent {
+    struct LineRendererComponent : Component {
         glm::vec3 target = {0, 0, 0};
         glm::vec4 color = {1, 1, 1, 1};
     };
 
-    struct CameraComponent {
+    struct CameraComponent : Component {
         enum class Type {
             Orthographic = 0, Orbit = 1
         };
@@ -156,11 +156,9 @@ namespace Shado {
         CameraComponent()
             : CameraComponent(Type::Orthographic,
                               Application::get().getWindow().getWidth(),
-                              Application::get().getWindow().getHeight()) {
-        }
+                              Application::get().getWindow().getHeight()) {}
 
-        ~CameraComponent() {
-        }
+        ~CameraComponent() {}
 
         void setViewportSize(uint32_t width, uint32_t height) {
             if (type == Type::Orthographic) {
@@ -171,8 +169,7 @@ namespace Shado {
                 float bottom = -size * 0.5f;
                 float top = size * 0.5f;
                 cam->setProjection(left, right, bottom, top);
-            }
-            else {
+            } else {
                 auto* cam = (OrbitCamera*)camera.Raw();
                 cam->setAspectRatio((float)width / (float)height);
             }
@@ -209,16 +206,16 @@ namespace Shado {
             if (type == Type::Orthographic) {
                 camera = CreateRef<OrthoCamera>(-16.0f, 16.0f, -9.0f, 9.0f);
                 setViewportSize(width, height);
-            }
-            else
+            } else
                 camera = CreateRef<OrbitCamera>((float)width / (float)height);
         }
     };
 
-    struct NativeScriptComponent {
+    struct NativeScriptComponent : Component {
         ScriptableEntity* script;
 
         ScriptableEntity* (*instantiateScript)();
+
         void (*destroyScript)(NativeScriptComponent*);
 
         template <typename T>
@@ -231,7 +228,7 @@ namespace Shado {
         }
     };
 
-    struct ScriptComponent {
+    struct ScriptComponent : Component {
         UUID ScriptID = 0;
         CSharpObject Instance;
         std::vector<uint32_t> FieldIDs;
@@ -241,7 +238,7 @@ namespace Shado {
     };
 
     // Physics
-    struct RigidBody2DComponent {
+    struct RigidBody2DComponent : Component {
         enum class BodyType { STATIC = 0, KINEMATIC, DYNAMIC };
 
         BodyType type = BodyType::STATIC;
@@ -251,10 +248,11 @@ namespace Shado {
         void* runtimeBody = nullptr;
 
         RigidBody2DComponent() = default;
+
         RigidBody2DComponent(const RigidBody2DComponent&) = default;
     };
 
-    struct BoxCollider2DComponent {
+    struct BoxCollider2DComponent : Component {
         glm::vec2 offset = {0, 0};
         glm::vec2 size = {0.5f, 0.5f};
 
@@ -268,10 +266,11 @@ namespace Shado {
         void* runtimeFixture = nullptr;
 
         BoxCollider2DComponent() = default;
+
         BoxCollider2DComponent(const BoxCollider2DComponent&) = default;
     };
 
-    struct CircleCollider2DComponent {
+    struct CircleCollider2DComponent : Component {
         glm::vec2 offset = {0.0f, 0.0f};
         glm::vec2 radius = glm::vec2(0.5f); // The Y component is ignored, this is just here to be able
         // To type pun in ScriptManager setupInteralCalls
@@ -286,10 +285,11 @@ namespace Shado {
         void* runtimeFixture = nullptr;
 
         CircleCollider2DComponent() = default;
+
         CircleCollider2DComponent(const CircleCollider2DComponent&) = default;
     };
 
-    struct PrefabInstanceComponent {
+    struct PrefabInstanceComponent : Component {
         UUID prefabId = 0;
 
         // Each entity inside the prefab has a unique id (different from the prefab id)
@@ -302,7 +302,7 @@ namespace Shado {
         }
     };
 
-    struct TextComponent {
+    struct TextComponent : Component {
         Ref<Font> font = nullptr;
         std::string text = "";
         glm::vec4 color = {1, 1, 1, 1};
@@ -310,12 +310,12 @@ namespace Shado {
         float kerning = 0.0f;
 
         TextComponent() = default;
+
         TextComponent(const TextComponent&) = default;
     };
 
-    template <typename... Component>
-    struct ComponentGroup {
-    };
+    template <typename... Components>
+    struct ComponentGroup {};
 
     using AllComponents =
     ComponentGroup<TagComponent, TransformComponent, SpriteRendererComponent,

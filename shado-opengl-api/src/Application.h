@@ -1,21 +1,24 @@
 ﻿#pragma once
+#include <mutex>
 #include <string>
 #include <vector>
-#include <mutex>
-#include "util/Memory.h"
-#include "Events/Event.h"
 #include "Window.h"
 #include "debug/Debug.h"
+#include "Events/Event.h"
 #include "ui/ImguiScene.h"
+#include "util/Memory.h"
 
 namespace Shado {
     class Application {
     public:
         Application(unsigned int width, unsigned int height, const std::string& title);
+
         Application();
+
         ~Application();
 
         static Application& get();
+
         static void destroy();
 
         static void close();
@@ -27,24 +30,30 @@ namespace Shado {
             app.onEvent(event);
         }
 
-        template <typename T>
+        template <typename T> requires std::is_base_of_v<Event, T>
         static void dispatchEvent(const T& event) {
             Application::dispatchEvent(const_cast<T&>(event));
         }
 
         void run();
-        void submit(Layer* scene);
+
+        void submit(Layer* layer);
+
         void onEvent(Event& e);
 
         void SubmitToMainThread(const std::function<void()>& function);
 
-        Window& getWindow() { return *window; }
-        ImguiLayer* getUILayer() { return uiScene; }
-        float getTime() const;
+        void AddOnDestroyedCallback(const std::function<void()>& function);
+
+        Window& getWindow() const { return *window; }
+        ImguiLayer* getUILayer() const { return uiScene; }
+
+        double getTime() const;
 
     private:
         void Init();
-        ScopedRef<Window> window; // TODO: This might be a bad idea, might want to revert to std::unique_ptr
+
+        ScopedRef<Window> window;
         ImguiLayer* uiScene;
         float m_LastFrameTime = 0.0f; // Time took to render last frame	
 
@@ -55,5 +64,8 @@ namespace Shado {
 
         std::vector<std::function<void()>> m_MainThreadQueue;
         std::mutex m_MainThreadQueueMutex;
+
+        std::vector<std::function<void()>> m_TeardownCallbacks;
+        std::mutex m_TeardownCallbacksMutex;
     };
 }

@@ -1,73 +1,94 @@
 #include "MemoryPanel.h"
+
+#include <algorithm>
+
 #include "imgui.h"
+#include "ui/UI.h"
 #include "util/Memory.h"
 
+
 namespace Shado {
-	// Utility function to format storage size in a human-readable format
+	/**
+	 * Utility function to format storage size in a human-readable format
+	 * @param sizeInBytes  
+	 * @return 
+	 */
 	static std::string FormatStorageSize(float sizeInBytes) {
-		const char* units[] = { "B", "KB", "MB", "GB", "TB" };
+		constexpr const char* units[] = { "B", "KB", "MB", "GB", "TB" };
 		int unitIndex = 0;
 
-		while (sizeInBytes >= 1024.0f && unitIndex < sizeof(units) / sizeof(units[0]) - 1) {
+		while (sizeInBytes >= 1024.0f && unitIndex < std::size(units) - 1) {
 			sizeInBytes /= 1024.0f;
 			unitIndex++;
 		}
 
-		char formattedSize[32];
-		snprintf(formattedSize, sizeof(formattedSize), "%.2f %s", sizeInBytes, units[unitIndex]);
-
-		return formattedSize;
+		return std::format("{:.2f} {}", sizeInBytes, units[unitIndex]);
 	}
 
-	MemoryPanel::MemoryPanel()
-	{
-	}
-
-	void MemoryPanel::onImGuiRender()
+	void MemoryPanel::onImGuiRender() const
 	{
 		ImGui::Begin("Memory");
-		ImGui::Text("Total allocated: %s", FormatStorageSize((float)Memory::GetTotalAllocated()).c_str());
-		ImGui::Text("Total alive: %s", FormatStorageSize((float)Memory::GetTotalAlive()).c_str());
+		ImGui::Text("Total allocated: %s", FormatStorageSize(static_cast<float>(Memory::GetTotalAllocated())).c_str());
+		ImGui::Text("Total alive: %s", FormatStorageSize(static_cast<float>(Memory::GetTotalAlive())).c_str());
 
-		//ImGui::Text("Total allocated: %d", Memory::GetTotalAllocated());
-		//ImGui::Text("Total alive: %d", Memory::GetTotalAlive());
 		// Inside the ImGui window
 		if (!Memory::GetMemoryHistory().empty()) {
-			ImGui::Text("Heap Memory Usage Over Time");
-
 			// Convert memory history data to ImGui-compatible arrays
-			std::vector<float> timeData, memoryData;
-			for (const auto& entry : Memory::GetMemoryHistory()) {
-				timeData.push_back(entry.first);
-				memoryData.push_back(static_cast<float>(entry.second));
+			auto& memoryHistory = Memory::GetMemoryHistory();
+
+			// Extract memory values into a uint64_t buffer
+			std::vector<float> memoryValues;
+			memoryValues.reserve(memoryHistory.size());
+			for (const auto& [timestamp, mem] : memoryHistory) {
+				memoryValues.push_back(static_cast<float>(mem));
 			}
 
 			// Display a graph using ImGui's PlotLines function
-			ImGui::PlotHistogram("Heap Memory Usage", timeData.data(), timeData.size(),
-				0, NULL, 0.0f, FLT_MAX, ImVec2(0, 200));
+			ImGui::PlotLines(
+				"Heap Total Alive Memory Usage (MB)",
+				memoryValues.data(),
+				static_cast<int>(memoryValues.size()),
+				0,
+				nullptr,
+				0.0f,
+				*std::ranges::max_element(memoryValues),
+				ImVec2(0, 80)
+			);
+		}
+
+		auto memoryLabels = Memory::GetMemoryLabels();
+		static bool detailedBreakdown = true;
+		UI::Checkbox("Detailed", detailedBreakdown);
+		
+		if (detailedBreakdown) {
+			// Aggregate all labels that start with "Engine -"
+			uint64_t totalEngineMemory = 0;
+			for (const auto& [label, mem] : memoryLabels) {
+				if (label.starts_with("Engine -")) {
+					totalEngineMemory += mem;
+				}
+			}
+
+			std::erase_if(memoryLabels, [](const auto& entry) {
+				return entry.first.starts_with("Engine -");
+			});
+
+			memoryLabels["Engine"] = totalEngineMemory;
 		}
 		
-		if (ImGui::BeginTable("Memory Breakdown", 2))
-		{
-
-			// Header
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("sector");
-			ImGui::TableSetColumnIndex(1);
-			ImGui::Text("total allocated");
-			
-			auto& temp = Memory::GetMemoryLabels();
-			for (const auto& entry : temp)
+		UI::Table(
+			"Memory Breakdown",
+			memoryLabels.begin(),
+			memoryLabels.end(),
 			{
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("%s", entry.first);
-				ImGui::TableSetColumnIndex(1);
-				ImGui::Text("%zu", entry.second);
+				{"Sector", [](const auto& entry, int i) {
+					UI::Text("%s", entry.first.c_str());
+				}},
+				{"Total allocated", [](const auto& entry, int i) {
+					UI::Text("%s", FormatStorageSize(static_cast<float>(entry.second)).c_str());
+				}}
 			}
-			ImGui::EndTable();
-		}
+		);
 		
 		ImGui::End();
 	}

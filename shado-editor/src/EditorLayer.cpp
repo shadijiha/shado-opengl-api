@@ -245,6 +245,20 @@ namespace Shado {
                     ImGui::EndMenu();
                 }
 
+                if (ImGui::BeginMenu("Edit")) {
+                    if (ImGui::MenuItem("Undo", "Ctrl+Z", false, !m_UndoQueue.empty())) {
+                        undo();
+                    }
+
+                    ImGui::Separator();
+                    
+                    if (ImGui::MenuItem("Duplicate Entity", "Ctrl+D", false, Project::GetActive())) {
+                        duplicateEntity();
+                    }
+
+                    ImGui::EndMenu();
+                }   
+                
                 if (Project::GetActive() && ImGui::BeginMenu("Scene")) {
                     // New scene
                     if (ImGui::MenuItem("New", "Ctrl+N")) {
@@ -345,6 +359,7 @@ namespace Shado {
                 ScriptEngine::GetMutable().SetCurrentScene(this->m_ActiveScene);
                 this->onScenePlay();
             });
+            m_UndoQueue.clear();
             return false;
         });
 
@@ -377,11 +392,7 @@ namespace Shado {
         // Entity
         case KeyCode::D:
             if (control) {
-                Entity selectedEntityDub = m_sceneHierarchyPanel.getSelected();
-                EditorEntityChanged event(EditorEntityChanged::ChangeType::ENTITY_ADDED, selectedEntityDub);
-                onEvent(event);
-
-                m_ActiveScene->duplicateEntity(selectedEntityDub);
+                duplicateEntity();
             }
             break;
         case KeyCode::Delete: {
@@ -398,10 +409,7 @@ namespace Shado {
         // Undo, Redo
         case KeyCode::Z:
             if (control && !m_UndoQueue.empty()) {
-                Ref<Scene> scene = m_UndoQueue.back();
-                m_EditorScene = scene;
-                setActiveScene(scene);
-                m_UndoQueue.pop_back();
+                undo();
             }
             break;
 
@@ -728,6 +736,27 @@ namespace Shado {
             Application::get().getWindow().setOpacity(windowOpacity);
 
         ImGui::End();
+    }
+
+    void EditorLayer::undo() {
+        if (m_UndoQueue.empty())
+            return;
+        
+        Ref<Scene> scene = m_UndoQueue.back();
+        m_EditorScene = scene;
+        setActiveScene(scene);
+        m_UndoQueue.pop_back();
+    }
+
+    void EditorLayer::duplicateEntity() {
+        Entity selectedEntityDub = m_sceneHierarchyPanel.getSelected();
+        if (!selectedEntityDub)
+            return;
+        
+        EditorEntityChanged event(EditorEntityChanged::ChangeType::ENTITY_ADDED, selectedEntityDub);
+        onEvent(event);
+
+        m_ActiveScene->duplicateEntity(selectedEntityDub);
     }
 
     void EditorLayer::ReloadCSharp() {

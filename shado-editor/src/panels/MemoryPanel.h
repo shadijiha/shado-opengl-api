@@ -9,10 +9,10 @@
 namespace Shado {
 	class MemoryPanel {
 	public:
-		MemoryPanel();
+		MemoryPanel() = default;
 		~MemoryPanel() = default;
 
-		void onImGuiRender();
+		void onImGuiRender() const;
 	};
 }
 #endif // !MEMORY_H

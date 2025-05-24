@@ -1,19 +1,19 @@
 #include "Scene.h"
 
-#include <box2d/b2_world.h>
 #include <box2d/b2_body.h>
-#include <box2d/b2_fixture.h>
-#include <box2d/b2_polygon_shape.h>
 #include <box2d/b2_circle_shape.h>
 #include <box2d/b2_contact.h>
+#include <box2d/b2_fixture.h>
+#include <box2d/b2_polygon_shape.h>
+#include <box2d/b2_world.h>
 
 #include "Components.h"
-#include "renderer/Renderer2D.h"
 #include "Entity.h"
-#include "script/ScriptEngine.h"
 #include "Prefab.h"
-#include "debug/Profile.h"
 #include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
+#include "debug/Profile.h"
+#include "renderer/Renderer2D.h"
+#include "script/ScriptEngine.h"
 
 namespace Shado {
     /**
@@ -39,14 +39,13 @@ namespace Shado {
         };
 
     public:
-        Physics2DCallback(Scene* scene): scene(scene) {
-        }
+        Physics2DCallback(Scene* scene): scene(scene) {}
 
-        void BeginContact(b2Contact* contact) override {
+        virtual void BeginContact(b2Contact* contact) override {
             invokeCollisionFunction(contact, "OnCollision2DEnter");
         }
 
-        void EndContact(b2Contact* contact) override {
+        virtual void EndContact(b2Contact* contact) override {
             invokeCollisionFunction(contact, "OnCollision2DLeave");
         }
 
@@ -116,14 +115,33 @@ namespace Shado {
      */
     static Physics2DCallback* s_physics2DCallback = nullptr;
 
-    template <typename Component>
-    static void CopyComponent(entt::registry& dst, entt::registry& src,
-                              const std::unordered_map<UUID, entt::entity>& enttMap);
-    template <typename Component>
-    static void CopyComponentIfExists(Entity dst, Entity src);
+    // Helpers
+    namespace {
+        template <typename T>
+        concept ValidComponent = std::is_base_of_v<Shado::Component, T>;
 
-    Scene::Scene() {
+        template <ValidComponent Component>
+        void CopyComponent(entt::registry& dst, entt::registry& src,
+                           const std::unordered_map<UUID, entt::entity>& enttMap) {
+            auto view = src.view<Component>();
+            for (auto e : view) {
+                UUID uuid = src.get<IDComponent>(e).id;
+                SHADO_CORE_ASSERT(enttMap.find(uuid) != enttMap.end(), "");
+                entt::entity dstEnttID = enttMap.at(uuid);
+
+                auto& component = src.get<Component>(e);
+                dst.emplace_or_replace<Component>(dstEnttID, component);
+            }
+        }
+
+        template <ValidComponent Component>
+        void CopyComponentIfExists(Entity dst, Entity src) {
+            if (src.hasComponent<Component>())
+                dst.addOrReplaceComponent<Component>(src.getComponent<Component>());
+        }
     }
+
+    Scene::Scene() {}
 
     Scene::Scene(Scene& other) {
         m_ViewportWidth = other.m_ViewportWidth;
@@ -140,8 +158,7 @@ namespace Shado {
         other.m_ScriptStorage.CopyTo(this->m_ScriptStorage);
     }
 
-    Scene::~Scene() {
-    }
+    Scene::~Scene() {}
 
     Entity Scene::createEntity(const std::string& name) {
         return createEntityWithUUID(name, UUID());
@@ -253,7 +270,7 @@ namespace Shado {
 
     Entity Scene::instantiatePrefabHelper(Ref<Prefab> prefab, Entity toDuplicate, bool modifyTag) {
         Scene& scene = *this;
-        UUID instantiatedEntityId = UUID();
+        auto instantiatedEntityId = UUID();
 
         // Copy the script storage from the prefab to the new entity with instantiatedEntityId
         if (toDuplicate.hasComponent<ScriptComponent>()) {
@@ -324,8 +341,7 @@ namespace Shado {
 
                 CopyAllComponentsHelper(e, prefabEntity, m_ScriptStorage, e.isChild(*this), false);
                 e.getComponent<TransformComponent>().setParent(e, oldParent);
-            }
-            else
+            } else
                 SHADO_CORE_WARN("Prefab element {0} not found", prefabEntityUniqueId);
         }
     }
@@ -472,7 +488,7 @@ namespace Shado {
                 auto& transform = entity.getComponent<TransformComponent>();
                 auto& rb2D = entity.getComponent<RigidBody2DComponent>();
 
-                b2Body* body = (b2Body*)rb2D.runtimeBody;
+                auto body = (b2Body*)rb2D.runtimeBody;
                 if (body) {
                     transform.position.x = body->GetPosition().x;
                     transform.position.y = body->GetPosition().y;
@@ -525,12 +541,13 @@ namespace Shado {
                 for (auto entity : view) {
                     auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
 
-                    if (circle.texture)
+                    if (circle.texture) {
                         Renderer2D::DrawCircle(transform.getTransform(*this), circle.texture, circle.tilingFactor,
                                                circle.color, circle.thickness, circle.fade, (int)entity);
-                    else
+                    } else {
                         Renderer2D::DrawCircle(transform.getTransform(*this), circle.color, circle.thickness,
                                                circle.fade, (int)entity);
+                    }
                 }
             }
 
@@ -556,8 +573,7 @@ namespace Shado {
         }
     }
 
-    void Scene::onUpdateEditor(TimeStep ts, EditorCamera& camera) {
-    }
+    void Scene::onUpdateEditor(TimeStep ts, EditorCamera& camera) {}
 
     void Scene::onDrawEditor(EditorCamera& camera) {
         Renderer2D::BeginScene(camera);
@@ -575,12 +591,13 @@ namespace Shado {
             for (auto entity : view) {
                 auto [transform, circle] = view.get<TransformComponent, CircleRendererComponent>(entity);
 
-                if (circle.texture)
+                if (circle.texture) {
                     Renderer2D::DrawCircle(transform.getTransform(*this), circle.texture, circle.tilingFactor,
                                            circle.color, circle.thickness, circle.fade, (int)entity);
-                else
+                } else {
                     Renderer2D::DrawCircle(transform.getTransform(*this), circle.color, circle.thickness, circle.fade,
                                            (int)entity);
+                }
             }
         }
 
@@ -632,12 +649,12 @@ namespace Shado {
         return {};
     }
 
-    Entity Scene::getEntityById(uint64_t __id) {
+    Entity Scene::getEntityById(uint64_t entityId) {
         auto ids = m_Registry.view<IDComponent>();
         for (auto entity : ids) {
-            const auto& id = ids.get<IDComponent>(entity);
+            const auto& idComponent = ids.get<IDComponent>(entity);
 
-            if (id.id == __id)
+            if (idComponent.id == entityId)
                 return {entity, this};
         }
         return {};
@@ -764,26 +781,5 @@ namespace Shado {
         CopyComponent<PrefabInstanceComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
         CopyComponent<TextComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
         CopyComponent<ScriptComponent>(dstSceneRegistry, srcSceneRegistry, enttMap);
-    }
-
-    // Helpers
-    template <typename Component>
-    static void CopyComponent(entt::registry& dst, entt::registry& src,
-                              const std::unordered_map<UUID, entt::entity>& enttMap) {
-        auto view = src.view<Component>();
-        for (auto e : view) {
-            UUID uuid = src.get<IDComponent>(e).id;
-            SHADO_CORE_ASSERT(enttMap.find(uuid) != enttMap.end(), "");
-            entt::entity dstEnttID = enttMap.at(uuid);
-
-            auto& component = src.get<Component>(e);
-            dst.emplace_or_replace<Component>(dstEnttID, component);
-        }
-    }
-
-    template <typename Component>
-    static void CopyComponentIfExists(Entity dst, Entity src) {
-        if (src.hasComponent<Component>())
-            dst.addOrReplaceComponent<Component>(src.getComponent<Component>());
     }
 }

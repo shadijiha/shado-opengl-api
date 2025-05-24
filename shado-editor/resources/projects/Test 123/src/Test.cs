@@ -35,7 +35,8 @@ namespace Sandbox
 
         protected override void OnCreate()
         {
-            FetchRandomCaitImage();
+            //FetchRandomCaitImage();
+             
             const float max = 5.0f;
             // for (float y = -5.0f; y < max; y += 0.5f)
             // {

@@ -6,8 +6,8 @@
 #include "debug/Debug.h"
 #include "Events/input.h"
 #include "project/Project.h"
-#include "scene/utils/SceneUtils.h"
 #include "renderer/Texture2D.h"
+#include "scene/utils/SceneUtils.h"
 
 namespace Shado {
     void UI::TreeNode(int id, const std::string& label, std::function<void()> ui, ImGuiTreeNodeFlags flags) {
@@ -178,7 +178,7 @@ namespace Shado {
         // For drag and drop
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                const wchar_t* pathRelativeToProject = (const wchar_t*)payload->Data;
+                auto pathRelativeToProject = (const wchar_t*)payload->Data;
                 std::filesystem::path dataPath = pathRelativeToProject;
 
                 bool acceptable = dragAndDropExtensions.empty();
@@ -192,8 +192,7 @@ namespace Shado {
                 if (acceptable) {
                     filepath = dataPath.string();
                     onChange((Project::GetProjectDirectory() / dataPath).string());
-                }
-                else
+                } else
                     SHADO_CORE_WARN("Invalid drag and drop file extension {0}", dataPath.filename());
             }
 
@@ -204,7 +203,7 @@ namespace Shado {
         ImGui::PushID(id);
         ImGui::SameLine();
         if (ImGui::Button("...", {24, 24})) {
-            std::string buffer = "";
+            std::string buffer;
             int count = 0;
             for (const auto& ext : dragAndDropExtensions) {
                 buffer += "*" + ext;
@@ -234,16 +233,19 @@ namespace Shado {
                 break;
             }
 
-            // Check if the path is inside the project directory
-            if (filepath.find(Project::GetProjectDirectory().string()) == std::string::npos) {
-                SHADO_CORE_WARN("File {} is not inside the project directory", filepath);
-                std::filesystem::path copyToPath = Project::GetAssetDirectory() / std::filesystem::path(filepath).filename();
-                std::filesystem::copy_file(filepath, copyToPath);
-                filepath = copyToPath.string();
-            } else
-                filepath = std::filesystem::relative(filepath, Project::GetProjectDirectory()).string();
+            if (!filepath.empty()) {
+                // Check if the path is inside the project directory
+                if (filepath.find(Project::GetProjectDirectory().string()) == std::string::npos) {
+                    SHADO_CORE_WARN("File {} is not inside the project directory", filepath);
+                    std::filesystem::path copyToPath = Project::GetAssetDirectory() / std::filesystem::path(filepath).
+                        filename();
+                    std::filesystem::copy_file(filepath, copyToPath);
+                    filepath = copyToPath.string();
+                } else
+                    filepath = std::filesystem::relative(filepath, Project::GetProjectDirectory()).string();
 
-            filepathHasChanged = true;
+                filepathHasChanged = true;
+            }
         }
         ImGui::PopID();
 
@@ -276,18 +278,20 @@ namespace Shado {
 
         ImGui::Columns(2);
         ImGui::SetColumnWidth(0, columnWidth);
-        ImGui::Text(tag.c_str());
+        ImGui::Text("%s", tag.c_str());
         ImGui::NextColumn();
 
         ImGui::PushMultiItemsWidths(1, ImGui::CalcItemWidth());
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
 
-        char buffer[512];
-        memset(buffer, 0, sizeof(buffer));
-        strcpy_s(buffer, sizeof(buffer), value.c_str());
+        char buffer[512] = {};
+        if (strcpy_s<512>(buffer, value.c_str()) != 0) {
+            value = "<Error strcpy_s>";
+            return false;
+        }
 
         bool modified = false;
-        if (ImGui::InputText("##rafvvara4", buffer, sizeof(buffer), flags)) {
+        if (ImGui::InputText("##textControl", buffer, sizeof(buffer), flags)) {
             value = std::string(buffer);
             modified = true;
         }

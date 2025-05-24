@@ -1,11 +1,11 @@
 ﻿#include "Application.h"
-#include "debug/Profile.h"
-#include "GL/glew.h"
-#include "renderer/Renderer2D.h"
 #include <algorithm>
-#include "Events/ApplicationEvent.h"
-#include "project/Project.h"
 #include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
+#include "debug/Profile.h"
+#include "Events/ApplicationEvent.h"
+#include "GL/glew.h"
+#include "project/Project.h"
+#include "renderer/Renderer2D.h"
 #include "scene/Scene.h"
 #include "script/ScriptEngine.h"
 #include "util/Random.h"
@@ -20,12 +20,11 @@ namespace Shado {
     }
 
     Application::Application()
-        : Application(1280, 720, "Shado OpenGL simple Rendering engine") {
-    }
+        : Application(1280, 720, "Shado OpenGL simple Rendering engine") {}
 
     Application::~Application() {
         SHADO_PROFILE_FUNCTION();
-        
+
         ScriptEngine::GetMutable().ShutdownHost();
 
         for (Layer* layer : layers) {
@@ -40,10 +39,9 @@ namespace Shado {
         glfwTerminate();
     }
 
-    Application& Application::get()
-    {
+    Application& Application::get() {
         static Application* instance = nullptr;
-        if (!instance)    {
+        if (!instance) {
             instance = snew(Application) Application();
             return *instance;
         }
@@ -120,7 +118,7 @@ namespace Shado {
 
     void Application::onEvent(Event& e) {
         SHADO_PROFILE_FUNCTION();
-        
+
         Init();
 
         //SHADO_CORE_TRACE("App received event {}", e.toString());
@@ -173,7 +171,7 @@ namespace Shado {
             if (layer != nullptr) {
                 layer->onEvent(e);
                 if (e.isHandled()) {
-                    SHADO_CORE_TRACE("Layer {} handled event.", layer->getName());   
+                    SHADO_CORE_TRACE("Layer {} handled event.", layer->getName());
                     break;
                 }
             }
@@ -183,6 +181,11 @@ namespace Shado {
     void Application::SubmitToMainThread(const std::function<void()>& function) {
         std::scoped_lock lock(m_MainThreadQueueMutex);
         m_MainThreadQueue.emplace_back(function);
+    }
+
+    void Application::AddOnDestroyedCallback(const std::function<void()>& function) {
+        std::scoped_lock lock(m_TeardownCallbacksMutex);
+        m_TeardownCallbacks.emplace_back(function);
     }
 
     void Application::destroy() {
@@ -198,6 +201,8 @@ namespace Shado {
         get().m_Running = false;
 
         Renderer2D::Shutdown();
+        for (const auto& cb : get().m_TeardownCallbacks)
+            cb();
         sdelete(&get());
     }
 
@@ -205,7 +210,7 @@ namespace Shado {
         get().m_Running = false;
     }
 
-    float Application::getTime() const {
+    double Application::getTime() const {
         return glfwGetTime();
     }
 
