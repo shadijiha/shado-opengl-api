@@ -4,6 +4,7 @@
 #include <debug/Debug.h>
 
 #include "Application.h"
+#include "debug/Profile.h"
 
 namespace Shado { namespace {
         std::unordered_set<void*>& CreateLiveReferencesMap() {
@@ -21,6 +22,8 @@ namespace Shado { namespace {
     ////////////////////////////////
 
     void* Memory::HeapRaw(size_t size, const std::string& label) {
+        SHADO_PROFILE_FUNCTION();
+    
         total_allocated += size;
         total_alive += size;
         void* ptr = std::malloc(size);
@@ -31,6 +34,7 @@ namespace Shado { namespace {
     }
 
     void* Memory::ReallocRaw(void* block, size_t size, const std::string& label) {
+        SHADO_PROFILE_FUNCTION();
         uint32_t old_block_size = live_array_refs.contains(block) ? live_array_refs[block] : 0;
         total_allocated += size;
         total_alive += size - old_block_size;
@@ -43,6 +47,7 @@ namespace Shado { namespace {
     }
 
     void Memory::FreeRaw(void* ptr, const std::string& label) {
+        SHADO_PROFILE_FUNCTION();
         size_t size = live_array_refs.contains(ptr) ? live_array_refs[ptr] : 0;
         live_array_refs.erase(ptr);
         total_alive -= size;
@@ -55,6 +60,8 @@ namespace Shado { namespace {
     }
 
     const std::vector<std::pair<float, size_t>>& Memory::GetMemoryHistory() {
+        SHADO_PROFILE_FUNCTION();
+        
         // If more than max entries, remove until max
         constexpr int maxDataPoints = 10240;
         if (memory_history.size() > maxDataPoints)

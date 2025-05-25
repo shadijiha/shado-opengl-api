@@ -76,10 +76,12 @@ namespace Shado {
 				InternalEndSession();
 			}
 			m_OutputStream.open(filepath);
+			m_OutputStream << std::nounitbuf;
 
 			if (m_OutputStream.is_open())
 			{
 				m_CurrentSession = new InstrumentationSession({ name });
+				SHADO_CORE_TRACE("Instrumentation Session '{}' started. Saving file to {}", m_CurrentSession->Name, std::filesystem::absolute(std::filesystem::path(filepath)).string());
 				WriteHeader();
 			} else
 			{
@@ -115,7 +117,7 @@ namespace Shado {
 			if (m_CurrentSession)
 			{
 				m_OutputStream << json.str();
-				m_OutputStream.flush();
+				//m_OutputStream.flush();
 			}
 		}
 
@@ -191,7 +193,7 @@ namespace Shado {
 			m_Stopped = true;
 		}
 	private:
-		const char* m_Name;
+		std::string m_Name;
 		std::chrono::time_point<std::chrono::steady_clock> m_StartTimepoint;
 		bool m_Stopped;
 	};
@@ -226,7 +228,7 @@ namespace Shado {
 	}
 }
 
-#define FORCE_PROFILE 0
+#define FORCE_PROFILE 1
 #if defined(SHADO_PROFILE) || FORCE_PROFILE
 #define SHADO_PROFILE_BEGIN_SESSION(name, filepath)	::Shado::Instrumentor::Get().BeginSession(name, filepath);
 #define SHADO_PROFILE_END_SESSION()					::Shado::Instrumentor::Get().EndSession();

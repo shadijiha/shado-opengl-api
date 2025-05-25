@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "Events/Event.h"
+#include "scene/Entity.h"
 
 namespace Shado {
 	class EditorGuizmosStartEvent : public Event {

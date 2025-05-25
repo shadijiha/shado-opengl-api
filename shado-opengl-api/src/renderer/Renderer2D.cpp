@@ -170,7 +170,7 @@ namespace Shado {
 
         Ref<IndexBuffer> quadIB = IndexBuffer::create(quadIndices, s_Data.MaxIndices);
         s_Data.QuadVertexArray->setIndexBuffer(quadIB);
-        Memory::Free(quadIndices, true);
+        Memory::Free(quadIndices);
 
         // Circles
         s_Data.CircleVertexArray = VertexArray::create();
@@ -278,7 +278,7 @@ namespace Shado {
     void Renderer2D::Shutdown() {
         SHADO_PROFILE_FUNCTION();
 
-        Memory::Free(s_Data.QuadVertexBufferBase, true);
+        Memory::Free(s_Data.QuadVertexBufferBase);
     }
 
     void Renderer2D::BeginScene(const Camera& camera) {
@@ -440,9 +440,9 @@ namespace Shado {
         SHADO_PROFILE_FUNCTION();
 
         constexpr size_t quadVertexCount = 4;
-        const float textureIndex = 0.0f; // White Texture
+        constexpr float textureIndex = 0.0f; // White Texture
         constexpr glm::vec2 textureCoords[] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
-        const float tilingFactor = 1.0f;
+        constexpr float tilingFactor = 1.0f;
 
         if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
             NextBatch();
@@ -915,7 +915,7 @@ namespace Shado {
     }
 
     void Renderer2D::ResetStats() {
-        memset(&s_Data.Stats, 0, sizeof(Statistics));
+        std::memset(&s_Data.Stats, 0, sizeof(Statistics));
     }
 
     Renderer2D::Statistics Renderer2D::GetStats() {

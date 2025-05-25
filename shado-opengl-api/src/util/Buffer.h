@@ -42,7 +42,7 @@ namespace Shado {
         }
 
         void Release() {
-            Memory::Free<byte>((byte*)Data, true);
+            Memory::Free<byte>((byte*)Data);
             Data = nullptr;
             Size = 0;
         }
