@@ -80,7 +80,7 @@ namespace Shado {
 
 			if (m_OutputStream.is_open())
 			{
-				m_CurrentSession = new InstrumentationSession({ name });
+				m_CurrentSession = snew(InstrumentationSession) InstrumentationSession({ name });
 				SHADO_CORE_TRACE("Instrumentation Session '{}' started. Saving file to {}", m_CurrentSession->Name, std::filesystem::absolute(std::filesystem::path(filepath)).string());
 				WriteHeader();
 			} else

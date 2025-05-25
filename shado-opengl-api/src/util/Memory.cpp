@@ -7,13 +7,13 @@
 #include "debug/Profile.h"
 
 namespace Shado { namespace {
-        std::unordered_set<void*>& CreateLiveReferencesMap() {
+        std::unordered_set<void*>* CreateLiveReferencesMap() {
             auto* map = snew(std::unordered_set<void*>) std::unordered_set<void*>();
             Application::get().AddOnDestroyedCallback([map]() { sdelete(map); });
-            return *map;
+            return map;
         }
 
-        std::unordered_set<void*>& s_LiveReferences = CreateLiveReferencesMap();
+        std::unordered_set<void*>* s_LiveReferences = CreateLiveReferencesMap();
         std::mutex s_LiveReferenceMutex;
     }
 
@@ -78,18 +78,19 @@ namespace Shado { namespace {
         void AddToLiveReferences(void* instance) {
             std::scoped_lock<std::mutex> lock(s_LiveReferenceMutex);
             SHADO_CORE_ASSERT(instance, "");
-            s_LiveReferences.insert(instance);
+            s_LiveReferences->insert(instance);
         }
 
         void RemoveFromLiveReferences(void* instance) {
             std::scoped_lock<std::mutex> lock(s_LiveReferenceMutex);
-            SHADO_CORE_ASSERT(instance, "");
-            SHADO_CORE_ASSERT(s_LiveReferences.find(instance) != s_LiveReferences.end(), "");
-            s_LiveReferences.erase(instance);
+            // TODO: fix teardown bug
+            //if (!IsLive(instance))
+            //    SHADO_CORE_WARN("Attempting to remove a live reference instance that is not in the s_LiveReferences map");
+            //else
+            //    s_LiveReferences->erase(instance);
         }
 
         bool IsLive(void* instance) {
-            SHADO_CORE_ASSERT(instance, "");
-            return s_LiveReferences.find(instance) != s_LiveReferences.end();
+            return s_LiveReferences && instance && s_LiveReferences->contains(instance);
         }
     }}

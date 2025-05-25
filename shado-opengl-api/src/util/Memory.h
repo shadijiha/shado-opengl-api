@@ -15,39 +15,88 @@ double glfwGetTime();
 namespace Shado {
     class Memory {
     public:
+        /**
+         * Calls std::malloc and does some bookkeeping. Does not call the constructor
+         * @tparam T The object type
+         * @param label Memory allocator debug label. E.g., Engine, ImGui, Script Engine, etc.
+         * @return a pointer to the allocated memory
+         */
         template <typename T>
         inline static T* Heap(const std::string& label = "Engine") {
             return static_cast<T*>(HeapRaw(sizeof(T), label));
         }
 
+        /**
+         * Used to allocate arrays.Does not call any constructors
+         * @tparam T The object type
+         * @param count The size of the array
+         * @param label Memory allocator debug label
+         * @return a pointer to the beginning of the memory block
+         */
         template <typename T>
         inline static T* Heap(uint64_t count, const std::string& label = "Engine") {
             return static_cast<T*>(HeapRaw(sizeof(T) * count, label));
         }
 
+        /**
+         * Wrapper around std::malloc with memory tracking and bookkeeping
+         * @param size The block size to allocate
+         * @param label Memory allocator debug label
+         * @return a pointer to the allocated memory
+         */
         static void* HeapRaw(size_t size, const std::string& label = "Engine");
 
+        /**
+         * Calls std::realloc and does some bookkeeping. Does not call constructors or destructors
+         * @param block 
+         * @param size 
+         * @param label 
+         * @return 
+         */
         static void* ReallocRaw(void* block, size_t size, const std::string& label = "Engine");
 
+        /**
+         * Calls the destructor and then std::free
+         * @tparam T The object type
+         * @param ptr The ptr to the object
+         * @param label Memory allocator debug label. E.g., Engine, ImGui, Script Engine, etc.
+         */
         template <typename T>
         inline static void Free(T* ptr, const std::string& label = "Engine") {
+            ptr->~T();
             FreeRaw(static_cast<void*>(ptr), label);
         }
 
+        /**
+         * calls std:free on the provided ptr. Does NOT call the destructor
+         * @param ptr 
+         * @param label Memory allocator debug label. E.g., Engine, ImGui, Script Engine, etc.
+         */
         static void FreeRaw(void* ptr, const std::string& label = "Engine");
 
         static void* CallocRaw(size_t count, size_t size, const std::string& label = "Engine");
 
-        template <typename T>
-        inline static T* Stack() {
-            return static_cast<T*>(alloca(sizeof(T)));
-        }
-
+        /**
+         * @returns total allocated memory since the start of the app
+         */
         static size_t GetTotalAllocated() { return total_allocated; }
+
+        /**
+         * 
+         * @returns current active allocated memory. Total allocated - total freed
+         */
         static size_t GetTotalAlive() { return total_alive; }
 
+        /**
+         * 
+         * @return Total allocated memory at different points in time. Max data points maxDataPoints
+         */
         static const std::vector<std::pair<float, size_t>>& GetMemoryHistory();
 
+        /**
+         * 
+         * @return each Memory allocator debug label with their total allocated memory
+         */
         static const std::unordered_map<std::string, size_t>& GetMemoryLabels();
 
     private:
