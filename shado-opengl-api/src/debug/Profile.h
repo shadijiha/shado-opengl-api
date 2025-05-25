@@ -228,7 +228,7 @@ namespace Shado {
 	}
 }
 
-#define FORCE_PROFILE 1
+#define FORCE_PROFILE 0
 #if defined(SHADO_PROFILE) || FORCE_PROFILE
 #define SHADO_PROFILE_BEGIN_SESSION(name, filepath)	::Shado::Instrumentor::Get().BeginSession(name, filepath);
 #define SHADO_PROFILE_END_SESSION()					::Shado::Instrumentor::Get().EndSession();
