@@ -4,12 +4,19 @@ using UI = Shado.Editor.UI;
 
 namespace Shado
 {
+    /// <summary>
+    /// Represents a Texture2D handle what was loaded into the engine
+    /// </summary>
     [EditorAssignable]
     public class Texture2D
     {
         public readonly string? filepath;
         internal ulong handle = 0;
 
+        /// <summary>
+        /// Loads a Texture2D into the game engine
+        /// </summary>
+        /// <param name="pathRelativeToProject">The filepath of the texture relative to the project</param>
         public Texture2D(string pathRelativeToProject) {
             filepath = pathRelativeToProject;
             unsafe {
