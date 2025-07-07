@@ -1239,7 +1239,7 @@ namespace Shado {
                 SHADO_ERROR(message);
                 break;
             case LogLevel::Critical:
-                SHADO_ERROR(message);
+                SHADO_CRITICAL(message);
                 break;
             }
             Coral::String::Free(inFormattedMessage);

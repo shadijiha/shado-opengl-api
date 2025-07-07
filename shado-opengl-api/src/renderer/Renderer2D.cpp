@@ -794,7 +794,7 @@ namespace Shado {
 
     void Renderer2D::DrawString(const glm::mat4& transform, const TextComponent& textRenderer,
                                 int entityID) {
-        if (!textRenderer.font)
+        if (!textRenderer.font || textRenderer.text.empty())
             return;
 
         auto& font = textRenderer.font;
