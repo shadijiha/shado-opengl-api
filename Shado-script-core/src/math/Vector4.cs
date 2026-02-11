@@ -29,6 +29,10 @@ namespace Shado
             this.w = w;
         }
 
+        public Vector4(Vector3 xyz, float w) : this(xyz.x, xyz.y, xyz.z, w)
+        {
+        }
+
         public Vector3 xyz
         {
             get => new(x, y, z);

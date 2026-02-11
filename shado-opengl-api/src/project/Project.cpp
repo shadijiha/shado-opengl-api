@@ -125,7 +125,7 @@ namespace Shado {
 
         // Generate premake bat file
         std::ofstream batFile(projectPath / "GenerateSolution.bat");
-        batFile << "call " + (projectPath / "premake5.exe").string() + " vs2022\nPAUSE";
+        batFile << "call \"" + (projectPath / "premake5.exe").string() + "\" vs2022\nPAUSE";
         batFile.close();
 
         // Generate premake5.lua

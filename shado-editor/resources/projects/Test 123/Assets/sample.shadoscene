@@ -274,3 +274,17 @@ Entities:
     PrefabInstanceComponent:
       PrefabId: 13622340184056878492
       PrefabEntityUniqueId: 8287227290003258444
+  - Entity: 14795169137253266859
+    TagComponent:
+      Tag: sscript content
+    TransformComponent:
+      Translation: [-6.30000019, 2.5999999, 0.400000006]
+      Rotation: [0, 0, 0]
+      Scale: [0.200000003, 0.200000003, 1]
+      ParentEntityId: 0
+    TextRendererComponent:
+      Text: test
+      Color: [0.918918908, 0.398027807, 0.120630257, 1]
+      LineSpacing: 0
+      Kerning: 0
+      Font: D:\Code\Projects\shado-opengl-api\shado-editor\resources\projects\Test 123\Assets\OpenSans-Bold.ttf

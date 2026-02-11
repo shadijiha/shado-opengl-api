@@ -55,9 +55,9 @@ namespace Shado {
 #pragma endregion
 
 #pragma region Window
-        void Window_GetPosition(glm::vec2* outPosition);
-        void Window_GetSize(glm::vec2* outSize);
-        void Window_SetSize(glm::vec2* inSize);
+        void Window_GetPosition(Coral::String name, glm::vec2* outPosition);
+        void Window_GetSize(Coral::String name, glm::vec2* outSize);
+        void Window_SetSize(Coral::String name, glm::vec2* inSize);
         int Window_GetMode();
         void Window_SetMode(int mode);
         Coral::String Window_GetTitle();
@@ -125,6 +125,8 @@ namespace Shado {
         CameraComponent::Type CameraComponent_GetType(uint64_t entityID);
         void CameraComponent_SetType(uint64_t entityID, CameraComponent::Type inType);
         void CameraComponent_SetViewportSize(uint64_t entityID, uint32_t inWidth, uint32_t inHeight);
+        glm::mat4 CameraComponent_GetView(uint64_t entityID);
+        glm::mat4 CameraComponent_GetProjection(uint64_t entityID);
 
 #pragma endregion
 
@@ -276,6 +278,12 @@ namespace Shado {
         Coral::String Project_GetProjectDirectory();
 
         Coral::String Project_GetRelativePath(Coral::String path);
+#pragma endregion 
+        
+#pragma region Math
+        glm::mat4 Math_MultiplyMatrix(glm::mat4 a, glm::mat4 b);
+        glm::vec4 Math_MultiplyMatrixVector4(glm::mat4 m, glm::vec4 vec);
+        glm::mat4 Math_InverseMatrix(glm::mat4 a);
 #pragma endregion 
     }
 }

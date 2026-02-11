@@ -20,9 +20,9 @@ namespace Shado
 
         #region Window
 
-        internal static delegate* unmanaged<Vector2*, void> Window_GetPosition;
-        internal static delegate* unmanaged<Vector2*, void> Window_GetSize;
-        internal static delegate* unmanaged<Vector2*, void> Window_SetSize;
+        internal static delegate* unmanaged<NativeString, Vector2*, void> Window_GetPosition;
+        internal static delegate* unmanaged<NativeString, Vector2*, void> Window_GetSize;
+        internal static delegate* unmanaged<NativeString, Vector2*, void> Window_SetSize;
         internal static delegate* unmanaged<int> Window_GetMode;
         internal static delegate* unmanaged<int, void> Window_SetMode;
         internal static delegate* unmanaged<NativeString> Window_GetTitle;
@@ -88,6 +88,8 @@ namespace Shado
         internal static delegate* unmanaged<ulong, CameraComponent.Type> CameraComponent_GetType;
         internal static delegate* unmanaged<ulong, CameraComponent.Type, void> CameraComponent_SetType;
         internal static delegate* unmanaged<ulong, uint, uint, void> CameraComponent_SetViewportSize;
+        internal static delegate* unmanaged<ulong, Matrix4x4> CameraComponent_GetView;
+        internal static delegate* unmanaged<ulong, Matrix4x4> CameraComponent_GetProjection;
 
         #endregion
 
@@ -211,6 +213,13 @@ namespace Shado
         internal static delegate* unmanaged<NativeString> Project_GetAssetDirectory;
         internal static delegate* unmanaged<NativeString> Project_GetProjectDirectory;
         internal static delegate* unmanaged<NativeString, NativeString> Project_GetRelativePath;
+
+        #endregion
+
+        #region Math
+        internal static delegate* unmanaged<Matrix4x4, Matrix4x4, Matrix4x4> Math_MultiplyMatrix;
+        internal static delegate* unmanaged<Matrix4x4, Vector4, Vector4> Math_MultiplyMatrixVector4;
+        internal static delegate* unmanaged<Matrix4x4, Matrix4x4> Math_InverseMatrix;
 
         #endregion
 

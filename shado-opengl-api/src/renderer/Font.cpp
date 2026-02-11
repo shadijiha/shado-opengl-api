@@ -5,6 +5,7 @@
 
 #include "Texture2D.h"
 #include "debug/Debug.h"
+#include "project/Project.h"
 
 namespace Shado {
     template <typename T, typename S, int N, msdf_atlas::GeneratorFunction<S, N> GenFunc>
@@ -48,7 +49,7 @@ namespace Shado {
         m_Data->m_FontTypeHandle = ft;
 
         // TODO: When we have an asset manager, we should load the font from memory buffer
-        FontHandle* font = loadFont(ft, path.string().c_str());
+        FontHandle* font = loadFont(ft, (Project::GetProjectDirectory() / path).string().c_str());
         if (!font) {
             SHADO_CORE_ERROR("Failed to load font from path: {0}", path.string());
             return;

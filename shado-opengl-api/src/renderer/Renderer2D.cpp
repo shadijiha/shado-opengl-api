@@ -803,7 +803,12 @@ namespace Shado {
         const auto& fontGeometry = font->getData().m_FontGeometry;
         const auto& metrics = fontGeometry->getMetrics();
         Ref<Texture2D> fontAtlas = font->getAtlasTexture();
-
+        
+        if (!fontAtlas || !&metrics)
+        {
+            return;
+        }
+        
         s_Data.FontAtlasTexture = fontAtlas;
 
         double x = 0.0;

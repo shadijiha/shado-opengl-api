@@ -6,6 +6,8 @@ namespace Shado
     {
         public static Window window => new Window();
 
+        public static Window viewport => new Window { name = "Viewport" };
+
         public static void Close() {
             unsafe {
                 InternalCalls.Application_Quit();
@@ -27,13 +29,15 @@ namespace Shado
         }
     }
 
-    public struct Window
+    public class Window
     {
+        internal string name = "";
+        
         public Vector2 position {
             get {
                 unsafe {
                     Vector2 pos;
-                    InternalCalls.Window_GetPosition(&pos);
+                    InternalCalls.Window_GetPosition(name, &pos);
                     return pos;
                 }
             }
@@ -43,13 +47,13 @@ namespace Shado
             get {
                 unsafe {
                     Vector2 size;
-                    InternalCalls.Window_GetSize(&size);
+                    InternalCalls.Window_GetSize(name, &size);
                     return size;
                 }
             }
             set {
                 unsafe {
-                    InternalCalls.Window_SetSize(&value);
+                    InternalCalls.Window_SetSize(name, &value);
                 }
             }
         }
@@ -109,6 +113,11 @@ namespace Shado
                     InternalCalls.Window_SetOpacity(value);
                 }
             }
+        }
+
+        public Vector2 GetRelativeMousePos()
+        {
+            return new Vector2(Input.mousePosition.x - position.x, Input.mousePosition.y - position.y);
         }
 
         public enum WindowMode

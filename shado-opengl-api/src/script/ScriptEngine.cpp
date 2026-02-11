@@ -154,7 +154,7 @@ namespace Shado {
                                        "Shado C# Scripting Engine Initialization Failure", MB_OK | MB_ICONERROR
             );
 #else
-            SHADO_CORE_ERROR("Hazel C# Scripting Engine Initialization Failure: {}", message);
+            SHADO_CORE_ERROR("Shado C# Scripting Engine Initialization Failure: {}", message);
 #endif
             break;
         }

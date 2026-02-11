@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -14,7 +15,183 @@ using System.Threading;
 using System.Web;
 
 namespace Sandbox
-{ 
+{
+    /**
+     * Original shado script
+     */
+    public class SScript : IDisposable
+    {
+        public Test entity { get; set; }
+        
+        protected string compilerExe = new("D:\\Code\\Projects\\Compiler\\Cs Compile test\\bin\\Release\\net6.0\\Cs Compile test.exe");
+        protected StreamWriter? scriptProcessIn;
+        protected string scriptPath = @"D:\Code\Projects\shado-java-graphics-api\assets\cmd_script.sscript";
+        protected FileSystemWatcher? watcher;
+        public CancellationTokenSource TokenSourceource { get; private set; }
+
+        public SScript()
+        {
+            Init();
+        }
+
+        protected void Init()
+        {
+            TokenSourceource = new();
+            watcher = new(Path.GetDirectoryName(scriptPath));
+            watcher.Filter = Path.GetFileName(scriptPath);
+            watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size;
+            
+            watcher.Changed += ReloadScript;
+            watcher.Created += ReloadScript;
+
+            watcher.EnableRaisingEvents = true;
+
+            Entity? textEntity = Entity.FindEntityByName("sscript content");
+            if (textEntity is not null)
+                textEntity.GetComponent<TextComponent>().text = File.ReadAllText(scriptPath);
+        }
+        
+        public void Execute()
+        {
+            RunScriptAsync(compilerExe, scriptPath, TokenSourceource.Token);
+        }
+        
+        protected async Task RunScriptAsync(string compilerExePath, string scriptPath, CancellationToken token)
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = compilerExePath,
+                    Arguments = GetProcessArguments(),
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+                process.Start();
+
+                scriptProcessIn = process.StandardInput;
+
+                try
+                {
+                    var outputTask = Task.Run(async () =>
+                    {
+                        using var reader = process.StandardOutput;
+                        while (await reader.ReadLineAsync(token) is { } line && !token.IsCancellationRequested)
+                        {
+                            ProcessCommand(line.Trim());
+                        }
+                    }, token);
+
+                    await outputTask;
+                }
+                catch (OperationCanceledException e)
+                {
+                    Log.Info("Cancelling SScript");
+                }
+                
+                scriptProcessIn.Close(); // Close stdin to signal end of input
+
+                Log.Info($"killing process {process.ProcessName}...");
+                process.Kill(true);
+                
+                await process.WaitForExitAsync(token);
+                ProcessCommand($"EXIT,{process.ExitCode}");
+            }
+            catch (Exception e)
+            {
+                ProcessCommand($"ERROR,{e.Message}");
+            }
+        }
+        
+        protected void ReloadScript(object sender, FileSystemEventArgs e) {
+            Log.Info("SScript Change detected. Reloading...");
+            Dispose();
+            Init();
+            Execute();
+        }
+
+        protected void ProcessCommand(String rawCommand) {
+            Log.Info("> " + rawCommand);
+            String[] tokens = rawCommand.Trim().Split([",", ";"], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            String command = tokens[0].ToLower();
+
+            switch (command) {
+                case "exit":
+                    break;
+                case "error":
+                    Log.Info(tokens[1]);
+                    break;
+                case "wait": {
+                    var ms = tokens[1];
+                    Thread.Sleep(int.Parse(ms));
+                    break;
+                }
+                case "left": {
+                    entity.transform.position =
+                        entity.transform.position with { x = entity.transform.position.x - 1.0f };
+                    break;
+                }
+                case "right": {
+                    entity.transform.position =
+                        entity.transform.position with { x = entity.transform.position.x + 1.0f };
+                    break;
+                }
+                case "colour": {
+                    float r = float.Parse(tokens[1]) / 255.0f;
+                    float g = float.Parse(tokens[2]) / 255.0f;
+                    float b = float.Parse(tokens[3]) / 255.0f;
+                    entity.GetComponent<SpriteRendererComponent>().colour = new Vector4(r, g, b, 1);
+                    break;
+                }
+                default:
+                    Log.Error("Unexpected value: " + command);
+                    break;
+            }
+        }
+
+        public void SendToScript(String message) {
+            scriptProcessIn.Write(message + "\n");
+            scriptProcessIn.Flush();
+        }
+
+        public void Dispose()
+        {
+            TokenSourceource.Cancel();
+            scriptProcessIn?.Dispose();
+            watcher?.Dispose();
+            TokenSourceource.Dispose();
+        }
+
+        protected virtual string GetProcessArguments()
+        {
+            return $"--filepath \"{scriptPath}\"";
+        }
+    }
+
+    /**
+     * Shado simple script with end keywords 
+     */
+    public class SimpleScript : SScript
+    {
+        public SimpleScript()
+        {
+            Dispose();
+            compilerExe = @"java";
+            scriptPath = @"D:\Code\Projects\shado-script-simplified\test.simple";
+            Init();
+        }
+
+        protected override string GetProcessArguments()
+        {
+            return $@"-jar ""D:\Code\Projects\shado-script-simplified\out\artifacts\shado_script_simplified_jar\shado-script-simplified.jar"" -time -f ""{scriptPath}"" -import-dir ""D:\Code\Projects\shado-script-simplified\stdlib""";
+        }
+    }
+    
     public class Test : Entity
     {
         static Random random = new Random();
@@ -32,11 +209,17 @@ namespace Sandbox
 
         private List<GridCell> cells = new();
 
+        private SScript sscript;
 
         protected override void OnCreate()
         {
             //FetchRandomCaitImage();
-             
+            sscript = new SimpleScript
+            {
+                entity = this
+            };
+            sscript.Execute();
+            
             const float max = 5.0f;
             // for (float y = -5.0f; y < max; y += 0.5f)
             // {
@@ -47,21 +230,25 @@ namespace Sandbox
             //         cells[^1].OnCreate();
             //     }
             // }
-
-            texture = new Texture2D("Assets/riven2.jpg");
-            GetComponent<SpriteRendererComponent>()!.tilingFactor = (int)Mathf.Random(2, 10);
-            GetComponent<SpriteRendererComponent>()!.texture = texture;
             
-            OnCollision2DEnterEvent += (info, other) => {
-                Log.Info("Collision with {0}", other?.tag);
-            };
-
-            Entity e = linePrefab.Instantiate(Vector3.one);
-            e.transform.rotation = new Vector3(0, Mathf.DegToRad(30.0f), 0);
+            // texture = new Texture2D("Assets/riven2.jpg");
+            // GetComponent<SpriteRendererComponent>()!.tilingFactor = (int)Mathf.Random(2, 10);
+            // GetComponent<SpriteRendererComponent>()!.texture = texture;
+            //
+            // OnCollision2DEnterEvent += (info, other) => {
+            //     Log.Info("Collision with {0}", other?.tag);
+            // };
+            //
+            // Entity e = linePrefab.Instantiate(Vector3.one);
+            // e.transform.rotation = new Vector3(0, Mathf.DegToRad(30.0f), 0);
+            
+            sscript.SendToScript("queen");
+            sscript.SendToScript("Queen cait from game engine C#");
         }
 
         protected override void OnUpdate(float dt)
         {
+            return;
             totalDt += dt;
             //if (GetComponent<SpriteRendererComponent>().texture != texture)
             //    GetComponent<SpriteRendererComponent>().texture = texture;
@@ -97,7 +284,11 @@ namespace Sandbox
             }
         }
 
-
+        protected override void OnDestroy()
+        {
+            sscript.Dispose();
+        }
+        
         private WebRequestHelper web = new();
         
         record struct DirListResponse

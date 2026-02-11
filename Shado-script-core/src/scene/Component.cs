@@ -422,6 +422,28 @@ namespace Shado
             }
         }
 
+        public Matrix4x4 view
+        {
+            get
+            {
+                unsafe
+                {
+                    return InternalCalls.CameraComponent_GetView(Entity.ID);
+                }
+            }
+        }
+        
+        public Matrix4x4 projection
+        {
+            get
+            {
+                unsafe
+                {
+                    return InternalCalls.CameraComponent_GetProjection(Entity.ID);
+                }
+            }
+        }
+        
         public void SetViewport(uint width, uint height) {
             unsafe {
                 InternalCalls.CameraComponent_SetViewportSize(Entity.ID, width, height);

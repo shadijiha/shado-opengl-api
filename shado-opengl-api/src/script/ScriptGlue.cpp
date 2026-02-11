@@ -164,6 +164,8 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(CameraComponent_GetType);
         SHADO_ADD_INTERNAL_CALL(CameraComponent_SetType);
         SHADO_ADD_INTERNAL_CALL(CameraComponent_SetViewportSize);
+        SHADO_ADD_INTERNAL_CALL(CameraComponent_GetView);
+        SHADO_ADD_INTERNAL_CALL(CameraComponent_GetProjection);
 
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_GetColor);
         SHADO_ADD_INTERNAL_CALL(SpriteRendererComponent_SetColor);
@@ -238,6 +240,10 @@ namespace Shado {
         SHADO_ADD_INTERNAL_CALL(Project_GetAssetDirectory);
         SHADO_ADD_INTERNAL_CALL(Project_GetProjectDirectory);
         SHADO_ADD_INTERNAL_CALL(Project_GetRelativePath);
+        
+        SHADO_ADD_INTERNAL_CALL(Math_MultiplyMatrix);
+        SHADO_ADD_INTERNAL_CALL(Math_MultiplyMatrixVector4);
+        SHADO_ADD_INTERNAL_CALL(Math_InverseMatrix);
     }
 
     namespace InternalCalls {
@@ -284,17 +290,48 @@ namespace Shado {
 #pragma endregion
 
 #pragma region Window
-        void Window_GetPosition(glm::vec2* outPosition) {
+        void Window_GetPosition(Coral::String name, glm::vec2* outPosition) {
             *outPosition = {0, 0};
+            
+            std::string namestr = name;
+            if (!namestr.empty())
+            {
+                if (ImGuiWindow* window = ImGui::FindWindowByName(namestr.c_str()))
+                {
+                    ImVec2 pos = window->Pos;
+                    *outPosition = {pos.x, pos.y};
+                    return;
+                }
+            }
+            
             outPosition->x = Application::get().getWindow().getPosX();
             outPosition->y = Application::get().getWindow().getPosY();
         }
 
-        void Window_GetSize(glm::vec2* outSize) {
+        void Window_GetSize(Coral::String name, glm::vec2* outSize) {
+            std::string namestr = name;
+            if (!namestr.empty())
+            {
+                if (ImGuiWindow* window = ImGui::FindWindowByName(namestr.c_str()))
+                {
+                    ImVec2 size = window->Size;
+                    *outSize = {size.x, size.y};
+                    return;
+                }
+            }
             *outSize = {Application::get().getWindow().getWidth(), Application::get().getWindow().getHeight()};
         }
 
-        void Window_SetSize(glm::vec2* inSize) {
+        void Window_SetSize(Coral::String name, glm::vec2* inSize) {
+            std::string namestr = name;
+            if (!namestr.empty())
+            {
+                if (ImGuiWindow* window = ImGui::FindWindowByName(namestr.c_str()))
+                {
+                    window->Size = {inSize->x, inSize->y};
+                    return;
+                }
+            }
             Application::get().getWindow().resize(inSize->x, inSize->y);
         }
 
@@ -669,6 +706,24 @@ namespace Shado {
             HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
             HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
             entity.getComponent<CameraComponent>().setViewportSize(inWidth, inHeight);
+        }
+        
+        glm::mat4 CameraComponent_GetView(uint64_t entityID)
+        {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
+            
+            return entity.getComponent<CameraComponent>().camera->getViewMatrix();
+        }
+        
+        glm::mat4 CameraComponent_GetProjection(uint64_t entityID)
+        {
+            auto entity = GetEntity(entityID);
+            HZ_ICALL_VALIDATE_PARAM_V(entity, entityID);
+            HZ_ICALL_VALIDATE_PARAM(entity.hasComponent<CameraComponent>());
+            
+            return entity.getComponent<CameraComponent>().camera->getProjectionMatrix();
         }
 
 #pragma endregion
@@ -1297,5 +1352,23 @@ namespace Shado {
             return Coral::String::New(Project::GetActive()->GetRelativePath(std::string(path)).lexically_normal().string());
         }
 #pragma endregion 
+        
+#pragma region Math
+        glm::mat4 Math_MultiplyMatrix(glm::mat4 a, glm::mat4 b)
+        {
+            return a * b;
+        }
+    
+        glm::vec4 Math_MultiplyMatrixVector4(glm::mat4 m, glm::vec4 vec)
+        {
+            return m * vec;
+        }
+        
+        glm::mat4 Math_InverseMatrix(glm::mat4 a)
+        {
+            glm::mat4 b = glm::inverse(a);
+            return b;
+        }
+#pragma endregion
     }
 }
