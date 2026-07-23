@@ -84,7 +84,7 @@ namespace Shado {
 
             char buffer[512];
             memset(buffer, 0, sizeof(buffer));
-            strcpy_s(buffer, sizeof(buffer), tc.tag.c_str());
+            std::strncpy(buffer, tc.tag.c_str(), sizeof(buffer) - 1);
             if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
                 tc.tag = std::string(buffer);
             }
@@ -393,7 +393,7 @@ namespace Shado {
 
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                const wchar_t* pathStr = (const wchar_t*)payload->Data;
+                const std::filesystem::path::value_type* pathStr = (const std::filesystem::path::value_type*)payload->Data;
                 auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
 
                 if (Prefab::IsPrefabPath(path)) {

@@ -143,9 +143,9 @@ namespace Shado {
                 }
 
                 if (ImGui::BeginDragDropSource()) {
-                    const wchar_t* itemPath = relativePath.c_str();
+                    const auto* itemPath = relativePath.c_str();
                     ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath,
-                                              (wcslen(itemPath) + 1) * sizeof(wchar_t));
+                                              (relativePath.native().size() + 1) * sizeof(std::filesystem::path::value_type));
 
                     // Drag and drop preview
                     if (isImage(path)) {

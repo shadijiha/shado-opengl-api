@@ -1,13 +1,14 @@
 #pragma once
 #include <filesystem>
 #include <string>
-#include <Windows.h>
-#include <winuser.h>
 
 namespace Shado {
 
 	class FileDialogs {
 	public:
+		// filter uses the Win32 double-null-terminated format on Windows, e.g.
+		// "Shado Project (*.sproj)\0*.sproj\0". On other platforms the filter is
+		// used on a best-effort basis (or ignored).
 		static std::string openFile(const char* filter);
 		static std::string saveFile(const char* filter);
 
@@ -16,15 +17,17 @@ namespace Shado {
 
 	class Dialog {
 	public:
+		// Platform-neutral icon identifiers. Each platform implementation maps
+		// these onto its native dialog icon constants.
 		enum class DialogIcon {
-			EXCLAMATION = MB_ICONEXCLAMATION,
-			WARNING = MB_ICONWARNING,
-			INFORMATION = MB_ICONINFORMATION,
-			ASTERISK = MB_ICONASTERISK,
-			QUESTION = MB_ICONQUESTION,
-			STOP = MB_ICONSTOP,
-			ERROR_ICON = MB_ICONERROR,
-			HAND = MB_ICONHAND
+			EXCLAMATION,
+			WARNING,
+			INFORMATION,
+			ASTERISK,
+			QUESTION,
+			STOP,
+			ERROR_ICON,
+			HAND
 		};
 
 		static void alert(const std::string& message, const std::string& alertTitle = "Alert", DialogIcon icon = DialogIcon::WARNING);

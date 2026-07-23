@@ -28,7 +28,12 @@ namespace Shado {
 	}
 
 	VertexArray::VertexArray() {
+#if defined(SHADO_PLATFORM_MACOS)
+		// macOS OpenGL caps at 4.1 and has no DSA; glCreateVertexArrays is 4.5.
+		glGenVertexArrays(1, &m_RendererID);
+#else
 		glCreateVertexArrays(1, &m_RendererID);
+#endif
 	}
 
 	VertexArray::~VertexArray() {

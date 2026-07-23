@@ -1,6 +1,7 @@
 ﻿#include "UI.h"
 
 #include <filesystem>
+#include <cstring>
 
 #include "asset/AssetManager.h"
 #include "debug/Debug.h"
@@ -168,7 +169,7 @@ namespace Shado {
         if (ImGui::BeginPopupContextItem()) {
             if (ImGui::MenuItem("Open...")) {
                 std::filesystem::path path = std::filesystem::path(filepath).is_absolute()
-                                                 ? filepath
+                                                 ? std::filesystem::path(filepath)
                                                  : Project::GetProjectDirectory() / filepath;
                 Dialog::openPathInExplorer(path);
             }
@@ -178,7 +179,7 @@ namespace Shado {
         // For drag and drop
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                auto pathRelativeToProject = (const wchar_t*)payload->Data;
+                auto pathRelativeToProject = (const std::filesystem::path::value_type*)payload->Data;
                 std::filesystem::path dataPath = pathRelativeToProject;
 
                 bool acceptable = dragAndDropExtensions.empty();
@@ -285,10 +286,12 @@ namespace Shado {
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 10});
 
         char buffer[512] = {};
-        if (strcpy_s<512>(buffer, value.c_str()) != 0) {
+        if (value.size() >= sizeof(buffer)) {
             value = "<Error strcpy_s>";
             return false;
         }
+        std::memcpy(buffer, value.c_str(), value.size());
+        buffer[value.size()] = '\0';
 
         bool modified = false;
         if (ImGui::InputText("##textControl", buffer, sizeof(buffer), flags)) {

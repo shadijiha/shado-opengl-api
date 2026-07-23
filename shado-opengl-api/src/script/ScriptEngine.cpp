@@ -14,7 +14,49 @@
 #include "Project/Project.h"
 #include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
 
+#if defined(SHADO_PLATFORM_WINDOWS)
+#include <Windows.h>
+#elif defined(SHADO_PLATFORM_MACOS)
+#include <mach-o/dyld.h>
+#include <cstdint>
+#elif defined(SHADO_PLATFORM_LINUX)
+#include <unistd.h>
+#endif
+
 namespace Shado {
+    // Resolve the directory containing the running executable. The scripting
+    // host's assemblies (the "DotNet" folder) are deployed next to the binary,
+    // so this must not depend on the current working directory (which may be
+    // changed by GLFW/Cocoa or not yet set during static initialization).
+    static std::filesystem::path GetExecutableDir() {
+#if defined(SHADO_PLATFORM_WINDOWS)
+        char buffer[MAX_PATH] = {0};
+        GetModuleFileNameA(nullptr, buffer, MAX_PATH);
+        return std::filesystem::path(buffer).parent_path();
+#elif defined(SHADO_PLATFORM_MACOS)
+        char buffer[4096];
+        uint32_t size = sizeof(buffer);
+        if (_NSGetExecutablePath(buffer, &size) == 0) {
+            std::error_code ec;
+            auto canonical = std::filesystem::canonical(std::filesystem::path(buffer), ec);
+            if (!ec)
+                return canonical.parent_path();
+            return std::filesystem::path(buffer).parent_path();
+        }
+        return std::filesystem::current_path();
+#elif defined(SHADO_PLATFORM_LINUX)
+        char buffer[4096];
+        ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+        if (len != -1) {
+            buffer[len] = '\0';
+            return std::filesystem::path(buffer).parent_path();
+        }
+        return std::filesystem::current_path();
+#else
+        return std::filesystem::current_path();
+#endif
+    }
+
     static std::unordered_map<std::string, DataType> s_DataTypeLookup = {
         {"System.SByte", DataType::SByte},
         {"System.Byte", DataType::Byte},
@@ -133,7 +175,7 @@ namespace Shado {
 
         Coral::HostSettings settings =
         {
-            .CoralDirectory = (std::filesystem::current_path() / "DotNet").string(),
+            .CoralDirectory = (GetExecutableDir() / "DotNet").string(),
             .MessageCallback = OnCoralMessage,
             .ExceptionCallback = OnCSharpException
         };
@@ -212,12 +254,37 @@ namespace Shado {
         m_LoadContext = std::make_unique<Coral::AssemblyLoadContext>(
             std::move(m_Host->CreateAssemblyLoadContext("HazelLoadContext")));
 
-        auto scriptCorePath = (Project::GetProjectDirectory() / Project::GetActive()->GetConfig().ScriptModulePath).
-            parent_path() / "Shado-script-core.dll";
+        // Locate Shado-script-core.dll. Historically this was resolved only
+        // relative to the project's ScriptModulePath, but that path is often a
+        // platform-specific build output that does not exist (e.g. a Windows
+        // "bin/Release-windows-x86_64/..." path opened on macOS). Fall back to
+        // the engine's own deploy locations next to the executable.
+        const auto exeDir = GetExecutableDir();
+        std::vector<std::filesystem::path> candidates = {
+            (Project::GetProjectDirectory() / Project::GetActive()->GetConfig().ScriptModulePath).parent_path()
+                / "Shado-script-core.dll",
+            exeDir / "ScriptCore" / "Shado-script-core.dll",
+            exeDir / "DotNet" / "Shado-script-core.dll",
+            exeDir / "Shado-script-core.dll",
+        };
 
-        if (!std::filesystem::exists(scriptCorePath)) {
-            throw std::runtime_error(
-                std::format("Could not find Shado-script-core.dll in directory {}", scriptCorePath.string()));
+        std::filesystem::path scriptCorePath;
+        for (const auto& candidate : candidates) {
+            std::error_code ec;
+            if (std::filesystem::exists(candidate, ec)) {
+                scriptCorePath = candidate;
+                break;
+            }
+        }
+
+        if (scriptCorePath.empty()) {
+            // Not fatal: the editor can still run without the scripting core,
+            // it just cannot load/run C# scripts. Throwing here would propagate
+            // out of Project::Load and terminate the application.
+            SHADO_CORE_ERROR(
+                "Could not find Shado-script-core.dll (looked next to the project's script module and in the "
+                "editor's ScriptCore/DotNet folders). C# scripting will be unavailable for this project.");
+            return;
         }
 
         m_CoreAssemblyData = CreateScoped<AssemblyData>();

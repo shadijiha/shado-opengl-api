@@ -75,7 +75,13 @@ namespace Shado {
         static const uint32_t MaxQuads = 20000;
         static const uint32_t MaxVertices = MaxQuads * 4;
         static const uint32_t MaxIndices = MaxQuads * 6;
+#if defined(SHADO_PLATFORM_MACOS)
+        // macOS OpenGL 4.1 only guarantees 16 fragment texture image units
+        // (GL_MAX_TEXTURE_IMAGE_UNITS).
+        static const uint32_t MaxTextureSlots = 16; // TODO: RenderCaps
+#else
         static const uint32_t MaxTextureSlots = 32; // TODO: RenderCaps
+#endif
 
         Ref<VertexArray> QuadVertexArray;
         Ref<VertexBuffer> QuadVertexBuffer;
@@ -230,6 +236,16 @@ namespace Shado {
         s_Data.LineShader = ShaderImporter::LoadShader("assets/shaders/Renderer2D_Line.glsl");
         s_Data.TextShader = ShaderImporter::LoadShader("assets/shaders/Renderer2D_Text.glsl");
 
+#if defined(SHADO_PLATFORM_MACOS)
+        // On macOS the sampler array binding cannot be expressed in-shader
+        // (layout(binding=) is 4.2+ and is stripped when downgrading to GLSL
+        // 410), so bind sampler units 0..N explicitly. On Windows/Linux the
+        // shaders declare layout(binding=0) and this is unnecessary.
+        s_Data.QuadShader->setIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
+        s_Data.CircleShader->setIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
+        s_Data.TextShader->setIntArray("u_Textures", samplers, s_Data.MaxTextureSlots);
+#endif
+
         // Set first texture slot to 0
         s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
@@ -253,6 +269,9 @@ namespace Shado {
          * Debug
          */
 #if SHADO_DEBUG || SHADO_RELEASE
+        // KHR_debug (glDebugMessageCallback) is OpenGL 4.3+. macOS caps at 4.1
+        // and GLEW resolves the entry point to null there, so guard on it.
+        if (glDebugMessageCallback) {
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // Ensures the callback is executed immediately
         glDebugMessageCallback([](GLenum source, GLenum type, GLuint id,
@@ -272,6 +291,7 @@ namespace Shado {
                 SHADO_CORE_ERROR("[OpenGL Error] {} ({}): {}", severityString, id, message);
             }, nullptr);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+        }
 #endif
     }
 
@@ -800,15 +820,19 @@ namespace Shado {
         auto& font = textRenderer.font;
         auto& string = textRenderer.text;
 
+        // The font may have failed to load (e.g. a missing/invalid font path),
+        // in which case its geometry and atlas were never created. Guard against
+        // that BEFORE dereferencing (the previous `!&metrics` check was a no-op
+        // since the address of a reference is never null).
         const auto& fontGeometry = font->getData().m_FontGeometry;
-        const auto& metrics = fontGeometry->getMetrics();
         Ref<Texture2D> fontAtlas = font->getAtlasTexture();
-        
-        if (!fontAtlas || !&metrics)
+        if (!fontGeometry || !fontAtlas)
         {
             return;
         }
-        
+
+        const auto& metrics = fontGeometry->getMetrics();
+
         s_Data.FontAtlasTexture = fontAtlas;
 
         double x = 0.0;
