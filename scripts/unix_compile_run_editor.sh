@@ -75,7 +75,12 @@ if [[ "$DO_BUILD" == "1" ]]; then
   make config=$CONFIG shado-editor
 
   echo ">> Building C# managed assemblies (dotnet)..."
-  dotnet build "$CORAL_MANAGED/Coral.Managed.csproj" -c Release -o "$CORAL_MANAGED/bin-managed" --nologo -v q
+  # Coral.Managed via the upstream tracked static csproj -> dll + runtimeconfig + deps.
+  dotnet build "$CORAL_MANAGED/Coral.Managed-Static.csproj" -c Release -o "$CORAL_MANAGED/bin-managed" --nologo -v q
+  # Generate the C# project files with premake (Coral's own cross-platform
+  # pattern: gmake2 for native, vs2022 for the managed .csproj), then build
+  # Shado-script-core (which references Coral.Managed).
+  premake5 vs2022 >/dev/null
   dotnet build "$SCRIPT_CORE/Shado-script-core.csproj" -c Release -o "$SCRIPT_CORE/bin-core" --nologo -v q
 
   echo ">> Deploying managed assemblies to $EDITOR_DIR/DotNet ..."
