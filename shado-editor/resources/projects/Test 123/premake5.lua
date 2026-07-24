@@ -39,9 +39,8 @@ project "Test123"
 	
 	links
 	{
-		RootDir .. "shado-editor/ScriptCore/Shado-script-core.dll",
-		RootDir .. "shado-editor/DotNet/Coral.Managed.dll",
-		
+        "Coral.Managed",
+        "Shado-script-core"
 	}
 
 	files

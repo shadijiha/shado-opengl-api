@@ -2,5 +2,5 @@ Project:
   Name: Test123
   StartScene: sample.shadoscene
   AssetDirectory: Assets
-  ScriptModulePath: bin/Release-macosx-AARCH64/Test123/Test123.dll
+  ScriptModulePath: bin/Release-windows-x86_64/Test123/Test123.dll
   AssetRegistryPath: AssetRegistry.sar
