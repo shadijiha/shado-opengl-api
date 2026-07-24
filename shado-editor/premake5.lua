@@ -58,6 +58,12 @@ project "shado-editor"
         "FMT_CONSTEVAL="
     }
 
+    -- Ensure the C# assemblies are built before the editor's post-build deploy
+    -- (Visual Studio path). On gmake they're excluded and built via dotnet.
+    if BUILD_CSHARP == nil or BUILD_CSHARP then
+        dependson { "Coral.Managed", "Shado-script-core" }
+    end
+
     filter "system:windows"
         staticruntime "Off"
         systemversion "latest"
@@ -65,6 +71,16 @@ project "shado-editor"
         defines
         {
             "SHADO_PLATFORM_WINDOWS"
+        }
+
+        -- Stage Shado-script-core.dll (built to shado-editor/ScriptCore) into
+        -- shado-editor/DotNet so the common DotNet->bin copy below deploys it
+        -- next to the executable. Coral.Managed is staged there by the engine's
+        -- own post-build step.
+        postbuildcommands
+        {
+            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
+            '{COPYFILE} "%{wks.location}/shado-editor/ScriptCore/Shado-script-core.dll" "%{wks.location}/shado-editor/DotNet/Shado-script-core.dll"',
         }
 
     filter "system:macosx"

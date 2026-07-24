@@ -80,6 +80,20 @@ project "shado-opengl-api"
             "shcore.lib"
         }
 
+        -- On Windows the C# managed assemblies are built by the Visual Studio
+        -- solution (Coral.Managed -> vendor/Coral/Build/<config>/, Shado-script-core
+        -- -> shado-editor/ScriptCore/). Deploy them into shado-editor/DotNet so the
+        -- editor's post-build step then copies them next to the executable and the
+        -- scripting host can load them. (On macOS/Linux this deployment is handled
+        -- by scripts/unix_compile_run_editor.sh instead.)
+        postbuildcommands
+        {
+            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
+            '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/%{cfg.buildcfg}/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
+            '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/%{cfg.buildcfg}/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+            '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/%{cfg.buildcfg}/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
+        }
+
     filter "system:macosx"
         defines
         {
