@@ -5,6 +5,12 @@
 
 #if defined(SHADO_PLATFORM_WINDOWS)
 
+// <Windows.h> must be included before the Windows sub-headers below
+// (commdlg.h, shtypes.h, shlobj_core.h, glfw3native.h with GLFW_EXPOSE_NATIVE_WIN32),
+// which rely on its types. Previously this ordering was provided by
+// SceneUtils.h; keep it explicit here now that the header is platform-neutral.
+#include <Windows.h>
+#include <winuser.h>
 #include <commdlg.h>
 #include "Application.h"
 #include <GLFW/glfw3.h>
@@ -12,7 +18,6 @@
 #include <shtypes.h>
 #include <GLFW/glfw3native.h>
 #include <shlobj_core.h>
-#include <Windows.h>
 
 #include "Project/Project.h"
 #include "asset/AssetManager.h" // <--- This is needed DO NOT REMOVE
