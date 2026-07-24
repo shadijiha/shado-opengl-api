@@ -133,6 +133,13 @@ project "shado-opengl-api"
         defines "SHADO_DIST"
         optimize "Full"
 
-    -- needed for ##__VA_ARGS__ in macros
+    -- NOTE: /Zc:preprocessor (MSVC's conforming preprocessor) breaks
+    -- <windows.h>/winbase.h on Windows SDKs older than 10.0.22621 — every
+    -- WINBASEAPI/WINAPI declaration fails to parse, producing a storm of
+    -- "identifier not found" / "undeclared identifier" errors for all Win32
+    -- functions. The engine only needs the traditional preprocessor's
+    -- `, ##__VA_ARGS__` comma-elision (for the log/assert macros), which the
+    -- default (traditional) MSVC preprocessor supports, so explicitly keep the
+    -- conforming preprocessor OFF.
     filter "action:vs*"
-        buildoptions { "/Zc:preprocessor" }
+        buildoptions { "/Zc:preprocessor-" }
