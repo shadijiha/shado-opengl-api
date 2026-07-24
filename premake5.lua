@@ -12,6 +12,11 @@ workspace "shado-opengl-api"
 	-- Windows/Linux desktop builds target x86_64.
 	filter "system:windows"
 		architecture "x64"
+		-- Use a valid modern Windows SDK for EVERY project in the workspace.
+		-- Some vendored projects (e.g. Coral.Native) don't set this themselves;
+		-- without it, projects that include <Windows.h> fail to compile with
+		-- "undeclared identifier" errors in WinBase.h (stale/8.1 SDK fallback).
+		systemversion "latest"
 	filter "system:linux"
 		architecture "x64"
 	filter "system:macosx"
