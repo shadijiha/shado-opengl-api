@@ -17,6 +17,12 @@ workspace "shado-opengl-api"
 		-- without it, projects that include <Windows.h> fail to compile with
 		-- "undeclared identifier" errors in WinBase.h (stale/8.1 SDK fallback).
 		systemversion "latest"
+		-- Target Windows 10 (0x0A00). Defining these as compiler macros (rather
+		-- than relying on sdkddkver.h defaults) guarantees the modern Win32 API
+		-- surface is available regardless of header include order — otherwise
+		-- winnt.h/WinBase.h emit "undeclared identifier" for symbols gated behind
+		-- _WIN32_WINNT (SRWLOCK, CONDITION_VARIABLE, ...).
+		defines { "_WIN32_WINNT=0x0A00", "WINVER=0x0A00" }
 	filter "system:linux"
 		architecture "x64"
 	filter "system:macosx"
