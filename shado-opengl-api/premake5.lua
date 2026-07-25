@@ -1,10 +1,12 @@
-
 project "shado-opengl-api"
     kind "StaticLib"
     language "C++"
     staticruntime "off"
     cppdialect "C++20"
-    dependson "Coral.Managed"
+
+    if BUILD_CSHARP then
+        dependson "Coral.Managed"
+    end
 
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -39,19 +41,27 @@ project "shado-opengl-api"
         "%{IncludeDir.shado_bin_serialization}"
     }
 
+    -- Sibling (project) libraries. These are the same on every platform.
     links
     {
         "GLFW",
         "GLEW",
         "ImGui",
-        "gdi32.lib",
-        "opengl32.lib",
         "box2d",
         "yaml-cpp",
-        "shcore.lib",
         "msdf-atlas-gen",
         "Coral.Native",
         "shado-bin-serialization"
+    }
+
+    defines
+    {
+        "GLEW_STATIC",
+        "SHADO_ENABLE_ASSERTS",
+        -- The bundled fmt in this spdlog fork uses consteval in a way that
+        -- newer clang/gcc reject under C++20. Disable fmt's consteval checks.
+        "FMT_CONSTEVAL=",
+        "SHADO_OPENGL_SOLUTION_DIR_TODO_REMOVE=\"" .. path.getabsolute("%{wks.location}") .. "\""
     }
 
     filter "system:windows"
@@ -60,52 +70,76 @@ project "shado-opengl-api"
 
         defines
         {
-            "SHADO_PLATFORM_WINDOWS", "GLEW_STATIC", "SHADO_ENABLE_ASSERTS"
+            "SHADO_PLATFORM_WINDOWS"
         }
 
+        links
+        {
+            "gdi32.lib",
+            "opengl32.lib",
+            "shcore.lib"
+        }
 
-    defines 
-    {
-        "SHADO_OPENGL_SOLUTION_DIR_TODO_REMOVE=\"" .. path.getabsolute("%{wks.location}") .. "\""
-    }
+    filter "system:macosx"
+        defines
+        {
+            "SHADO_PLATFORM_MACOS",
+            "GL_SILENCE_DEPRECATION"
+        }
+
+        -- Objective-C++ implementations (file dialogs, etc.)
+        files
+        {
+            "src/**.mm"
+        }
+
+        links
+        {
+            "OpenGL.framework",
+            "Cocoa.framework",
+            "IOKit.framework",
+            "CoreVideo.framework",
+            "CoreFoundation.framework",
+            "AppKit.framework",
+            "z"
+        }
+
+    filter "system:linux"
+        pic "On"
+        defines
+        {
+            "SHADO_PLATFORM_LINUX"
+        }
+
+        links
+        {
+            "GL",
+            "X11",
+            "pthread",
+            "dl",
+            "m",
+            "z"
+        }
 
     filter "configurations:Debug"
         defines {"SHADO_DEBUG", "SHADO_PROFILE"}
         symbols "On"
 
-        postbuildcommands
-        {
-            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
-            '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
-		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
-		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
-		    '{COPYFILE} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Debug/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
-        }
-
     filter "configurations:Release"
         defines "SHADO_RELEASE"
         optimize "On"
-
-        postbuildcommands {
-            '{MKDIR} "%{wks.location}/shado-editor/DotNet"',
-            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
-        }
 
     filter "configurations:Dist"
         defines "SHADO_DIST"
         optimize "Full"
 
-        postbuildcommands {
-            '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.dll" "%{wks.location}/shado-editor/DotNet/Coral.Managed.dll"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.pdb" "%{wks.location}/shado-editor/DotNet/Coral.Managed.pdb"',
-		    '{COPY} "%{wks.location}/shado-opengl-api/vendor/Coral/Build/Release/Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
-        }
-
-    -- needed for ##__VA_ARGS__ in macros
+    -- NOTE: /Zc:preprocessor (MSVC's conforming preprocessor) breaks
+    -- <windows.h>/winbase.h on Windows SDKs older than 10.0.22621 — every
+    -- WINBASEAPI/WINAPI declaration fails to parse, producing a storm of
+    -- "identifier not found" / "undeclared identifier" errors for all Win32
+    -- functions. The engine only needs the traditional preprocessor's
+    -- `, ##__VA_ARGS__` comma-elision (for the log/assert macros), which the
+    -- default (traditional) MSVC preprocessor supports, so explicitly keep the
+    -- conforming preprocessor OFF.
     filter "action:vs*"
-        buildoptions { "/Zc:preprocessor" }
-
+        buildoptions { "/Zc:preprocessor-" }

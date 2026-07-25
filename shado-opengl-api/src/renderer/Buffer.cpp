@@ -24,13 +24,21 @@ namespace Shado {
     }
 
     VertexBuffer::VertexBuffer(uint32_t size) {
+#if defined(SHADO_PLATFORM_MACOS)
+        glGenBuffers(1, &m_RendererID); // macOS 4.1 has no DSA (glCreateBuffers is 4.5)
+#else
         glCreateBuffers(1, &m_RendererID);
+#endif
         glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
         glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
     }
 
     VertexBuffer::VertexBuffer(float* vertices, uint32_t size) {
+#if defined(SHADO_PLATFORM_MACOS)
+        glGenBuffers(1, &m_RendererID); // macOS 4.1 has no DSA (glCreateBuffers is 4.5)
+#else
         glCreateBuffers(1, &m_RendererID);
+#endif
         glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
         glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
     }
@@ -67,7 +75,11 @@ namespace Shado {
 
     IndexBuffer::IndexBuffer(uint32_t* indices, uint32_t count)
         : m_Count(count) {
+#if defined(SHADO_PLATFORM_MACOS)
+        glGenBuffers(1, &m_RendererID); // macOS 4.1 has no DSA (glCreateBuffers is 4.5)
+#else
         glCreateBuffers(1, &m_RendererID);
+#endif
 
         // GL_ELEMENT_ARRAY_BUFFER is not valid without an actively bound VAO
         // Binding with GL_ARRAY_BUFFER allows the data to be loaded regardless of VAO state. 

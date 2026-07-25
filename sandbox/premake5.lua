@@ -33,16 +33,65 @@ project "sandbox"
 	links
 	{
 		"shado-opengl-api",
+		"GLFW",
+		"GLEW",
+		"ImGui",
+		"Box2D",
+		"yaml-cpp",
+		"msdf-atlas-gen",
+		"msdfgen",
+		"freetype",
+		"Coral.Native",
+		"shado-bin-serialization",
 	}
-
-	filter "system:windows"
-	staticruntime "Off"
-	systemversion "latest"
 
 	defines
 	{
-		"SHADO_PLATFORM_WINDOWS"
+		"FMT_CONSTEVAL="
 	}
+
+	filter "system:windows"
+		staticruntime "Off"
+		systemversion "latest"
+
+		defines
+		{
+			"SHADO_PLATFORM_WINDOWS"
+		}
+
+	filter "system:macosx"
+		defines
+		{
+			"SHADO_PLATFORM_MACOS",
+			"GL_SILENCE_DEPRECATION"
+		}
+
+		links
+		{
+			"OpenGL.framework",
+			"Cocoa.framework",
+			"IOKit.framework",
+			"CoreVideo.framework",
+			"CoreFoundation.framework",
+			"AppKit.framework",
+			"z"
+		}
+
+	filter "system:linux"
+		defines
+		{
+			"SHADO_PLATFORM_LINUX"
+		}
+
+		links
+		{
+			"GL",
+			"X11",
+			"pthread",
+			"dl",
+			"m",
+			"z"
+		}
 
 	filter "configurations:Debug"
 		defines "SHADO_DEBUG"

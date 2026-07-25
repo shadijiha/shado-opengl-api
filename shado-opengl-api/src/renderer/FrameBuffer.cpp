@@ -19,7 +19,13 @@ namespace Shado {
 
 		static void CreateTextures(bool multisampled, uint32_t* outID, uint32_t count)
 		{
+#if defined(SHADO_PLATFORM_MACOS)
+			// macOS 4.1 has no DSA; glGenTextures + a later bind is equivalent.
+			(void)multisampled;
+			glGenTextures(count, outID);
+#else
 			glCreateTextures(TextureTarget(multisampled), count, outID);
+#endif
 		}
 
 		static void BindTexture(bool multisampled, uint32_t id)
@@ -55,7 +61,14 @@ namespace Shado {
 				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, format, width, height, GL_FALSE);
 			} else
 			{
+#if defined(SHADO_PLATFORM_MACOS)
+				// glTexStorage2D is GL 4.2; use glTexImage2D on macOS (4.1).
+				// DEPTH24_STENCIL8 pairs with DEPTH_STENCIL / UNSIGNED_INT_24_8.
+				glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+					GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+#else
 				glTexStorage2D(GL_TEXTURE_2D, 1, format, width, height);
+#endif
 
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -124,7 +137,11 @@ namespace Shado {
 			m_DepthAttachment = 0;
 		}
 
+#if defined(SHADO_PLATFORM_MACOS)
+		glGenFramebuffers(1, &m_RendererID); // macOS 4.1: no DSA (glCreateFramebuffers is 4.5)
+#else
 		glCreateFramebuffers(1, &m_RendererID);
+#endif
 		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 
 		bool multisample = m_Specification.Samples > 1;
@@ -217,8 +234,17 @@ namespace Shado {
 	{
 		SHADO_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "");
 
+#if defined(SHADO_PLATFORM_MACOS)
+		// glClearTexImage is GL 4.4 and unavailable on macOS (4.1). Clear the
+		// attachment through the bound framebuffer instead. The draw-buffer index
+		// matches the color attachment index (see glDrawBuffers setup above).
+		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+		GLint clearValue[4] = { value, value, value, value };
+		glClearBufferiv(GL_COLOR, (GLint)attachmentIndex, clearValue);
+#else
 		auto& spec = m_ColorAttachmentSpecifications[attachmentIndex];
 		glClearTexImage(m_ColorAttachments[attachmentIndex], 0,
 			Utils::HazelFBTextureFormatToGL(spec.TextureFormat), GL_INT, &value);
+#endif
 	}
 }

@@ -12,7 +12,11 @@ int WINAPI WinMain( HINSTANCE hInstance,    // HANDLE TO AN INSTANCE.  This is t
 int main(int argc, const char** argv)
 #endif
 {
+#if SHADO_PLATFORM_WINDOWS && SHADO_DIST
 	std::filesystem::current_path(std::filesystem::path(__argv[0]).parent_path());
+#else
+	std::filesystem::current_path(std::filesystem::path(argv[0]).parent_path());
+#endif
 	
 	SHADO_PROFILE_BEGIN_SESSION("Startup", "ShadoProfile-Startup.json");
 	

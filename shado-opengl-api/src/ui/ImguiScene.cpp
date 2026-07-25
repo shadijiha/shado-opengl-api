@@ -27,10 +27,27 @@ namespace Shado {
 		//io.ConfigViewportsNoAutoMerge = true;
 		//io.ConfigViewportsNoTaskBarIcon = true;
 
+		const float contentScale = Application::get().getWindow().getWindowScale().first;
+
+#if defined(SHADO_PLATFORM_MACOS)
+		// macOS renders into a high-DPI (Retina) framebuffer and ImGui already
+		// scales rendering via io.DisplayFramebufferScale. Scaling the fonts and
+		// style by the content scale again would double-apply DPI and make the
+		// UI look zoomed in. Instead, load the font atlas at native pixel size
+		// (for crispness) and scale it back down logically; leave widget metrics
+		// at their default point sizes.
+		const float fontScale = contentScale > 0.0f ? contentScale : 1.0f;
+		io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Bold.ttf", 18.0f * fontScale);
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Regular.ttf", 18.0f * fontScale);
+		io.FontGlobalScale = 1.0f / fontScale;
+#else
+		// Windows/Linux: the framebuffer matches the window in pixels, so scale
+		// the UI up for HiDPI displays.
 		io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Bold.ttf", 18.0f);
 		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Regular.ttf", 18.0f);
-		io.FontGlobalScale = Application::get().getWindow().getWindowScale().first;
-		ImGui::GetStyle().ScaleAllSizes(Application::get().getWindow().getWindowScale().first);
+		io.FontGlobalScale = contentScale;
+		ImGui::GetStyle().ScaleAllSizes(contentScale);
+#endif
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();

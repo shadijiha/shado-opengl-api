@@ -208,6 +208,7 @@ namespace Shado {
                     if (ImGui::MenuItem("Open Project...", "Ctrl+P+O")) {
                         std::string path = FileDialogs::openFile("Shado Project (*.sproj)\0*.sproj\0");
 
+                        try {
                         if (!path.empty() && Project::Load(path)) {
                             auto appAssemblyPath = Project::GetActive()->GetConfig().ScriptModulePath;
                             if (!appAssemblyPath.empty()) {
@@ -219,9 +220,16 @@ namespace Shado {
                             openScene(startScenePath);
                             m_ContentPanel = ContentBrowserPanel();
 
+                            // Only watch the script module directory if it exists; watching a
+                            // missing directory (e.g. a not-yet-built or Windows-only build path)
+                            // throws on some platforms.
+                            auto scriptModuleDir =
+                                (Project::GetProjectDirectory() / Project::GetActive()->GetConfig().ScriptModulePath)
+                                .parent_path();
+                            std::error_code ec;
+                            if (std::filesystem::exists(scriptModuleDir, ec)) {
                             m_ScriptFileWatcher = CreateScoped<filewatch::FileWatch<std::string>>(
-                                (Project::GetProjectDirectory() / Project::GetActive()->GetConfig().ScriptModulePath).
-                                string(),
+                                scriptModuleDir.string(),
                                 filewatch::ChangeLastWrite,
                                 [this](const auto& file, filewatch::Event eventType) {
                                     std::filesystem::path filePath = file;
@@ -233,6 +241,12 @@ namespace Shado {
 
                                     m_ShouldReloadCSharp = true;
                                 });
+                            }
+                        }
+                        } catch (const std::exception& e) {
+                            SHADO_CORE_ERROR("Failed to open project '{}': {}", path, e.what());
+                            Dialog::alert(std::string("Failed to open project:\n") + e.what(),
+                                          "Open Project Error", Dialog::DialogIcon::ERROR_ICON);
                         }
                     }
 
@@ -450,7 +464,7 @@ namespace Shado {
         }
 
         auto filepath = !path.has_value()
-                            ? FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0")
+                            ? std::filesystem::path(FileDialogs::saveFile("Shado Scene(*.shadoscene)\0*.shadoscene\0"))
                             : path.value();
 
         if (!filepath.empty()) {
@@ -581,7 +595,7 @@ namespace Shado {
         // For drag and drop
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM")) {
-                const wchar_t* pathStr = (const wchar_t*)payload->Data;
+                const std::filesystem::path::value_type* pathStr = (const std::filesystem::path::value_type*)payload->Data;
                 auto path = Project::GetActive()->GetProjectDirectory() / pathStr;
                 auto extension = path.extension();
 

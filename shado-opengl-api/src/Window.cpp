@@ -9,7 +9,6 @@
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "GL/glew.h"
-#include <shellscalingapi.h>
 #include <GLFW/glfw3.h>
 #if SHADO_PLATFORM_WINDOWS
 #include <shellscalingapi.h>
@@ -29,6 +28,13 @@ namespace Shado {
         allocator.user = NULL;
         glfwInitAllocator(&allocator);
 
+#if defined(SHADO_PLATFORM_MACOS)
+        // On macOS, GLFW changes the process working directory to the app
+        // bundle's Resources folder by default. The engine loads assets/shaders
+        // with paths relative to the executable directory, so disable this.
+        glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
+#endif
+
         /* Initialize the library */
         if (!glfwInit())
             SHADO_CORE_ASSERT(false, "Failed to initialize GLFW!");
@@ -36,6 +42,20 @@ namespace Shado {
         m_Data.title = title;
         m_Data.width = width;
         m_Data.height = height;
+
+#if defined(SHADO_PLATFORM_MACOS)
+        /*
+         * macOS only exposes Core profile contexts for OpenGL 3.2+, capped at
+         * 4.1, and requires forward compatibility. The engine's shaders are
+         * downgraded to GLSL 4.1 there, so request a 4.1 Core context.
+         * Windows/Linux keep the default context (compatibility, up to 4.6),
+         * which provides the Direct State Access functions the renderer uses.
+         */
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+#endif
 
         /* Create a windowed mode window and its OpenGL context */
         native_window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
@@ -47,10 +67,19 @@ namespace Shado {
         /* Make the window's context current */
         glfwMakeContextCurrent(native_window);
 
+#if defined(SHADO_PLATFORM_MACOS)
+        // Under an OpenGL Core profile context, GLEW must use "experimental"
+        // entry points to resolve function pointers correctly.
+        glewExperimental = GL_TRUE;
+#endif
         if (glewInit() != GLEW_OK) {
             glfwTerminate();
             SHADO_CORE_ASSERT(false, "Failed to create GLEW context");
         }
+#if defined(SHADO_PLATFORM_MACOS)
+        // GLEW on a Core profile triggers a benign GL_INVALID_ENUM; clear it.
+        glGetError();
+#endif
 
         glfwSetWindowUserPointer(native_window, &m_Data);
         listenToEvents();
@@ -61,7 +90,9 @@ namespace Shado {
         monitor = glfwGetPrimaryMonitor();
 
 
+#if defined(SHADO_PLATFORM_WINDOWS)
         SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+#endif
     }
 
     Window::Window()
@@ -218,8 +249,13 @@ namespace Shado {
     }
 
     std::pair<float, float> Window::getWindowScale() const {
-        float xscale, yscale;
-        glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+        float xscale = 1.0f, yscale = 1.0f;
+        // glfwGetPrimaryMonitor() can return NULL (e.g. display asleep or no
+        // monitor); passing NULL to glfwGetMonitorContentScale asserts inside
+        // GLFW and aborts. Fall back to a 1.0 scale.
+        GLFWmonitor* mon = monitor ? monitor : glfwGetPrimaryMonitor();
+        if (mon)
+            glfwGetMonitorContentScale(mon, &xscale, &yscale);
         return std::pair(xscale, yscale);
     }
 

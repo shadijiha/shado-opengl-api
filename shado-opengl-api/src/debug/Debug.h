@@ -54,6 +54,19 @@ inline OStream& operator<<(OStream& os, glm::qua<T, Q> quaternion)
 	return os << glm::to_string(quaternion);
 }
 
+// __debugbreak() is an MSVC intrinsic. Provide a portable equivalent on other
+// platforms so the assert macros below work everywhere.
+#if !defined(SHADO_PLATFORM_WINDOWS)
+	#if defined(__clang__)
+		#define __debugbreak() __builtin_debugtrap()
+	#elif defined(__GNUC__)
+		#define __debugbreak() __builtin_trap()
+	#else
+		#include <csignal>
+		#define __debugbreak() raise(SIGTRAP)
+	#endif
+#endif
+
 #ifdef SHADO_ENABLE_ASSERTS
 #define SHADO_ASSERT(x, ...) { if(!(x)) { SHADO_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
 #define SHADO_CORE_ASSERT(Cond, ...) {\

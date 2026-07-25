@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #define snew(Type) new(Shado::Memory::Heap<Type>(std::string("Engine - ") + typeid(Type).name()))
 #define sdelete(ptr) Shado::Memory::Free(ptr)

@@ -28,3 +28,11 @@ project "Shado-script-core"
 	{
 		"src/**.cs",
 	}
+
+    postbuildcommands
+    {
+        --'{MKDIR} "%{wks.location}/shado-editor/DotNet"',
+        --'{COPYDIR} "$(TargetDir)" "%{wks.location}/shado-editor/DotNet"',
+        --'{COPYFILE} "%{wks.location}/shado-opengl-api/Shado-script-core/bin/Release/Coral.Managed.runtimeconfig.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.runtimeconfig.json"',
+        --'{COPYFILE} "$(TargetDir)Coral.Managed.deps.json" "%{wks.location}/shado-editor/DotNet/Coral.Managed.deps.json"',
+    }

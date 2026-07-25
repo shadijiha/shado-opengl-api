@@ -2,11 +2,43 @@
 #include <GL/glew.h>
 #include <fstream>
 #include <array>
+#if defined(SHADO_PLATFORM_MACOS)
+#include <regex>
+#endif
 
 #include "debug/Debug.h"
 #include "glm/gtc/type_ptr.hpp"
 
 namespace Shado {
+#if defined(SHADO_PLATFORM_MACOS)
+    // Apple caps OpenGL/GLSL at 4.1. The engine's shaders are authored against
+    // GLSL 4.5 (#version 450 + explicit `binding=` layout qualifiers on uniform
+    // blocks and samplers, which require GLSL 4.2+). Rewrite the source to
+    // GLSL 4.10 on the fly (macOS only): downgrade the #version and strip
+    // `binding=` qualifiers. Uniform-block and sampler bindings are instead
+    // assigned from C++ (uniform blocks default to binding 0; sampler arrays
+    // are set via glUniform1iv in the renderer). Windows/Linux are unaffected.
+    static std::string PatchGLSLForGL41(std::string src) {
+        // #version 4x0 (420..460) -> 410, keeping any trailing "core".
+        // NB: use a literal replacement (no capture group) because "$1" followed
+        // by digits would be misparsed as a higher-numbered group reference.
+        src = std::regex_replace(src, std::regex(R"(#version\s+4[2-6]0)"), "#version 410");
+
+        // Remove a standalone `layout(binding = N)`.
+        src = std::regex_replace(src, std::regex(R"(layout\s*\(\s*binding\s*=\s*\d+\s*\)\s*)"), "");
+        // Remove `, binding = N` inside a layout list.
+        src = std::regex_replace(src, std::regex(R"(\s*,\s*binding\s*=\s*\d+)"), "");
+        // Remove `binding = N,` when it is the first qualifier in a list.
+        src = std::regex_replace(src, std::regex(R"(binding\s*=\s*\d+\s*,\s*)"), "");
+
+        // GLSL 410 requires the interpolation qualifier ("flat") to precede the
+        // storage qualifier ("in"/"out"); GLSL 420+ relaxed this. Reorder
+        // "in flat"/"out flat" -> "flat in"/"flat out".
+        src = std::regex_replace(src, std::regex(R"(\b(in|out)\s+flat\b)"), "flat $1");
+        return src;
+    }
+#endif
+
     static GLenum ShaderTypeFromString(const std::string& type) {
         if (type == "vertex")
             return GL_VERTEX_SHADER;
@@ -112,7 +144,24 @@ namespace Shado {
         int glShaderIDIndex = 0;
         for (auto& kv : shaderSources) {
             GLenum type = kv.first;
-            const std::string& source = kv.second;
+            std::string source = kv.second;
+
+#if defined(SHADO_PLATFORM_MACOS)
+            // Windows/Linux compile the shaders as authored (GLSL 4.5). macOS
+            // caps at GLSL 4.10, so rewrite the source on the fly there only.
+            source = PatchGLSLForGL41(source);
+
+            // GLSL 410 matches varyings between stages by NAME (explicit
+            // location-based interface matching for struct varyings is 4.4+).
+            // The shaders name the vertex output block "Output" and the fragment
+            // input block "Input"; unify them so linking succeeds.
+            if (type == GL_FRAGMENT_SHADER) {
+                source = std::regex_replace(source, std::regex(R"(\bInput\b)"), "Output");
+                // macOS GL 4.1 allows only 16 fragment samplers; the sampler
+                // array must match Renderer2D's MaxTextureSlots (16).
+                source = std::regex_replace(source, std::regex(R"(u_Textures\s*\[\s*32\s*\])"), "u_Textures[16]");
+            }
+#endif
 
             GLuint shader = glCreateShader(type);
 
@@ -315,8 +364,14 @@ namespace Shado {
         int currentProgram = getCurrentActiveProgram();
         this->bind();
         glm::vec2 result;
+#if defined(SHADO_PLATFORM_MACOS)
+        // glGetnUniformfv is GL 4.5 (ARB_robustness) and null on macOS 4.1.
+        glGetUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()),
+                        glm::value_ptr(result));
+#else
         glGetnUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), sizeof(glm::vec2),
                         glm::value_ptr(result));
+#endif
         // Bind back the previous program
         glUseProgram(currentProgram);
         return result;
@@ -326,8 +381,13 @@ namespace Shado {
         int currentProgram = getCurrentActiveProgram();
         this->bind();
         glm::vec3 result;
+#if defined(SHADO_PLATFORM_MACOS)
+        glGetUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()),
+                        glm::value_ptr(result));
+#else
         glGetnUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), sizeof(glm::vec3),
                         glm::value_ptr(result));
+#endif
         // Bind back the previous program
         glUseProgram(currentProgram);
         return result;
@@ -337,8 +397,13 @@ namespace Shado {
         int currentProgram = getCurrentActiveProgram();
         this->bind();
         glm::vec4 result;
+#if defined(SHADO_PLATFORM_MACOS)
+        glGetUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()),
+                        glm::value_ptr(result));
+#else
         glGetnUniformfv(m_Renderer2DID, glGetUniformLocation(m_Renderer2DID, name.c_str()), sizeof(glm::vec4),
                         glm::value_ptr(result));
+#endif
         // Bind back the previous program
         glUseProgram(currentProgram);
         return result;

@@ -20,7 +20,14 @@ namespace Shado {
         msdf_atlas::ImmediateAtlasGenerator<S, N, GenFunc, msdf_atlas::BitmapAtlasStorage<T, N>> generator(
             width, height);
         generator.setAttributes(attributes);
+#if defined(SHADO_PLATFORM_MACOS)
+        // msdf-atlas-gen's multi-threaded generator has a nondeterministic race
+        // that intermittently segfaults on macOS/arm64. Generate single-threaded
+        // there; Windows/Linux keep the original multi-threaded path.
+        generator.setThreadCount(1);
+#else
         generator.setThreadCount(8);
+#endif
         generator.generate(glyphs.data(), (int)glyphs.size());
 
         msdfgen::BitmapConstRef<T, N> bitmap = (msdfgen::BitmapConstRef<T, N>)generator.atlasStorage();
@@ -62,7 +69,11 @@ namespace Shado {
             0,
         };
         msdf_atlas::Charset charset;
-        for (std::size_t range = 0; range < std::size(charsetRanges); range += 2) {
+        // The range list is a series of [start, end] pairs terminated by a 0
+        // sentinel. Iterate while the start of the pair is non-zero; this avoids
+        // reading past the end of the array (which previously produced a garbage
+        // upper bound and a multi-billion-iteration hang on macOS).
+        for (std::size_t range = 0; charsetRanges[range] != 0; range += 2) {
             for (uint32_t i = charsetRanges[range]; i <= charsetRanges[range + 1]; i++) {
                 charset.add(i);
             }

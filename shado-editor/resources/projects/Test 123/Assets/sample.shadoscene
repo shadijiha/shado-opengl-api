@@ -48,7 +48,7 @@ Entities:
       Color: [0.760617733, 0.432869822, 0.346536279, 1]
       LineSpacing: 0
       Kerning: 0
-      Font: D:\Code\Projects\shado-opengl-api\shado-editor\resources\projects\Test 123\Assets\OpenSans-Bold.ttf
+      Font: Assets/OpenSans-Bold.ttf
   - Entity: 9834946628721182815
     TagComponent:
       Tag: Cool blob
@@ -287,4 +287,4 @@ Entities:
       Color: [0.918918908, 0.398027807, 0.120630257, 1]
       LineSpacing: 0
       Kerning: 0
-      Font: D:\Code\Projects\shado-opengl-api\shado-editor\resources\projects\Test 123\Assets\OpenSans-Bold.ttf
+      Font: Assets/OpenSans-Bold.ttf

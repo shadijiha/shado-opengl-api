@@ -37,22 +37,37 @@ namespace Sandbox
         protected void Init()
         {
             TokenSourceource = new();
-            watcher = new(Path.GetDirectoryName(scriptPath));
-            watcher.Filter = Path.GetFileName(scriptPath);
-            watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size;
-            
-            watcher.Changed += ReloadScript;
-            watcher.Created += ReloadScript;
 
-            watcher.EnableRaisingEvents = true;
+            // scriptPath may be an absolute path that doesn't exist on this
+            // machine (e.g. a Windows path when running on macOS/Linux). Guard
+            // the watcher and file read so Init doesn't throw.
+            var scriptDir = Path.GetDirectoryName(scriptPath);
+            if (!string.IsNullOrEmpty(scriptDir) && Directory.Exists(scriptDir))
+            {
+                watcher = new(scriptDir);
+                watcher.Filter = Path.GetFileName(scriptPath);
+                watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size;
+
+                watcher.Changed += ReloadScript;
+                watcher.Created += ReloadScript;
+
+                watcher.EnableRaisingEvents = true;
+            }
 
             Entity? textEntity = Entity.FindEntityByName("sscript content");
-            if (textEntity is not null)
+            if (textEntity is not null && File.Exists(scriptPath))
                 textEntity.GetComponent<TextComponent>().text = File.ReadAllText(scriptPath);
         }
         
         public void Execute()
         {
+            // The external compiler is a Windows-only tool that won't exist on
+            // other platforms; skip launching it instead of erroring out.
+            if (!File.Exists(compilerExe))
+            {
+                Log.Info("SScript: external compiler not found, skipping: " + compilerExe);
+                return;
+            }
             RunScriptAsync(compilerExe, scriptPath, TokenSourceource.Token);
         }
         
@@ -155,6 +170,7 @@ namespace Sandbox
         }
 
         public void SendToScript(String message) {
+            if (scriptProcessIn is null) return;
             scriptProcessIn.Write(message + "\n");
             scriptProcessIn.Flush();
         }
@@ -248,7 +264,6 @@ namespace Sandbox
 
         protected override void OnUpdate(float dt)
         {
-            return;
             totalDt += dt;
             //if (GetComponent<SpriteRendererComponent>().texture != texture)
             //    GetComponent<SpriteRendererComponent>().texture = texture;
